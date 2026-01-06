@@ -1,0 +1,5 @@
+{
+  "name": "Botequista",
+  "description": "Sistema completo para gestão de bar, incluindo cadastro de produtos, ponto de venda (POS) e análises inteligentes com IA.",
+  "requestFramePermissions": []
+}
