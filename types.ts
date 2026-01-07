@@ -12,7 +12,7 @@ export type SellType = 'unit' | 'weight';
 export interface Product {
   id: string;
   name: string;
-  price: number; // Preço por unidade ou por Kg
+  price: number;
   category: string;
   sellType: SellType;
 }
@@ -20,14 +20,14 @@ export interface Product {
 export interface SaleItem {
   productId: string;
   productName: string;
-  quantity: number; // Quantidade (unidades) ou Peso (em Kg, ex: 0.350 para 350g)
+  quantity: number;
   unitPrice: number;
   totalPrice: number;
 }
 
 export interface Tab {
   id: string;
-  name: string; // Mesa ou Nome do Cliente
+  name: string;
   items: SaleItem[];
   openedAt: number;
 }
@@ -41,5 +41,5 @@ export interface Sale {
   tabName?: string;
 }
 
-export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports';
-export type Theme = 'light' | 'dark';
+export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings';
+export type Theme = 'light' | 'dark' | 'retro';
