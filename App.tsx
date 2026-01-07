@@ -15,7 +15,6 @@ import { saveToFirebase, loadFromFirebase, AppFullData } from './services/fireba
 // ========================================================
 const FIXED_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const FIXED_GIST_ID = ''; 
-// O token do Github foi removido conforme solicitado para evitar falhas.
 // ========================================================
 
 const App: React.FC = () => {
@@ -29,7 +28,6 @@ const App: React.FC = () => {
   const [fbUrl, setFbUrl] = useState(() => FIXED_FB_URL || localStorage.getItem('bar_fb_url') || '');
   const [gistId, setGistId] = useState(() => FIXED_GIST_ID || localStorage.getItem('bar_gist_id') || '');
 
-  // Tema padrão definido como ESCURO
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('bar_theme');
     return (saved as Theme) || 'dark';
@@ -86,7 +84,6 @@ const App: React.FC = () => {
 
     if (fbUrl && !isInitialMount.current) {
       const timer = setTimeout(() => {
-        // ghToken removido do payload de salvamento
         const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId } };
         saveToFirebase(fbUrl, fullData)
           .then(() => setDbStatus('success'))
@@ -98,9 +95,10 @@ const App: React.FC = () => {
   }, [products, sales, openTabs, fbUrl, gistId, theme]);
 
   const handleImportAll = (data: AppFullData) => {
-    if (data.products) setProducts(data.products);
-    if (data.sales) setSales(data.sales);
-    if (data.openTabs) setOpenTabs(data.openTabs);
+    if (!data) return;
+    setProducts(data.products ?? []);
+    setSales(data.sales ?? []);
+    setOpenTabs(data.openTabs ?? []);
     setDbStatus('success');
   };
 
