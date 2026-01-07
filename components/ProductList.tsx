@@ -76,28 +76,44 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Nome</label>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-2 rounded-lg dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-700" placeholder="Ex: Cerveja 600ml" />
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none" 
+                  placeholder="Ex: Cerveja 600ml" 
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Categoria</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-4 py-2 rounded-lg dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-700">
+                <select 
+                  value={category} 
+                  onChange={(e) => setCategory(e.target.value)} 
+                  className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none"
+                >
                   {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Tipo de Venda</label>
                 <div className="flex gap-2">
-                  <button onClick={() => setSellType('unit')} className={`flex-1 py-2 rounded-lg font-bold text-xs border ${sellType === 'unit' ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}>UNIDADE</button>
-                  <button onClick={() => setSellType('weight')} className={`flex-1 py-2 rounded-lg font-bold text-xs border ${sellType === 'weight' ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}>POR PESO (KG)</button>
+                  <button onClick={() => setSellType('unit')} className={`flex-1 py-2 rounded-lg font-bold text-xs border transition-colors ${sellType === 'unit' ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}>UNIDADE</button>
+                  <button onClick={() => setSellType('weight')} className={`flex-1 py-2 rounded-lg font-bold text-xs border transition-colors ${sellType === 'weight' ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'}`}>POR PESO (KG)</button>
                 </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Preço (R$ {sellType === 'weight' ? 'por Kg' : ''})</label>
-                <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} className="w-full px-4 py-2 rounded-lg dark:bg-slate-900 dark:text-white border border-slate-200 dark:border-slate-700" placeholder="0.00" />
+                <input 
+                  type="number" 
+                  value={price} 
+                  onChange={(e) => setPrice(e.target.value)} 
+                  className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none" 
+                  placeholder="0.00" 
+                />
               </div>
               <div className="lg:col-span-2 flex gap-3 pt-5">
-                <button onClick={handleSave} className="flex-1 bg-red-600 text-white py-2 rounded-xl font-bold hover:bg-red-700">Salvar Produto</button>
-                <button onClick={() => { setIsAdding(false); setEditingId(null); resetForm(); }} className="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-xl font-bold">Cancelar</button>
+                <button onClick={handleSave} className="flex-1 bg-red-600 text-white py-2 rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md">Salvar Produto</button>
+                <button onClick={() => { setIsAdding(false); setEditingId(null); resetForm(); }} className="flex-1 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-2 rounded-xl font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Cancelar</button>
               </div>
             </div>
           </div>
