@@ -12,14 +12,16 @@ interface DashboardProps {
   theme: Theme;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ sales, products, theme }) => {
+const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme }) => {
   const isDark = theme === 'dark';
-  const totalRevenue = sales.reduce((acc, s) => acc + s.total, 0);
-  const totalOrders = sales.length;
+  const safeSales = sales ?? [];
+  
+  const totalRevenue = safeSales.reduce((acc, s) => acc + (s.total ?? 0), 0);
+  const totalOrders = safeSales.length;
   const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-  const productCounts = sales.flatMap(s => s.items).reduce((acc: Record<string, number>, item) => {
-    acc[item.productName] = (acc[item.productName] || 0) + item.quantity;
+  const productCounts = safeSales.flatMap(s => s.items ?? []).reduce((acc: Record<string, number>, item) => {
+    acc[item.productName] = (acc[item.productName] || 0) + (item.quantity ?? 0);
     return acc;
   }, {} as Record<string, number>);
 
@@ -28,25 +30,25 @@ const Dashboard: React.FC<DashboardProps> = ({ sales, products, theme }) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
-  const salesTrend = sales.slice(-10).reverse().map((s, i) => ({
+  const salesTrend = safeSales.slice(-10).reverse().map((s) => ({
     name: new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    total: s.total
+    total: s.total ?? 0
   }));
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Faturamento</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">R$ {totalRevenue.toFixed(2)}</p>
           <p className="text-[10px] text-emerald-500 font-bold mt-2">↑ Em tempo real</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Pedidos</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{totalOrders}</p>
           <p className="text-[10px] text-slate-400 font-bold mt-2">Registros totais</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sm:col-span-2 lg:col-span-1">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sm:col-span-2 lg:col-span-1 transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Médio</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">R$ {avgOrder.toFixed(2)}</p>
           <p className="text-[10px] text-indigo-400 font-bold mt-2">Por cliente</p>
@@ -54,7 +56,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales, products, theme }) => {
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <h3 className="font-bold text-sm lg:text-base text-slate-800 dark:text-white mb-6">Top 5 Produtos</h3>
           <div className="h-[250px] lg:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -79,7 +81,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales, products, theme }) => {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <h3 className="font-bold text-sm lg:text-base text-slate-800 dark:text-white mb-6">Vendas Recentes</h3>
           <div className="h-[250px] lg:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">

@@ -9,7 +9,7 @@ interface POSProps {
   onCompleteSale: (sale: Sale) => void;
 }
 
-const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteSale }) => {
+const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, onCompleteSale }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newTabName, setNewTabName] = useState('');
@@ -36,16 +36,30 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
     setIsAddingTab(false);
   };
 
+  const handleAbandonTab = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const tab = openTabs.find(t => t.id === id);
+    if (tab && (tab.items ?? []).length > 0) {
+      alert("Não é possível abandonar uma mesa com consumo. Feche a conta normalmente.");
+      return;
+    }
+    if (confirm("Deseja abandonar esta mesa vazia?")) {
+      onUpdateTabs(openTabs.filter(t => t.id !== id));
+      if (activeTabId === id) setActiveTabId(null);
+    }
+  };
+
   const addToTab = (product: Product, quantity: number = 1) => {
     if (!activeTabId) return;
 
     const tabs = openTabs.map(tab => {
       if (tab.id === activeTabId) {
-        const existing = tab.items.find(i => i.productId === product.id);
+        const items = tab.items ?? [];
+        const existing = items.find(i => i.productId === product.id);
         if (existing && product.sellType === 'unit') {
           return {
             ...tab,
-            items: tab.items.map(i => i.productId === product.id 
+            items: items.map(i => i.productId === product.id 
               ? { ...i, quantity: i.quantity + quantity, totalPrice: (i.quantity + quantity) * i.unitPrice }
               : i
             )
@@ -53,7 +67,7 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
         }
         return {
           ...tab,
-          items: [...tab.items, {
+          items: [...items, {
             productId: product.id,
             productName: product.name,
             quantity: quantity,
@@ -70,7 +84,7 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
   const removeFromTab = (productId: string) => {
     const tabs = openTabs.map(tab => {
       if (tab.id === activeTabId) {
-        return { ...tab, items: tab.items.filter(i => i.productId !== productId) };
+        return { ...tab, items: (tab.items ?? []).filter(i => i.productId !== productId) };
       }
       return tab;
     });
@@ -78,13 +92,14 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
   };
 
   const finishSale = () => {
-    if (!activeTab || activeTab.items.length === 0) return;
+    if (!activeTab || (activeTab.items ?? []).length === 0) return;
     
-    const total = activeTab.items.reduce((acc, i) => acc + i.totalPrice, 0);
+    const items = activeTab.items ?? [];
+    const total = items.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
     const sale: Sale = {
       id: Date.now().toString(),
       timestamp: Date.now(),
-      items: activeTab.items,
+      items: items,
       paymentMethod: selectedPayment,
       total,
       tabName: activeTab.name
@@ -128,23 +143,33 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {openTabs.map(tab => (
-            <button 
-              key={tab.id}
-              onClick={() => setActiveTabId(tab.id)}
-              className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-600 transition-all text-left group shadow-sm hover:shadow-md"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 group-hover:text-red-500 transition-colors">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l-8-3V7l8-3 8 3v11l-8 3zM12 21V7M12 7l8-3-8-3-8 3 8 3z" /></svg>
+            <div key={tab.id} className="relative group">
+              <button 
+                onClick={() => setActiveTabId(tab.id)}
+                className="w-full bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-slate-200 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-600 transition-all text-left shadow-sm hover:shadow-md h-full"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-500 group-hover:text-red-500 transition-colors">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l-8-3V7l8-3 8 3v11l-8 3zM12 21V7M12 7l8-3-8-3-8 3 8 3z" /></svg>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Há {Math.floor((Date.now() - tab.openedAt) / 60000)}m</span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Há {Math.floor((Date.now() - tab.openedAt) / 60000)}m</span>
-              </div>
-              <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase truncate">{tab.name}</h3>
-              <p className="text-red-600 dark:text-red-400 font-black mt-2">
-                R$ {tab.items.reduce((acc, i) => acc + i.totalPrice, 0).toFixed(2)}
-              </p>
-              <div className="mt-4 text-[10px] text-slate-400 font-black uppercase tracking-widest">{tab.items.length} ITENS</div>
-            </button>
+                <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase truncate pr-2">{tab.name}</h3>
+                <p className="text-red-600 dark:text-red-400 font-black mt-2">
+                  R$ {(tab.items ?? []).reduce((acc, i) => acc + (i.totalPrice ?? 0), 0).toFixed(2)}
+                </p>
+                <div className="mt-4 text-[10px] text-slate-400 font-black uppercase tracking-widest">{(tab.items ?? []).length} ITENS</div>
+              </button>
+              {(tab.items ?? []).length === 0 && (
+                <button 
+                  onClick={(e) => handleAbandonTab(tab.id, e)}
+                  className="absolute bottom-4 right-4 p-2 text-slate-300 hover:text-red-500 transition-colors bg-white/50 dark:bg-slate-900/50 rounded-lg"
+                  title="Abandonar Mesa Vazia"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+              )}
+            </div>
           ))}
           {openTabs.length === 0 && !isAddingTab && (
             <div className="col-span-full py-20 text-center text-slate-400 italic font-medium">
@@ -169,7 +194,7 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
 
       {/* Menu de Produtos */}
       <div className="flex-1 space-y-6">
-        <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+        <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 transition-colors">
           <button onClick={() => setActiveTabId(null)} className="hidden lg:flex bg-slate-100 dark:bg-slate-800 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
@@ -212,14 +237,14 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
 
       {/* Detalhe da Comanda / Carrinho */}
       <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] sticky top-24">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl transition-colors">
           <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-red-600 text-white flex justify-between items-center">
             <h3 className="font-black uppercase tracking-tighter">{activeTab?.name}</h3>
             <span className="text-[10px] bg-black/20 px-2 py-1 rounded-full font-bold">#{activeTab?.id.slice(-4)}</span>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {activeTab?.items.map((item, idx) => (
+            {(activeTab?.items ?? []).map((item, idx) => (
               <div key={`${item.productId}-${idx}`} className="flex justify-between items-center animate-in slide-in-from-right-2">
                 <div className="flex-1">
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{item.productName}</p>
@@ -231,14 +256,14 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm font-black dark:text-white">R$ {item.totalPrice.toFixed(2)}</p>
+                  <p className="text-sm font-black dark:text-white">R$ {(item.totalPrice ?? 0).toFixed(2)}</p>
                   <button onClick={() => removeFromTab(item.productId)} className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>
               </div>
             ))}
-            {activeTab?.items.length === 0 && (
+            {(activeTab?.items ?? []).length === 0 && (
               <div className="h-40 flex flex-col items-center justify-center opacity-40 text-slate-500 italic text-sm text-center">
                 <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                 Comanda vazia
@@ -250,32 +275,42 @@ const POS: React.FC<POSProps> = ({ products, openTabs, onUpdateTabs, onCompleteS
              <div className="flex justify-between items-center">
                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
                <span className="text-2xl font-black text-slate-900 dark:text-white">
-                 R$ {activeTab?.items.reduce((acc, i) => acc + i.totalPrice, 0).toFixed(2)}
+                 R$ {(activeTab?.items ?? []).reduce((acc, i) => acc + (i.totalPrice ?? 0), 0).toFixed(2)}
                </span>
              </div>
 
-             <div className="space-y-2">
-               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pagamento</label>
-               <div className="grid grid-cols-2 gap-2">
-                 {Object.values(PaymentMethod).map(m => (
-                   <button 
-                     key={m} 
-                     onClick={() => setSelectedPayment(m)}
-                     className={`py-2 rounded-lg text-[10px] font-black border transition-all ${selectedPayment === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800'}`}
-                   >
-                     {m}
-                   </button>
-                 ))}
-               </div>
-             </div>
+             {activeTab && (activeTab.items ?? []).length > 0 ? (
+               <div className="space-y-4 animate-in slide-in-from-bottom-2">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pagamento</label>
+                   <div className="grid grid-cols-2 gap-2">
+                     {Object.values(PaymentMethod).map(m => (
+                       <button 
+                         key={m} 
+                         onClick={() => setSelectedPayment(m)}
+                         className={`py-2 rounded-lg text-[10px] font-black border transition-all ${selectedPayment === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800'}`}
+                       >
+                         {m}
+                       </button>
+                     ))}
+                   </div>
+                 </div>
 
-             <button 
-               disabled={!activeTab || activeTab.items.length === 0}
-               onClick={finishSale}
-               className="w-full bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-             >
-               FECHAR COMANDA
-             </button>
+                 <button 
+                   onClick={finishSale}
+                   className="w-full bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 transition-all active:scale-[0.98]"
+                 >
+                   FECHAR COMANDA
+                 </button>
+               </div>
+             ) : (
+               <button 
+                 onClick={() => activeTab && handleAbandonTab(activeTab.id)}
+                 className="w-full bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black transition-all active:scale-[0.98] uppercase tracking-widest text-xs"
+               >
+                 Abandonar Mesa
+               </button>
+             )}
           </div>
         </div>
       </div>

@@ -6,7 +6,9 @@ interface ReportsProps {
   sales: Sale[];
 }
 
-const Reports: React.FC<ReportsProps> = ({ sales }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [] }) => {
+  const safeSales = sales ?? [];
+  
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() - 30);
@@ -17,8 +19,8 @@ const Reports: React.FC<ReportsProps> = ({ sales }) => {
   const filteredSales = useMemo(() => {
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime() + 86400000;
-    return sales.filter(s => s.timestamp >= start && s.timestamp <= end);
-  }, [sales, startDate, endDate]);
+    return safeSales.filter(s => s.timestamp >= start && s.timestamp <= end);
+  }, [safeSales, startDate, endDate]);
 
   const reportData = useMemo(() => {
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc, method) => {
@@ -29,11 +31,11 @@ const Reports: React.FC<ReportsProps> = ({ sales }) => {
     filteredSales.forEach(sale => {
       if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
-        totalsByMethod[sale.paymentMethod].total += sale.total;
+        totalsByMethod[sale.paymentMethod].total += (sale.total ?? 0);
       }
     });
 
-    const grandTotal = filteredSales.reduce((acc, s) => acc + s.total, 0);
+    const grandTotal = filteredSales.reduce((acc, s) => acc + (s.total ?? 0), 0);
 
     return { totalsByMethod, grandTotal };
   }, [filteredSales]);
@@ -41,15 +43,15 @@ const Reports: React.FC<ReportsProps> = ({ sales }) => {
   const aggregations = useMemo(() => {
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())).getTime();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    const daily = sales.filter(s => s.timestamp >= startOfToday).reduce((acc, s) => acc + s.total, 0);
-    const weekly = sales.filter(s => s.timestamp >= startOfWeek).reduce((acc, s) => acc + s.total, 0);
-    const monthly = sales.filter(s => s.timestamp >= startOfMonth).reduce((acc, s) => acc + s.total, 0);
+    const daily = safeSales.filter(s => s.timestamp >= startOfToday).reduce((acc, s) => acc + (s.total ?? 0), 0);
+    const weekly = safeSales.filter(s => s.timestamp >= startOfWeek).reduce((acc, s) => acc + (s.total ?? 0), 0);
+    const monthly = safeSales.filter(s => s.timestamp >= startOfMonth).reduce((acc, s) => acc + (s.total ?? 0), 0);
 
     return { daily, weekly, monthly };
-  }, [sales]);
+  }, [safeSales]);
 
   return (
     <div className="space-y-6">
