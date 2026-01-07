@@ -21,21 +21,36 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --sb-track: transparent;
+            --sb-thumb: #cbd5e1; /* slate-300 */
+            --sb-size: 8px;
+        }
+
+        .dark {
+            --sb-thumb: #334155; /* slate-700 */
+        }
+
         body { 
             font-family: 'Inter', sans-serif; 
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-y: auto;
         }
         
         /* Tema Retro 8-bit Alegre e Divertido */
         .retro {
-            --pixel-blue: #3db1ff;   /* Azul céu vibrante */
-            --pixel-green: #00a800;  /* Verde grama clássico */
-            --pixel-red: #ff0000;    /* Vermelho intenso */
-            --pixel-yellow: #ffff00; /* Amarelo moeda */
+            --pixel-blue: #3db1ff;
+            --pixel-green: #00a800;
+            --pixel-red: #ff0000;
+            --pixel-yellow: #ffff00;
             --pixel-white: #ffffff;
             --pixel-black: #000000;
             
+            --sb-track: #000000;
+            --sb-thumb: #ffff00;
+            --sb-size: 10px;
+
             background-color: var(--pixel-blue) !important;
             font-family: 'Press Start 2P', cursive !important;
         }
@@ -108,13 +123,26 @@
         /* Transição suave */
         * {
             transition-property: background-color, border-color, color, transform, box-shadow;
-            transition-timing-function: steps(4, end); /* Animação em passos para o estilo retro */
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
             transition-duration: 150ms;
         }
         
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--pixel-black); }
-        ::-webkit-scrollbar-thumb { background: var(--pixel-yellow); border: 2px solid var(--pixel-black); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { 
+            width: var(--sb-size); 
+            height: var(--sb-size);
+        }
+        ::-webkit-scrollbar-track { 
+            background: var(--sb-track); 
+        }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--sb-thumb); 
+            border-radius: 10px;
+        }
+        .retro ::-webkit-scrollbar-thumb {
+            border: 2px solid var(--pixel-black);
+            border-radius: 0;
+        }
     </style>
 <script type="importmap">
 {

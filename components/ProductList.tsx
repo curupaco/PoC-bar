@@ -42,6 +42,12 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
     resetForm();
   };
 
+  const handleDelete = (id: string, productName: string) => {
+    if (window.confirm(`Tem certeza que deseja remover "${productName}" do cardápio?`)) {
+      onDelete(id);
+    }
+  };
+
   const resetForm = () => {
     setName('');
     setPrice('');
@@ -139,7 +145,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   <td className="px-6 py-4 font-black text-red-600 dark:text-red-400">R$ {p.price.toFixed(2)}{p.sellType === 'weight' ? '/kg' : ''}</td>
                   <td className="px-6 py-4 text-right space-x-4">
                     <button onClick={() => startEdit(p)} className="text-blue-500 font-bold hover:underline">Editar</button>
-                    <button onClick={() => onDelete(p.id)} className="text-red-500 font-bold hover:underline">Excluir</button>
+                    <button onClick={() => handleDelete(p.id, p.name)} className="text-red-500 font-bold hover:underline">Excluir</button>
                   </td>
                 </tr>
               ))}
