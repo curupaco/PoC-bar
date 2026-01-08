@@ -105,7 +105,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
                   tickLine={false}
                   tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 9 }}
                 />
-                <Tooltip formatter={(value: number) => [formatCurrency(value), 'Total']} />
+                {/* Fixed TypeScript error by changing parameter type from number to any to accommodate unknown values from Tooltip */}
+                <Tooltip formatter={(value: any) => [formatCurrency(Number(value)), 'Total']} />
                 <Area type="monotone" dataKey="total" stroke="#ef4444" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>

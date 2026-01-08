@@ -27,8 +27,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center space-x-2 pl-2">
             <div className="flex flex-col">
-               <span className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tighter leading-none">Botequista</span>
-               <span className="text-[10px] font-bold text-red-500 uppercase tracking-[0.2em] mt-1">Gestão de Bar</span>
+               <span className="text-4xl font-normal text-slate-800 dark:text-slate-100 tracking-tighter leading-none font-barrio">Botequista</span>
+               <span className="text-[10px] font-bold text-red-500 uppercase tracking-[0.2em] mt-1 ml-1">Gestão de Bar</span>
             </div>
           </div>
           <button onClick={onClose} className="p-2 md:hidden text-slate-400 hover:text-red-500 transition-colors">
