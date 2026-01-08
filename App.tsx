@@ -24,8 +24,9 @@ const App: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
   const isInitialMount = useRef(true);
+  const isSyncingFromCloud = useRef(false);
 
-  const [fbUrl, setFbUrl] = useState(() => FIXED_FB_URL || localStorage.getItem('bar_fb_url') || '');
+  const [fbUrl, setFbUrl] = useState(() => localStorage.getItem('bar_fb_url') || FIXED_FB_URL);
   const [gistId, setGistId] = useState('');
 
   const [theme, setTheme] = useState<Theme>(() => {
@@ -72,34 +73,44 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Sync state with LocalStorage and Firebase
   useEffect(() => {
     localStorage.setItem('bar_products', JSON.stringify(products));
     localStorage.setItem('bar_sales', JSON.stringify(sales));
     localStorage.setItem('bar_open_tabs', JSON.stringify(openTabs));
     localStorage.setItem('bar_theme', theme);
+    localStorage.setItem('bar_fb_url', fbUrl);
     
     const root = window.document.documentElement;
     root.classList.remove('dark', 'retro');
     if (theme !== 'light') root.classList.add(theme);
 
-    if (fbUrl && !isInitialMount.current) {
+    // Only auto-save to Firebase if not in the initial mount phase 
+    // and not currently importing data from cloud
+    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current) {
       const timer = setTimeout(() => {
         const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId } };
         saveToFirebase(fbUrl, fullData)
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
-      }, 1000); // Reduzi o delay para 1s para sincronia mais rápida
+      }, 1500); 
       return () => clearTimeout(timer);
     }
-    isInitialMount.current = false;
-  }, [products, sales, openTabs, fbUrl, gistId, theme]);
+    
+    if (isInitialMount.current) {
+        isInitialMount.current = false;
+    }
+  }, [products, sales, openTabs, fbUrl, theme]);
 
   const handleImportAll = (data: AppFullData) => {
     if (!data) return;
+    isSyncingFromCloud.current = true;
     if (data.products) setProducts(data.products);
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
     setDbStatus('success');
+    // Allow auto-save again after a brief moment to ensure state has settled
+    setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
   };
 
   const deleteSale = (id: string) => {
@@ -108,8 +119,9 @@ const App: React.FC = () => {
     }
   };
 
+  // Initial load from Firebase
   useEffect(() => {
-    const urlToLoad = FIXED_FB_URL || localStorage.getItem('bar_fb_url');
+    const urlToLoad = fbUrl || FIXED_FB_URL;
     if (urlToLoad) {
       setDbStatus('loading');
       loadFromFirebase(urlToLoad)
@@ -117,7 +129,10 @@ const App: React.FC = () => {
           if (data) handleImportAll(data);
           else setDbStatus('idle');
         })
-        .catch(() => setDbStatus('error'));
+        .catch((err) => {
+            console.error("Initial load failed:", err);
+            setDbStatus('error');
+        });
     }
   }, []);
 
@@ -125,8 +140,8 @@ const App: React.FC = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts([...products, p])} onDelete={id => setProducts(products.filter(p => p.id !== id))} onUpdate={u => setProducts(products.map(p => p.id === u.id ? u : p))} />;
-      case 'pos': return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales([s, ...sales])} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} />;
+      case 'pos': return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={deleteSale} />;
       case 'reports': return <Reports sales={sales} />;
       case 'settings': return (
@@ -138,7 +153,7 @@ const App: React.FC = () => {
           onStatusChange={setDbStatus} 
         />
       );
-      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales([s, ...sales])} />;
+      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} />;
     }
   };
 
