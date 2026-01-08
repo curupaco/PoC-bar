@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Sale, Product, PaymentMethod, Theme } from '../types';
+import { Sale, Product, PaymentMethod, Theme, formatCurrency } from '../types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area
@@ -40,7 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Faturamento</p>
-          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">R$ {totalRevenue.toFixed(2)}</p>
+          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
           <p className="text-[10px] text-emerald-500 font-bold mt-2">↑ Em tempo real</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
@@ -50,7 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sm:col-span-2 lg:col-span-1 transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Médio</p>
-          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">R$ {avgOrder.toFixed(2)}</p>
+          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(avgOrder)}</p>
           <p className="text-[10px] text-indigo-400 font-bold mt-2">Por cliente</p>
         </div>
       </div>
@@ -74,6 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
                 <Tooltip 
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: 'none', borderRadius: '10px', fontSize: '12px' }}
+                  formatter={(value: any) => [`${value} unid.`, 'Vendas']}
                 />
                 <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} barSize={16} />
               </BarChart>
@@ -104,7 +105,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
                   tickLine={false}
                   tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 9 }}
                 />
-                <Tooltip />
+                <Tooltip formatter={(value: number) => [formatCurrency(value), 'Total']} />
                 <Area type="monotone" dataKey="total" stroke="#ef4444" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>

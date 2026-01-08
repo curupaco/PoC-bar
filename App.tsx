@@ -11,10 +11,10 @@ import Settings from './components/Settings';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
 // ========================================================
-// CONFIGURAÇÃO FIXA (HARDCODED) - DEFINITIVA PARA DEPLOY
+// CONFIGURAÇÃO DINÂMICA PARA DEPLOY
 // ========================================================
-const FIXED_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
-const FIXED_GIST_ID = ''; 
+const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
+const FIXED_FB_URL = process.env.FIREBASE_URL || DEFAULT_FB_URL;
 // ========================================================
 
 const App: React.FC = () => {
@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const isInitialMount = useRef(true);
 
   const [fbUrl, setFbUrl] = useState(() => FIXED_FB_URL || localStorage.getItem('bar_fb_url') || '');
-  const [gistId, setGistId] = useState(() => FIXED_GIST_ID || localStorage.getItem('bar_gist_id') || '');
+  const [gistId, setGistId] = useState('');
 
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('bar_theme');
@@ -88,7 +88,7 @@ const App: React.FC = () => {
         saveToFirebase(fbUrl, fullData)
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
-      }, 2000);
+      }, 1000); // Reduzi o delay para 1s para sincronia mais rápida
       return () => clearTimeout(timer);
     }
     isInitialMount.current = false;
@@ -96,9 +96,9 @@ const App: React.FC = () => {
 
   const handleImportAll = (data: AppFullData) => {
     if (!data) return;
-    setProducts(data.products ?? []);
-    setSales(data.sales ?? []);
-    setOpenTabs(data.openTabs ?? []);
+    if (data.products) setProducts(data.products);
+    if (data.sales) setSales(data.sales);
+    if (data.openTabs) setOpenTabs(data.openTabs);
     setDbStatus('success');
   };
 

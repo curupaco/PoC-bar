@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Sale } from '../types';
+import { Sale, formatCurrency } from '../types';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -60,7 +60,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales, onDeleteSale }) => {
                 </td>
                 <td className="px-6 py-4">
                   <span className="font-black text-red-600 dark:text-red-400">
-                    R$ {sale.total.toFixed(2)}
+                    {formatCurrency(sale.total)}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-right">

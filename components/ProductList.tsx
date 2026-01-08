@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Product, SellType } from '../types';
+import { Product, SellType, formatCurrency } from '../types';
 
 interface ProductListProps {
   products: Product[];
@@ -114,7 +114,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   value={price} 
                   onChange={(e) => setPrice(e.target.value)} 
                   className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none" 
-                  placeholder="0.00" 
+                  placeholder="0,00" 
                 />
               </div>
               <div className="lg:col-span-2 flex gap-3 pt-5">
@@ -142,7 +142,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200">{p.name}</td>
                   <td className="px-6 py-4"><span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase">{p.category}</span></td>
                   <td className="px-6 py-4 text-xs font-medium text-slate-500">{p.sellType === 'unit' ? '📦 Unidade' : '⚖️ Por Peso'}</td>
-                  <td className="px-6 py-4 font-black text-red-600 dark:text-red-400">R$ {p.price.toFixed(2)}{p.sellType === 'weight' ? '/kg' : ''}</td>
+                  <td className="px-6 py-4 font-black text-red-600 dark:text-red-400">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</td>
                   <td className="px-6 py-4 text-right space-x-4">
                     <button onClick={() => startEdit(p)} className="text-blue-500 font-bold hover:underline">Editar</button>
                     <button onClick={() => handleDelete(p.id, p.name)} className="text-red-500 font-bold hover:underline">Excluir</button>

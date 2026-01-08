@@ -43,3 +43,13 @@ export interface Sale {
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings';
 export type Theme = 'light' | 'dark' | 'retro';
+
+/**
+ * Formata um número para o padrão monetário brasileiro (BRL)
+ */
+export const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+};
