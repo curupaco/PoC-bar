@@ -10,47 +10,51 @@ import Reports from './components/Reports';
 import Settings from './components/Settings';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
-// ========================================================
-// CONFIGURAÇÃO DINÂMICA PARA DEPLOY
-// ========================================================
 const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const FIXED_FB_URL = process.env.FIREBASE_URL || DEFAULT_FB_URL;
-// ========================================================
+const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 
 const App: React.FC = () => {
+  const [isLoggedIn] = useState(true); // Login removido, acessa direto
+  const [encryptionKey] = useState<string>(MASTER_KEY);
+
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
+  const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
+  
   const isInitialMount = useRef(true);
   const isSyncingFromCloud = useRef(false);
 
   const [fbUrl, setFbUrl] = useState(() => localStorage.getItem('bar_fb_url') || FIXED_FB_URL);
-  const [gistId, setGistId] = useState('');
-
+  
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('bar_theme');
     return (saved as Theme) || 'dark';
   });
 
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('bar_products');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', name: 'Cerveja Lata 350ml', price: 6.00, category: 'Bebidas', sellType: 'unit' },
-      { id: '2', name: 'Batata Frita', price: 45.00, category: 'Porções', sellType: 'weight' },
-    ];
-  });
+  const [products, setProducts] = useState<Product[]>([]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
 
-  const [sales, setSales] = useState<Sale[]>(() => {
-    const saved = localStorage.getItem('bar_sales');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [openTabs, setOpenTabs] = useState<Tab[]>(() => {
-    const saved = localStorage.getItem('bar_open_tabs');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Inicializa dados locais
+  useEffect(() => {
+    const p = localStorage.getItem('bar_products');
+    const s = localStorage.getItem('bar_sales');
+    const t = localStorage.getItem('bar_open_tabs');
+    
+    try {
+      if (p) setProducts(JSON.parse(p));
+      else setProducts([
+        { id: '1', name: 'Cerveja Lata 350ml', price: 6.00, category: 'Bebidas', sellType: 'unit' },
+        { id: '2', name: 'Batata Frita', price: 45.00, category: 'Porções', sellType: 'weight' },
+      ]);
+      if (s) setSales(JSON.parse(s));
+      if (t) setOpenTabs(JSON.parse(t));
+    } catch (e) { console.error("Erro ao carregar cache local", e); }
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => {
@@ -73,7 +77,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Sync state with LocalStorage and Firebase
+  // Autosave e Tema
   useEffect(() => {
     localStorage.setItem('bar_products', JSON.stringify(products));
     localStorage.setItem('bar_sales', JSON.stringify(sales));
@@ -85,12 +89,10 @@ const App: React.FC = () => {
     root.classList.remove('dark', 'retro');
     if (theme !== 'light') root.classList.add(theme);
 
-    // Only auto-save to Firebase if not in the initial mount phase 
-    // and not currently importing data from cloud
-    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current) {
+    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current && encryptionKey) {
       const timer = setTimeout(() => {
-        const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId } };
-        saveToFirebase(fbUrl, fullData)
+        const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId: '' } };
+        saveToFirebase(fbUrl, fullData, encryptionKey)
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
       }, 1500); 
@@ -100,31 +102,14 @@ const App: React.FC = () => {
     if (isInitialMount.current) {
         isInitialMount.current = false;
     }
-  }, [products, sales, openTabs, fbUrl, theme]);
+  }, [products, sales, openTabs, fbUrl, theme, encryptionKey]);
 
-  const handleImportAll = (data: AppFullData) => {
-    if (!data) return;
-    isSyncingFromCloud.current = true;
-    if (data.products) setProducts(data.products);
-    if (data.sales) setSales(data.sales);
-    if (data.openTabs) setOpenTabs(data.openTabs);
-    setDbStatus('success');
-    // Allow auto-save again after a brief moment to ensure state has settled
-    setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
-  };
-
-  const deleteSale = (id: string) => {
-    if (confirm("Deseja realmente excluir esta venda do histórico?")) {
-      setSales(prev => prev.filter(s => s.id !== id));
-    }
-  };
-
-  // Initial load from Firebase
+  // Carga inicial do Firebase
   useEffect(() => {
     const urlToLoad = fbUrl || FIXED_FB_URL;
     if (urlToLoad) {
       setDbStatus('loading');
-      loadFromFirebase(urlToLoad)
+      loadFromFirebase(urlToLoad, encryptionKey)
         .then((data) => {
           if (data) handleImportAll(data);
           else setDbStatus('idle');
@@ -136,14 +121,45 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleImportAll = (data: AppFullData) => {
+    if (!data) return;
+    isSyncingFromCloud.current = true;
+    setProducts(data.products || []);
+    setSales(data.sales || []);
+    setOpenTabs(data.openTabs || []);
+    setDbStatus('success');
+    setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
+  };
+
+  const deleteSale = (id: string) => {
+    if (window.confirm("Deseja realmente excluir esta venda do histórico?")) {
+      const targetId = String(id).trim();
+      setSales(prev => prev.filter(s => String(s.id).trim() !== targetId));
+    }
+  };
+
+  const handleQuitarPendura = (customerName: string, amount: number) => {
+    setShortcutCheckout({ name: customerName, amount });
+    setActiveView('pos');
+  };
+
   const renderContent = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
       case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} />;
-      case 'pos': return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} />;
+      case 'pos': return (
+        <POS 
+          products={products} 
+          openTabs={openTabs} 
+          onUpdateTabs={setOpenTabs} 
+          onCompleteSale={s => setSales(prev => [s, ...prev])} 
+          shortcutCheckout={shortcutCheckout}
+          onClearShortcut={() => setShortcutCheckout(null)}
+        />
+      );
       case 'history': return <SalesHistory sales={sales} onDeleteSale={deleteSale} />;
-      case 'reports': return <Reports sales={sales} />;
+      case 'reports': return <Reports sales={sales} products={products} onQuitarPendura={handleQuitarPendura} />;
       case 'settings': return (
         <Settings 
           {...commonProps} 

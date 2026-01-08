@@ -7,14 +7,24 @@ interface POSProps {
   openTabs: Tab[];
   onUpdateTabs: (updater: (prev: Tab[]) => Tab[]) => void;
   onCompleteSale: (sale: Sale) => void;
+  shortcutCheckout?: { name: string; amount: number } | null;
+  onClearShortcut?: () => void;
 }
 
 interface PaymentEntry {
   method: PaymentMethod;
   amount: number;
+  customerName?: string;
 }
 
-const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, onCompleteSale }) => {
+const POS: React.FC<POSProps> = ({ 
+  products = [], 
+  openTabs = [], 
+  onUpdateTabs, 
+  onCompleteSale,
+  shortcutCheckout,
+  onClearShortcut
+}) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newTabName, setNewTabName] = useState('');
@@ -23,25 +33,38 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [currentPayments, setCurrentPayments] = useState<PaymentEntry[]>([]);
   const [paymentAmountInput, setPaymentAmountInput] = useState('');
+  const [customerNameInput, setCustomerNameInput] = useState('');
   const [paymentMethodInput, setPaymentMethodInput] = useState<PaymentMethod>(PaymentMethod.CASH);
 
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
   const [editingWeightIndex, setEditingWeightIndex] = useState<number | null>(null);
   const [inputGrams, setInputGrams] = useState('');
 
-  // Utility to normalize IDs for comparison
+  // Lógica para o atalho de quitação (vindo do relatório)
+  useEffect(() => {
+    if (shortcutCheckout) {
+      setActiveTabId('shortcut-payment');
+      setIsClosingTab(true);
+      setCurrentPayments([]);
+      setCustomerNameInput(shortcutCheckout.name);
+      setPaymentAmountInput(shortcutCheckout.amount.toFixed(2));
+      setPaymentMethodInput(PaymentMethod.CASH);
+    }
+  }, [shortcutCheckout]);
+
   const normalizeId = (id: any) => id ? String(id).trim() : '';
 
-  // Current active tab lookup
-  const activeTab = openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
+  const activeTab = shortcutCheckout 
+    ? { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() }
+    : openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
+    
   const tabItems = activeTab?.items ?? [];
-  const tabTotal = tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
+  const tabTotal = shortcutCheckout ? shortcutCheckout.amount : tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
 
-  // Close panel if active tab is removed from parent state
   useEffect(() => {
-    if (activeTabId && !openTabs.some(t => normalizeId(t.id) === normalizeId(activeTabId))) {
+    if (activeTabId && activeTabId !== 'shortcut-payment' && !openTabs.some(t => normalizeId(t.id) === normalizeId(activeTabId))) {
       setActiveTabId(null);
       setIsClosingTab(false);
       setCurrentPayments([]);
@@ -71,19 +94,25 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
       items: [],
       openedAt: Date.now()
     };
-    onUpdateTabs(prev => [...prev, newTab]);
+    onUpdateTabs(prev => [...(prev || []), newTab]);
     setActiveTabId(newId);
     setNewTabName('');
     setIsAddingTab(false);
   };
 
-  // Robust delete function for any tab
   const handleDeleteTab = (id: string | null, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
     
+    if (id === 'shortcut-payment') {
+      if (onClearShortcut) onClearShortcut();
+      setActiveTabId(null);
+      setIsClosingTab(false);
+      return;
+    }
+
     const targetId = normalizeId(id);
     if (!targetId) return;
 
@@ -96,7 +125,7 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
       : `Deseja excluir a mesa "${target.name}"?`;
 
     if (window.confirm(msg)) {
-      onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== targetId));
+      onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== targetId));
       if (normalizeId(activeTabId) === targetId) {
         setActiveTabId(null);
         setIsClosingTab(false);
@@ -105,8 +134,8 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
   };
 
   const removeItem = (index: number) => {
-    if (!activeTabId) return;
-    onUpdateTabs(prev => prev.map(tab => {
+    if (!activeTabId || activeTabId === 'shortcut-payment') return;
+    onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const newItems = [...(tab.items ?? [])];
         newItems.splice(index, 1);
@@ -117,20 +146,18 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
   };
 
   const addToTab = (product: Product, quantity: number = 1) => {
-    if (!activeTabId) return;
-    onUpdateTabs(prev => prev.map(tab => {
+    if (!activeTabId || activeTabId === 'shortcut-payment') return;
+    onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const items = [...(tab.items ?? [])];
         
         if (editingWeightIndex !== null) {
-          // Updating an existing weighted item
           items[editingWeightIndex] = {
             ...items[editingWeightIndex],
             quantity: quantity,
             totalPrice: quantity * items[editingWeightIndex].unitPrice
           };
         } else {
-          // Standard adding logic
           const existingIndex = items.findIndex(i => i.productId === product.id);
           if (existingIndex > -1 && product.sellType === 'unit') {
             const newQty = items[existingIndex].quantity + quantity;
@@ -159,8 +186,8 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
   };
 
   const updateItemQuantity = (itemIndex: number, delta: number) => {
-    if (!activeTabId) return;
-    onUpdateTabs(prev => prev.map(tab => {
+    if (!activeTabId || activeTabId === 'shortcut-payment') return;
+    onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const newItems = [...(tab.items ?? [])];
         const item = newItems[itemIndex];
@@ -187,37 +214,69 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
   const addPaymentEntry = () => {
     const val = parseFloat(paymentAmountInput.replace(',', '.'));
     if (isNaN(val) || val <= 0) return;
-    setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val }]);
+
+    if ((paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && !customerNameInput.trim()) {
+      alert("Para identificar pagamentos de pendura, o nome do cliente é obrigatório!");
+      return;
+    }
+
+    setCurrentPayments(prev => [...(prev || []), { 
+      method: paymentMethodInput, 
+      amount: val,
+      customerName: customerNameInput.trim() || undefined
+    }]);
+    
     setPaymentAmountInput('');
+    if (!shortcutCheckout) {
+      setCustomerNameInput('');
+    }
   };
 
   const removePaymentEntry = (index: number) => {
-    setCurrentPayments(prev => prev.filter((_, i) => i !== index));
+    setCurrentPayments(prev => (prev || []).filter((_, i) => i !== index));
   };
 
   const finishSale = () => {
-    if (!activeTab || tabItems.length === 0 || remainingBalance > 0.01) return;
+    const isShortcut = activeTabId === 'shortcut-payment';
+    // Se for atalho, permite finalizar com qualquer valor > 0. Caso contrário, exige quitação total.
+    const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
+
+    if (!activeTab || (!isShortcut && tabItems.length === 0) || !canFinish) return;
     
     currentPayments.forEach((p, index) => {
       const sale: Sale = {
         id: `${Date.now()}-${index}`,
         timestamp: Date.now(),
-        items: index === 0 ? tabItems : [],
+        // Para quitação, o item é virtual e representa o valor sendo pago agora.
+        items: isShortcut 
+          ? (index === 0 ? [{ productId: 'quitacao', productName: 'Pagamento de Pendura', quantity: 1, unitPrice: paidSoFar, totalPrice: paidSoFar }] : [])
+          : (index === 0 ? tabItems : []),
         paymentMethod: p.method,
         total: p.amount,
-        tabName: activeTab.name
+        tabName: activeTab.name,
+        customerName: p.customerName || shortcutCheckout?.name
       };
       onCompleteSale(sale);
     });
 
-    onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
+    if (isShortcut) {
+      if (onClearShortcut) onClearShortcut();
+    } else {
+      onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
+    }
+    
     setActiveTabId(null);
     setIsClosingTab(false);
     setCurrentPayments([]);
   };
 
-  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const categories = Array.from(new Set(products.map(p => p.category)));
+  const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const categories = Array.from(new Set(filteredProducts.map(p => p.category)));
+
+  // Filtra métodos de pagamento: Em modo de quitação, não faz sentido "pendurar" novamente a quitação
+  const availablePaymentMethods = Object.values(PaymentMethod).filter(m => 
+    shortcutCheckout ? m !== PaymentMethod.PENDURA : true
+  );
 
   if (!activeTabId) {
     return (
@@ -247,7 +306,7 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {openTabs.map(tab => {
+          {(openTabs || []).map(tab => {
             const itemsCount = (tab.items ?? []).length;
             const tabTotalVal = (tab.items ?? []).reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
             return (
@@ -288,7 +347,7 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
     <div className="flex flex-col lg:flex-row gap-6 relative">
       <div className="flex-1 space-y-6">
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
-          <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); }} className="flex bg-slate-100 dark:bg-slate-800 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+          <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="flex bg-slate-100 dark:bg-slate-800 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           </button>
           <div className="flex-1 flex items-center gap-3">
@@ -299,32 +358,51 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="flex-1 bg-transparent border-none outline-none text-slate-900 dark:text-white font-medium"
+              disabled={!!shortcutCheckout}
             />
           </div>
         </div>
 
-        {categories.map(cat => (
-          <div key={cat} className="space-y-3">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">{cat}</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredProducts.filter(p => p.category === cat).map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)}
-                  className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left group"
-                >
-                  <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-1 truncate group-hover:text-red-500 transition-colors">{p.name}</p>
-                  <p className="text-sm font-black text-red-600">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</p>
-                </button>
-              ))}
-            </div>
+        {shortcutCheckout ? (
+          <div className="bg-orange-50 dark:bg-orange-900/10 border-2 border-orange-200 dark:border-orange-800 rounded-3xl p-12 text-center space-y-6 animate-in zoom-in-95">
+             <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-600 mx-auto mb-4">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Quitação de Dívida</h2>
+             <p className="text-slate-600 dark:text-slate-400 max-w-sm mx-auto font-medium">
+               Você está recebendo o pagamento de <span className="text-red-600 font-black">{shortcutCheckout.name}</span> referente ao saldo de penduras pendentes.
+             </p>
+             <button 
+               onClick={() => { if(onClearShortcut) onClearShortcut(); setActiveTabId(null); }}
+               className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors"
+             >
+               Cancelar Operação
+             </button>
           </div>
-        ))}
+        ) : (
+          categories.map(cat => (
+            <div key={cat} className="space-y-3">
+              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">{cat}</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                {filteredProducts.filter(p => p.category === cat).map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)}
+                    className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left group"
+                  >
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-1 truncate group-hover:text-red-500 transition-colors">{p.name}</p>
+                    <p className="text-sm font-black text-red-600">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] sticky top-24">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
-          <div className="p-5 bg-red-600 text-white">
+          <div className="p-5 bg-red-600 text-white shrink-0">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-black uppercase tracking-tighter truncate leading-tight flex-1 pr-4">{activeTab?.name}</h3>
               <span className="text-[10px] bg-black/20 px-2 py-1 rounded-full font-bold">#{normalizeId(activeTabId).slice(-4)}</span>
@@ -335,7 +413,7 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
               className="w-full py-2 bg-black/20 hover:bg-black/40 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              Abandonar Mesa
+              {shortcutCheckout ? 'Cancelar Pagamento' : 'Abandonar Mesa'}
             </button>
           </div>
 
@@ -349,16 +427,13 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
                     <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2 shadow-sm transition-all hover:bg-white dark:hover:bg-slate-800/40">
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          {/* CONTROLES À ESQUERDA DA QUANTIDADE */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             {isUnit ? (
                               <div className="flex flex-col bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 shadow-sm">
                                 <button onClick={() => updateItemQuantity(idx, 1)} className="p-1 text-slate-400 hover:text-emerald-500 transition-colors">
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
                                 </button>
-                                <button onClick={() => updateItemQuantity(idx, -1)} className="p-1 text-slate-400 hover:text-red-500 border-t border-slate-100 dark:border-slate-800 transition-colors">
-                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg>
-                                </button>
+                                <button onClick={() => updateItemQuantity(idx, -1)} className="p-1 text-slate-400 hover:text-red-500 border-t border-slate-100 dark:border-slate-800 transition-colors"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M20 12H4" /></svg></button>
                               </div>
                             ) : (
                               <button 
@@ -392,7 +467,7 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
                   </div>
                 )}
               </div>
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
                   <span className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(tabTotal)}</span>
@@ -403,42 +478,73 @@ const POS: React.FC<POSProps> = ({ products = [], openTabs = [], onUpdateTabs, o
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col p-5 space-y-6 animate-in slide-in-from-right-4">
-               <button onClick={() => setIsClosingTab(false)} className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase group">
+            <div className="flex-1 flex flex-col p-5 space-y-4 animate-in slide-in-from-right-4 overflow-hidden h-full">
+               <button onClick={() => { setIsClosingTab(false); setPaymentMethodInput(PaymentMethod.CASH); if (!shortcutCheckout) setCustomerNameInput(''); if (shortcutCheckout && onClearShortcut) onClearShortcut(); }} className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase group shrink-0">
                  <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Voltar
                </button>
-               <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Faltando</p>
+               
+               <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shrink-0">
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{shortcutCheckout ? 'Dívida Pendente' : 'Faltando'}</p>
                  <p className="text-3xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
                </div>
+
                {remainingBalance > 0.01 && (
-                 <div className="space-y-4">
+                 <div className="space-y-3 shrink-0">
                     <div className="grid grid-cols-2 gap-2">
-                       {Object.values(PaymentMethod).map(m => (
-                         <button key={m} onClick={() => setPaymentMethodInput(m)} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${paymentMethodInput === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>{m}</button>
+                       {availablePaymentMethods.map(m => (
+                         <button key={m} onClick={() => { setPaymentMethodInput(m); }} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${paymentMethodInput === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>{m}</button>
                        ))}
                     </div>
+                    
+                    {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
+                       <div className="animate-in fade-in slide-in-from-top-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Nome do Cliente (Obrigatório)</label>
+                          <input 
+                            type="text" 
+                            value={customerNameInput} 
+                            onChange={e => setCustomerNameInput(e.target.value)} 
+                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold border-2 border-orange-500/30 focus:border-orange-500 outline-none transition-colors" 
+                            placeholder="Quem está pagando?" 
+                            readOnly={!!shortcutCheckout}
+                          />
+                       </div>
+                    )}
+
                     <div className="flex gap-2">
                        <input 
                          type="number" 
                          value={paymentAmountInput} 
                          onChange={e => setPaymentAmountInput(e.target.value)} 
-                         className="no-spinner flex-1 px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white font-black border-2 border-slate-200 dark:border-slate-800 focus:border-red-500 outline-none transition-colors" 
+                         className="no-spinner flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white font-black border-2 border-slate-200 dark:border-slate-800 focus:border-red-500 outline-none transition-colors" 
                          placeholder="0.00" 
                        />
                        <button onClick={addPaymentEntry} className="bg-slate-800 text-white px-5 rounded-xl font-black text-xs hover:bg-black transition-colors active:scale-95">+</button>
                     </div>
                  </div>
                )}
-               <div className="flex-1 overflow-y-auto space-y-2 max-h-48 scrollbar-hide">
-                 {currentPayments.map((p, i) => (
-                   <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                     <div><p className="text-[10px] font-black uppercase text-slate-400">{p.method}</p><p className="font-black text-slate-800 dark:text-white">{formatCurrency(p.amount)}</p></div>
-                     <button onClick={() => removePaymentEntry(i)} className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
+
+               <div className="flex-1 min-h-0 overflow-y-auto space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                 {(currentPayments || []).map((p, i) => (
+                   <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all animate-in slide-in-from-bottom-2">
+                     <div>
+                       <p className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                         {p.method} {p.customerName && <span className="text-orange-500">• {p.customerName}</span>}
+                       </p>
+                       <p className="font-black text-slate-800 dark:text-white">{formatCurrency(p.amount)}</p>
+                     </div>
+                     <button onClick={() => removePaymentEntry(i)} className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors">
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                     </button>
                    </div>
                  ))}
+                 {(currentPayments || []).length === 0 && (
+                   <div className="text-center py-6 text-slate-300 italic text-[10px] uppercase font-bold tracking-widest">Aguardando pagamentos...</div>
+                 )}
                </div>
-               <button onClick={finishSale} disabled={remainingBalance > 0.01} className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all ${remainingBalance <= 0.01 ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.02]' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>FINALIZAR ({formatCurrency(paidSoFar)})</button>
+
+               <div className="pt-2 shrink-0">
+                  <button onClick={finishSale} disabled={shortcutCheckout ? paidSoFar <= 0 : remainingBalance > 0.01} className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all ${((shortcutCheckout && paidSoFar > 0) || remainingBalance <= 0.01) ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.02]' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>FINALIZAR ({formatCurrency(paidSoFar)})</button>
+               </div>
             </div>
           )}
         </div>

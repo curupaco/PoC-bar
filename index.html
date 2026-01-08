@@ -13,13 +13,16 @@
             extend: {
               fontFamily: {
                 sans: ['Inter', 'sans-serif'],
+                barrio: ['Barrio', 'system-ui', 'cursive'],
                 retro: ['"Press Start 2P"', 'cursive'],
               },
             }
           }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Press+Start+2P&family=Barrio&display=swap" rel="stylesheet" crossorigin="anonymous">
     <style>
         :root {
             --sb-track: #f1f5f9;
@@ -58,7 +61,6 @@
             border: 3px solid var(--sb-track) !important;
         }
 
-        /* Remove arrows from number inputs */
         input.no-spinner::-webkit-outer-spin-button,
         input.no-spinner::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -90,7 +92,9 @@
     "react": "https://esm.sh/react@^19.2.3",
     "recharts": "https://esm.sh/recharts@^3.6.0",
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "crypto-js": "https://esm.sh/crypto-js@^4.2.0",
+    "html-to-image": "https://esm.sh/html-to-image@^1.11.11"
   }
 }
 </script>

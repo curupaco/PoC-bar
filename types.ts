@@ -39,6 +39,7 @@ export interface Sale {
   paymentMethod: PaymentMethod;
   total: number;
   tabName?: string;
+  customerName?: string;
 }
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings';
