@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Sale, PaymentMethod } from '../types';
+import { Sale, PaymentMethod, formatCurrency } from '../types';
 
 interface ReportsProps {
   sales: Sale[];
@@ -58,15 +58,15 @@ const Reports: React.FC<ReportsProps> = ({ sales = [] }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm transition-colors">
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Faturamento Hoje</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">R$ {aggregations.daily.toFixed(2)}</p>
+          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.daily)}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-black dark:border-slate-100 shadow-sm transition-colors">
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Esta Semana</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">R$ {aggregations.weekly.toFixed(2)}</p>
+          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.weekly)}</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm transition-colors">
           <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Este Mês</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">R$ {aggregations.monthly.toFixed(2)}</p>
+          <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.monthly)}</p>
         </div>
       </div>
 
@@ -123,7 +123,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [] }) => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{typedData.count} vendas</td>
-                    <td className="px-6 py-4 text-right text-slate-900 dark:text-slate-100">R$ {typedData.total.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-right text-slate-900 dark:text-slate-100">{formatCurrency(typedData.total)}</td>
                   </tr>
                 );
               })}
@@ -131,7 +131,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [] }) => {
                 <td className="px-6 py-6">FATURAMENTO TOTAL</td>
                 <td className="px-6 py-6">{filteredSales.length} total</td>
                 <td className="px-6 py-6 text-right text-2xl text-red-500">
-                  R$ {reportData.grandTotal.toFixed(2)}
+                  {formatCurrency(reportData.grandTotal)}
                 </td>
               </tr>
             </tbody>

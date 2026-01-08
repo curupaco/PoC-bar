@@ -51,6 +51,32 @@ const Settings: React.FC<SettingsProps> = ({
     } finally { setIsSyncing(false); }
   };
 
+  // FUNÇÃO PARA REINICIAR O SISTEMA DE COMANDAS
+  const hardResetTabs = async () => {
+    if (!window.confirm("ATENÇÃO: Isso irá APAGAR TODAS as comandas abertas do navegador e do Firebase agora mesmo. Continuar?")) return;
+    
+    setIsSyncing(true);
+    try {
+      // 1. Limpa o LocalStorage imediatamente
+      localStorage.removeItem('bar_open_tabs');
+      
+      // 2. Envia para o Firebase uma lista vazia
+      const fullData = { products, sales, openTabs: [], config: { fbUrl, ghToken: '', gistId: '' } };
+      await saveToFirebase(fbUrl, fullData);
+      
+      // 3. Atualiza o estado local do App (via onImport)
+      onImport(fullData);
+      
+      onStatusChange('success');
+      setFbMessage({ type: 'success', text: "Comandas reiniciadas com sucesso!" });
+      alert("Sistema de comandas limpo! Redirecionando...");
+      window.location.reload(); // Recarrega para garantir estado limpo
+    } catch (err: any) {
+      onStatusChange('error');
+      setFbMessage({ type: 'error', text: `Falha no Reset: ${err.message}` });
+    } finally { setIsSyncing(false); }
+  };
+
   const exportJSON = () => {
     const fullData = { products, sales, openTabs, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
@@ -78,7 +104,6 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-24">
-      {/* CARD FIREBASE */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border-2 border-orange-500 shadow-xl space-y-6 relative overflow-hidden transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -96,7 +121,7 @@ const Settings: React.FC<SettingsProps> = ({
             type="text" 
             value={fbUrl} 
             onChange={e => { setFbUrl(e.target.value); onStatusChange('idle'); setFbMessage(null); }} 
-            placeholder="URL do Firebase (ex: https://seu-app.firebaseio.com)" 
+            placeholder="URL do Firebase" 
             className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500" 
           />
           <button onClick={testFirebase} className="px-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs hover:bg-slate-200 transition-colors">Testar</button>
@@ -108,25 +133,33 @@ const Settings: React.FC<SettingsProps> = ({
           </div>
         )}
 
-        <button 
-          onClick={handleFullSyncFirebase} 
-          disabled={isSyncing || !fbUrl} 
-          className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50"
-        >
-          {isSyncing ? "Sincronizando..." : "Sincronizar Agora"}
-        </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button 
+            onClick={handleFullSyncFirebase} 
+            disabled={isSyncing || !fbUrl} 
+            className="bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest"
+          >
+            {isSyncing ? "Sincronizando..." : "Sincronizar Backup"}
+          </button>
+          <button 
+            onClick={hardResetTabs} 
+            disabled={isSyncing} 
+            className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest"
+          >
+            Limpar Todas as Comandas
+          </button>
+        </div>
       </div>
 
-      {/* MANUTENÇÃO MANUAL */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-4 transition-colors">
           <div className="flex flex-col md:flex-row gap-4 justify-center">
             <button onClick={exportJSON} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-              Exportar JSON (Backup Local)
+              Exportar JSON
             </button>
             <label className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all cursor-pointer flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-              Importar JSON (Restaurar)
+              Importar JSON
               <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={importJSON} />
             </label>
           </div>

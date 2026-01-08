@@ -3,18 +3,18 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Product, Sale } from "../types";
 
 export const getAIInsights = async (sales: Sale[], products: Product[]) => {
-  // Inicialização dentro da chamada para garantir que o process.env.API_KEY esteja disponível
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const model = "gemini-3-flash-preview";
   
+  const safeSales = sales ?? [];
   const summary = {
-    totalRevenue: sales.reduce((acc, s) => acc + s.total, 0),
-    totalSales: sales.length,
-    topProducts: sales.flatMap(s => s.items).reduce((acc, item) => {
-      acc[item.productName] = (acc[item.productName] || 0) + item.quantity;
+    totalRevenue: safeSales.reduce((acc, s) => acc + (s.total ?? 0), 0),
+    totalSales: safeSales.length,
+    topProducts: safeSales.flatMap(s => s.items ?? []).reduce((acc, item) => {
+      acc[item.productName] = (acc[item.productName] || 0) + (item.quantity ?? 0);
       return acc;
     }, {} as Record<string, number>),
-    paymentMix: sales.reduce((acc, s) => {
+    paymentMix: safeSales.reduce((acc, s) => {
       acc[s.paymentMethod] = (acc[s.paymentMethod] || 0) + 1;
       return acc;
     }, {} as Record<string, number>)
