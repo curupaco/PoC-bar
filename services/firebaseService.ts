@@ -1,11 +1,13 @@
 
-import { Product, Sale, Tab } from "../types";
+import { Product, Sale, Tab, User, Shift } from "../types";
 import { encryptData, decryptData } from "./cryptoService";
 
 export interface AppFullData {
   products: Product[];
   sales: Sale[];
   openTabs: Tab[];
+  users?: User[];
+  shifts?: Shift[];
   config: {
     fbUrl: string;
     ghToken?: string;
@@ -14,19 +16,18 @@ export interface AppFullData {
   updatedAt: string;
 }
 
-export const saveToFirebase = async (url: string, data: Omit<AppFullData, 'updatedAt'>, encryptionKey?: string) => {
-  if (!url) return;
-  const firebasePct = url.endsWith('.json') ? url : `${url.replace(/\/$/, '')}/data.json`;
+const getFirebaseUrl = (url: string) => {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+  return cleanUrl.endsWith('.json') ? cleanUrl : `${cleanUrl.replace(/\/$/, '')}/data.json`;
+};
 
-  const fullData: AppFullData = {
-    ...data,
-    updatedAt: new Date().toISOString()
-  };
+export const saveToFirebase = async (url: string, data: any, encryptionKey?: string) => {
+  const firebasePct = getFirebaseUrl(url);
+  if (!firebasePct) return;
 
-  // Se houver uma chave, criptografamos todo o objeto antes de enviar
-  const payload = encryptionKey 
-    ? { encrypted: encryptData(fullData, encryptionKey) }
-    : fullData;
+  const fullData = { ...data, updatedAt: new Date().toISOString() };
+  const payload = encryptionKey ? { encrypted: encryptData(fullData, encryptionKey) } : fullData;
 
   try {
     const response = await fetch(firebasePct, {
@@ -34,41 +35,29 @@ export const saveToFirebase = async (url: string, data: Omit<AppFullData, 'updat
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Erro ${response.status}: ${errorText || response.statusText}`);
-    }
+    if (!response.ok) throw new Error(`Firebase Error: ${response.status}`);
     return await response.json();
-  } catch (err: any) {
-    throw new Error(err.message || "Erro desconhecido ao salvar no Firebase");
+  } catch (err) {
+    console.warn("Silent failure on background sync:", err);
+    throw err;
   }
 };
 
 export const loadFromFirebase = async (url: string, encryptionKey?: string): Promise<AppFullData | null> => {
-  if (!url) return null;
-  const firebasePct = url.endsWith('.json') ? url : `${url.replace(/\/$/, '')}/data.json`;
+  const firebasePct = getFirebaseUrl(url);
+  if (!firebasePct) return null;
 
   try {
     const response = await fetch(firebasePct);
-    if (!response.ok) {
-       if (response.status === 404) return null;
-       const errorText = await response.text();
-       throw new Error(`Erro ${response.status}: ${errorText || response.statusText}`);
-    }
-    
+    if (!response.ok) return null;
     const rawData = await response.json();
-
-    // Se os dados estiverem criptografados no banco
     if (rawData && rawData.encrypted) {
-      if (!encryptionKey) throw new Error("Dados criptografados. Chave de acesso necessária.");
-      const decrypted = decryptData(rawData.encrypted, encryptionKey);
-      if (!decrypted) throw new Error("Chave de acesso incorreta ou dados corrompidos.");
-      return decrypted;
+      if (!encryptionKey) return null;
+      return decryptData(rawData.encrypted, encryptionKey);
     }
-
     return rawData;
-  } catch (err: any) {
-    throw new Error(err.message || "Erro ao carregar dados do Firebase");
+  } catch (err) {
+    console.error("Firebase load failed:", err);
+    return null;
   }
 };
