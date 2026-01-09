@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Product, Sale, View, Theme, Tab, User, Shift } from './types';
+import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
 import POS from './components/POS';
@@ -15,8 +15,8 @@ import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
-const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
-const FIXED_FB_URL = process.env.FIREBASE_URL || DEFAULT_FB_URL;
+// Prioriza Variável de Ambiente para Deploy (Vercel)
+const FIXED_FB_URL = process.env.FIREBASE_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 
 const App: React.FC = () => {
@@ -48,13 +48,6 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
-  const normalizeCategories = (prods: Product[]): Product[] => {
-    return prods.map(p => ({
-      ...p,
-      category: (p.category === 'CACHETA' || p.category === 'Cacheta') ? 'Cacheta' : p.category
-    }));
-  };
-
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -74,56 +67,36 @@ const App: React.FC = () => {
     const sh = localStorage.getItem('bar_shifts');
     
     try {
-      if (p) {
-        const loadedProducts = JSON.parse(p);
-        setProducts(normalizeCategories(loadedProducts));
-      } else {
+      if (p) setProducts(JSON.parse(p));
+      else {
         setProducts([
-          { id: '1', name: 'Cerveja Lata 350ml', price: 6.00, category: 'Bebidas', sellType: 'unit' },
-          { id: '2', name: 'Batata Frita', price: 45.00, category: 'Porções', sellType: 'weight' },
+          { id: '1', name: 'CERVEJA LATA 350ML', price: 6.00, category: 'BEBIDAS', sellType: 'unit' },
+          { id: '2', name: 'BATATA FRITA', price: 45.00, category: 'PORÇÕES', sellType: 'weight' },
         ]);
       }
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
       
-      let initialUsers: User[] = [];
-      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup', 'help_view'];
-      const standardPerms: any[] = ['dashboard', 'pos', 'history', 'help_view'];
+      // Fix: Correctly explicitly define all permissions using the imported UserPermission type
+      const allAdminPerms: UserPermission[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup', 'help_view'];
       
+      let initialUsers: User[] = [];
       if (u) {
         initialUsers = JSON.parse(u);
-        if (!initialUsers.find(u => u.username === 'admin')) {
-          initialUsers.push({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allAdminPerms });
-        }
-        if (!initialUsers.find(u => u.username === 'ozzy')) {
-          initialUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: standardPerms });
-        }
-        
+        // Garante que admin sempre tenha tudo, inclusive ajuda
         initialUsers = initialUsers.map(user => {
           if (user.username === 'admin') {
-            return { ...user, permissions: Array.from(new Set([...user.permissions, ...allAdminPerms])) };
+            return { ...user, permissions: allAdminPerms };
           }
           return user;
         });
       } else {
-        const admin: User = { 
-          id: 'admin', 
-          username: 'admin', 
-          password: 'admin', 
-          displayName: 'Administrador', 
-          permissions: allAdminPerms 
-        };
-        const ozzy: User = { 
-          id: 'user-ozzy', 
-          username: 'ozzy', 
-          password: 'ozzy', 
-          displayName: 'Ozzy Osbourne', 
-          permissions: standardPerms 
-        };
-        initialUsers = [admin, ozzy];
+        initialUsers = [
+          { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allAdminPerms },
+          { id: 'ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history', 'help_view'] }
+        ];
       }
       setUsers(initialUsers);
-
       if (sh) setShifts(JSON.parse(sh));
     } catch (e) { console.error("Erro ao carregar cache local", e); }
   }, []);
@@ -132,7 +105,9 @@ const App: React.FC = () => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
       setCurrentUser(found);
-      if (!found.permissions.includes(activeView as any) && found.username !== 'admin') {
+      if (found.username === 'admin') {
+         // Admin pode ver tudo, permanece no POS ou dashboard
+      } else if (!found.permissions.includes(activeView as any)) {
         setActiveView(found.permissions.includes('pos') ? 'pos' : (found.permissions[0] as any) || 'pos');
       }
     } else {
@@ -165,15 +140,13 @@ const App: React.FC = () => {
       }, 1500); 
       return () => clearTimeout(timer);
     }
-    
     if (isInitialMount.current) isInitialMount.current = false;
   }, [products, sales, openTabs, users, shifts, fbUrl, theme]);
 
   useEffect(() => {
-    const urlToLoad = fbUrl || FIXED_FB_URL;
-    if (urlToLoad) {
+    if (fbUrl) {
       setDbStatus('loading');
-      loadFromFirebase(urlToLoad, encryptionKey)
+      loadFromFirebase(fbUrl, encryptionKey)
         .then((data: any) => {
           if (data) handleImportAll(data);
           else setDbStatus('idle');
@@ -184,16 +157,10 @@ const App: React.FC = () => {
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
-    if (data.products) setProducts(normalizeCategories(data.products));
+    if (data.products) setProducts(data.products);
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
-    if (data.users) {
-      const importedUsers = data.users as User[];
-      if (!importedUsers.find(u => u.username === 'ozzy')) {
-        importedUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history', 'help_view'] });
-      }
-      setUsers(importedUsers);
-    }
+    if (data.users) setUsers(data.users);
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
@@ -212,7 +179,7 @@ const App: React.FC = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => normalizeCategories([...prev, p]))} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => normalizeCategories(prev.map(p => p.id === u.id ? u : p)))} currentUser={currentUser} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'pos': return (
         <POS 
           products={products} 
@@ -254,22 +221,18 @@ const App: React.FC = () => {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
-            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase">
               {menuItems.find(i => i.id === activeView)?.label}
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            {activeShift ? (
+            {activeShift && (
               <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full text-[10px] font-black uppercase">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                Turno Ativo
-              </div>
-            ) : (
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full text-[10px] font-black uppercase">
-                Fora de Turno
+                Turno Aberto
               </div>
             )}
-            <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm">
+            <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm border border-slate-200 dark:border-slate-700">
               {theme === 'light' ? '🌙' : '🌞'}
             </button>
           </div>

@@ -20,15 +20,15 @@ export type UserPermission =
   | 'shifts_admin' 
   | 'cash_admin' 
   | 'open_shift' 
-  | 'close_shift'
-  | 'delete_sale'
-  | 'delete_product'
-  | 'edit_product'
-  | 'export_report'
-  | 'clear_fiado'
-  | 'full_reset'
-  | 'manage_backup'
-  | 'help_view'; // Permissão para ver a ajuda
+  | 'close_shift' 
+  | 'delete_sale' 
+  | 'delete_product' 
+  | 'edit_product' 
+  | 'export_report' 
+  | 'clear_fiado' 
+  | 'full_reset' 
+  | 'manage_backup' 
+  | 'help_view';
 
 export interface User {
   id: string;
@@ -42,16 +42,12 @@ export interface Shift {
   id: string;
   startTime: number;
   endTime?: number;
-  openedBy: string; // userId
-  closedBy?: string; // userId
+  openedBy: string;
+  closedBy?: string;
   status: 'open' | 'closed';
-  
-  // Caixas Segmentados (Saldos de Abertura)
   cashPrimary: number;   
   cashChange: number;    
   cashSecondary: number; 
-
-  // Valores de fechamento
   finalCashPrimary?: number;
   finalCashChange?: number;
   finalCashSecondary?: number;
@@ -89,8 +85,8 @@ export interface Sale {
   total: number;
   tabName?: string;
   customerName?: string;
-  userId: string; // Quem realizou a venda
-  shiftId: string; // Turno vinculado
+  userId: string;
+  shiftId: string;
 }
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
