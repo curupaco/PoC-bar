@@ -247,6 +247,7 @@ const POS: React.FC<POSProps> = ({
       const sale: Sale = {
         id: `${Date.now()}-${index}`,
         timestamp: Date.now(),
+        openedAt: activeTab.openedAt,
         // Para quitação, o item é virtual e representa o valor sendo pago agora.
         items: isShortcut 
           ? (index === 0 ? [{ productId: 'quitacao', productName: 'Pagamento de Pendura', quantity: 1, unitPrice: paidSoFar, totalPrice: paidSoFar }] : [])
