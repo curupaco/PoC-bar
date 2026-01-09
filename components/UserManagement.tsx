@@ -14,7 +14,7 @@ const ALL_PERMISSIONS: { id: UserPermission, label: string }[] = [
   { id: 'history', label: 'Histórico' },
   { id: 'reports', label: 'Relatórios' },
   { id: 'shifts_admin', label: 'Gestão de Turnos' },
-  { id: 'cash_admin', label: 'Gestão de Caixa (Tesouraria)' },
+  { id: 'cash_admin', label: 'Gestão de Caixa' },
   { id: 'users_admin', label: 'Gestão de Usuários' },
   { id: 'settings', label: 'Ajustes' },
   { id: 'open_shift', label: 'Abrir Turno' },
@@ -24,8 +24,9 @@ const ALL_PERMISSIONS: { id: UserPermission, label: string }[] = [
   { id: 'edit_product', label: 'Editar Produto' },
   { id: 'export_report', label: 'Salvar Relatórios' },
   { id: 'clear_fiado', label: 'Quitar Penduras' },
-  { id: 'full_reset', label: 'Reset Total Sistema' },
+  { id: 'full_reset', label: 'Reset Total' },
   { id: 'manage_backup', label: 'Gerenciar Backup' },
+  { id: 'help_view', label: 'Ver Ajuda/Guia' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers }) => {
@@ -41,7 +42,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
     setUsername('');
     setPassword('');
     setDisplayName('');
-    setSelectedPerms(['dashboard', 'pos']);
+    setSelectedPerms(['dashboard', 'pos', 'help_view']);
     setEditingUser(null);
     setIsAdding(false);
   };

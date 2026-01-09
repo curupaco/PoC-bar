@@ -27,9 +27,11 @@ export const menuItems = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onClose, dbStatus, isOnline, currentUser, onLogout }) => {
-  // Regra de ouro: Administrador vê TUDO sempre. Outros usuários dependem do array de permissões.
+  // AJUDA SEMPRE VISÍVEL: Para garantir que o usuário não se perca, o item 'help' ignora o filtro de permissão.
+  // ADMIN SEMPRE VÊ TUDO: Bypass total de permissões para o username 'admin'.
   const filteredItems = menuItems.filter(item => 
     currentUser?.username === 'admin' || 
+    item.id === 'help' ||
     currentUser?.permissions.includes(item.perm as any)
   );
 
@@ -46,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
           </div>
           <nav className="space-y-1">
             {filteredItems.map((item) => (
-              <button key={item.id} onClick={() => { onViewChange(item.id as View); onClose(); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeView === item.id ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+              <button key={item.id} onClick={() => { onViewChange(item.id as View); onClose(); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${activeView === item.id ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                 <span className={`${activeView === item.id ? 'text-red-600 dark:text-red-400' : 'text-slate-400'}`}>{item.icon}</span>
                 <span className="text-sm uppercase font-black">{item.label}</span>
               </button>
@@ -60,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-black text-slate-800 dark:text-white truncate uppercase">{currentUser?.displayName}</p>
-              <button onClick={onLogout} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest">Sair do Sistema</button>
+              <button onClick={onLogout} className="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors">Sair do Sistema</button>
             </div>
           </div>
         </div>

@@ -15,7 +15,7 @@ import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
-// Prioriza Variável de Ambiente para Deploy (Vercel)
+// IMPORTANTE: Configure a variável FIREBASE_URL no painel da Vercel para o deploy automático funcionar.
 const FIXED_FB_URL = process.env.FIREBASE_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
 const MASTER_KEY = "Tc@00216587";
 
@@ -59,7 +59,6 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Lista mestre de permissões
   const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
     'dashboard', 'pos', 'products', 'history', 'reports', 'settings', 
     'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 
@@ -88,7 +87,6 @@ const App: React.FC = () => {
       let initialUsers: User[] = [];
       if (u) {
         initialUsers = JSON.parse(u);
-        // FORÇA: Sempre garante que o admin tenha TODAS as permissões atuais, corrigindo caches antigos
         initialUsers = initialUsers.map(user => {
           if (user.username === 'admin') {
             return { ...user, permissions: ALL_ADMIN_PERMISSIONS };
@@ -109,7 +107,6 @@ const App: React.FC = () => {
   const handleLogin = (user: string, pass: string) => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
-      // Força permissões do admin também no login
       const userToLogin = found.username === 'admin' 
         ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } 
         : found;
@@ -170,7 +167,6 @@ const App: React.FC = () => {
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.users) {
-      // Ao importar da nuvem, também garante que o admin local tenha todas as permissões
       const importedUsers = (data.users as User[]).map(u => 
         u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u
       );
