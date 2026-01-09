@@ -80,38 +80,53 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20 relative">
-      {/* TELA DE CONFERÊNCIA (MODAL INTERNO) */}
+      {/* TELA DE CONFERÊNCIA DE SISTEMA (SEM COMPONENTES NATIVOS) */}
       {showConferral && activeShift && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
-              <div className="p-8 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-center">
-                 <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Conferência de Fechamento</h2>
-                 <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-1">Validação de Valores do Turno</p>
+        <div className="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-0 lg:p-12 animate-in fade-in zoom-in-95 duration-500">
+           <div className="bg-white dark:bg-slate-900 w-full h-full max-w-4xl lg:rounded-[60px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+              <div className="p-8 lg:p-12 bg-red-600 text-white shrink-0">
+                 <h2 className="text-4xl lg:text-6xl font-black uppercase tracking-tighter italic">Conferência Final</h2>
+                 <p className="text-xs lg:text-sm font-black uppercase tracking-widest mt-2 opacity-80">Validação de Valores para Fechamento de Turno</p>
               </div>
-              <div className="p-10 space-y-6">
-                 <div className="space-y-4 font-mono text-sm">
-                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                       <span className="text-slate-400">FUNDO INICIAL</span>
-                       <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.cashChange)}</span>
+              <div className="flex-1 p-8 lg:p-20 overflow-y-auto space-y-12">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="space-y-6">
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Resumo de Movimentações</h3>
+                       <div className="space-y-4 font-mono text-lg">
+                          <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                             <span className="text-slate-500 uppercase">Fundo Inicial</span>
+                             <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.cashChange)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                             <span className="text-slate-500 uppercase">Vendas Dinheiro</span>
+                             <span className="font-bold text-emerald-500">+{formatCurrency(cashMovements.sales)}</span>
+                          </div>
+                          <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                             <span className="text-slate-500 uppercase">Quitações Recebidas</span>
+                             <span className="font-bold text-blue-500">+{formatCurrency(cashMovements.settlements)}</span>
+                          </div>
+                       </div>
                     </div>
-                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                       <span className="text-slate-400">VENDAS (DINH)</span>
-                       <span className="font-bold text-emerald-500">+{formatCurrency(cashMovements.sales)}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                       <span className="text-slate-400">QUITAÇÕES (DINH)</span>
-                       <span className="font-bold text-blue-500">+{formatCurrency(cashMovements.settlements)}</span>
-                    </div>
-                    <div className="flex justify-between pt-4 text-lg">
-                       <span className="font-black text-slate-800 dark:text-white uppercase">ESPERADO GAVETA</span>
-                       <span className="font-black text-red-600 underline">{formatCurrency(activeShift.cashChange + cashMovements.total)}</span>
+                    
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-10 rounded-[40px] border border-slate-100 dark:border-slate-800 flex flex-col justify-center text-center space-y-4">
+                       <p className="text-[10px] font-black text-red-500 uppercase tracking-widest">Saldo Esperado na Gaveta</p>
+                       <p className="text-6xl font-black text-slate-900 dark:text-white tracking-tighter underline decoration-red-600 decoration-8 underline-offset-8">
+                          {formatCurrency(activeShift.cashChange + cashMovements.total)}
+                       </p>
+                       <p className="text-[10px] text-slate-400 font-bold uppercase mt-4 italic">Conferir antes de confirmar</p>
                     </div>
                  </div>
 
-                 <div className="pt-8 flex flex-col gap-3">
-                    <button onClick={handleConfirmClose} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">EFETIVAR FECHAMENTO</button>
-                    <button onClick={() => setShowConferral(false)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">REVISAR DADOS</button>
+                 <div className="bg-red-50 dark:bg-red-900/10 p-8 rounded-[32px] border border-red-100 dark:border-red-900/20 text-center">
+                    <p className="text-xs font-bold text-red-600 dark:text-red-400 leading-relaxed uppercase">
+                       Ao confirmar, este turno será encerrado permanentemente e os valores acima serão registrados no histórico do banco de dados.
+                    </p>
                  </div>
+              </div>
+
+              <div className="p-8 lg:p-12 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row gap-4 shrink-0">
+                 <button onClick={handleConfirmClose} className="flex-1 bg-red-600 text-white py-6 rounded-3xl font-black uppercase text-sm tracking-[0.2em] shadow-2xl shadow-red-600/30 active:scale-95 transition-all">EFETIVAR FECHAMENTO</button>
+                 <button onClick={() => setShowConferral(false)} className="lg:w-64 bg-white dark:bg-slate-900 text-slate-500 py-6 rounded-3xl font-black uppercase text-sm tracking-widest border border-slate-200 dark:border-slate-800 active:scale-95 transition-all">CANCELAR</button>
               </div>
            </div>
         </div>
@@ -159,7 +174,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
               <div className="pt-4">
                 {canClose ? (
                   <button onClick={() => setShowConferral(true)} className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95 shadow-xl shadow-red-900/40">
-                    Fechar Turno e Gerar Cupom
+                    Ir para Conferência e Fechamento
                   </button>
                 ) : (
                   <div className="w-full bg-slate-800 text-slate-500 py-6 rounded-2xl font-black uppercase text-center text-xs tracking-widest cursor-not-allowed">Acesso Negado</div>
