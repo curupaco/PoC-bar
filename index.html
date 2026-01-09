@@ -27,39 +27,42 @@
     <style>
         :root {
             --sb-track: #f1f5f9;
-            --sb-thumb: #94a3b8;
-            --sb-size: 12px;
+            --sb-thumb: #cbd5e1;
+            --sb-size: 10px;
+            scrollbar-gutter: stable;
         }
 
         .dark {
             --sb-track: #0f172a;
-            --sb-thumb: #475569;
+            --sb-thumb: #334155;
         }
 
         html, body {
-            scrollbar-width: auto;
+            scrollbar-width: thin;
             scrollbar-color: var(--sb-thumb) var(--sb-track);
+            overflow-x: hidden;
         }
 
         body { 
             font-family: 'Inter', sans-serif; 
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            overflow-y: scroll;
         }
         
         ::-webkit-scrollbar { 
-            width: var(--sb-size) !important; 
-            height: var(--sb-size) !important;
-            display: block !important;
+            width: var(--sb-size); 
+            height: var(--sb-size);
         }
         ::-webkit-scrollbar-track { 
-            background: var(--sb-track) !important; 
+            background: var(--sb-track); 
         }
         ::-webkit-scrollbar-thumb { 
-            background: var(--sb-thumb) !important; 
-            border-radius: 10px !important;
-            border: 3px solid var(--sb-track) !important;
+            background: var(--sb-thumb); 
+            border-radius: 10px;
+            border: 2px solid var(--sb-track);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         /* Efeito Serrilhado do Cupom */

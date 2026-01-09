@@ -65,10 +65,19 @@ const App: React.FC = () => {
       
       let initialUsers: User[] = [];
       const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift'];
+      const standardPerms: any[] = ['dashboard', 'pos', 'history'];
       
       if (u) {
         initialUsers = JSON.parse(u);
-        // Migração Vital: Garante que o admin tenha ABSOLUTAMENTE TODAS as permissões do sistema
+        // Garante que o admin e o ozzy existam no carregamento
+        if (!initialUsers.find(u => u.username === 'admin')) {
+          initialUsers.push({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allAdminPerms });
+        }
+        if (!initialUsers.find(u => u.username === 'ozzy')) {
+          initialUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: standardPerms });
+        }
+        
+        // Migração Admin
         initialUsers = initialUsers.map(user => {
           if (user.username === 'admin') {
             return { ...user, permissions: Array.from(new Set([...user.permissions, ...allAdminPerms])) };
@@ -83,7 +92,14 @@ const App: React.FC = () => {
           displayName: 'Administrador', 
           permissions: allAdminPerms 
         };
-        initialUsers = [admin];
+        const ozzy: User = { 
+          id: 'user-ozzy', 
+          username: 'ozzy', 
+          password: 'ozzy', 
+          displayName: 'Ozzy Osbourne', 
+          permissions: standardPerms 
+        };
+        initialUsers = [admin, ozzy];
       }
       setUsers(initialUsers);
 
@@ -139,7 +155,6 @@ const App: React.FC = () => {
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
       }, 1500); 
-      // Fix: Use clearTimeout instead of setTimeout in useEffect cleanup to prevent memory leaks and redundant operations
       return () => clearTimeout(timer);
     }
     
@@ -164,7 +179,14 @@ const App: React.FC = () => {
     if (data.products) setProducts(data.products);
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
-    if (data.users) setUsers(data.users);
+    if (data.users) {
+      // Mescla ozzy se ele não vier no import (segurança)
+      const importedUsers = data.users as User[];
+      if (!importedUsers.find(u => u.username === 'ozzy')) {
+        importedUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history'] });
+      }
+      setUsers(importedUsers);
+    }
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
@@ -243,7 +265,7 @@ const App: React.FC = () => {
             </button>
           </div>
         </header>
-        <div className="p-4 lg:p-8 ml-0 md:ml-64">{renderContent()}</div>
+        <div className="p-4 lg:p-8 ml-0 md:ml-64 h-full overflow-y-auto">{renderContent()}</div>
       </main>
     </div>
   );
