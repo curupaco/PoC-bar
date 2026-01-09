@@ -65,34 +65,32 @@
             background: #94a3b8;
         }
 
-        /* Efeito Serrilhado do Cupom */
-        .serrated-top {
-            position: relative;
-        }
+        /* Efeito Serrilhado do Cupom - Branco */
+        .serrated-top { position: relative; }
         .serrated-top:before {
-            content: "";
-            position: absolute;
-            top: -10px;
-            left: 0;
-            width: 100%;
-            height: 10px;
+            content: ""; position: absolute; top: -10px; left: 0; width: 100%; height: 10px;
             background: linear-gradient(-135deg, transparent 5px, white 0), linear-gradient(135deg, transparent 5px, white 0);
-            background-size: 10px 10px;
-            background-repeat: repeat-x;
+            background-size: 10px 10px; background-repeat: repeat-x;
         }
-        .serrated-bottom {
-            position: relative;
-        }
+        .serrated-bottom { position: relative; }
         .serrated-bottom:after {
-            content: "";
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 10px;
+            content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px;
             background: linear-gradient(-45deg, transparent 5px, white 0), linear-gradient(45deg, transparent 5px, white 0);
-            background-size: 10px 10px;
-            background-repeat: repeat-x;
+            background-size: 10px 10px; background-repeat: repeat-x;
+        }
+
+        /* Efeito Serrilhado do Cupom - Preto */
+        .serrated-top-black { position: relative; }
+        .serrated-top-black:before {
+            content: ""; position: absolute; top: -10px; left: 0; width: 100%; height: 10px;
+            background: linear-gradient(-135deg, transparent 5px, black 0), linear-gradient(135deg, transparent 5px, black 0);
+            background-size: 10px 10px; background-repeat: repeat-x;
+        }
+        .serrated-bottom-black { position: relative; }
+        .serrated-bottom-black:after {
+            content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px;
+            background: linear-gradient(-45deg, transparent 5px, black 0), linear-gradient(45deg, transparent 5px, black 0);
+            background-size: 10px 10px; background-repeat: repeat-x;
         }
     </style>
 <script type="importmap">

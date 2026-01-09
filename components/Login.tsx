@@ -44,7 +44,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Ex: admin"
               className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black border-2 border-transparent focus:border-red-500 outline-none transition-all"
             />
           </div>
@@ -55,7 +54,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
               className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white font-black border-2 border-transparent focus:border-red-500 outline-none transition-all"
             />
           </div>

@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
-import { Product, SellType, formatCurrency } from '../types';
+import { Product, SellType, formatCurrency, User } from '../types';
 
 interface ProductListProps {
   products: Product[];
   onAdd: (product: Product) => void;
   onDelete: (id: string) => void;
   onUpdate: (product: Product) => void;
+  currentUser: User;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, onUpdate }) => {
+const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, onUpdate, currentUser }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -17,13 +18,20 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
   const [category, setCategory] = useState('Geral');
   const [sellType, setSellType] = useState<SellType>('unit');
 
-  // Ajustada a categoria 'Cacheta' para manter o padrão de capitalização
+  const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
+  const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
+
   const categories = Array.from(new Set(['Geral', 'Bebidas', 'Cervejas', 'Porções', 'Refeições', 'Doses', 'Cacheta', ...products.map(p => p.category)]));
 
   const handleSave = () => {
     if (!name || !price) return;
     const priceNum = parseFloat(price);
     if (isNaN(priceNum)) return;
+
+    if (editingId && !canEdit) {
+        alert("Você não tem permissão para editar produtos.");
+        return;
+    }
 
     const productData: Product = {
       id: editingId || Date.now().toString(),
@@ -44,6 +52,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
   };
 
   const handleDelete = (id: string, productName: string) => {
+    if (!canDelete) {
+        alert("Você não tem permissão para excluir produtos.");
+        return;
+    }
     if (window.confirm(`Tem certeza que deseja remover "${productName}" do cardápio?`)) {
       onDelete(id);
     }
@@ -57,6 +69,10 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
   };
 
   const startEdit = (p: Product) => {
+    if (!canEdit) {
+        alert("Você não tem permissão para editar produtos.");
+        return;
+    }
     setEditingId(p.id);
     setName(p.name);
     setPrice(p.price.toString());
@@ -70,7 +86,7 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
       <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Gerenciar Cardápio</h2>
-          {!isAdding && (
+          {!isAdding && canEdit && (
             <button onClick={() => setIsAdding(true)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg">
               + Novo Produto
             </button>
@@ -88,7 +104,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
                   className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none" 
-                  placeholder="Ex: Cerveja 600ml" 
                 />
               </div>
               <div className="space-y-1">
@@ -115,7 +130,6 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   value={price} 
                   onChange={(e) => setPrice(e.target.value)} 
                   className="w-full px-4 py-2 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-red-500 outline-none" 
-                  placeholder="0,00" 
                 />
               </div>
               <div className="lg:col-span-2 flex gap-3 pt-5">
@@ -154,8 +168,8 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                   </td>
                   <td className="px-6 py-4 font-black text-red-600 dark:text-red-400">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</td>
                   <td className="px-6 py-4 text-right space-x-4">
-                    <button onClick={() => startEdit(p)} className="text-blue-500 font-bold hover:underline">Editar</button>
-                    <button onClick={() => handleDelete(p.id, p.name)} className="text-red-500 font-bold hover:underline">Excluir</button>
+                    <button onClick={() => startEdit(p)} disabled={!canEdit} className="text-blue-500 font-bold hover:underline disabled:opacity-20">Editar</button>
+                    <button onClick={() => handleDelete(p.id, p.name)} disabled={!canDelete} className="text-red-500 font-bold hover:underline disabled:opacity-20">Excluir</button>
                   </td>
                 </tr>
               ))}

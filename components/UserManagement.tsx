@@ -19,6 +19,13 @@ const ALL_PERMISSIONS: { id: UserPermission, label: string }[] = [
   { id: 'settings', label: 'Ajustes' },
   { id: 'open_shift', label: 'Abrir Turno' },
   { id: 'close_shift', label: 'Fechar Turno' },
+  { id: 'delete_sale', label: 'Excluir Venda' },
+  { id: 'delete_product', label: 'Excluir Produto' },
+  { id: 'edit_product', label: 'Editar Produto' },
+  { id: 'export_report', label: 'Salvar Relatórios' },
+  { id: 'clear_fiado', label: 'Quitar Penduras' },
+  { id: 'full_reset', label: 'Reset Total Sistema' },
+  { id: 'manage_backup', label: 'Gerenciar Backup' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers }) => {
@@ -79,26 +86,26 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Usuário de Login</label>
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" placeholder="ex: joao" />
+              <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" placeholder="••••••••" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Exibição</label>
-              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" placeholder="ex: João Silva" />
+              <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
             </div>
           </div>
 
           <div className="mb-8">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Acessos Permitidos</p>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Acessos Permitidos (Granular)</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {ALL_PERMISSIONS.map(p => (
                 <button 
                   key={p.id} 
                   onClick={() => togglePerm(p.id)}
-                  className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase border transition-all ${selectedPerms.includes(p.id) ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-100 dark:border-slate-700'}`}
+                  className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase border transition-all ${selectedPerms.includes(p.id) ? 'bg-red-600 border-red-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-500 border-slate-100 dark:border-slate-700'}`}
                 >
                   {p.label}
                 </button>
@@ -113,7 +120,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-12">
         {users.map(user => (
           <div key={user.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group">
             <div className="flex items-center gap-4">
@@ -124,7 +131,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                   <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm">{user.displayName}</h4>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username}</p>
                   <p className="text-[9px] text-red-500 font-bold uppercase mt-1">
-                    {user.permissions.length} acessos liberados
+                    {user.permissions.length} privilégios ativos
                   </p>
                </div>
             </div>

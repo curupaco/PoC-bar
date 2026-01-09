@@ -76,7 +76,7 @@ const App: React.FC = () => {
       if (t) setOpenTabs(JSON.parse(t));
       
       let initialUsers: User[] = [];
-      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift'];
+      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup'];
       const standardPerms: any[] = ['dashboard', 'pos', 'history'];
       
       if (u) {
@@ -214,7 +214,7 @@ const App: React.FC = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'pos': return (
         <POS 
           products={products} 
@@ -227,12 +227,12 @@ const App: React.FC = () => {
           onViewChange={setActiveView}
         />
       );
-      case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(prev => prev.filter(s => s.id !== id))} users={users} />;
-      case 'reports': return <Reports sales={sales} products={products} users={users} shifts={shifts} onQuitarPendura={handleQuitarPendura} />;
+      case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(prev => prev.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
+      case 'reports': return <Reports sales={sales} products={products} users={users} shifts={shifts} onQuitarPendura={handleQuitarPendura} currentUser={currentUser} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
       case 'shifts': return <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} />;
       case 'cash': return <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} />;
-      case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} />;
+      case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} currentUser={currentUser} />;
       default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} onViewChange={setActiveView} />;
     }
   };
