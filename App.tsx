@@ -193,9 +193,24 @@ const App: React.FC = () => {
             </button>
             <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tighter leading-none">{menuItems.find(i => i.id === activeView)?.label}</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`} title={dbStatus === 'success' ? 'Nuvem Conectada' : 'Erro de Conexão'}></div>
-            <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700">{theme === 'light' ? '🌙' : '🌞'}</button>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className={`w-2.5 h-2.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`} title={dbStatus === 'success' ? 'Nuvem Conectada' : 'Erro de Conexão'}></div>
+              <span className="hidden sm:inline text-[9px] font-black uppercase text-slate-400 tracking-widest">{dbStatus === 'success' ? 'ONLINE' : 'OFFLINE'}</span>
+            </div>
+            
+            <button 
+              onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} 
+              className="relative w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 shadow-md border border-slate-200 dark:border-slate-700 transition-all active:scale-90"
+              title="Trocar Tema"
+            >
+              <div className="absolute transition-all duration-500 rotate-0 dark:rotate-[360deg] scale-100 dark:scale-0 opacity-100 dark:opacity-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+              </div>
+              <div className="absolute transition-all duration-500 rotate-[-360deg] dark:rotate-0 scale-0 dark:scale-100 opacity-0 dark:opacity-100">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              </div>
+            </button>
           </div>
         </header>
         <div className="p-4 lg:p-8 ml-0 md:ml-64 h-full overflow-y-auto">{renderContent()}</div>

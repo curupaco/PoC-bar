@@ -75,6 +75,8 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
     );
   }
 
+  const numericValue = parseFloat(transferValue) || 0;
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 relative">
       {toast && (
@@ -128,9 +130,25 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                </div>
             </div>
 
-            <div className="space-y-2">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 text-center block">Valor da Transferência (R$)</label>
-               <input type="number" inputMode="decimal" value={transferValue} onChange={e => setTransferValue(e.target.value)} className="w-full bg-white dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-3xl text-center outline-none focus:ring-2 focus:ring-blue-500" placeholder="0.00" />
+            <div className="space-y-2 relative">
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 text-center block">Valor da Transferência</label>
+               <div className="relative flex items-center">
+                  <span className="absolute left-6 text-2xl font-black text-slate-400">R$</span>
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    inputMode="decimal" 
+                    value={transferValue} 
+                    onChange={e => setTransferValue(e.target.value)} 
+                    className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-6 rounded-3xl border-2 border-transparent focus:border-blue-500 font-black text-3xl outline-none transition-all" 
+                    placeholder="0.00" 
+                  />
+               </div>
+               {numericValue > 0 && (
+                 <p className="text-center font-black text-blue-500 text-xs animate-in fade-in slide-in-from-top-2 uppercase tracking-widest mt-2">
+                   Confirmando: {formatCurrency(numericValue)}
+                 </p>
+               )}
             </div>
 
             <button onClick={handleTransfer} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-95">
