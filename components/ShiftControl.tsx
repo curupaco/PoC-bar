@@ -11,6 +11,7 @@ interface ShiftControlProps {
 
 const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts, currentUser, sales = [] }) => {
   const activeShift = shifts.find(s => s.status === 'open');
+  const [showConferral, setShowConferral] = useState(false);
   
   const [valPrimary, setValPrimary] = useState('0');
   const [valChange, setValChange] = useState('0');
@@ -26,7 +27,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const totalSoldInShift = shiftSales.reduce((acc, s) => acc + (s.total || 0), 0);
   
-  // Detalhamento de Entradas em Dinheiro
   const cashMovements = useMemo(() => {
     const cashSalesOnly = shiftSales
       .filter(s => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
@@ -44,10 +44,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   }, [shiftSales]);
 
   const handleOpenShift = () => {
-    if (!canOpen) {
-      alert("Você não tem permissão para abrir o turno.");
-      return;
-    }
+    if (!canOpen) return;
     const newShift: Shift = {
       id: `shift-${Date.now()}`,
       startTime: Date.now(),
@@ -63,41 +60,63 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     setValSecondary('0');
   };
 
-  const handleCloseShift = () => {
-    if (!canClose) {
-      alert("Você não tem permissão para fechar o turno.");
-      return;
-    }
-    if (!activeShift) return;
+  const handleConfirmClose = () => {
+    if (!canClose || !activeShift) return;
 
-    const baseChange = activeShift.cashChange || 0;
-    const estimatedChange = baseChange + cashMovements.total;
-
-    const confirmMsg = `ENCERRAMENTO DE TURNO\n\n` +
-                       `Fundo de Troco Inicial: ${formatCurrency(baseChange)}\n` +
-                       `(+) Vendas em Dinheiro: ${formatCurrency(cashMovements.sales)}\n` +
-                       `(+) Quitações em Dinheiro: ${formatCurrency(cashMovements.settlements)}\n` +
-                       `(=) TOTAL ESPERADO NA GAVETA: ${formatCurrency(estimatedChange)}\n\n` +
-                       `Confirmar fechamento?`;
-
-    if (window.confirm(confirmMsg)) {
-      const updatedShifts = shifts.map(s => s.id === activeShift.id ? { 
-        ...s, 
-        status: 'closed' as const, 
-        endTime: Date.now(), 
-        closedBy: currentUser.username,
-        finalCashPrimary: s.cashPrimary,
-        finalCashChange: estimatedChange,
-        finalCashSecondary: s.cashSecondary
-      } : s);
-      
-      onUpdateShifts(updatedShifts);
-      alert("Turno encerrado com sucesso!");
-    }
+    const estimatedChange = (activeShift.cashChange || 0) + cashMovements.total;
+    const updatedShifts = shifts.map(s => s.id === activeShift.id ? { 
+      ...s, 
+      status: 'closed' as const, 
+      endTime: Date.now(), 
+      closedBy: currentUser.username,
+      finalCashPrimary: s.cashPrimary,
+      finalCashChange: estimatedChange,
+      finalCashSecondary: s.cashSecondary
+    } : s);
+    
+    onUpdateShifts(updatedShifts);
+    setShowConferral(false);
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 pb-20">
+    <div className="max-w-6xl mx-auto space-y-8 pb-20 relative">
+      {/* TELA DE CONFERÊNCIA (MODAL INTERNO) */}
+      {showConferral && activeShift && (
+        <div className="fixed inset-0 z-[100] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
+           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-300">
+              <div className="p-8 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-center">
+                 <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Conferência de Fechamento</h2>
+                 <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-1">Validação de Valores do Turno</p>
+              </div>
+              <div className="p-10 space-y-6">
+                 <div className="space-y-4 font-mono text-sm">
+                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                       <span className="text-slate-400">FUNDO INICIAL</span>
+                       <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.cashChange)}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                       <span className="text-slate-400">VENDAS (DINH)</span>
+                       <span className="font-bold text-emerald-500">+{formatCurrency(cashMovements.sales)}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                       <span className="text-slate-400">QUITAÇÕES (DINH)</span>
+                       <span className="font-bold text-blue-500">+{formatCurrency(cashMovements.settlements)}</span>
+                    </div>
+                    <div className="flex justify-between pt-4 text-lg">
+                       <span className="font-black text-slate-800 dark:text-white uppercase">ESPERADO GAVETA</span>
+                       <span className="font-black text-red-600 underline">{formatCurrency(activeShift.cashChange + cashMovements.total)}</span>
+                    </div>
+                 </div>
+
+                 <div className="pt-8 flex flex-col gap-3">
+                    <button onClick={handleConfirmClose} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">EFETIVAR FECHAMENTO</button>
+                    <button onClick={() => setShowConferral(false)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">REVISAR DADOS</button>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
+
       {activeShift ? (
         <div className="bg-slate-900 text-white p-10 rounded-[40px] shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-300">
            <div className="absolute top-0 right-0 p-12 opacity-10 pointer-events-none">
@@ -139,7 +158,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
               <div className="pt-4">
                 {canClose ? (
-                  <button onClick={handleCloseShift} className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95 shadow-xl shadow-red-900/40">
+                  <button onClick={() => setShowConferral(true)} className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all active:scale-95 shadow-xl shadow-red-900/40">
                     Fechar Turno e Gerar Cupom
                   </button>
                 ) : (
