@@ -179,20 +179,13 @@ const Settings: React.FC<SettingsProps> = ({
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <button 
             onClick={handleFullSyncFirebase} 
             disabled={isSyncing || !fbUrl} 
-            className="bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest"
+            className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest"
           >
-            {isSyncing ? "Sincronizando..." : "Forçar Sincronização"}
-          </button>
-          <button 
-            onClick={hardResetTabs} 
-            disabled={isSyncing} 
-            className="bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black uppercase transition-all text-xs tracking-widest"
-          >
-            Zerar Apenas Mesas
+            {isSyncing ? "Sincronizando..." : "Forçar Sincronização Cloud"}
           </button>
         </div>
       </div>
@@ -216,16 +209,21 @@ const Settings: React.FC<SettingsProps> = ({
           >
             Zerar Cardápio Produtos
           </button>
+          <button 
+            onClick={hardResetTabs} 
+            disabled={isSyncing} 
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+          >
+            Zerar Apenas Mesas
+          </button>
+          <button 
+            onClick={fullSystemReset} 
+            disabled={isSyncing} 
+            className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2"
+          >
+            Hard Reset Total
+          </button>
         </div>
-
-        <button 
-          onClick={fullSystemReset} 
-          disabled={isSyncing} 
-          className="w-full bg-red-600 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-          Limpar Todo o Sistema (Hard Reset)
-        </button>
       </div>
 
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-4 transition-colors">

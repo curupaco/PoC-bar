@@ -35,6 +35,7 @@ export interface Tab {
 export interface Sale {
   id: string;
   timestamp: number;
+  openedAt?: number;
   items: SaleItem[];
   paymentMethod: PaymentMethod;
   total: number;

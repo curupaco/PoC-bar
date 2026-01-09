@@ -20,6 +20,20 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
   const totalOrders = safeSales.length;
   const avgOrder = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
+  // Cálculo de Tempo Médio de Permanência
+  const salesWithTime = safeSales.filter(s => s.openedAt && s.timestamp);
+  const totalStayTimeMs = salesWithTime.reduce((acc, s) => acc + (s.timestamp - (s.openedAt || 0)), 0);
+  const avgStayTimeMs = salesWithTime.length > 0 ? totalStayTimeMs / salesWithTime.length : 0;
+  
+  const formatStayTime = (ms: number) => {
+    if (ms <= 0) return "--";
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
   const productCounts = safeSales.flatMap(s => s.items ?? []).reduce((acc: Record<string, number>, item) => {
     acc[item.productName] = (acc[item.productName] || 0) + (item.quantity ?? 0);
     return acc;
@@ -37,18 +51,23 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Faturamento</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(totalRevenue)}</p>
           <p className="text-[10px] text-emerald-500 font-bold mt-2">↑ Em tempo real</p>
         </div>
         <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-          <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Pedidos</p>
+          <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Mesas</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{totalOrders}</p>
           <p className="text-[10px] text-slate-400 font-bold mt-2">Registros totais</p>
         </div>
-        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sm:col-span-2 lg:col-span-1 transition-colors">
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
+          <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Tempo Médio</p>
+          <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatStayTime(avgStayTimeMs)}</p>
+          <p className="text-[10px] text-blue-400 font-bold mt-2">Permanência</p>
+        </div>
+        <div className="bg-white dark:bg-slate-900 p-5 lg:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <p className="text-[10px] lg:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Ticket Médio</p>
           <p className="text-2xl lg:text-3xl font-black text-slate-900 dark:text-white">{formatCurrency(avgOrder)}</p>
           <p className="text-[10px] text-indigo-400 font-bold mt-2">Por cliente</p>
@@ -105,7 +124,6 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
                   tickLine={false}
                   tick={{ fill: isDark ? '#94a3b8' : '#64748b', fontSize: 9 }}
                 />
-                {/* Fixed TypeScript error by changing parameter type from number to any to accommodate unknown values from Tooltip */}
                 <Tooltip formatter={(value: any) => [formatCurrency(Number(value)), 'Total']} />
                 <Area type="monotone" dataKey="total" stroke="#ef4444" fillOpacity={1} fill="url(#colorTotal)" strokeWidth={2} />
               </AreaChart>
