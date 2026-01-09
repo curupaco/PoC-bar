@@ -478,72 +478,83 @@ const POS: React.FC<POSProps> = ({
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col p-5 space-y-4 animate-in slide-in-from-right-4 overflow-hidden h-full">
-               <button onClick={() => { setIsClosingTab(false); setPaymentMethodInput(PaymentMethod.CASH); if (!shortcutCheckout) setCustomerNameInput(''); if (shortcutCheckout && onClearShortcut) onClearShortcut(); }} className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase group shrink-0">
-                 <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Voltar
-               </button>
-               
-               <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shrink-0">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{shortcutCheckout ? 'Dívida Pendente' : 'Faltando'}</p>
-                 <p className="text-3xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
-               </div>
+            <div className="flex-1 flex flex-col min-h-0 animate-in slide-in-from-right-4 overflow-hidden h-full">
+               {/* Área rolável: Contém formulários e histórico de pagamentos */}
+               <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                  <button onClick={() => { setIsClosingTab(false); setPaymentMethodInput(PaymentMethod.CASH); if (!shortcutCheckout) setCustomerNameInput(''); if (shortcutCheckout && onClearShortcut) onClearShortcut(); }} className="flex items-center gap-2 text-slate-400 font-bold text-[10px] uppercase group shrink-0">
+                    <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg> Voltar
+                  </button>
+                  
+                  <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shrink-0">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{shortcutCheckout ? 'Dívida Pendente' : 'Faltando'}</p>
+                    <p className="text-3xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
+                  </div>
 
-               {remainingBalance > 0.01 && (
-                 <div className="space-y-3 shrink-0">
-                    <div className="grid grid-cols-2 gap-2">
-                       {availablePaymentMethods.map(m => (
-                         <button key={m} onClick={() => { setPaymentMethodInput(m); }} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${paymentMethodInput === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>{m}</button>
-                       ))}
-                    </div>
-                    
-                    {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
-                       <div className="animate-in fade-in slide-in-from-top-1">
-                          <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Nome do Cliente (Obrigatório)</label>
-                          <input 
-                            type="text" 
-                            value={customerNameInput} 
-                            onChange={e => setCustomerNameInput(e.target.value)} 
-                            className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold border-2 border-orange-500/30 focus:border-orange-500 outline-none transition-colors" 
-                            placeholder="Quem está pagando?" 
-                            readOnly={!!shortcutCheckout}
-                          />
+                  {remainingBalance > 0.01 && (
+                    <div className="space-y-3 shrink-0">
+                       <div className="grid grid-cols-2 gap-2">
+                          {availablePaymentMethods.map(m => (
+                            <button key={m} onClick={() => { setPaymentMethodInput(m); }} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${paymentMethodInput === m ? 'bg-red-600 border-red-600 text-white shadow-md' : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50'}`}>{m}</button>
+                          ))}
                        </div>
-                    )}
+                       
+                       {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
+                          <div className="animate-in fade-in slide-in-from-top-1">
+                             <label className="text-[10px] font-black text-slate-400 uppercase block mb-1">Nome do Cliente (Obrigatório)</label>
+                             <input 
+                               type="text" 
+                               value={customerNameInput} 
+                               onChange={e => setCustomerNameInput(e.target.value)} 
+                               className="w-full px-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-bold border-2 border-orange-500/30 focus:border-orange-500 outline-none transition-colors" 
+                               placeholder="Quem está pagando?" 
+                               readOnly={!!shortcutCheckout}
+                             />
+                          </div>
+                       )}
 
-                    <div className="flex gap-2">
-                       <input 
-                         type="number" 
-                         value={paymentAmountInput} 
-                         onChange={e => setPaymentAmountInput(e.target.value)} 
-                         className="no-spinner flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white font-black border-2 border-slate-200 dark:border-slate-800 focus:border-red-500 outline-none transition-colors" 
-                         placeholder="0.00" 
-                       />
-                       <button onClick={addPaymentEntry} className="bg-slate-800 text-white px-5 rounded-xl font-black text-xs hover:bg-black transition-colors active:scale-95">+</button>
+                       <div className="flex gap-2">
+                          <input 
+                            type="number" 
+                            value={paymentAmountInput} 
+                            onChange={e => setPaymentAmountInput(e.target.value)} 
+                            className="no-spinner flex-1 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white font-black border-2 border-slate-200 dark:border-slate-800 focus:border-red-500 outline-none transition-colors" 
+                            placeholder="0.00" 
+                          />
+                          <button onClick={addPaymentEntry} className="bg-slate-800 text-white px-5 rounded-xl font-black text-xs hover:bg-black transition-colors active:scale-95">+</button>
+                       </div>
                     </div>
-                 </div>
-               )}
+                  )}
 
-               <div className="flex-1 min-h-0 overflow-y-auto space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
-                 {(currentPayments || []).map((p, i) => (
-                   <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all animate-in slide-in-from-bottom-2">
-                     <div>
-                       <p className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
-                         {p.method} {p.customerName && <span className="text-orange-500">• {p.customerName}</span>}
-                       </p>
-                       <p className="font-black text-slate-800 dark:text-white">{formatCurrency(p.amount)}</p>
-                     </div>
-                     <button onClick={() => removePaymentEntry(i)} className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors">
-                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                     </button>
-                   </div>
-                 ))}
-                 {(currentPayments || []).length === 0 && (
-                   <div className="text-center py-6 text-slate-300 italic text-[10px] uppercase font-bold tracking-widest">Aguardando pagamentos...</div>
-                 )}
+                  <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Entradas Registradas</p>
+                    {(currentPayments || []).map((p, i) => (
+                      <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all animate-in slide-in-from-bottom-2">
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-1">
+                            {p.method} {p.customerName && <span className="text-orange-500">• {p.customerName}</span>}
+                          </p>
+                          <p className="font-black text-slate-800 dark:text-white">{formatCurrency(p.amount)}</p>
+                        </div>
+                        <button onClick={() => removePaymentEntry(i)} className="text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                      </div>
+                    ))}
+                    {(currentPayments || []).length === 0 && (
+                      <div className="text-center py-6 text-slate-300 italic text-[10px] uppercase font-bold tracking-widest">Aguardando pagamentos...</div>
+                    )}
+                  </div>
                </div>
 
-               <div className="pt-2 shrink-0">
-                  <button onClick={finishSale} disabled={shortcutCheckout ? paidSoFar <= 0 : remainingBalance > 0.01} className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all ${((shortcutCheckout && paidSoFar > 0) || remainingBalance <= 0.01) ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.02]' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}>FINALIZAR ({formatCurrency(paidSoFar)})</button>
+               {/* Rodapé Fixo: Botão Finalizar */}
+               <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                  <button 
+                    onClick={finishSale} 
+                    disabled={shortcutCheckout ? paidSoFar <= 0 : remainingBalance > 0.01} 
+                    className={`w-full py-4 rounded-2xl font-black shadow-lg transition-all ${((shortcutCheckout && paidSoFar > 0) || remainingBalance <= 0.01) ? 'bg-red-600 text-white hover:bg-red-700 hover:scale-[1.02]' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                  >
+                    FINALIZAR ({formatCurrency(paidSoFar)})
+                  </button>
                </div>
             </div>
           )}
