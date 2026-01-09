@@ -5,14 +5,13 @@ import * as htmlToImage from 'html-to-image';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
 const DrinkBorder = ({ position }: { position: 'top' | 'bottom' }) => (
-  <div className={`absolute left-0 right-0 flex justify-around items-center px-2 overflow-hidden h-4 pointer-events-none opacity-40 ${position === 'top' ? '-top-4' : '-bottom-4 rotate-180'}`}>
-    {Array.from({ length: 12 }).map((_, i) => (
-      <div key={i} className="flex gap-2 text-white scale-75">
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A2,2 0 0,1 14,4V7H10V4A2,2 0 0,1 12,2M15,10V22H9V10H15M14,8H10V9H14V8Z" /></svg>
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M4,2H18A2,2 0 0,1 20,4V6H22V11A2,2 0 0,1 20,13V18A2,2 0 0,1 18,20H4A2,2 0 0,1 2,18V4A2,2 0 0,1 4,2M20,6H18V11H20V6M4,4V18H18V4H4Z" /></svg>
-        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M3,2L5,20.23C5.13,21.23 5.97,22 7,22H17C18.03,22 18.87,21.23 19,20.23L21,2V4H3V2Z" /></svg>
-      </div>
-    ))}
+  <div className={`absolute left-0 right-0 h-3 overflow-hidden pointer-events-none z-10 ${position === 'top' ? '-top-3' : '-bottom-3 rotate-180'}`}>
+    <svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <path 
+        d="M0 10 L2.5 0 L5 10 L7.5 0 L10 10 L12.5 0 L15 10 L17.5 0 L20 10 L22.5 0 L25 10 L27.5 0 L30 10 L32.5 0 L35 10 L37.5 0 L40 10 L42.5 0 L45 10 L47.5 0 L50 10 L52.5 0 L55 10 L57.5 0 L60 10 L62.5 0 L65 10 L67.5 0 L70 10 L72.5 0 L75 10 L77.5 0 L80 10 L82.5 0 L85 10 L87.5 0 L90 10 L92.5 0 L95 10 L97.5 0 L100 10 Z" 
+        fill="#000000" 
+      />
+    </svg>
   </div>
 );
 
@@ -64,7 +63,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     const itemsCount = filteredSales.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
     const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
-    // Saldos Devedores (Lógica Global, mas exibimos apenas os ativos)
     const pendurasByCustomer = safeSales
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName;
@@ -77,12 +75,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         return acc;
       }, {} as Record<string, number>);
 
-    // Fix for unknown type error from Object.entries by explicitly typing the iteration output
     const activePenduras = (Object.entries(pendurasByCustomer) as [string, number][])
       .filter(([_, balance]) => balance > 0.01)
       .reduce((acc, [name, balance]) => { acc[name] = balance; return acc; }, {} as Record<string, number>);
 
-    // Categorias no Período
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
@@ -94,7 +90,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => Number(b.total) - Number(a.total));
 
-    // Penduras criadas no período específico para o recibo
     const pendurasInPeriod = filteredSales
       .filter(s => s.paymentMethod === PaymentMethod.PENDURA)
       .reduce((acc: Record<string, number>, s) => {
@@ -171,7 +166,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
       
-      {/* Atalhos de Período Fixos no Topo */}
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 justify-center sticky top-20 z-20">
         {['HOJE', 'ONTEM', 'SEMANA', 'MÊS'].map(p => (
           <button 
@@ -188,7 +182,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         ))}
       </div>
 
-      {/* Resumo Financeiro Dinâmico */}
       <div>
         <SectionHeader 
           title={`Resumo Financeiro (${periodLabel})`} 
@@ -213,7 +206,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         )}
       </div>
 
-      {/* FECHAMENTO (RECIBO) */}
       <div>
         <SectionHeader 
           title="Fechamento" 
@@ -222,7 +214,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         />
         {expanded.dailyClosing && (
           <div className="animate-in slide-in-from-top-2 flex flex-col items-center gap-12 py-10">
-            <div ref={fechamentoRef} className="bg-black w-full max-w-sm p-8 shadow-2xl border-t-[10px] border-emerald-500 font-mono text-white flex flex-col relative">
+            <div ref={fechamentoRef} className="bg-black w-full max-w-sm p-8 shadow-2xl border-t-[2px] border-emerald-500 font-mono text-white flex flex-col relative overflow-visible">
               <DrinkBorder position="top" />
               
               <div className="text-center mb-6 space-y-0.5">
@@ -286,7 +278,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                             width={110}
                             axisLine={false} 
                             tickLine={false}
-                            tick={{ fill: '#ffffff', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }} 
+                            tick={{ fill: '#ffffff', fontSize: 9, fontStretch: 'condensed', fontWeight: '900', textTransform: 'uppercase' }} 
                           />
                          <Bar 
                            dataKey="total" 
@@ -319,7 +311,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
               onClick={exportAsImage}
               className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-3xl font-black shadow-xl transition-all active:scale-95 text-sm uppercase tracking-widest"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
               Exportar PNG
             </button>
           </div>
