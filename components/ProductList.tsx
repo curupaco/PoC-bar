@@ -17,8 +17,8 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
   const [category, setCategory] = useState('Geral');
   const [sellType, setSellType] = useState<SellType>('unit');
 
-  // Adicionada a categoria 'CACHETA' à lista padrão
-  const categories = Array.from(new Set(['Geral', 'Bebidas', 'Cervejas', 'Porções', 'Refeições', 'Doses', 'CACHETA', ...products.map(p => p.category)]));
+  // Ajustada a categoria 'Cacheta' para manter o padrão de capitalização
+  const categories = Array.from(new Set(['Geral', 'Bebidas', 'Cervejas', 'Porções', 'Refeições', 'Doses', 'Cacheta', ...products.map(p => p.category)]));
 
   const handleSave = () => {
     if (!name || !price) return;
