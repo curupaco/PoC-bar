@@ -1,9 +1,9 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import { Sale, Product, PaymentMethod, formatCurrency, SaleItem } from '../types';
 import * as htmlToImage from 'html-to-image';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
-// Componente para a borda temática de ícones
 const DrinkBorder = ({ position }: { position: 'top' | 'bottom' }) => (
   <div className={`absolute left-0 right-0 flex justify-around items-center px-2 overflow-hidden h-4 pointer-events-none opacity-40 ${position === 'top' ? '-top-4' : '-bottom-4 rotate-180'}`}>
     {Array.from({ length: 12 }).map((_, i) => (
@@ -30,10 +30,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [periodLabel, setPeriodLabel] = useState('DIA');
 
-  // Todas as seções colapsadas por padrão conforme solicitado
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
     summary: false,
-    filter: false,
     financial: false,
     penduras: false,
     dailyClosing: false
@@ -58,7 +56,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     filteredSales.forEach(sale => {
       if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
-        // Fix: Explicitly handle potential numeric addition
         const currentVal = totalsByMethod[sale.paymentMethod].total || 0;
         const addVal = sale.total || 0;
         totalsByMethod[sale.paymentMethod].total = currentVal + addVal;
@@ -71,11 +68,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName;
         if (!name) return acc;
-        
-        // Fix: Ensure numeric types for penduras calculation
         const currentBalance = Number(acc[name] || 0);
         const saleTotal = Number(s.total ?? 0);
-        
         if (s.paymentMethod === PaymentMethod.PENDURA) {
           acc[name] = currentBalance + saleTotal;
         } else {
@@ -94,7 +88,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
-      // Fix: Ensure current value is a number for addition
       const current = Number(acc[cat] || 0);
       const itemPrice = Number(item.totalPrice || 0);
       acc[cat] = current + itemPrice;
@@ -103,13 +96,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
 
     const categoryData = Object.entries(categoryAgg)
       .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => b.total - a.total);
+      .sort((a, b) => Number(b.total) - Number(a.total));
 
     const pendurasInPeriod = filteredSales
       .filter(s => s.paymentMethod === PaymentMethod.PENDURA)
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName || 'Cliente Oculto';
-        // Fix: Explicit conversion to Number to avoid potential arithmetic operand issues on line 102
         const currentSum = Number(acc[name] || 0);
         const amountToAdd = Number(s.total ?? 0);
         acc[name] = currentSum + amountToAdd;
@@ -139,7 +131,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     return { daily, weekly, monthly };
   }, [safeSales]);
 
-  const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MES') => {
+  const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
     const now = new Date();
     let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -153,7 +145,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     } else if (type === 'SEMANA') {
       start.setDate(now.getDate() - now.getDay());
       setPeriodLabel('SEMANA');
-    } else if (type === 'MES') {
+    } else if (type === 'MÊS') {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
       setPeriodLabel('MÊS');
     }
@@ -176,13 +168,13 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     }
   };
 
-  const SectionHeader = ({ title, section, icon, color = "slate" }: { title: string, section: string, icon: React.ReactNode, color?: string }) => (
+  const SectionHeader = ({ title, section, icon }: { title: string, section: string, icon: React.ReactNode }) => (
     <button 
       onClick={() => toggleSection(section)}
       className={`w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm mb-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50`}
     >
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg bg-${color}-100 dark:bg-${color}-900/30 text-${color}-600 dark:text-${color}-400`}>
+        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
           {icon}
         </div>
         <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm">{title}</h3>
@@ -196,12 +188,28 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
       
+      {/* Atalhos de Período Fixos no Topo */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 justify-center">
+        {['HOJE', 'ONTEM', 'SEMANA', 'MÊS'].map(p => (
+          <button 
+            key={p} 
+            onClick={() => setPreset(p as any)}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border ${
+              (periodLabel === p || (p === 'MÊS' && periodLabel === 'MÊS') || (p === 'HOJE' && periodLabel === 'DIA'))
+                ? 'bg-red-600 border-red-600 text-white shadow-red-500/20'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
       {/* Resumo Financeiro */}
       <div>
         <SectionHeader 
           title="Resumo Financeiro" 
           section="summary" 
-          color="red"
           icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>} 
         />
         {expanded.summary && (
@@ -222,62 +230,16 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         )}
       </div>
 
-      {/* Filtros de Data */}
-      <div>
-        <SectionHeader 
-          title="Filtros de Data" 
-          section="filter" 
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>} 
-        />
-        {expanded.filter && (
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors animate-in slide-in-from-top-2">
-            <div className="flex flex-wrap gap-2 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-               {['HOJE', 'ONTEM', 'SEMANA', 'MES'].map(p => (
-                 <button 
-                  key={p} 
-                  onClick={() => setPreset(p as any)}
-                  className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"
-                 >
-                   {p}
-                 </button>
-               ))}
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Início</label>
-                <input 
-                  type="date" 
-                  value={startDate}
-                  onChange={(e) => { setStartDate(e.target.value); setPeriodLabel('PERSONALIZADO'); }}
-                  className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Fim</label>
-                <input 
-                  type="date" 
-                  value={endDate}
-                  onChange={(e) => { setEndDate(e.target.value); setPeriodLabel('PERSONALIZADO'); }}
-                  className="w-full px-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 dark:text-white border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 outline-none"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* FECHAMENTO (RECEIPT STYLE - BLACK THEME) */}
       <div>
         <SectionHeader 
-          title="Cupom de Fechamento" 
+          title="Fechamento" 
           section="dailyClosing" 
-          color="emerald"
           icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
         />
         {expanded.dailyClosing && (
           <div className="animate-in slide-in-from-top-2 flex flex-col items-center gap-12 py-10">
             <div ref={fechamentoRef} className="bg-black w-full max-w-sm p-8 shadow-2xl border-t-[10px] border-emerald-500 font-mono text-white flex flex-col relative">
-              {/* Bordas de Ícones de Bar */}
               <DrinkBorder position="top" />
               
               <div className="text-center mb-6 space-y-0.5">
@@ -310,7 +272,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                         <span>{method}</span>
                         <span>{formatCurrency(data.total)}</span>
                       </div>
-                      {/* Detalhamento de Penduras */}
                       {method === PaymentMethod.PENDURA && Object.keys(reportData.pendurasInPeriod).length > 0 && (
                         <div className="pl-3 border-l-2 border-slate-800 space-y-0 mt-0.5">
                            {(Object.entries(reportData.pendurasInPeriod) as [string, number][]).map(([name, val]) => (
@@ -325,7 +286,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                   ))}
                 </div>
 
-                {/* Gráfico Térmico Integrado - Densidade vertical aumentada e espaçamento horizontal restaurado */}
                 <div className="pt-4 mt-4 border-t border-dashed border-slate-800">
                   <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-3 text-center">Consumo por Categoria</p>
                   <div className="h-[200px] w-full bg-slate-900/40 rounded-xl p-2 border border-slate-800">
@@ -333,14 +293,14 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                       <BarChart 
                         data={reportData.categoryData} 
                         layout="vertical" 
-                        margin={{ left: -15, right: 15, top: 10, bottom: 10 }} // Espaçamento horizontal restaurado
-                        categoryGap={2} // Diminui o gap entre categorias
+                        margin={{ left: -15, right: 15, top: 10, bottom: 10 }}
+                        categoryGap={2}
                       >
                          <XAxis type="number" hide />
                          <YAxis 
                             dataKey="name" 
                             type="category" 
-                            width={110} // Espaçamento horizontal restaurado para os nomes
+                            width={110}
                             axisLine={false} 
                             tickLine={false}
                             tick={{ fill: '#ffffff', fontSize: 9, fontWeight: '900', textTransform: 'uppercase' }} 
@@ -349,7 +309,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                            dataKey="total" 
                            fill="#94a3b8" 
                            radius={[0, 4, 4, 0]} 
-                           barSize={18} // Barras mais grossas para diminuir espaço vertical visual
+                           barSize={18}
                          />
                       </BarChart>
                     </ResponsiveContainer>
@@ -369,7 +329,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                 <p className="text-[9px] uppercase font-black text-slate-600">{new Date().toLocaleDateString('pt-BR')} - {new Date().toLocaleTimeString('pt-BR')}</p>
               </div>
 
-              {/* Bordas de Ícones de Bar (Base) */}
               <DrinkBorder position="bottom" />
             </div>
 
@@ -378,14 +337,13 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
               className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-3xl font-black shadow-xl transition-all active:scale-95 text-sm uppercase tracking-widest"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              Exportar Cupom (PNG)
+              Exportar PNG
             </button>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Detalhamento Técnico (Tabela) */}
         <div className="space-y-4">
           <SectionHeader 
             title="Detalhamento Técnico" 
@@ -423,12 +381,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
           )}
         </div>
 
-        {/* Saldos Devedores Ativos */}
         <div className="space-y-4">
           <SectionHeader 
             title="Saldos Devedores Ativos" 
             section="penduras" 
-            color="orange"
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
           />
           {expanded.penduras && (
@@ -450,7 +406,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                         <td className="px-6 py-4 text-right">
                           <button 
                             onClick={() => onQuitarPendura(customer, total)}
-                            className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all active:scale-95 shadow-sm"
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all active:scale-95 shadow-sm"
                           >
                             Quitar
                           </button>
