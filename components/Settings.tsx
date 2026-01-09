@@ -150,7 +150,7 @@ const Settings: React.FC<SettingsProps> = ({
           <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${dbStatus === 'success' ? 'bg-emerald-100 text-emerald-600' : dbStatus === 'error' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>{dbStatus === 'success' ? '● CONECTADO' : dbStatus === 'error' ? '● ERRO' : '○ DISCONECTADO'}</div>
         </div>
         <div className="flex gap-2">
-          <input type="text" value={fbUrl} onChange={e => { setFbUrl(e.target.value); onStatusChange('idle'); setFbMessage(null); }} placeholder="URL do Banco de Dados" className="flex-1 px-4 py-3 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500" />
+          <input type="text" value={fbUrl} onChange={e => { setFbUrl(e.target.value); onStatusChange('idle'); setFbMessage(null); }} placeholder="URL do Banco de Dados" className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500" />
         </div>
         <button onClick={async () => { setIsSyncing(true); await saveToFirebase(fbUrl, {products, sales, openTabs}, "REMOVED_FIREBASE_PASSWORD"); showToast("Nuvem Atualizada!"); setIsSyncing(false); }} disabled={isSyncing || !fbUrl || !canBackup} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest active:scale-95">{isSyncing ? "Sincronizando..." : "Forçar Sincronização Cloud"}</button>
       </div>
