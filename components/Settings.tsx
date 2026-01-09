@@ -27,9 +27,9 @@ const Settings: React.FC<SettingsProps> = ({
     onStatusChange('loading');
     setFbMessage(null);
     try {
-      const data = await loadFromFirebase(fbUrl);
+      const data = await loadFromFirebase(fbUrl, "REMOVED_FIREBASE_PASSWORD");
       onStatusChange('success');
-      setFbMessage({ type: 'success', text: "Conectado ao Firebase!" });
+      setFbMessage({ type: 'success', text: "Conectado e sincronizado com o Firebase!" });
       if (data) onImport(data);
     } catch (err: any) {
       onStatusChange('error');
@@ -42,38 +42,80 @@ const Settings: React.FC<SettingsProps> = ({
     setFbMessage(null);
     try {
       const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId: '' } };
-      await saveToFirebase(fbUrl, fullData);
+      await saveToFirebase(fbUrl, fullData, "REMOVED_FIREBASE_PASSWORD");
       onStatusChange('success');
-      setFbMessage({ type: 'success', text: "Backup enviado para o Firebase!" });
+      setFbMessage({ type: 'success', text: "Backup criptografado enviado com sucesso!" });
     } catch (err: any) {
       onStatusChange('error');
       setFbMessage({ type: 'error', text: `Erro: ${err.message}` });
     } finally { setIsSyncing(false); }
   };
 
-  // FUNÇÃO PARA REINICIAR O SISTEMA DE COMANDAS
   const hardResetTabs = async () => {
-    if (!window.confirm("ATENÇÃO: Isso irá APAGAR TODAS as comandas abertas do navegador e do Firebase agora mesmo. Continuar?")) return;
+    if (!window.confirm("Isso apagará TODAS as mesas abertas agora. As vendas já fechadas continuam no histórico. Continuar?")) return;
     
     setIsSyncing(true);
     try {
-      // 1. Limpa o LocalStorage imediatamente
-      localStorage.removeItem('bar_open_tabs');
-      
-      // 2. Envia para o Firebase uma lista vazia
       const fullData = { products, sales, openTabs: [], config: { fbUrl, ghToken: '', gistId: '' } };
-      await saveToFirebase(fbUrl, fullData);
-      
-      // 3. Atualiza o estado local do App (via onImport)
+      await saveToFirebase(fbUrl, fullData, "REMOVED_FIREBASE_PASSWORD");
       onImport(fullData);
-      
-      onStatusChange('success');
-      setFbMessage({ type: 'success', text: "Comandas reiniciadas com sucesso!" });
-      alert("Sistema de comandas limpo! Redirecionando...");
-      window.location.reload(); // Recarrega para garantir estado limpo
+      setFbMessage({ type: 'success', text: "Comandas zeradas!" });
     } catch (err: any) {
-      onStatusChange('error');
-      setFbMessage({ type: 'error', text: `Falha no Reset: ${err.message}` });
+      setFbMessage({ type: 'error', text: `Falha: ${err.message}` });
+    } finally { setIsSyncing(false); }
+  };
+
+  const granularReset = async (type: 'sales' | 'products') => {
+    const msg = type === 'sales' 
+      ? "Deseja apagar TODO o histórico de faturamento e vendas passadas? Esta ação é irreversível."
+      : "Deseja apagar TODO o cardápio de produtos? Você terá que cadastrar tudo novamente.";
+    
+    if (!window.confirm(msg)) return;
+
+    setIsSyncing(true);
+    try {
+      const newData: AppFullData = { 
+        products: type === 'products' ? [] : products, 
+        sales: type === 'sales' ? [] : sales, 
+        openTabs: openTabs, 
+        config: { fbUrl, ghToken: '', gistId: '' },
+        updatedAt: new Date().toISOString()
+      };
+      
+      await saveToFirebase(fbUrl, newData, "REMOVED_FIREBASE_PASSWORD");
+      onImport(newData);
+      setFbMessage({ type: 'success', text: `Limpeza de ${type === 'sales' ? 'vendas' : 'produtos'} realizada!` });
+    } catch (err: any) {
+      setFbMessage({ type: 'error', text: `Erro: ${err.message}` });
+    } finally { setIsSyncing(false); }
+  };
+
+  const fullSystemReset = async () => {
+    const confirm1 = window.confirm("CUIDADO: Isso apagará TUDO (Produtos, Vendas e Mesas) do seu dispositivo e do Firebase. É uma limpeza total. Deseja continuar?");
+    if (!confirm1) return;
+    
+    const confirm2 = window.confirm("TEM CERTEZA ABSOLUTA? Você perderá todo o histórico de faturamento e terá que cadastrar os produtos novamente.");
+    if (!confirm2) return;
+
+    setIsSyncing(true);
+    try {
+      const emptyData: AppFullData = { 
+        products: [], 
+        sales: [], 
+        openTabs: [], 
+        config: { fbUrl, ghToken: '', gistId: '' },
+        updatedAt: new Date().toISOString()
+      };
+      
+      localStorage.clear();
+      await saveToFirebase(fbUrl, emptyData, "REMOVED_FIREBASE_PASSWORD");
+      onImport(emptyData);
+      
+      setFbMessage({ type: 'success', text: "Sistema reiniciado do zero!" });
+      alert("O sistema foi totalmente resetado. A página será recarregada.");
+      window.location.reload();
+    } catch (err: any) {
+      setFbMessage({ type: 'error', text: `Erro no Reset Total: ${err.message}` });
     } finally { setIsSyncing(false); }
   };
 
@@ -110,12 +152,16 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.99 7.99 0 0120 13a7.98 7.98 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14l.879 2.121z" /></svg>
             </div>
-            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Firebase Database</h3>
+            <div>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter text-left">Firebase Cloud</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-left">Criptografia AES Ativa</p>
+            </div>
           </div>
           <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${dbStatus === 'success' ? 'bg-emerald-100 text-emerald-600' : dbStatus === 'error' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>
-            {dbStatus === 'success' ? '● ONLINE' : dbStatus === 'error' ? '● ERRO' : '○ DESCONECTADO'}
+            {dbStatus === 'success' ? '● CONECTADO' : dbStatus === 'error' ? '● ERRO' : '○ DISCONECTADO'}
           </div>
         </div>
+
         <div className="flex gap-2">
           <input 
             type="text" 
@@ -139,29 +185,62 @@ const Settings: React.FC<SettingsProps> = ({
             disabled={isSyncing || !fbUrl} 
             className="bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest"
           >
-            {isSyncing ? "Sincronizando..." : "Sincronizar Backup"}
+            {isSyncing ? "Sincronizando..." : "Forçar Sincronização"}
           </button>
           <button 
             onClick={hardResetTabs} 
             disabled={isSyncing} 
-            className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest"
+            className="bg-slate-800 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-black uppercase transition-all text-xs tracking-widest"
           >
-            Limpar Todas as Comandas
+            Zerar Apenas Mesas
           </button>
         </div>
       </div>
 
+      <div className="bg-red-50 dark:bg-red-900/10 p-8 rounded-3xl border-2 border-red-200 dark:border-red-900/30 space-y-6">
+        <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+           <h3 className="font-black uppercase text-xs tracking-widest">Zona Crítica de Dados</h3>
+        </div>
+        <p className="text-xs text-red-500/70 font-medium text-left">Como o banco está criptografado na nuvem, use as ações abaixo para limpar dados específicos se necessário.</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <button 
+            onClick={() => granularReset('sales')} 
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+          >
+            Limpar Histórico Vendas
+          </button>
+          <button 
+            onClick={() => granularReset('products')} 
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+          >
+            Zerar Cardápio Produtos
+          </button>
+        </div>
+
+        <button 
+          onClick={fullSystemReset} 
+          disabled={isSyncing} 
+          className="w-full bg-red-600 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+          Limpar Todo o Sistema (Hard Reset)
+        </button>
+      </div>
+
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-4 transition-colors">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Backup Manual em Arquivo</p>
           <div className="flex flex-col md:flex-row gap-4 justify-center">
             <button onClick={exportJSON} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Exportar JSON
             </button>
-            <label className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all cursor-pointer flex items-center justify-center gap-2">
+            <button onClick={() => fileInputRef.current?.click()} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               Importar JSON
-              <input type="file" ref={fileInputRef} className="hidden" accept=".json" onChange={importJSON} />
-            </label>
+            </button>
+            <input type="file" ref={fileInputRef} onChange={importJSON} className="hidden" accept=".json" />
           </div>
       </div>
     </div>

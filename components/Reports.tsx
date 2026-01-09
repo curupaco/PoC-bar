@@ -3,12 +3,6 @@ import { Sale, Product, PaymentMethod, formatCurrency, SaleItem } from '../types
 import * as htmlToImage from 'html-to-image';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 
-interface ReportsProps {
-  sales: Sale[];
-  products: Product[];
-  onQuitarPendura: (customerName: string, amount: number) => void;
-}
-
 // Componente para a borda temática de ícones
 const DrinkBorder = ({ position }: { position: 'top' | 'bottom' }) => (
   <div className={`absolute left-0 right-0 flex justify-around items-center px-2 overflow-hidden h-4 pointer-events-none opacity-40 ${position === 'top' ? '-top-4' : '-bottom-4 rotate-180'}`}>
@@ -21,6 +15,12 @@ const DrinkBorder = ({ position }: { position: 'top' | 'bottom' }) => (
     ))}
   </div>
 );
+
+interface ReportsProps {
+  sales: Sale[];
+  products: Product[];
+  onQuitarPendura: (customerName: string, amount: number) => void;
+}
 
 const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPendura }) => {
   const safeSales = sales ?? [];
@@ -58,7 +58,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     filteredSales.forEach(sale => {
       if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
-        totalsByMethod[sale.paymentMethod].total += (sale.total ?? 0);
+        // Fix: Explicitly handle potential numeric addition
+        const currentVal = totalsByMethod[sale.paymentMethod].total || 0;
+        const addVal = sale.total || 0;
+        totalsByMethod[sale.paymentMethod].total = currentVal + addVal;
       }
     });
 
@@ -69,7 +72,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         const name = s.customerName;
         if (!name) return acc;
         
-        // Use Number() to ensure operands are numeric for arithmetic operations
+        // Fix: Ensure numeric types for penduras calculation
         const currentBalance = Number(acc[name] || 0);
         const saleTotal = Number(s.total ?? 0);
         
@@ -91,9 +94,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
-      // Ensure current value is a number for addition
+      // Fix: Ensure current value is a number for addition
       const current = Number(acc[cat] || 0);
-      acc[cat] = current + Number(item.totalPrice || 0);
+      const itemPrice = Number(item.totalPrice || 0);
+      acc[cat] = current + itemPrice;
       return acc;
     }, {} as Record<string, number>);
 
@@ -105,8 +109,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       .filter(s => s.paymentMethod === PaymentMethod.PENDURA)
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName || 'Cliente Oculto';
-        // Explicit conversion to Number to avoid potential arithmetic operand issues
-        acc[name] = Number(acc[name] || 0) + Number(s.total ?? 0);
+        // Fix: Explicit conversion to Number to avoid potential arithmetic operand issues on line 102
+        const currentSum = Number(acc[name] || 0);
+        const amountToAdd = Number(s.total ?? 0);
+        acc[name] = currentSum + amountToAdd;
         return acc;
       }, {} as Record<string, number>);
 
