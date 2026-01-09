@@ -13,23 +13,24 @@ O Botequista foi projetado para ser intuitivo e rápido, focado na agilidade do 
 - **Abertura:** Na tela de **Venda (PDV)**, utilize "Abrir Nova Mesa".
 - **Lançamento de Itens:**
     - **Unidade:** Clique no produto para adicionar. Use `+` e `-` para ajustes finos.
-    - **Peso (Kg):** Para itens vendidos por gramatura, o sistema abre um teclado numérico.
+    - **Peso (Kg):** Para itens vendidos por gramatura, o sistema abre um teclado numérico para entrada em gramas (g).
 - **Cancelamento:** Permite remover itens individuais ou "Abandonar Mesa" (limpa o consumo sem gerar venda).
 
-### 1.2 Métodos de Pagamento e Penduras
-O sistema suporta pagamentos parciais (dividir a conta):
-- **CASH (Dinheiro), PIX, Débito, Crédito.**
+### 1.2 Padrão Monetário e Pagamentos
+- **Moeda:** O sistema utiliza rigorosamente o padrão brasileiro (**R$ 1.234,56**).
+- **Métodos Suportados:** CASH (Dinheiro), PIX, Débito, Crédito e Pendura.
 - **Pendura (Fiado):** Registra o valor como uma dívida vinculada ao nome do cliente.
-- **Quitação:** Para pagar uma dívida, o sistema gera uma venda especial de "Quitação" que abate o saldo devedor do cliente no relatório.
+- **Quitação Corrigida:** Para pagar uma dívida, o sistema gera uma venda especial de "Quitação". Agora, o sistema detecta automaticamente pagamentos parciais ou totais e abate o valor exato do saldo devedor do cliente no relatório.
 
-### 1.3 Relatórios Inteligentes
-O módulo de **Relatórios** foi expandido para oferecer controle total:
-- **Fechamento de Turno:** Um "cupom digital" detalhado com faturamento, conferência de gaveta (esperado vs. real) e produtos mais vendidos no período. Possui seletor de turnos anteriores e botão para exportar como imagem (PNG).
-- **Penduras:** Lista em tempo real todos os clientes que possuem saldo devedor, com botão de "Quitação Rápida" que preenche o PDV automaticamente.
-- **Financeiro e Equipe:** Gráficos de faturamento por método, ticket médio e performance de vendas por colaborador.
+### 1.3 Relatório de Fechamento (Estilo Cupom Fiscal)
+O módulo de **Relatórios** conta com um design de alta fidelidade para conferência:
+- **Visual Retrô/Térmico:** O relatório de fechamento simula uma impressora térmica com bordas serrilhadas (zigzag) no topo e na base.
+- **Exportação:** Permite gerar uma imagem PNG perfeita do cupom para compartilhamento via WhatsApp ou impressão, com correção de enquadramento para evitar cortes.
+- **Conferência de Gaveta:** Calcula automaticamente o "Dinheiro Esperado" somando o Fundo de Troco inicial às vendas em espécie do turno.
 
-### 1.4 Insights com Inteligência Artificial
-Na dashboard, o Gemini analisa o mix de produtos e faturamento para sugerir 3 dicas estratégicas para aumentar a lucratividade do bar.
+### 1.4 Usuários Padrão
+- **Admin:** Acesso total a todas as funções.
+- **Ozzy:** Usuário padrão para operação de vendas e visualização de histórico.
 
 ---
 
@@ -37,25 +38,19 @@ Na dashboard, o Gemini analisa o mix de produtos e faturamento para sugerir 3 di
 
 ### 2.1 Stack Tecnológica
 - **Frontend:** React 19 + TypeScript.
-- **Estilização:** Tailwind CSS com suporte a Temas (Light, Dark, Retro).
-- **Gráficos:** Recharts para visualizações analíticas.
-- **Exportação:** `html-to-image` para geração de comprovantes de fechamento.
-- **IA:** `@google/genai` (Google Gemini 3 Flash).
+- **Estilização:** Tailwind CSS com classes dinâmicas para suporte a temas (Light, Dark, Retro).
+- **Efeitos CSS:** Gradientes lineares avançados para simular o corte serrilhado de papel.
+- **Exportação:** `html-to-image` configurado com `pixelRatio: 2` para alta definição.
 
-### 2.2 Arquitetura de Sincronização e Segurança
-- **Cloud Sync:** Integração com Firebase Realtime DB via REST.
-- **Criptografia AES:** Todos os dados (vendas, produtos, usuários) são criptografados com a biblioteca `crypto-js` antes de serem enviados para a nuvem, utilizando uma chave mestra.
-- **Snapshot de Segurança:** Na tela de Ajustes, o usuário pode criar um "Ponto de Restauração" local (LocalStorage) antes de realizar operações críticas.
+### 2.2 UI/UX e Acessibilidade
+- **Custom Scrollbars:** Barras de rolagem personalizadas e visíveis em desktops para garantir navegação fluida em telas com muito conteúdo.
+- **Layout Fixo no PDV:** O botão de finalização de venda é fixado no rodapé da barra lateral para garantir acessibilidade em qualquer resolução de tela, evitando que o scroll esconda a ação principal.
+- **Scrollbar Gutter:** Utilização de `scrollbar-gutter: stable` para evitar saltos de layout (layout shift) durante a navegação.
 
-### 2.3 Gestão de Turnos
-- O sistema bloqueia vendas se não houver um turno ativo.
-- O turno registra: Operador de abertura/fechamento, Fundo de troco inicial e Sangrias/Suprimentos via Tesouraria.
-
----
-
-## 🛡 3. Segurança e Boas Práticas
-- **Permissões Granulares:** Usuários podem ser limitados a apenas "Vender" ou ter acesso "Admin" (Relatórios, Ajustes, Gestão de Usuários).
-- **Resiliência Offline:** O sistema prioriza o cache local e tenta sincronizar com o Firebase em background assim que detecta conectividade.
+### 2.3 Sincronização e Segurança
+- **Firebase:** Integração via REST API com persistência em tempo real.
+- **Criptografia:** AES-256 para proteção de dados sensíveis na nuvem.
+- **Snapshot Local:** Permite criar pontos de restauração no `localStorage` antes de operações de reset ou importação.
 
 ---
 *Botequista: O braço direito do dono de bar.*
