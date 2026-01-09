@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Product, Sale, Tab, formatCurrency } from '../types';
+import { Product, Sale, Tab, formatCurrency, User } from '../types';
 import { saveToFirebase, loadFromFirebase, AppFullData } from '../services/firebaseService';
 
 interface SettingsProps {
@@ -11,17 +11,22 @@ interface SettingsProps {
   onImport: (data: AppFullData) => void;
   dbStatus: 'idle' | 'loading' | 'success' | 'error';
   onStatusChange: (status: 'idle' | 'loading' | 'success' | 'error') => void;
+  currentUser: User;
 }
 
 const Settings: React.FC<SettingsProps> = ({ 
   products, sales, openTabs, 
   fbUrl, setFbUrl,
-  onImport, dbStatus, onStatusChange 
+  onImport, dbStatus, onStatusChange,
+  currentUser
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [fbMessage, setFbMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [snapshotInfo, setSnapshotInfo] = useState<{ date: string; count: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const canBackup = currentUser.username === 'admin' || currentUser.permissions.includes('manage_backup');
+  const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
 
   // Carregar info do snapshot ao montar
   useEffect(() => {
@@ -82,6 +87,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleFullSyncFirebase = async () => {
+    if (!canBackup) return;
     setIsSyncing(true);
     setFbMessage(null);
     try {
@@ -96,6 +102,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const hardResetTabs = async () => {
+    if (!canReset) return;
     if (!window.confirm("Isso apagará TODAS as mesas abertas agora. As vendas já fechadas continuam no histórico. Continuar?")) return;
     
     setIsSyncing(true);
@@ -110,6 +117,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const granularReset = async (type: 'sales' | 'products') => {
+    if (!canReset) return;
     const msg = type === 'sales' 
       ? "Deseja apagar TODO o histórico de faturamento e vendas passadas? Esta ação é irreversível."
       : "Deseja apagar TODO o cardápio de produtos? Você terá que cadastrar tudo novamente.";
@@ -135,6 +143,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const fullSystemReset = async () => {
+    if (!canReset) return;
     const confirm1 = window.confirm("CUIDADO: Isso apagará TUDO (Produtos, Vendas e Mesas) do seu dispositivo e do Firebase. É uma limpeza total. Deseja continuar?");
     if (!confirm1) return;
     
@@ -164,6 +173,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const exportJSON = () => {
+    if (!canBackup) return;
     const fullData = { products, sales, openTabs, exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(fullData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -175,6 +185,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const importJSON = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canBackup) return;
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -190,7 +201,6 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-24">
-      {/* NOVO: Ponto de Restauração de Segurança */}
       <div className="bg-slate-100 dark:bg-slate-900/50 p-8 rounded-3xl border-2 border-blue-500 shadow-lg space-y-6 relative overflow-hidden transition-all">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600">
@@ -259,7 +269,7 @@ const Settings: React.FC<SettingsProps> = ({
         <div className="grid grid-cols-1 gap-4">
           <button 
             onClick={handleFullSyncFirebase} 
-            disabled={isSyncing || !fbUrl} 
+            disabled={isSyncing || !fbUrl || !canBackup} 
             className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest"
           >
             {isSyncing ? "Sincronizando..." : "Forçar Sincronização Cloud"}
@@ -275,28 +285,30 @@ const Settings: React.FC<SettingsProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button 
+            disabled={!canReset}
             onClick={() => granularReset('sales')} 
-            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase disabled:opacity-20"
           >
             Limpar Histórico Vendas
           </button>
           <button 
+            disabled={!canReset}
             onClick={() => granularReset('products')} 
-            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase disabled:opacity-20"
           >
             Zerar Cardápio Produtos
           </button>
           <button 
+            disabled={!canReset}
             onClick={hardResetTabs} 
-            disabled={isSyncing} 
-            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase"
+            className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase disabled:opacity-20"
           >
             Zerar Apenas Mesas
           </button>
           <button 
+            disabled={!canReset}
             onClick={fullSystemReset} 
-            disabled={isSyncing} 
-            className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2"
+            className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2 disabled:opacity-20"
           >
             Hard Reset Total
           </button>
@@ -306,11 +318,11 @@ const Settings: React.FC<SettingsProps> = ({
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-4 transition-colors">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Backup Manual em Arquivo</p>
           <div className="flex flex-col md:flex-row gap-4 justify-center">
-            <button onClick={exportJSON} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+            <button disabled={!canBackup} onClick={exportJSON} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-20">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
               Exportar JSON
             </button>
-            <button onClick={() => fileInputRef.current?.click()} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+            <button disabled={!canBackup} onClick={() => fileInputRef.current?.click()} className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-4 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-20">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
               Importar JSON
             </button>
