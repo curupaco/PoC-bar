@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Product, Sale, View, Theme, Tab } from './types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Product, Sale, View, Theme, Tab, User, Shift } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
 import POS from './components/POS';
@@ -8,6 +8,10 @@ import SalesHistory from './components/SalesHistory';
 import Sidebar, { menuItems } from './components/Sidebar';
 import Reports from './components/Reports';
 import Settings from './components/Settings';
+import UserManagement from './components/UserManagement';
+import ShiftControl from './components/ShiftControl';
+import CashManagement from './components/CashManagement';
+import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
 const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
@@ -15,7 +19,7 @@ const FIXED_FB_URL = process.env.FIREBASE_URL || DEFAULT_FB_URL;
 const MASTER_KEY = "Tc@00216587";
 
 const App: React.FC = () => {
-  const [isLoggedIn] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [encryptionKey] = useState<string>(MASTER_KEY);
 
   const [activeView, setActiveView] = useState<View>('pos');
@@ -38,11 +42,17 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+
+  const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
   useEffect(() => {
     const p = localStorage.getItem('bar_products');
     const s = localStorage.getItem('bar_sales');
     const t = localStorage.getItem('bar_open_tabs');
+    const u = localStorage.getItem('bar_users');
+    const sh = localStorage.getItem('bar_shifts');
     
     try {
       if (p) setProducts(JSON.parse(p));
@@ -52,8 +62,55 @@ const App: React.FC = () => {
       ]);
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
+      
+      let initialUsers: User[] = [];
+      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift'];
+      
+      if (u) {
+        initialUsers = JSON.parse(u);
+        // Migração Vital: Garante que o admin tenha ABSOLUTAMENTE TODAS as permissões do sistema
+        initialUsers = initialUsers.map(user => {
+          if (user.username === 'admin') {
+            return { ...user, permissions: Array.from(new Set([...user.permissions, ...allAdminPerms])) };
+          }
+          return user;
+        });
+      } else {
+        const admin: User = { 
+          id: 'admin', 
+          username: 'admin', 
+          password: 'admin', 
+          displayName: 'Administrador', 
+          permissions: allAdminPerms 
+        };
+        initialUsers = [admin];
+      }
+      setUsers(initialUsers);
+
+      if (sh) setShifts(JSON.parse(sh));
     } catch (e) { console.error("Erro ao carregar cache local", e); }
   }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      const updated = users.find(u => u.id === currentUser.id);
+      if (updated && JSON.stringify(updated.permissions) !== JSON.stringify(currentUser.permissions)) {
+        setCurrentUser(updated);
+      }
+    }
+  }, [users, currentUser]);
+
+  const handleLogin = (user: string, pass: string) => {
+    const found = users.find(u => u.username === user && u.password === pass);
+    if (found) {
+      setCurrentUser(found);
+      if (!found.permissions.includes(activeView as any) && found.username !== 'admin') {
+        setActiveView(found.permissions.includes('pos') ? 'pos' : found.permissions[0] as any);
+      }
+    } else {
+      alert("Usuário ou senha inválidos.");
+    }
+  };
 
   const toggleTheme = () => {
     setTheme(prev => {
@@ -63,81 +120,64 @@ const App: React.FC = () => {
     });
   };
 
-  const viewTitle = menuItems.find(item => item.id === activeView)?.label || activeView;
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   useEffect(() => {
     localStorage.setItem('bar_products', JSON.stringify(products));
     localStorage.setItem('bar_sales', JSON.stringify(sales));
     localStorage.setItem('bar_open_tabs', JSON.stringify(openTabs));
+    localStorage.setItem('bar_users', JSON.stringify(users));
+    localStorage.setItem('bar_shifts', JSON.stringify(shifts));
     localStorage.setItem('bar_theme', theme);
-    localStorage.setItem('bar_fb_url', fbUrl);
     
     const root = window.document.documentElement;
     root.classList.remove('dark', 'retro');
     if (theme !== 'light') root.classList.add(theme);
 
-    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current && encryptionKey) {
+    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current) {
       const timer = setTimeout(() => {
-        const fullData = { products, sales, openTabs, config: { fbUrl, ghToken: '', gistId: '' } };
+        const fullData = { products, sales, openTabs, users, shifts, config: { fbUrl } };
         saveToFirebase(fbUrl, fullData, encryptionKey)
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
       }, 1500); 
+      // Fix: Use clearTimeout instead of setTimeout in useEffect cleanup to prevent memory leaks and redundant operations
       return () => clearTimeout(timer);
     }
     
-    if (isInitialMount.current) {
-        isInitialMount.current = false;
-    }
-  }, [products, sales, openTabs, fbUrl, theme, encryptionKey]);
+    if (isInitialMount.current) isInitialMount.current = false;
+  }, [products, sales, openTabs, users, shifts, fbUrl, theme]);
 
   useEffect(() => {
     const urlToLoad = fbUrl || FIXED_FB_URL;
     if (urlToLoad) {
       setDbStatus('loading');
       loadFromFirebase(urlToLoad, encryptionKey)
-        .then((data) => {
+        .then((data: any) => {
           if (data) handleImportAll(data);
           else setDbStatus('idle');
         })
-        .catch((err) => {
-            console.error("Initial load failed:", err);
-            setDbStatus('error');
-        });
+        .catch(() => setDbStatus('error'));
     }
   }, []);
 
-  const handleImportAll = (data: AppFullData) => {
-    if (!data) return;
+  const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
-    setProducts(data.products || []);
-    setSales(data.sales || []);
-    setOpenTabs(data.openTabs || []);
+    if (data.products) setProducts(data.products);
+    if (data.sales) setSales(data.sales);
+    if (data.openTabs) setOpenTabs(data.openTabs);
+    if (data.users) setUsers(data.users);
+    if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
-  };
-
-  const deleteSale = (id: string) => {
-    if (window.confirm("Deseja realmente excluir esta venda do histórico?")) {
-      setSales(prev => prev.filter(s => String(s.id).trim() !== String(id).trim()));
-    }
   };
 
   const handleQuitarPendura = (customerName: string, amount: number) => {
     setShortcutCheckout({ name: customerName, amount });
     setActiveView('pos');
   };
+
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={null} />;
+  }
 
   const renderContent = () => {
     const commonProps = { products, sales, openTabs };
@@ -149,23 +189,19 @@ const App: React.FC = () => {
           products={products} 
           openTabs={openTabs} 
           onUpdateTabs={setOpenTabs} 
-          onCompleteSale={s => setSales(prev => [s, ...prev])} 
+          onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
           shortcutCheckout={shortcutCheckout}
           onClearShortcut={() => setShortcutCheckout(null)}
+          activeShift={activeShift}
         />
       );
-      case 'history': return <SalesHistory sales={sales} onDeleteSale={deleteSale} />;
-      case 'reports': return <Reports sales={sales} products={products} onQuitarPendura={handleQuitarPendura} />;
-      case 'settings': return (
-        <Settings 
-          {...commonProps} 
-          fbUrl={fbUrl} setFbUrl={setFbUrl} 
-          onImport={handleImportAll} 
-          dbStatus={dbStatus} 
-          onStatusChange={setDbStatus} 
-        />
-      );
-      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} />;
+      case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(prev => prev.filter(s => s.id !== id))} users={users} />;
+      case 'reports': return <Reports sales={sales} products={products} users={users} shifts={shifts} onQuitarPendura={handleQuitarPendura} />;
+      case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
+      case 'shifts': return <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} />;
+      case 'cash': return <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} />;
+      case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} />;
+      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} />;
     }
   };
 
@@ -178,6 +214,8 @@ const App: React.FC = () => {
         onClose={() => setIsMobileMenuOpen(false)} 
         dbStatus={dbStatus} 
         isOnline={isOnline}
+        currentUser={currentUser}
+        onLogout={() => setCurrentUser(null)}
       />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3 lg:px-8 lg:py-4 flex justify-between items-center ml-0 md:ml-64">
@@ -186,20 +224,22 @@ const App: React.FC = () => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
             <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              {viewTitle}
+              {menuItems.find(i => i.id === activeView)?.label}
             </h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {activeShift ? (
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full text-[10px] font-black uppercase">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                Turno Ativo
+              </div>
+            ) : (
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-full text-[10px] font-black uppercase">
+                Fora de Turno
+              </div>
+            )}
             <button onClick={toggleTheme} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm">
-              {theme === 'light' && (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-              )}
-              {theme === 'dark' && (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
-              {theme === 'retro' && (
-                 <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2L15.09,8.26L22,9.27L17,14.14L18.18,21.02L12,17.77L5.82,21.02L7,14.14L2,9.27L8.91,8.26L12,2Z" /></svg>
-              )}
+              {theme === 'light' ? '🌞' : theme === 'dark' ? '🌙' : '⭐'}
             </button>
           </div>
         </header>
