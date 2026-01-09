@@ -34,6 +34,7 @@ const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [encryptionKey] = useState<string>(MASTER_KEY);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -110,9 +111,10 @@ const App: React.FC = () => {
   const handleLogin = (user: string, pass: string) => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
+      setLoginError(null);
       setCurrentUser(found.username === 'admin' ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
     } else {
-      alert("Usuário ou senha inválidos.");
+      setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
     }
   };
 
@@ -161,7 +163,7 @@ const App: React.FC = () => {
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
   };
 
-  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={null} />;
+  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
 
   const renderContent = () => {
     const props = { products, sales, openTabs, users, shifts, currentUser };
@@ -189,7 +191,7 @@ const App: React.FC = () => {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
-            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase leading-none">{menuItems.find(i => i.id === activeView)?.label}</h1>
+            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tighter leading-none">{menuItems.find(i => i.id === activeView)?.label}</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`} title={dbStatus === 'success' ? 'Nuvem Conectada' : 'Erro de Conexão'}></div>

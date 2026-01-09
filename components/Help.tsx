@@ -41,7 +41,8 @@ const Help: React.FC = () => {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
             <p>• <span className="text-orange-600 font-black">Nuvem:</span> O sistema salva tudo automaticamente no seu <span className="font-bold underline">Banco de Dados</span> remoto.</p>
-            <p>• <span className="text-orange-600 font-black">Backup:</span> Você pode gerar um arquivo manual em <span className="font-black italic">Ajustes > Exportar JSON</span> para ter uma cópia física.</p>
+            <p>• <span className="text-orange-600 font-black">Receber Penduras:</span> Vá em <span className="font-black italic">Relatórios &gt; Penduras</span> e use o botão <FakeButton>Quitar</FakeButton>.</p>
+            <p>• <span className="text-orange-600 font-black">Backup:</span> Você pode gerar um arquivo manual em <span className="font-black italic">Ajustes &gt; Exportar JSON</span> para ter uma cópia física.</p>
           </div>
         </section>
       </div>
