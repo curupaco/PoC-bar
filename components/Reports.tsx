@@ -35,25 +35,28 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const reportData = useMemo(() => {
     const selectedShift = shifts.find(sh => sh.id === selectedShiftId);
-    const shiftSales = (sales || []).filter(s => s.shiftId === selectedShiftId);
+    const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId);
 
-    const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc, method) => {
-      acc[method] = shiftSales.filter(s => s.paymentMethod === method).reduce((sum, s) => sum + s.total, 0);
+    const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, number>, method) => {
+      // Fix: Added explicit types to filter and reduce callbacks to prevent 'unknown' inference
+      acc[method] = shiftSales.filter((s: Sale) => s.paymentMethod === method).reduce((sum: number, s: Sale) => sum + s.total, 0);
       return acc;
     }, {} as Record<string, number>);
 
     const cashSalesOnly = shiftSales
-      .filter(s => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc, s) => acc + s.total, 0);
+      .filter((s: Sale) => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
+      // Fix: Added explicit types to reduce callback to prevent 'unknown' inference
+      .reduce((acc: number, s: Sale) => acc + s.total, 0);
 
     const cashSettlementsOnly = shiftSales
-      .filter(s => s.paymentMethod === PaymentMethod.CASH && s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc, s) => acc + s.total, 0);
+      .filter((s: Sale) => s.paymentMethod === PaymentMethod.CASH && s.items?.some(i => i.productId === 'quitacao'))
+      // Fix: Added explicit types to reduce callback to prevent 'unknown' inference
+      .reduce((acc: number, s: Sale) => acc + s.total, 0);
 
-    const totalsByMethod = Object.values(PaymentMethod).reduce((acc, method) => {
+    const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
       acc[method] = { count: 0, total: 0 };
       return acc;
-    }, {} as Record<string, { count: number, total: number }>);
+    }, {} as Record<string, { count: number, total: number }>;
 
     filteredSales.forEach((sale: Sale) => {
       if (totalsByMethod[sale.paymentMethod]) {
@@ -62,7 +65,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       }
     });
 
-    const grandTotal = filteredSales.reduce((acc, s) => acc + s.total, 0);
+    // Fix: Added explicit types to reduce callback to prevent 'unknown' inference
+    const grandTotal = filteredSales.reduce((acc: number, s: Sale) => acc + s.total, 0);
     const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
@@ -82,10 +86,41 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
 
+    // Relatório de Equipe
+    const teamStats = users.map(u => {
+      const uSales = filteredSales.filter((s: Sale) => s.userId === u.id);
+      return {
+        name: u.displayName,
+        count: uSales.length,
+        // Fix: Added explicit types to reduce callback to prevent 'unknown' inference
+        total: uSales.reduce((acc: number, s: Sale) => acc + s.total, 0)
+      };
+    }).sort((a, b) => b.total - a.total);
+
+    // Relatório de Produtos
+    // Fix: Added explicit types to flatMap and reduce callbacks to prevent 'unknown' inference
+    const productStats = filteredSales.flatMap((s: Sale) => s.items || []).reduce((acc: Record<string, { name: string, qty: number, total: number }>, item) => {
+      if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
+      acc[item.productName].qty += item.quantity;
+      acc[item.productName].total += item.totalPrice;
+      return acc;
+    }, {} as Record<string, { name: string, qty: number, total: number }>);
+    const topProducts = Object.values(productStats).sort((a, b) => b.total - a.total);
+
+    // Relatório Operacional (Fluxo Horário)
+    const hourlyStats = Array.from({ length: 24 }).map((_, i) => ({ hour: i, total: 0, count: 0 }));
+    // Fix: Added explicit type to forEach callback to prevent 'unknown' inference
+    filteredSales.forEach((s: Sale) => {
+      const h = new Date(s.timestamp).getHours();
+      hourlyStats[h].total += s.total;
+      hourlyStats[h].count += 1;
+    });
+
     return { 
-      totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod, cashSalesOnly, cashSettlementsOnly
+      totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod, cashSalesOnly, cashSettlementsOnly,
+      teamStats, topProducts, hourlyStats
     };
-  }, [filteredSales, sales, shifts, selectedShiftId]);
+  }, [filteredSales, sales, shifts, selectedShiftId, users]);
 
   const exportAsImage = () => {
     if (!canExport || !reportRef.current) return;
@@ -245,6 +280,99 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
              </table>
           </div>
         );
+      case 'EQUIPE':
+        return (
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden">
+             <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Performance da Equipe</h3>
+             </div>
+             <div className="overflow-x-auto">
+               <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-bold tracking-widest text-[10px]">
+                      <th className="px-8 py-5">Colaborador</th>
+                      <th className="px-8 py-5 text-center">Atendimentos</th>
+                      <th className="px-8 py-5 text-right">Faturamento Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    {reportData.teamStats.map((u, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="px-8 py-5 font-black text-slate-800 dark:text-white uppercase">@{u.name}</td>
+                        <td className="px-8 py-5 text-center font-bold text-slate-500">{u.count}</td>
+                        <td className="px-8 py-5 text-right font-black text-blue-600">{formatCurrency(u.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+               </table>
+             </div>
+          </div>
+        );
+      case 'PRODUTOS':
+        return (
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden">
+             <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Ranking de Produtos (Curva ABC)</h3>
+             </div>
+             <div className="overflow-x-auto">
+               <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-bold tracking-widest text-[10px]">
+                      <th className="px-8 py-5">Produto</th>
+                      <th className="px-8 py-5 text-center">Volume</th>
+                      <th className="px-8 py-5 text-right">Faturamento</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    {reportData.topProducts.map((p, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                        <td className="px-8 py-5 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
+                        <td className="px-8 py-5 text-center">
+                          <span className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">{p.qty.toFixed(p.qty % 1 === 0 ? 0 : 3)}</span>
+                        </td>
+                        <td className="px-8 py-5 text-right font-black text-emerald-600">{formatCurrency(p.total)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+               </table>
+             </div>
+          </div>
+        );
+      case 'OPERACIONAL':
+        const peakHour = reportData.hourlyStats.reduce((prev, current) => (prev.count > current.count) ? prev : current);
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800">
+               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Fluxo por Horário</h3>
+               <div className="flex items-end justify-between h-48 gap-1">
+                 {reportData.hourlyStats.map((h, i) => (
+                   <div key={i} className="flex-1 group relative">
+                     <div 
+                       className={`w-full bg-red-500/20 hover:bg-red-500 transition-all rounded-t-sm`} 
+                       style={{ height: `${(h.count / (peakHour.count || 1)) * 100}%` }}
+                     ></div>
+                     <div className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 text-[8px] font-bold text-slate-400 group-hover:text-red-500 transition-colors">{h.hour}h</div>
+                     <div className="absolute top-[-30px] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[9px] px-2 py-1 rounded font-black whitespace-nowrap transition-all pointer-events-none">
+                       {h.count} vendas
+                     </div>
+                   </div>
+                 ))}
+               </div>
+            </div>
+            <div className="space-y-6">
+               <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 text-center">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Horário de Pico</p>
+                  <p className="text-4xl font-black text-red-600 tracking-tighter">{peakHour.hour}:00h</p>
+                  <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase">Maior volume de comandas</p>
+               </div>
+               <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-xl text-center">
+                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Giro Médio</p>
+                  <p className="text-4xl font-black text-white tracking-tighter">{(filteredSales.length / Math.max(1, shifts.length)).toFixed(1)}</p>
+                  <p className="text-[10px] text-slate-500 font-bold mt-2 uppercase">Comandas por Turno</p>
+               </div>
+            </div>
+          </div>
+        );
       default: return null;
     }
   };
@@ -266,7 +394,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
            </div>
         )}
       </div>
-      <div className="min-h-[500px]">{renderActiveReport()}</div>
+      <div className="min-h-[500px] animate-in fade-in duration-500">{renderActiveReport()}</div>
     </div>
   );
 };
