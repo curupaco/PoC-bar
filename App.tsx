@@ -87,8 +87,8 @@ const App: React.FC = () => {
       if (t) setOpenTabs(JSON.parse(t));
       
       let initialUsers: User[] = [];
-      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup'];
-      const standardPerms: any[] = ['dashboard', 'pos', 'history'];
+      const allAdminPerms: any[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup', 'help_view'];
+      const standardPerms: any[] = ['dashboard', 'pos', 'history', 'help_view'];
       
       if (u) {
         initialUsers = JSON.parse(u);
@@ -190,7 +190,7 @@ const App: React.FC = () => {
     if (data.users) {
       const importedUsers = data.users as User[];
       if (!importedUsers.find(u => u.username === 'ozzy')) {
-        importedUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history'] });
+        importedUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history', 'help_view'] });
       }
       setUsers(importedUsers);
     }

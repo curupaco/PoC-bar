@@ -18,7 +18,7 @@ O Botequista foi projetado para ser intuitivo e rápido, focado na agilidade do 
 
 ### 1.2 Cadastro de Produtos e Interface
 - **Modal Centralizado:** A edição e o cadastro agora abrem um modal fixo no centro da tela, garantindo que o usuário não perca o contexto.
-- **Visual:** O sistema utiliza **CAIXA ALTA** em nomes de produtos e categorias para garantir a máxima legibilidade em ambientes de baixa luminosidade ou telas pequenas.
+- **Visual:** O sistema utiliza rigorosamente **CAIXA ALTA** em nomes de produtos e categorias para garantir a máxima legibilidade em ambientes de baixa luminosidade ou telas pequenas.
 
 ### 1.3 Padrão Monetário e Pagamentos
 - **Moeda:** O sistema utiliza o padrão brasileiro (**R$ 1.234,56**).
@@ -47,7 +47,7 @@ O Botequista foi projetado para ser intuitivo e rápido, focado na agilidade do 
 
 ### 2.3 Gestão de Usuários
 - **Permissões Granulares:** Cada usuário possui um array de `UserPermission` que define quais botões e telas estão visíveis e funcionais.
-- **Admin:** O usuário `admin` possui bypass em todas as checagens de permissão.
+- **Admin:** O usuário `admin` possui bypass em todas as checagens de permissão e acesso garantido à visualização de ajuda (`help_view`).
 
 ---
 *Botequista: O braço direito do dono de bar.*
