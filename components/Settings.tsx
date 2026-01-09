@@ -1,6 +1,6 @@
 
-import React, { useState, useRef } from 'react';
-import { Product, Sale, Tab } from '../types';
+import React, { useState, useRef, useEffect } from 'react';
+import { Product, Sale, Tab, formatCurrency } from '../types';
 import { saveToFirebase, loadFromFirebase, AppFullData } from '../services/firebaseService';
 
 interface SettingsProps {
@@ -20,7 +20,51 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [fbMessage, setFbMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [snapshotInfo, setSnapshotInfo] = useState<{ date: string; count: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Carregar info do snapshot ao montar
+  useEffect(() => {
+    const saved = localStorage.getItem('bar_snapshot');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSnapshotInfo({
+          date: parsed.timestamp,
+          count: (parsed.products?.length || 0) + (parsed.sales?.length || 0)
+        });
+      } catch (e) { console.error("Snapshot corrompido"); }
+    }
+  }, []);
+
+  const createRestorePoint = () => {
+    const timestamp = new Date().toLocaleString('pt-BR');
+    const snapshot = {
+      timestamp,
+      products,
+      sales,
+      openTabs,
+      config: { fbUrl }
+    };
+    localStorage.setItem('bar_snapshot', JSON.stringify(snapshot));
+    setSnapshotInfo({ date: timestamp, count: products.length + sales.length });
+    alert("Ponto de restauração criado com sucesso! Seus dados atuais estão protegidos localmente.");
+  };
+
+  const restoreFromPoint = () => {
+    const saved = localStorage.getItem('bar_snapshot');
+    if (!saved) return;
+    
+    if (window.confirm("Deseja restaurar os dados para o ponto salvo em " + snapshotInfo?.date + "? O estado ATUAL será perdido.")) {
+      try {
+        const data = JSON.parse(saved);
+        onImport(data);
+        alert("Sistema restaurado com sucesso!");
+      } catch (e) {
+        alert("Erro ao restaurar snapshot.");
+      }
+    }
+  };
 
   const testFirebase = async () => {
     if (!fbUrl) return;
@@ -146,6 +190,39 @@ const Settings: React.FC<SettingsProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-24">
+      {/* NOVO: Ponto de Restauração de Segurança */}
+      <div className="bg-slate-100 dark:bg-slate-900/50 p-8 rounded-3xl border-2 border-blue-500 shadow-lg space-y-6 relative overflow-hidden transition-all">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Ponto de Restauração</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Snapshot de Segurança Local</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <button 
+            onClick={createRestorePoint}
+            className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+            Criar Snapshot Agora
+          </button>
+          
+          {snapshotInfo && (
+            <button 
+              onClick={restoreFromPoint}
+              className="flex-1 bg-white dark:bg-slate-800 text-blue-600 border border-blue-200 dark:border-blue-900/50 py-4 rounded-2xl font-black hover:bg-blue-50 transition-all text-xs tracking-widest uppercase flex flex-col items-center justify-center gap-1"
+            >
+              <span>Restaurar Snapshot</span>
+              <span className="text-[9px] opacity-60 font-medium">Salvo em: {snapshotInfo.date}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border-2 border-orange-500 shadow-xl space-y-6 relative overflow-hidden transition-colors">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
