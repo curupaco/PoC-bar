@@ -27,10 +27,10 @@ export const menuItems = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onClose, dbStatus, isOnline, currentUser, onLogout }) => {
+  // Regra de ouro: Administrador vê TUDO sempre. Outros usuários dependem do array de permissões.
   const filteredItems = menuItems.filter(item => 
     currentUser?.username === 'admin' || 
-    currentUser?.permissions.includes(item.perm as any) ||
-    item.id === 'help' // Garante que ajuda sempre esteja no menu para quem tem a permissão help_view ou é admin
+    currentUser?.permissions.includes(item.perm as any)
   );
 
   return (

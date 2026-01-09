@@ -2,8 +2,8 @@
 import React from 'react';
 
 const Help: React.FC = () => {
-  // Fix: Use React.ReactNode for children to properly support multiple or single children elements including strings.
-  const FakeButton = ({ children, color = "red" }: { children: React.ReactNode, color?: string }) => (
+  // Fix: children prop made optional to prevent type errors when used as JSX wrapper
+  const FakeButton = ({ children, color = "red" }: { children?: React.ReactNode, color?: string }) => (
     <span className={`inline-block px-2 py-1 mx-1 text-[10px] font-black uppercase rounded-lg shadow-sm text-white ${color === 'red' ? 'bg-red-600' : color === 'blue' ? 'bg-blue-600' : 'bg-slate-800'}`}>
       {children}
     </span>

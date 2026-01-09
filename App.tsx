@@ -59,6 +59,14 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Lista mestre de permissões
+  const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
+    'dashboard', 'pos', 'products', 'history', 'reports', 'settings', 
+    'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 
+    'delete_sale', 'delete_product', 'edit_product', 'export_report', 
+    'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
+  ];
+
   useEffect(() => {
     const p = localStorage.getItem('bar_products');
     const s = localStorage.getItem('bar_sales');
@@ -77,22 +85,19 @@ const App: React.FC = () => {
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
       
-      // Fix: Correctly explicitly define all permissions using the imported UserPermission type
-      const allAdminPerms: UserPermission[] = ['dashboard', 'pos', 'products', 'history', 'reports', 'settings', 'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 'delete_sale', 'delete_product', 'edit_product', 'export_report', 'clear_fiado', 'full_reset', 'manage_backup', 'help_view'];
-      
       let initialUsers: User[] = [];
       if (u) {
         initialUsers = JSON.parse(u);
-        // Garante que admin sempre tenha tudo, inclusive ajuda
+        // FORÇA: Sempre garante que o admin tenha TODAS as permissões atuais, corrigindo caches antigos
         initialUsers = initialUsers.map(user => {
           if (user.username === 'admin') {
-            return { ...user, permissions: allAdminPerms };
+            return { ...user, permissions: ALL_ADMIN_PERMISSIONS };
           }
           return user;
         });
       } else {
         initialUsers = [
-          { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allAdminPerms },
+          { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS },
           { id: 'ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history', 'help_view'] }
         ];
       }
@@ -104,11 +109,15 @@ const App: React.FC = () => {
   const handleLogin = (user: string, pass: string) => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
-      setCurrentUser(found);
-      if (found.username === 'admin') {
-         // Admin pode ver tudo, permanece no POS ou dashboard
-      } else if (!found.permissions.includes(activeView as any)) {
-        setActiveView(found.permissions.includes('pos') ? 'pos' : (found.permissions[0] as any) || 'pos');
+      // Força permissões do admin também no login
+      const userToLogin = found.username === 'admin' 
+        ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } 
+        : found;
+      
+      setCurrentUser(userToLogin);
+      
+      if (userToLogin.username !== 'admin' && !userToLogin.permissions.includes(activeView as any)) {
+        setActiveView(userToLogin.permissions.includes('pos') ? 'pos' : (userToLogin.permissions[0] as any) || 'pos');
       }
     } else {
       alert("Usuário ou senha inválidos.");
@@ -160,7 +169,13 @@ const App: React.FC = () => {
     if (data.products) setProducts(data.products);
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
-    if (data.users) setUsers(data.users);
+    if (data.users) {
+      // Ao importar da nuvem, também garante que o admin local tenha todas as permissões
+      const importedUsers = (data.users as User[]).map(u => 
+        u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u
+      );
+      setUsers(importedUsers);
+    }
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
@@ -221,7 +236,7 @@ const App: React.FC = () => {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
-            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase">
+            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase leading-none">
               {menuItems.find(i => i.id === activeView)?.label}
             </h1>
           </div>
