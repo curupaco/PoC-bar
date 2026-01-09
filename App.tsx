@@ -47,6 +47,14 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
+  // Função para normalizar categorias (CACHETA -> Cacheta)
+  const normalizeCategories = (prods: Product[]): Product[] => {
+    return prods.map(p => ({
+      ...p,
+      category: p.category === 'CACHETA' ? 'Cacheta' : p.category
+    }));
+  };
+
   // Atualiza status de rede
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -67,11 +75,15 @@ const App: React.FC = () => {
     const sh = localStorage.getItem('bar_shifts');
     
     try {
-      if (p) setProducts(JSON.parse(p));
-      else setProducts([
-        { id: '1', name: 'Cerveja Lata 350ml', price: 6.00, category: 'Bebidas', sellType: 'unit' },
-        { id: '2', name: 'Batata Frita', price: 45.00, category: 'Porções', sellType: 'weight' },
-      ]);
+      if (p) {
+        const loadedProducts = JSON.parse(p);
+        setProducts(normalizeCategories(loadedProducts));
+      } else {
+        setProducts([
+          { id: '1', name: 'Cerveja Lata 350ml', price: 6.00, category: 'Bebidas', sellType: 'unit' },
+          { id: '2', name: 'Batata Frita', price: 45.00, category: 'Porções', sellType: 'weight' },
+        ]);
+      }
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
       
@@ -182,7 +194,7 @@ const App: React.FC = () => {
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
-    if (data.products) setProducts(data.products);
+    if (data.products) setProducts(normalizeCategories(data.products));
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.users) {
@@ -210,12 +222,17 @@ const App: React.FC = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => normalizeCategories([...prev, p]))} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? normalizeCategories([u])[0] : p))} currentUser={currentUser} />;
       case 'pos': return (
         <POS 
           products={products} 
           openTabs={openTabs} 
-          onUpdateTabs={setOpenTabs} 
+          onUpdateTabs={onUpdateTabs => {
+            setOpenTabs(prev => {
+              const updated = onUpdateTabs(prev);
+              return updated;
+            });
+          }} 
           onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
           shortcutCheckout={shortcutCheckout}
           onClearShortcut={() => setShortcutCheckout(null)}
