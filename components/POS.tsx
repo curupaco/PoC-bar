@@ -328,7 +328,8 @@ const POS: React.FC<POSProps> = ({
                     <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center text-slate-400 mb-2 transition-colors group-hover:bg-red-50 dark:group-hover:bg-red-900/10 group-hover:text-red-500">
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21l-8-3V7l8-3 8 3v11l-8 3zM12 21V7M12 7l8-3-8-3-8 3 8 3z" /></svg>
                     </div>
-                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase truncate tracking-tighter leading-none">{tab.name}</h3>
+                    {/* leading-normal e tracking-tight ajudam a não cortar acentos e dar espaço horizontal/vertical */}
+                    <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase truncate tracking-tight leading-normal">{tab.name}</h3>
                     <p className="text-red-600 dark:text-red-400 font-black text-xl mt-1">{formatCurrency(tabTotalVal)}</p>
                   </div>
                   <div className="flex justify-between items-end border-t border-slate-50 dark:border-slate-800/50 pt-2">
@@ -405,7 +406,7 @@ const POS: React.FC<POSProps> = ({
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
           <div className="p-5 bg-red-600 text-white shrink-0">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-black uppercase tracking-tighter truncate leading-tight flex-1 pr-4">{activeTab?.name}</h3>
+              <h3 className="font-black uppercase tracking-tight truncate leading-normal flex-1 pr-4">{activeTab?.name}</h3>
               <span className="text-[10px] bg-black/20 px-2 py-1 rounded-full font-bold">#{normalizeId(activeTabId).slice(-4)}</span>
             </div>
             <button 
