@@ -9,6 +9,46 @@ export enum PaymentMethod {
 
 export type SellType = 'unit' | 'weight';
 
+export type UserPermission = 
+  | 'dashboard' 
+  | 'pos' 
+  | 'products' 
+  | 'history' 
+  | 'reports' 
+  | 'settings' 
+  | 'users_admin' 
+  | 'shifts_admin' 
+  | 'cash_admin' 
+  | 'open_shift' 
+  | 'close_shift';
+
+export interface User {
+  id: string;
+  username: string;
+  password: string;
+  displayName: string;
+  permissions: UserPermission[];
+}
+
+export interface Shift {
+  id: string;
+  startTime: number;
+  endTime?: number;
+  openedBy: string; // userId
+  closedBy?: string; // userId
+  status: 'open' | 'closed';
+  
+  // Caixas Segmentados (Saldos de Abertura)
+  cashPrimary: number;   
+  cashChange: number;    
+  cashSecondary: number; 
+
+  // Valores de fechamento
+  finalCashPrimary?: number;
+  finalCashChange?: number;
+  finalCashSecondary?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -41,14 +81,13 @@ export interface Sale {
   total: number;
   tabName?: string;
   customerName?: string;
+  userId: string; // Quem realizou a venda
+  shiftId: string; // Turno vinculado
 }
 
-export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings';
+export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash';
 export type Theme = 'light' | 'dark' | 'retro';
 
-/**
- * Formata um número para o padrão monetário brasileiro (BRL)
- */
 export const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

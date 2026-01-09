@@ -1,50 +1,32 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Sale, Product, PaymentMethod, formatCurrency, SaleItem } from '../types';
+import { Sale, Product, PaymentMethod, formatCurrency, SaleItem, User, Shift } from '../types';
 import * as htmlToImage from 'html-to-image';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
-
-const DrinkBorder = ({ position }: { position: 'top' | 'bottom' }) => (
-  <div className={`absolute left-0 right-0 h-3 overflow-hidden pointer-events-none z-10 ${position === 'top' ? '-top-3' : '-bottom-3 rotate-180'}`}>
-    <svg width="100%" height="100%" viewBox="0 0 100 10" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <path 
-        d="M0 10 L2.5 0 L5 10 L7.5 0 L10 10 L12.5 0 L15 10 L17.5 0 L20 10 L22.5 0 L25 10 L27.5 0 L30 10 L32.5 0 L35 10 L37.5 0 L40 10 L42.5 0 L45 10 L47.5 0 L50 10 L52.5 0 L55 10 L57.5 0 L60 10 L62.5 0 L65 10 L67.5 0 L70 10 L72.5 0 L75 10 L77.5 0 L80 10 L82.5 0 L85 10 L87.5 0 L90 10 L92.5 0 L95 10 L97.5 0 L100 10 Z" 
-        fill="#000000" 
-      />
-    </svg>
-  </div>
-);
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 interface ReportsProps {
   sales: Sale[];
   products: Product[];
+  users: User[];
+  shifts: Shift[];
   onQuitarPendura: (customerName: string, amount: number) => void;
 }
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPendura }) => {
-  const safeSales = sales ?? [];
+type ReportCategory = 'FINANCEIRO' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS';
+
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], onQuitarPendura }) => {
   const fechamentoRef = useRef<HTMLDivElement>(null);
+  const [activeCategory, setActiveCategory] = useState<ReportCategory>('FINANCEIRO');
   
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [periodLabel, setPeriodLabel] = useState('DIA');
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    summary: true,
-    financial: false,
-    penduras: false,
-    dailyClosing: true
-  });
-
-  const toggleSection = (section: string) => {
-    setExpanded(prev => ({ ...prev, [section]: !prev[section] }));
-  };
-
   const filteredSales = useMemo(() => {
     const start = new Date(startDate + 'T00:00:00').getTime();
     const end = new Date(endDate + 'T23:59:59').getTime();
-    return safeSales.filter(s => s.timestamp >= start && s.timestamp <= end);
-  }, [safeSales, startDate, endDate]);
+    return (sales || []).filter(s => s.timestamp >= start && s.timestamp <= end);
+  }, [sales, startDate, endDate]);
 
   const reportData = useMemo(() => {
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc, method) => {
@@ -60,25 +42,21 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     });
 
     const grandTotal = filteredSales.reduce((acc, s) => acc + (s.total ?? 0), 0);
-    const itemsCount = filteredSales.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
     const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
-    const pendurasByCustomer = safeSales
-      .reduce((acc: Record<string, number>, s) => {
-        const name = s.customerName;
-        if (!name) return acc;
-        if (s.paymentMethod === PaymentMethod.PENDURA) {
-          acc[name] = (acc[name] || 0) + (s.total || 0);
-        } else if (s.items?.some(i => i.productId === 'quitacao')) {
-            acc[name] = (acc[name] || 0) - (s.total || 0);
-        }
-        return acc;
-      }, {} as Record<string, number>);
+    // Vendas por Usuário
+    const salesByUser = filteredSales.reduce((acc: Record<string, number>, s) => {
+      const user = users.find(u => u.id === s.userId)?.displayName || 'Desconhecido';
+      acc[user] = (acc[user] || 0) + (s.total || 0);
+      return acc;
+    }, {} as Record<string, number>);
 
-    const activePenduras = (Object.entries(pendurasByCustomer) as [string, number][])
-      .filter(([_, balance]) => balance > 0.01)
-      .reduce((acc, [name, balance]) => { acc[name] = balance; return acc; }, {} as Record<string, number>);
+    // Fix: Added explicit return type to map to resolve 'unknown' property access in sort (Fixing line 101 error)
+    const userChartData = Object.entries(salesByUser)
+      .map(([name, total]): { name: string; total: number } => ({ name, total: Number(total) }))
+      .sort((a, b) => b.total - a.total);
 
+    // Vendas por Categoria
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
@@ -86,321 +64,158 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       return acc;
     }, {} as Record<string, number>);
 
+    // Fix: Added explicit return type to map to resolve 'unknown' property access in sort (Fixing line 104 error)
     const categoryData = Object.entries(categoryAgg)
-      .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => Number(b.total) - Number(a.total));
-
-    const pendurasInPeriod = filteredSales
-      .filter(s => s.paymentMethod === PaymentMethod.PENDURA)
-      .reduce((acc: Record<string, number>, s) => {
-        const name = s.customerName || 'Cliente Oculto';
-        acc[name] = (acc[name] || 0) + (s.total ?? 0);
-        return acc;
-      }, {} as Record<string, number>);
+      .map(([name, total]): { name: string; total: number } => ({ name, total: Number(total) }))
+      .sort((a, b) => b.total - a.total);
 
     return { 
       totalsByMethod, 
       grandTotal, 
-      pendurasByCustomer: activePenduras, 
-      categoryData,
-      pendurasInPeriod,
-      itemsCount,
-      avgTicket
+      avgTicket,
+      userChartData,
+      categoryData
     };
-  }, [filteredSales, safeSales, products]);
+  }, [filteredSales, users, products]);
 
   const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
     const now = new Date();
     let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    if (type === 'HOJE') {
-      setPeriodLabel('DIA');
-    } else if (type === 'ONTEM') {
-      start.setDate(now.getDate() - 1);
-      end.setDate(now.getDate() - 1);
-      setPeriodLabel('ONTEM');
-    } else if (type === 'SEMANA') {
-      start.setDate(now.getDate() - now.getDay());
-      setPeriodLabel('SEMANA');
-    } else if (type === 'MÊS') {
-      start = new Date(now.getFullYear(), now.getMonth(), 1);
-      setPeriodLabel('MÊS');
-    }
-
+    if (type === 'ONTEM') { start.setDate(now.getDate() - 1); end.setDate(now.getDate() - 1); }
+    else if (type === 'SEMANA') { start.setDate(now.getDate() - now.getDay()); }
+    else if (type === 'MÊS') { start = new Date(now.getFullYear(), now.getMonth(), 1); }
     setStartDate(start.toISOString().split('T')[0]);
     setEndDate(end.toISOString().split('T')[0]);
+    setPeriodLabel(type);
   };
 
-  const exportAsImage = async () => {
-    if (!fechamentoRef.current) return;
-    try {
-      const dataUrl = await htmlToImage.toPng(fechamentoRef.current, { backgroundColor: '#000000', cacheBust: true });
-      const link = document.createElement('a');
-      link.download = `fechamento_${periodLabel}_${new Date().toISOString().split('T')[0]}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      alert('Não foi possível gerar a imagem.');
-    }
-  };
-
-  const SectionHeader = ({ title, section, icon }: { title: string, section: string, icon: React.ReactNode }) => (
-    <button 
-      onClick={() => toggleSection(section)}
-      className={`w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm mb-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50`}
-    >
-      <div className="flex items-center gap-3">
-        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-          {icon}
-        </div>
-        <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm">{title}</h3>
-      </div>
-      <svg className={`w-5 h-5 text-slate-400 transition-transform ${expanded[section] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
-  );
-
-  return (
-    <div className="space-y-6 max-w-6xl mx-auto pb-20">
-      
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 justify-center sticky top-20 z-20">
-        {['HOJE', 'ONTEM', 'SEMANA', 'MÊS'].map(p => (
-          <button 
-            key={p} 
-            onClick={() => setPreset(p as any)}
-            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border ${
-              (periodLabel === p || (p === 'MÊS' && periodLabel === 'MÊS') || (p === 'HOJE' && periodLabel === 'DIA'))
-                ? 'bg-red-600 border-red-600 text-white shadow-red-500/20'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
-
-      <div>
-        <SectionHeader 
-          title={`Resumo Financeiro (${periodLabel})`} 
-          section="summary" 
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>} 
-        />
-        {expanded.summary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-300">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Total no Período</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(reportData.grandTotal)}</p>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-black dark:border-slate-100 shadow-sm">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Ticket Médio</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(reportData.avgTicket)}</p>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Volume de Itens</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{reportData.itemsCount} <span className="text-xs font-normal text-slate-400">unid.</span></p>
-            </div>
+  const renderActiveReport = () => {
+    switch(activeCategory) {
+      case 'FINANCEIRO':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+             <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Faturamento por Método</h3>
+                <div className="space-y-4">
+                   {Object.entries(reportData.totalsByMethod).map(([method, data]) => (data.total > 0 && (
+                     <div key={method} className="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-800 last:border-0">
+                        <span className="text-sm font-bold uppercase text-slate-600 dark:text-slate-400">{method}</span>
+                        <span className="font-black text-slate-900 dark:text-white">{formatCurrency(data.total)}</span>
+                     </div>
+                   )))}
+                   <div className="pt-4 flex justify-between items-center text-xl font-black">
+                      <span className="uppercase text-[10px] tracking-widest">Total Líquido</span>
+                      <span className="text-red-600">{formatCurrency(reportData.grandTotal)}</span>
+                   </div>
+                </div>
+             </div>
+             
+             <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center text-center">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Ticket Médio</p>
+                <p className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(reportData.avgTicket)}</p>
+                <p className="text-[10px] text-slate-400 font-bold mt-4 uppercase">Baseado em {filteredSales.length} comandas</p>
+             </div>
           </div>
-        )}
-      </div>
-
-      <div>
-        <SectionHeader 
-          title="Fechamento" 
-          section="dailyClosing" 
-          icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
-        />
-        {expanded.dailyClosing && (
-          <div className="animate-in slide-in-from-top-2 flex flex-col items-center gap-12 py-10">
-            <div ref={fechamentoRef} className="bg-black w-full max-w-sm p-8 shadow-2xl border-t-[2px] border-emerald-500 font-mono text-white flex flex-col relative overflow-visible">
-              <DrinkBorder position="top" />
-              
-              <div className="text-center mb-6 space-y-0.5">
-                <h2 className="text-2xl font-black font-barrio tracking-tighter uppercase leading-none">Botequista</h2>
-                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">SISTEMA DE GESTÃO INTELIGENTE</p>
-                <div className="h-2 border-b-2 border-dashed border-slate-800 my-4"></div>
-                <p className="text-lg font-black uppercase text-red-500 tracking-tighter">FECHAMENTO {periodLabel}</p>
-                <p className="text-[9px] uppercase font-bold text-slate-500">
-                  {new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')} {startDate !== endDate ? `- ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}` : ''}
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-[11px] uppercase font-black">
-                  <span>Operações:</span>
-                  <span>{filteredSales.length} Vendas</span>
-                </div>
-                <div className="flex justify-between text-[11px] uppercase font-black">
-                  <span>Itens Vendidos:</span>
-                  <span>{reportData.itemsCount} unid.</span>
-                </div>
-                
-                <div className="h-px border-b border-dashed border-slate-800 my-2"></div>
-                
-                <div className="space-y-0.5">
-                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Entradas por Método:</p>
-                  {(Object.entries(reportData.totalsByMethod) as [string, {total: number}][]).map(([method, data]) => data.total > 0 && (
-                    <div key={method} className="mb-1">
-                      <div className="flex justify-between text-[11px] font-black uppercase">
-                        <span>{method}</span>
-                        <span>{formatCurrency(data.total)}</span>
-                      </div>
-                      {method === PaymentMethod.PENDURA && Object.keys(reportData.pendurasInPeriod).length > 0 && (
-                        <div className="pl-3 border-l-2 border-slate-800 space-y-0 mt-0.5">
-                           {(Object.entries(reportData.pendurasInPeriod) as [string, number][]).map(([name, val]) => (
-                             <div key={name} className="flex justify-between text-[10px] text-slate-500 font-black italic uppercase leading-tight">
-                               <span className="truncate pr-2">• {name}</span>
-                               <span className="shrink-0">{formatCurrency(val)}</span>
-                             </div>
-                           ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-dashed border-slate-800">
-                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-3 text-center">Consumo por Categoria</p>
-                  <div className="h-[200px] w-full bg-slate-900/40 rounded-xl p-2 border border-slate-800">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart 
-                        data={reportData.categoryData} 
-                        layout="vertical" 
-                        margin={{ left: -15, right: 15, top: 10, bottom: 10 }}
-                        categoryGap={2}
-                      >
-                         <XAxis type="number" hide />
-                         <YAxis 
-                            dataKey="name" 
-                            type="category" 
-                            width={110}
-                            axisLine={false} 
-                            tickLine={false}
-                            tick={{ fill: '#ffffff', fontSize: 9, fontStretch: 'condensed', fontWeight: '900', textTransform: 'uppercase' }} 
-                          />
-                         <Bar 
-                           dataKey="total" 
-                           fill="#94a3b8" 
-                           radius={[0, 4, 4, 0]} 
-                           barSize={18}
-                         />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="h-2 border-b-4 border-double border-slate-800 my-4"></div>
-                
-                <div className="flex justify-between items-center text-xl font-black">
-                  <span className="uppercase text-[10px] tracking-widest">Total Geral</span>
-                  <span className="text-emerald-500">{formatCurrency(reportData.grandTotal)}</span>
-                </div>
-              </div>
-
-              <div className="mt-10 pt-4 border-t border-dashed border-slate-800 text-center space-y-0.5">
-                <p className="text-[9px] uppercase font-black text-slate-600 tracking-widest">Botequista v2.5</p>
-                <p className="text-[9px] uppercase font-black text-slate-600">{new Date().toLocaleDateString('pt-BR')} - {new Date().toLocaleTimeString('pt-BR')}</p>
-              </div>
-
-              <DrinkBorder position="bottom" />
-            </div>
-
-            <button 
-              onClick={exportAsImage}
-              className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-3xl font-black shadow-xl transition-all active:scale-95 text-sm uppercase tracking-widest"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2-2v12a2 2 0 002 2z" /></svg>
-              Exportar PNG
-            </button>
+        );
+      case 'EQUIPE':
+        return (
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-500">
+             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 text-center">Performance de Vendas por Colaborador</h3>
+             <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={reportData.userChartData} layout="vertical">
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" width={120} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontWeight: 'bold', fontSize: 11}} />
+                      <Bar dataKey="total" radius={[0, 10, 10, 0]} barSize={24}>
+                         {reportData.userChartData.map((_, index) => (
+                           <Cell key={index} fill={index === 0 ? '#ef4444' : '#475569'} />
+                         ))}
+                      </Bar>
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
           </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <SectionHeader 
-            title="Detalhamento por Método" 
-            section="financial" 
-            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
-          />
-          {expanded.financial && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors animate-in slide-in-from-top-2">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
+        );
+      case 'OPERACIONAL':
+        return (
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-500">
+             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Eficiência por Turno</h3>
+             <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">
-                      <th className="px-6 py-4">Método</th>
-                      <th className="px-6 py-4">Qtd</th>
-                      <th className="px-6 py-4 text-right">Subtotal</th>
+                    <tr className="text-[10px] font-black uppercase text-slate-400 tracking-widest border-b border-slate-100 dark:border-slate-800">
+                      <th className="px-6 py-4">Turno/Data</th>
+                      <th className="px-6 py-4">Operador</th>
+                      <th className="px-6 py-4 text-right">Faturamento</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-sm">
-                    {Object.entries(reportData.totalsByMethod).map(([method, data]) => {
-                      const typedData = data as { count: number; total: number };
-                      if (typedData.total === 0 && typedData.count === 0) return null;
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                    {shifts.slice(-10).reverse().map(s => {
+                      const sTotal = (sales || []).filter(sa => sa.shiftId === s.id).reduce((acc, sa) => acc + sa.total, 0);
                       return (
-                        <tr key={method} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                          <td className="px-6 py-4">
-                            <span className="text-[11px] font-black uppercase text-slate-700 dark:text-slate-300">{method}</span>
-                          </td>
-                          <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{typedData.count}</td>
-                          <td className="px-6 py-4 text-right text-slate-900 dark:text-slate-100 font-black">{formatCurrency(typedData.total)}</td>
+                        <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                          <td className="px-6 py-4 font-bold">{new Date(s.startTime).toLocaleDateString()} {new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                          <td className="px-6 py-4 uppercase font-black text-slate-400">@{s.openedBy}</td>
+                          <td className="px-6 py-4 text-right font-black text-emerald-600">{formatCurrency(sTotal)}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              </div>
-            </div>
-          )}
-        </div>
+             </div>
+          </div>
+        );
+      case 'PRODUTOS':
+        return (
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-500">
+             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-8 text-center">Faturamento por Categoria de Produto</h3>
+             <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                   <BarChart data={reportData.categoryData} layout="vertical">
+                      <XAxis type="number" hide />
+                      <YAxis dataKey="name" type="category" width={120} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontWeight: 'bold', fontSize: 11}} />
+                      <Bar dataKey="total" fill="#ef4444" radius={[0, 10, 10, 0]} barSize={24} />
+                   </BarChart>
+                </ResponsiveContainer>
+             </div>
+          </div>
+        );
+      default: return null;
+    }
+  };
 
-        <div className="space-y-4">
-          <SectionHeader 
-            title="Saldos Devedores Ativos (Global)" 
-            section="penduras" 
-            icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
-          />
-          {expanded.penduras && (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors animate-in slide-in-from-top-2">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">
-                      <th className="px-6 py-4">Cliente</th>
-                      <th className="px-6 py-4 text-right">Saldo Atual</th>
-                      <th className="px-6 py-4 text-right">Receber</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-sm">
-                    {(Object.entries(reportData.pendurasByCustomer) as [string, number][]).map(([customer, total]) => (
-                      <tr key={customer} className="hover:bg-orange-50/30 dark:hover:bg-orange-900/5 transition-colors group">
-                        <td className="px-6 py-4 font-black text-slate-700 dark:text-slate-300 uppercase">{customer}</td>
-                        <td className="px-6 py-4 text-right text-red-600 font-black">{formatCurrency(total)}</td>
-                        <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => onQuitarPendura(customer, total)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all active:scale-95 shadow-sm"
-                          >
-                            Quitar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {Object.keys(reportData.pendurasByCustomer).length === 0 && (
-                      <tr>
-                        <td colSpan={3} className="px-6 py-12 text-center text-slate-400 italic">Nenhum saldo pendente encontrado.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+  return (
+    <div className="space-y-8 max-w-6xl mx-auto pb-24">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+          {(['FINANCEIRO', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => (
+            <button 
+              key={cat} 
+              onClick={() => setActiveCategory(cat)}
+              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white dark:bg-slate-900 text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex gap-2">
+           {['HOJE', 'ONTEM', 'SEMANA', 'MÊS'].map(p => (
+             <button key={p} onClick={() => setPreset(p as any)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase border transition-all ${periodLabel === p ? 'bg-black text-white border-black' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800'}`}>{p}</button>
+           ))}
         </div>
       </div>
+
+      <div className="min-h-[500px]">
+        {renderActiveReport()}
+      </div>
+
+      {activeCategory === 'FINANCEIRO' && (
+        <div className="flex justify-center">
+          <button onClick={() => setPreset('HOJE')} className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-red-500 transition-colors">Zerar filtros e ver hoje</button>
+        </div>
+      )}
     </div>
   );
 };
