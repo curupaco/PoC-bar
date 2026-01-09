@@ -1,51 +1,54 @@
 
 # 🍺 Botequista - Documentação Oficial
 
-Este documento fornece uma visão detalhada, tanto funcional quanto técnica, do sistema **Botequista**, uma solução moderna e completa de gestão para bares e restaurantes.
+Este documento fornece uma visão detalhada, tanto funcional quanto técnica, do sistema **Botequista**, a solução definitiva para gestão de bares focada em agilidade e precisão.
 
 ---
 
 ## 📋 1. Documentação Funcional (Guia do Usuário)
 
-O Botequista foi projetado para ser intuitivo e rápido, focado na agilidade do atendimento de balcão e mesa.
+### 1.1 Vendas e PDV (Ponto de Venda)
+- **Operação de Mesas:** Abertura rápida de comandas por nome ou número.
+- **Lançamento por Peso:** Produtos configurados como "Peso (Kg)" solicitam automaticamente o valor em gramas (ex: digitar `450` para 450g), realizando o cálculo monetário instantâneo.
+- **Fechamento de Conta:** Suporte a múltiplos métodos de pagamento em uma única comanda.
 
-### 1.1 Gestão de Comandas (Mesa/Cliente)
-- **Abertura:** Na tela de **Venda (PDV)**, utilize "Abrir Nova Mesa".
-- **Lançamento de Itens:**
-    - **Unidade:** Clique no produto para adicionar. Use `+` e `-` para ajustes finos.
-    - **Peso (Kg):** Para itens vendidos por gramatura, o sistema abre um teclado numérico para entrada em gramas (g). O cálculo é automático com base no preço/kg.
-- **Cancelamento:** Permite remover itens individuais ou "Abandonar Mesa" (limpa o consumo sem gerar venda).
+### 1.2 Gestão Financeira e Caixa
+- **Padrão Monetário:** Rigoroso uso do padrão brasileiro (**R$ 1.234,56**) em todas as telas e comprovantes.
+- **Confirmação Visual:** Entradas de valores no Caixa e Abertura de Turno possuem um preview em tempo real do valor formatado para evitar erros de digitação.
+- **Tesouraria (Caixa):** Gerenciamento de três níveis de fluxo: Primário (Cofre), Gaveta (Troco/Operacional) e Secundário.
 
-### 1.2 Cadastro de Produtos e Interface
-- **Modal Centralizado:** A edição e o cadastro agora abrem um modal fixo no centro da tela.
-- **Visual:** O sistema utiliza rigorosamente **CAIXA ALTA** em nomes de produtos e categorias para garantir a máxima legibilidade em ambientes de baixa luminosidade ou telas pequenas.
+### 1.3 Relatórios Estratégicos
+O sistema agora conta com 6 categorias de análise:
+1.  **Fechamento:** Cupom estilo térmico para conferência de turno (exportável em PNG).
+2.  **Financeiro:** Faturamento bruto, ticket médio e mix de pagamentos.
+3.  **Penduras:** Gestão ativa de fiados com opção de quitação rápida.
+4.  **Equipe:** Ranking de vendas por colaborador e volume de atendimentos.
+5.  **Operacional:** Gráficos de fluxo horário e identificação de horários de pico.
+6.  **Produtos:** Ranking de vendas (Curva ABC) para identificar itens mais rentáveis.
 
-### 1.3 Padrão Monetário e Pagamentos
-- **Moeda:** O sistema utiliza o padrão brasileiro (**R$ 1.234,56**).
-- **Pendura (Fiado):** Registra o valor como uma dívida vinculada ao nome do cliente.
-- **Quitação:** Para pagar uma dívida, acesse Relatórios > Penduras e clique em Quitar. Isso envia o comando para o PDV para recebimento formal.
-
-### 1.4 Tesouraria e Turnos
-- **Segregação de Caixa:** O dinheiro é dividido entre Primário (Cofre), Gaveta (Troco) e Secundário.
-- **Fechamento:** O relatório de fechamento simula uma impressora térmica com bordas serrilhadas e pode ser exportado como imagem PNG.
+### 1.4 Central de Ajuda Expandida
+Guia ilustrado com 6 cards cobrindo: Vendas, Nuvem, Cardápio, Equipe, Tesouraria e Dashboard.
 
 ---
 
 ## 🛠 2. Documentação Técnica (Guia do Desenvolvedor)
 
-### 2.1 Stack Tecnológica
+### 2.1 Interface e UX
+- **Material Design 3:** O botão de troca de tema segue as diretrizes Material, com ícones animados e transições suaves entre Light e Dark mode.
+- **Sidebar Otimizada:** Menu lateral com alinhamento corrigido e labels simplificados (ex: "Caixa").
+- **Tipografia:** Uso da fonte `Barrio` para branding e `Inter` para dados operacionais.
+- **Case Sensitivity:** Interface forçada em **CAIXA ALTA** para legibilidade em ambientes escuros.
+
+### 2.2 Tecnologias e Bibliotecas
 - **Frontend:** React 19 + TypeScript.
-- **Estilização:** Tailwind CSS (com suporte a Temas Light/Dark).
-- **Banco de Dados:** Firebase Realtime Database (via fetch REST).
-- **Criptografia:** AES-256 via CryptoJS para segurança dos dados em trânsito.
+- **Gráficos:** Recharts para visualização de dados operacionais e financeiros.
+- **Exportação:** `html-to-image` para geração de cupons digitais em alta resolução.
+- **IA:** Integração com o SDK `GoogleGenAI` (Gemini 3 Flash) para geração de insights de gestão.
 
-### 2.2 UI/UX e Arquitetura
-- **Sincronização:** Os dados são salvos localmente no `localStorage` e sincronizados de forma assíncrona com o Firebase via `useEffect` debounced.
-- **Environment:** O sistema utiliza `process.env.FIREBASE_URL` para facilitar o deploy no Vercel/GitHub.
-
-### 2.3 Gestão de Usuários
-- **Permissões Granulares:** Cada usuário possui um array de `UserPermission` que define quais botões e telas estão visíveis.
-- **Admin:** O usuário `admin` possui acesso garantido à visualização de ajuda (`help_view`).
+### 2.3 Segurança e Persistência
+- **Sincronização Híbrida:** Persistência primária em `localStorage` com sincronização secundária em Firebase Realtime Database.
+- **Criptografia:** Dados sensíveis são criptografados com **AES-256** antes de serem enviados para a nuvem.
+- **Snapshots:** Sistema de backup local para restauração imediata em caso de falha de rede.
 
 ---
-*Botequista: O braço direito do dono de bar.*
+*Botequista: Gestão profissional com alma de botequim.*
