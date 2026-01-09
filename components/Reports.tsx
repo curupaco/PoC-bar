@@ -31,10 +31,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
   const [periodLabel, setPeriodLabel] = useState('DIA');
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({
-    summary: false,
+    summary: true,
     financial: false,
     penduras: false,
-    dailyClosing: false
+    dailyClosing: true
   });
 
   const toggleSection = (section: string) => {
@@ -42,8 +42,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
   };
 
   const filteredSales = useMemo(() => {
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime() + 86400000;
+    const start = new Date(startDate + 'T00:00:00').getTime();
+    const end = new Date(endDate + 'T23:59:59').getTime();
     return safeSales.filter(s => s.timestamp >= start && s.timestamp <= end);
   }, [safeSales, startDate, endDate]);
 
@@ -56,41 +56,37 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     filteredSales.forEach(sale => {
       if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
-        const currentVal = totalsByMethod[sale.paymentMethod].total || 0;
-        const addVal = sale.total || 0;
-        totalsByMethod[sale.paymentMethod].total = currentVal + addVal;
+        totalsByMethod[sale.paymentMethod].total += (sale.total || 0);
       }
     });
 
     const grandTotal = filteredSales.reduce((acc, s) => acc + (s.total ?? 0), 0);
+    const itemsCount = filteredSales.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
+    const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
-    const pendurasByCustomer = filteredSales
+    // Saldos Devedores (Lógica Global, mas exibimos apenas os ativos)
+    const pendurasByCustomer = safeSales
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName;
         if (!name) return acc;
-        const currentBalance = Number(acc[name] || 0);
-        const saleTotal = Number(s.total ?? 0);
         if (s.paymentMethod === PaymentMethod.PENDURA) {
-          acc[name] = currentBalance + saleTotal;
-        } else {
-          acc[name] = currentBalance - saleTotal;
+          acc[name] = (acc[name] || 0) + (s.total || 0);
+        } else if (s.items?.some(i => i.productId === 'quitacao')) {
+            acc[name] = (acc[name] || 0) - (s.total || 0);
         }
         return acc;
       }, {} as Record<string, number>);
 
+    // Fix for unknown type error from Object.entries by explicitly typing the iteration output
     const activePenduras = (Object.entries(pendurasByCustomer) as [string, number][])
       .filter(([_, balance]) => balance > 0.01)
-      .reduce((acc, [name, balance]) => {
-        acc[name] = balance;
-        return acc;
-      }, {} as Record<string, number>);
+      .reduce((acc, [name, balance]) => { acc[name] = balance; return acc; }, {} as Record<string, number>);
 
+    // Categorias no Período
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
-      const current = Number(acc[cat] || 0);
-      const itemPrice = Number(item.totalPrice || 0);
-      acc[cat] = current + itemPrice;
+      acc[cat] = (acc[cat] || 0) + (item.totalPrice || 0);
       return acc;
     }, {} as Record<string, number>);
 
@@ -98,13 +94,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => Number(b.total) - Number(a.total));
 
+    // Penduras criadas no período específico para o recibo
     const pendurasInPeriod = filteredSales
       .filter(s => s.paymentMethod === PaymentMethod.PENDURA)
       .reduce((acc: Record<string, number>, s) => {
         const name = s.customerName || 'Cliente Oculto';
-        const currentSum = Number(acc[name] || 0);
-        const amountToAdd = Number(s.total ?? 0);
-        acc[name] = currentSum + amountToAdd;
+        acc[name] = (acc[name] || 0) + (s.total ?? 0);
         return acc;
       }, {} as Record<string, number>);
 
@@ -114,22 +109,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       pendurasByCustomer: activePenduras, 
       categoryData,
       pendurasInPeriod,
-      itemsCount: filteredSales.reduce((acc, s) => acc + (s.items?.length ?? 0), 0)
+      itemsCount,
+      avgTicket
     };
-  }, [filteredSales, products]);
-
-  const aggregations = useMemo(() => {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-
-    const daily = safeSales.filter(s => s.timestamp >= startOfToday).reduce((acc, s) => acc + (s.total ?? 0), 0);
-    const weekly = safeSales.filter(s => s.timestamp >= startOfWeek).reduce((acc, s) => acc + (s.total ?? 0), 0);
-    const monthly = safeSales.filter(s => s.timestamp >= startOfMonth).reduce((acc, s) => acc + (s.total ?? 0), 0);
-
-    return { daily, weekly, monthly };
-  }, [safeSales]);
+  }, [filteredSales, safeSales, products]);
 
   const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
     const now = new Date();
@@ -174,7 +157,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       className={`w-full flex items-center justify-between p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm mb-2 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50`}
     >
       <div className="flex items-center gap-3">
-        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 transition-colors">
+        <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
           {icon}
         </div>
         <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm">{title}</h3>
@@ -189,7 +172,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
     <div className="space-y-6 max-w-6xl mx-auto pb-20">
       
       {/* Atalhos de Período Fixos no Topo */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 justify-center">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-2 justify-center sticky top-20 z-20">
         {['HOJE', 'ONTEM', 'SEMANA', 'MÊS'].map(p => (
           <button 
             key={p} 
@@ -205,32 +188,32 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
         ))}
       </div>
 
-      {/* Resumo Financeiro */}
+      {/* Resumo Financeiro Dinâmico */}
       <div>
         <SectionHeader 
-          title="Resumo Financeiro" 
+          title={`Resumo Financeiro (${periodLabel})`} 
           section="summary" 
           icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>} 
         />
         {expanded.summary && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-300">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm transition-colors">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Hoje</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.daily)}</p>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Total no Período</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(reportData.grandTotal)}</p>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-black dark:border-slate-100 shadow-sm transition-colors">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Esta Semana</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.weekly)}</p>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-black dark:border-slate-100 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Ticket Médio</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(reportData.avgTicket)}</p>
             </div>
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm transition-colors">
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Este Mês</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{formatCurrency(aggregations.monthly)}</p>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-l-4 border-red-600 shadow-sm">
+              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase mb-1 tracking-wider">Volume de Itens</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{reportData.itemsCount} <span className="text-xs font-normal text-slate-400">unid.</span></p>
             </div>
           </div>
         )}
       </div>
 
-      {/* FECHAMENTO (RECEIPT STYLE - BLACK THEME) */}
+      {/* FECHAMENTO (RECIBO) */}
       <div>
         <SectionHeader 
           title="Fechamento" 
@@ -248,7 +231,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                 <div className="h-2 border-b-2 border-dashed border-slate-800 my-4"></div>
                 <p className="text-lg font-black uppercase text-red-500 tracking-tighter">FECHAMENTO {periodLabel}</p>
                 <p className="text-[9px] uppercase font-bold text-slate-500">
-                  {new Date(startDate).toLocaleDateString('pt-BR')} {startDate !== endDate ? `- ${new Date(endDate).toLocaleDateString('pt-BR')}` : ''}
+                  {new Date(startDate + 'T12:00:00').toLocaleDateString('pt-BR')} {startDate !== endDate ? `- ${new Date(endDate + 'T12:00:00').toLocaleDateString('pt-BR')}` : ''}
                 </p>
               </div>
 
@@ -265,7 +248,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                 <div className="h-px border-b border-dashed border-slate-800 my-2"></div>
                 
                 <div className="space-y-0.5">
-                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Resumo Financeiro:</p>
+                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Entradas por Método:</p>
                   {(Object.entries(reportData.totalsByMethod) as [string, {total: number}][]).map(([method, data]) => data.total > 0 && (
                     <div key={method} className="mb-1">
                       <div className="flex justify-between text-[11px] font-black uppercase">
@@ -319,7 +302,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                 <div className="h-2 border-b-4 border-double border-slate-800 my-4"></div>
                 
                 <div className="flex justify-between items-center text-xl font-black">
-                  <span className="uppercase text-[10px] tracking-widest">Total</span>
+                  <span className="uppercase text-[10px] tracking-widest">Total Geral</span>
                   <span className="text-emerald-500">{formatCurrency(reportData.grandTotal)}</span>
                 </div>
               </div>
@@ -346,7 +329,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <div className="space-y-4">
           <SectionHeader 
-            title="Detalhamento Técnico" 
+            title="Detalhamento por Método" 
             section="financial" 
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
           />
@@ -364,6 +347,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-sm">
                     {Object.entries(reportData.totalsByMethod).map(([method, data]) => {
                       const typedData = data as { count: number; total: number };
+                      if (typedData.total === 0 && typedData.count === 0) return null;
                       return (
                         <tr key={method} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                           <td className="px-6 py-4">
@@ -383,7 +367,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
 
         <div className="space-y-4">
           <SectionHeader 
-            title="Saldos Devedores Ativos" 
+            title="Saldos Devedores Ativos (Global)" 
             section="penduras" 
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} 
           />
@@ -394,7 +378,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], onQuitarPe
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">
                       <th className="px-6 py-4">Cliente</th>
-                      <th className="px-6 py-4 text-right">Saldo Total</th>
+                      <th className="px-6 py-4 text-right">Saldo Atual</th>
                       <th className="px-6 py-4 text-right">Receber</th>
                     </tr>
                   </thead>
