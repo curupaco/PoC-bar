@@ -13,9 +13,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const activeShift = shifts.find(s => s.status === 'open');
   const [showConferral, setShowConferral] = useState(false);
   
-  const [valPrimary, setValPrimary] = useState('0');
-  const [valChange, setValChange] = useState('0');
-  const [valSecondary, setValSecondary] = useState('0');
+  const [valPrimary, setValPrimary] = useState('');
+  const [valChange, setValChange] = useState('');
+  const [valSecondary, setValSecondary] = useState('');
 
   const canOpen = currentUser.username === 'admin' || currentUser.permissions.includes('open_shift');
   const canClose = currentUser.username === 'admin' || currentUser.permissions.includes('close_shift');
@@ -43,6 +43,15 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     };
   }, [shiftSales]);
 
+  const handleInputChange = (val: string, setter: (v: string) => void) => {
+    const cleaned = val.replace(/[^0-9,]/g, '');
+    const parts = cleaned.split(',');
+    if (parts.length > 2) return;
+    setter(cleaned);
+  };
+
+  const parseVal = (v: string) => parseFloat(v.replace(',', '.')) || 0;
+
   const handleOpenShift = () => {
     if (!canOpen) return;
     const newShift: Shift = {
@@ -50,14 +59,14 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       startTime: Date.now(),
       openedBy: currentUser.username,
       status: 'open',
-      cashPrimary: parseFloat(valPrimary.replace(',', '.')) || 0,
-      cashChange: parseFloat(valChange.replace(',', '.')) || 0,
-      cashSecondary: parseFloat(valSecondary.replace(',', '.')) || 0
+      cashPrimary: parseVal(valPrimary),
+      cashChange: parseVal(valChange),
+      cashSecondary: parseVal(valSecondary)
     };
     onUpdateShifts([newShift, ...shifts]);
-    setValPrimary('0');
-    setValChange('0');
-    setValSecondary('0');
+    setValPrimary('');
+    setValChange('');
+    setValSecondary('');
   };
 
   const handleConfirmClose = () => {
@@ -167,12 +176,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                     type="text" 
                     inputMode="decimal" 
                     value={item.val} 
-                    onChange={e => item.set(e.target.value.replace(/[^0-9,]/g, ''))} 
+                    onChange={e => handleInputChange(e.target.value, item.set)} 
                     className="w-full bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-2 focus:ring-blue-500" 
+                    placeholder="0,00"
                    />
-                   {parseFloat(item.val.replace(',', '.')) > 0 && (
+                   {parseVal(item.val) > 0 && (
                      <p className="text-[10px] font-black text-blue-500 uppercase ml-2">
-                       Confirmando: {formatCurrency(parseFloat(item.val.replace(',', '.')))}
+                       Confirmando: {formatCurrency(parseVal(item.val))}
                      </p>
                    )}
                 </div>

@@ -32,6 +32,14 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       .reduce((acc, s) => acc + s.total, 0);
   }, [activeShift, sales]);
 
+  const handleInputChange = (val: string) => {
+    // Permite apenas números e uma única vírgula
+    const cleaned = val.replace(/[^0-9,]/g, '');
+    const parts = cleaned.split(',');
+    if (parts.length > 2) return; // Impede múltiplas vírgulas
+    setTransferValue(cleaned);
+  };
+
   const handleTransfer = () => {
     if (!activeShift) return;
     // Converte vírgula em ponto para processamento numérico
@@ -139,7 +147,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                     type="text" 
                     inputMode="decimal" 
                     value={transferValue} 
-                    onChange={e => setTransferValue(e.target.value.replace(/[^0-9,]/g, ''))} 
+                    onChange={e => handleInputChange(e.target.value)} 
                     className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-6 rounded-3xl border-2 border-transparent focus:border-blue-500 font-black text-3xl outline-none transition-all" 
                     placeholder="0,00" 
                   />
