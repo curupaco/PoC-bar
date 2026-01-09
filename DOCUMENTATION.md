@@ -13,24 +13,24 @@ O Botequista foi projetado para ser intuitivo e rápido, focado na agilidade do 
 - **Abertura:** Na tela de **Venda (PDV)**, utilize "Abrir Nova Mesa".
 - **Lançamento de Itens:**
     - **Unidade:** Clique no produto para adicionar. Use `+` e `-` para ajustes finos.
-    - **Peso (Kg):** Para itens vendidos por gramatura, o sistema abre um teclado numérico para entrada em gramas (g).
+    - **Peso (Kg):** Para itens vendidos por gramatura, o sistema abre um teclado numérico para entrada em gramas (g). O cálculo é automático com base no preço/kg.
 - **Cancelamento:** Permite remover itens individuais ou "Abandonar Mesa" (limpa o consumo sem gerar venda).
 
-### 1.2 Padrão Monetário e Pagamentos
+### 1.2 Cadastro de Produtos (Novo Fluxo)
+- **Modal Centralizado:** A edição e o cadastro agora abrem um modal fixo no centro da tela, garantindo que o usuário não perca o contexto, mesmo em listas longas.
+- **Normalização de Categoria:** O sistema limpa automaticamente nomes de categoria em caixa alta. Exemplos: "CACHETA" vira "Cacheta".
+
+### 1.3 Padrão Monetário e Pagamentos
 - **Moeda:** O sistema utiliza rigorosamente o padrão brasileiro (**R$ 1.234,56**).
 - **Métodos Suportados:** CASH (Dinheiro), PIX, Débito, Crédito e Pendura.
 - **Pendura (Fiado):** Registra o valor como uma dívida vinculada ao nome do cliente.
-- **Quitação Corrigida:** Para pagar uma dívida, o sistema gera uma venda especial de "Quitação". Agora, o sistema detecta automaticamente pagamentos parciais ou totais e abate o valor exato do saldo devedor do cliente no relatório.
+- **Quitação:** Para pagar uma dívida, acesse Relatórios > Penduras e clique em Quitar. Isso envia o comando para o PDV para recebimento formal.
 
-### 1.3 Relatório de Fechamento (Estilo Cupom Fiscal)
+### 1.4 Relatório de Fechamento (Estilo Cupom Fiscal)
 O módulo de **Relatórios** conta com um design de alta fidelidade para conferência:
 - **Visual Retrô/Térmico:** O relatório de fechamento simula uma impressora térmica com bordas serrilhadas (zigzag) no topo e na base.
-- **Exportação:** Permite gerar uma imagem PNG perfeita do cupom para compartilhamento via WhatsApp ou impressão, com correção de enquadramento para evitar cortes.
+- **Exportação:** Permite gerar uma imagem PNG perfeita do cupom para compartilhamento via WhatsApp.
 - **Conferência de Gaveta:** Calcula automaticamente o "Dinheiro Esperado" somando o Fundo de Troco inicial às vendas em espécie do turno.
-
-### 1.4 Usuários Padrão
-- **Admin:** Acesso total a todas as funções.
-- **Ozzy:** Usuário padrão para operação de vendas e visualização de histórico.
 
 ---
 
@@ -38,19 +38,18 @@ O módulo de **Relatórios** conta com um design de alta fidelidade para confer�
 
 ### 2.1 Stack Tecnológica
 - **Frontend:** React 19 + TypeScript.
-- **Estilização:** Tailwind CSS com classes dinâmicas para suporte a temas (Light, Dark, Retro).
-- **Efeitos CSS:** Gradientes lineares avançados para simular o corte serrilhado de papel.
-- **Exportação:** `html-to-image` configurado com `pixelRatio: 2` para alta definição.
+- **Estilização:** Tailwind CSS.
+- **Banco de Dados:** Firebase Realtime Database (REST).
+- **IA:** Integração com Google Gemini para análise de ticket médio e sugestões de lucro.
 
-### 2.2 UI/UX e Acessibilidade
-- **Custom Scrollbars:** Barras de rolagem personalizadas e visíveis em desktops para garantir navegação fluida em telas com muito conteúdo.
-- **Layout Fixo no PDV:** O botão de finalização de venda é fixado no rodapé da barra lateral para garantir acessibilidade em qualquer resolução de tela, evitando que o scroll esconda a ação principal.
-- **Scrollbar Gutter:** Utilização de `scrollbar-gutter: stable` para evitar saltos de layout (layout shift) durante a navegação.
+### 2.2 UI/UX e Arquitetura
+- **Modais Fixed-Viewport:** Implementados com `fixed inset-0` e `z-index: 100` para garantir visibilidade total sobre listas scrollables.
+- **Bloqueio de Scroll:** O `document.body.style.overflow` é alterado para `hidden` durante a exibição de modais para evitar "scroll fantasma".
+- **Limpeza de Dados (Sanitization):** Funções de mapeamento garantem que inconsistências de string (como categorias legadas em caps lock) sejam corrigidas no tempo de execução e no salvamento.
 
 ### 2.3 Sincronização e Segurança
-- **Firebase:** Integração via REST API com persistência em tempo real.
-- **Criptografia:** AES-256 para proteção de dados sensíveis na nuvem.
-- **Snapshot Local:** Permite criar pontos de restauração no `localStorage` antes de operações de reset ou importação.
+- **Criptografia:** AES-256 (Crypto-JS) protege o payload antes do envio para o Firebase.
+- **Modo Offline:** O sistema utiliza `localStorage` como buffer. Dados são sincronizados assim que a conexão é restabelecida.
 
 ---
 *Botequista: O braço direito do dono de bar.*
