@@ -341,7 +341,7 @@ const POS: React.FC<POSProps> = ({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 relative">
+    <div className="flex flex-col lg:flex-row gap-6 relative h-full">
       <div className="flex-1 space-y-6">
         <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
           <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="flex bg-slate-100 dark:bg-slate-800 p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
@@ -391,7 +391,7 @@ const POS: React.FC<POSProps> = ({
         )}
       </div>
 
-      <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] sticky top-24">
+      <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
           <div className="p-5 bg-red-600 text-white shrink-0">
             <h3 className="font-black uppercase tracking-tight truncate leading-normal mb-2">{activeTab?.name}</h3>
@@ -434,7 +434,7 @@ const POS: React.FC<POSProps> = ({
                   );
                 })}
               </div>
-              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800">
+              <div className="p-5 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-[10px] font-black text-slate-400 uppercase">Total</span>
                   <span className="text-2xl font-black text-slate-900 dark:text-white">{formatCurrency(tabTotal)}</span>
@@ -445,33 +445,41 @@ const POS: React.FC<POSProps> = ({
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col p-5 space-y-4">
-               <button onClick={() => setIsClosingTab(false)} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg> Voltar</button>
-               <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl">
-                 <p className="text-[9px] font-black text-slate-400 uppercase">Faltando</p>
-                 <p className="text-3xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
+            <div className="flex-1 flex flex-col overflow-hidden">
+               <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                  <button onClick={() => setIsClosingTab(false)} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg> Voltar</button>
+                  <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl">
+                    <p className="text-[9px] font-black text-slate-400 uppercase">Faltando</p>
+                    <p className="text-3xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <select value={paymentMethodInput} onChange={e => setPaymentMethodInput(e.target.value as any)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-bold text-xs uppercase outline-none focus:ring-2 focus:ring-red-500">
+                      {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
+                      <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-bold text-xs outline-none focus:ring-2 focus:ring-red-500" placeholder="Nome do Cliente" />
+                    )}
+                    <div className="flex gap-2">
+                      <input type="number" value={paymentAmountInput} onChange={e => setPaymentAmountInput(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-black text-xl outline-none focus:ring-2 focus:ring-red-500" placeholder="0,00" />
+                      <button onClick={addPaymentEntry} className="bg-black text-white px-4 rounded-xl font-black hover:bg-slate-800 transition-colors">+</button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pagamentos Lançados</p>
+                    {currentPayments.map((p, i) => (
+                      <div key={i} className="flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
+                        <span className="text-[10px] font-black uppercase">{p.method}</span>
+                        <span className="font-black text-sm">{formatCurrency(p.amount)}</span>
+                      </div>
+                    ))}
+                    {currentPayments.length === 0 && (
+                      <div className="py-4 text-center text-[10px] font-bold text-slate-300 uppercase italic">Aguardando lançamento...</div>
+                    )}
+                  </div>
                </div>
-               <div className="space-y-2">
-                 <select value={paymentMethodInput} onChange={e => setPaymentMethodInput(e.target.value as any)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-bold text-xs uppercase">
-                   {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
-                 </select>
-                 {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
-                   <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-bold text-xs" placeholder="Nome do Cliente" />
-                 )}
-                 <div className="flex gap-2">
-                   <input type="number" value={paymentAmountInput} onChange={e => setPaymentAmountInput(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-black text-xl" placeholder="0.00" />
-                   <button onClick={addPaymentEntry} className="bg-black text-white px-4 rounded-xl font-black">+</button>
-                 </div>
+               <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                  <button onClick={finishSale} disabled={remainingBalance > 0.01} className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 hover:bg-red-700 transition-all shadow-xl shadow-red-500/20">Finalizar Venda</button>
                </div>
-               <div className="flex-1 overflow-y-auto space-y-2">
-                 {currentPayments.map((p, i) => (
-                   <div key={i} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
-                     <span className="text-[10px] font-black uppercase">{p.method}</span>
-                     <span className="font-black">{formatCurrency(p.amount)}</span>
-                   </div>
-                 ))}
-               </div>
-               <button onClick={finishSale} disabled={remainingBalance > 0.01} className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50">Finalizar Venda</button>
             </div>
           )}
         </div>
