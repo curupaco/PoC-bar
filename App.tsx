@@ -13,8 +13,6 @@ import { saveToFirebase, loadFromFirebase, AppFullData } from './services/fireba
 const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const FIXED_FB_URL = process.env.FIREBASE_URL || DEFAULT_FB_URL;
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
-// Placeholder para o repositório, pode ser ajustado nos Ajustes futuramente
-const GITHUB_REPO_URL = "https://github.com/usuario/botequista/issues/new";
 
 const App: React.FC = () => {
   const [isLoggedIn] = useState(true);
@@ -22,7 +20,6 @@ const App: React.FC = () => {
 
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
@@ -41,8 +38,6 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
-
-  const [supportForm, setSupportForm] = useState({ title: '', description: '' });
 
   useEffect(() => {
     const p = localStorage.getItem('bar_products');
@@ -144,28 +139,6 @@ const App: React.FC = () => {
     setActiveView('pos');
   };
 
-  const handleOpenGitHubIssue = () => {
-    const body = `
-### Relato do Usuário
-${supportForm.description}
-
-### Diagnóstico do Sistema
-- **Versão:** Botequista v2.5
-- **Data:** ${new Date().toLocaleString('pt-BR')}
-- **Navegador:** ${navigator.userAgent}
-- **Produtos Cadastrados:** ${products.length}
-- **Vendas no Histórico:** ${sales.length}
-- **Mesas Abertas:** ${openTabs.length}
-- **Status Online:** ${isOnline ? 'Sim' : 'Não'}
-- **Tema Ativo:** ${theme}
-    `.trim();
-
-    const url = `${GITHUB_REPO_URL}?title=${encodeURIComponent(supportForm.title)}&body=${encodeURIComponent(body)}`;
-    window.open(url, '_blank');
-    setIsSupportModalOpen(false);
-    setSupportForm({ title: '', description: '' });
-  };
-
   const renderContent = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
@@ -217,13 +190,6 @@ ${supportForm.description}
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setIsSupportModalOpen(true)}
-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm"
-              title="Reportar Erro ou Sugestão"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-            </button>
             <button onClick={toggleTheme} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm">
               {theme === 'light' && (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -239,54 +205,6 @@ ${supportForm.description}
         </header>
         <div className="p-4 lg:p-8 ml-0 md:ml-64">{renderContent()}</div>
       </main>
-
-      {/* Modal de Suporte */}
-      {isSupportModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-            <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-2 tracking-tighter">Central de Suporte</h3>
-            <p className="text-xs text-slate-500 mb-6 uppercase tracking-widest font-bold">Relate erros ou peça novas funções</p>
-            
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assunto Curto</label>
-                <input 
-                  type="text" 
-                  value={supportForm.title}
-                  onChange={e => setSupportForm({...supportForm, title: e.target.value})}
-                  placeholder="Ex: Erro ao apagar mesa"
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 outline-none transition-all"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">O que aconteceu?</label>
-                <textarea 
-                  rows={4}
-                  value={supportForm.description}
-                  onChange={e => setSupportForm({...supportForm, description: e.target.value})}
-                  placeholder="Descreva o problema de forma simples..."
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-red-500 outline-none transition-all resize-none"
-                />
-              </div>
-              <div className="pt-2 flex flex-col gap-3">
-                <button 
-                  onClick={handleOpenGitHubIssue}
-                  disabled={!supportForm.title || !supportForm.description}
-                  className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  Abrir no GitHub
-                </button>
-                <button 
-                  onClick={() => setIsSupportModalOpen(false)}
-                  className="w-full text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-slate-600"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

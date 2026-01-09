@@ -141,7 +141,16 @@ const ProductList: React.FC<ProductListProps> = ({ products, onAdd, onDelete, on
                 <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all">
                   <td className="px-6 py-4 font-bold text-slate-700 dark:text-slate-200">{p.name}</td>
                   <td className="px-6 py-4"><span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500 uppercase">{p.category}</span></td>
-                  <td className="px-6 py-4 text-xs font-medium text-slate-500">{p.sellType === 'unit' ? '📦 Unidade' : '⚖️ Por Peso'}</td>
+                  <td className="px-6 py-4 text-xs font-medium text-slate-500">
+                    <span className="flex items-center gap-2">
+                      {p.sellType === 'unit' ? (
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 12h12l3-12H3zm15 2l-1.5 8h-9L6 8h12z" /></svg>
+                      )}
+                      {p.sellType === 'unit' ? 'Unidade' : 'Por Peso'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 font-black text-red-600 dark:text-red-400">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</td>
                   <td className="px-6 py-4 text-right space-x-4">
                     <button onClick={() => startEdit(p)} className="text-blue-500 font-bold hover:underline">Editar</button>
