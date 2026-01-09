@@ -47,6 +47,18 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
+  // Atualiza status de rede
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   useEffect(() => {
     const p = localStorage.getItem('bar_products');
     const s = localStorage.getItem('bar_sales');
@@ -69,7 +81,6 @@ const App: React.FC = () => {
       
       if (u) {
         initialUsers = JSON.parse(u);
-        // Garante que o admin e o ozzy existam no carregamento
         if (!initialUsers.find(u => u.username === 'admin')) {
           initialUsers.push({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allAdminPerms });
         }
@@ -77,7 +88,6 @@ const App: React.FC = () => {
           initialUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: standardPerms });
         }
         
-        // Migração Admin
         initialUsers = initialUsers.map(user => {
           if (user.username === 'admin') {
             return { ...user, permissions: Array.from(new Set([...user.permissions, ...allAdminPerms])) };
@@ -180,7 +190,6 @@ const App: React.FC = () => {
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.users) {
-      // Mescla ozzy se ele não vier no import (segurança)
       const importedUsers = data.users as User[];
       if (!importedUsers.find(u => u.username === 'ozzy')) {
         importedUsers.push({ id: 'user-ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history'] });
@@ -215,6 +224,7 @@ const App: React.FC = () => {
           shortcutCheckout={shortcutCheckout}
           onClearShortcut={() => setShortcutCheckout(null)}
           activeShift={activeShift}
+          onViewChange={setActiveView}
         />
       );
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(prev => prev.filter(s => s.id !== id))} users={users} />;
@@ -223,7 +233,7 @@ const App: React.FC = () => {
       case 'shifts': return <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} />;
       case 'cash': return <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} />;
       case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} />;
-      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} />;
+      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} onViewChange={setActiveView} />;
     }
   };
 

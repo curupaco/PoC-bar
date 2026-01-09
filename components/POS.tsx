@@ -10,6 +10,7 @@ interface POSProps {
   shortcutCheckout?: { name: string; amount: number } | null;
   onClearShortcut?: () => void;
   activeShift?: Shift;
+  onViewChange?: (view: any) => void;
 }
 
 interface PaymentEntry {
@@ -25,7 +26,8 @@ const POS: React.FC<POSProps> = ({
   onCompleteSale,
   shortcutCheckout,
   onClearShortcut,
-  activeShift
+  activeShift,
+  onViewChange
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -80,13 +82,21 @@ const POS: React.FC<POSProps> = ({
 
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-500">
         <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl">
            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
         </div>
-        <div className="max-w-md">
+        <div className="max-w-md space-y-4">
            <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Vendas Bloqueadas</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium mt-2">Você precisa abrir um turno no menu "Caixa / Turnos" para poder lançar produtos e fechar contas.</p>
+           <p className="text-slate-500 dark:text-slate-400 font-medium">O PDV está bloqueado porque não há um turno ativo. Inicie um turno para começar a vender.</p>
+           {onViewChange && (
+             <button 
+                onClick={() => onViewChange('shifts')}
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-500/20 transition-all active:scale-95"
+             >
+                Abrir Turno Agora
+             </button>
+           )}
         </div>
       </div>
     );
@@ -123,13 +133,15 @@ const POS: React.FC<POSProps> = ({
     const targetId = normalizeId(id);
     if (!targetId) return;
 
-    const target = openTabs.find(t => normalizeId(t.id) === targetId);
-    if (!target) return;
+    const target = openTabs.find(t => normalizeId(t.id) !== targetId);
+    // Correção lógica para busca:
+    const realTarget = openTabs.find(t => normalizeId(t.id) === targetId);
+    if (!realTarget) return;
 
-    const hasItems = (target.items ?? []).length > 0;
+    const hasItems = (realTarget.items ?? []).length > 0;
     const msg = hasItems 
-      ? `A mesa "${target.name}" tem consumo. Deseja realmente APAGAR TUDO e remover a comanda?`
-      : `Deseja excluir a mesa "${target.name}"?`;
+      ? `A mesa "${realTarget.name}" tem consumo. Deseja realmente APAGAR TUDO e remover a comanda?`
+      : `Deseja excluir a mesa "${realTarget.name}"?`;
 
     if (window.confirm(msg)) {
       onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== targetId));
@@ -208,14 +220,6 @@ const POS: React.FC<POSProps> = ({
       }
       return tab;
     }));
-  };
-
-  const openWeightEditor = (idx: number, item: SaleItem) => {
-    const product = products.find(p => p.id === item.productId);
-    if (!product) return;
-    setWeightModalProduct(product);
-    setEditingWeightIndex(idx);
-    setInputGrams((item.quantity * 1000).toFixed(0));
   };
 
   const addPaymentEntry = () => {
@@ -371,23 +375,30 @@ const POS: React.FC<POSProps> = ({
              </p>
           </div>
         ) : (
-          categories.map(cat => (
-            <div key={cat} className="space-y-3">
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">{cat}</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                {filteredProducts.filter(p => p.category === cat).map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)}
-                    className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left group"
-                  >
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-1 truncate group-hover:text-red-500 transition-colors">{p.name}</p>
-                    <p className="text-sm font-black text-red-600">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</p>
-                  </button>
-                ))}
+          <>
+            {categories.length > 0 ? categories.map(cat => (
+              <div key={cat} className="space-y-3">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest pl-2">{cat}</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {filteredProducts.filter(p => p.category === cat).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)}
+                      className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left group"
+                    >
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-1 truncate group-hover:text-red-500 transition-colors">{p.name}</p>
+                      <p className="text-sm font-black text-red-600">{formatCurrency(p.price)}{p.sellType === 'weight' ? '/kg' : ''}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            )) : (
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-bold uppercase tracking-widest space-y-4">
+                 <svg className="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 <p>Nenhum produto encontrado</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -406,7 +417,7 @@ const POS: React.FC<POSProps> = ({
 
           {!isClosingTab ? (
             <>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[150px]">
                 {tabItems.map((item, idx) => {
                   const product = products.find(p => p.id === item.productId);
                   const isUnit = product?.sellType === 'unit';
@@ -460,7 +471,14 @@ const POS: React.FC<POSProps> = ({
                       <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-bold text-xs outline-none focus:ring-2 focus:ring-red-500" placeholder="Nome do Cliente" />
                     )}
                     <div className="flex gap-2">
-                      <input type="number" value={paymentAmountInput} onChange={e => setPaymentAmountInput(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-black text-xl outline-none focus:ring-2 focus:ring-red-500" placeholder="0,00" />
+                      <input 
+                        type="number" 
+                        inputMode="decimal"
+                        value={paymentAmountInput} 
+                        onChange={e => setPaymentAmountInput(e.target.value)} 
+                        className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-none font-black text-xl outline-none focus:ring-2 focus:ring-red-500" 
+                        placeholder="0,00" 
+                      />
                       <button onClick={addPaymentEntry} className="bg-black text-white px-4 rounded-xl font-black hover:bg-slate-800 transition-colors">+</button>
                     </div>
                   </div>
@@ -492,6 +510,7 @@ const POS: React.FC<POSProps> = ({
             <input 
               autoFocus 
               type="number" 
+              inputMode="numeric"
               value={inputGrams} 
               onChange={e => setInputGrams(e.target.value)} 
               className="w-full text-5xl font-black p-6 text-center rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-red-500 outline-none" 
