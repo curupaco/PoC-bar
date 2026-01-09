@@ -139,11 +139,7 @@ const App: React.FC = () => {
   };
 
   const toggleTheme = () => {
-    setTheme(prev => {
-      if (prev === 'dark') return 'light';
-      if (prev === 'light') return 'retro';
-      return 'dark';
-    });
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   useEffect(() => {
@@ -155,8 +151,8 @@ const App: React.FC = () => {
     localStorage.setItem('bar_theme', theme);
     
     const root = window.document.documentElement;
-    root.classList.remove('dark', 'retro');
-    if (theme !== 'light') root.classList.add(theme);
+    root.classList.remove('dark');
+    if (theme === 'dark') root.classList.add('dark');
 
     if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current) {
       const timer = setTimeout(() => {
@@ -270,8 +266,8 @@ const App: React.FC = () => {
                 Fora de Turno
               </div>
             )}
-            <button onClick={toggleTheme} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm">
-              {theme === 'light' ? '🌞' : theme === 'dark' ? '🌙' : '⭐'}
+            <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm">
+              {theme === 'light' ? '🌙' : '🌞'}
             </button>
           </div>
         </header>
