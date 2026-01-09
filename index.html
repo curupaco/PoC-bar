@@ -14,16 +14,20 @@
               fontFamily: {
                 sans: ['Inter', 'sans-serif'],
                 barrio: ['Barrio', 'system-ui', 'cursive'],
-                retro: ['"Press Start 2P"', 'cursive'],
                 mono: ['Courier New', 'Courier', 'monospace'],
               },
+              colors: {
+                slate: {
+                  950: '#020617',
+                }
+              }
             }
           }
         }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Press+Start+2P&family=Barrio&display=swap" rel="stylesheet" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Barrio&display=swap" rel="stylesheet" crossorigin="anonymous">
     <style>
         :root {
             --sb-track: #f1f5f9;
@@ -33,14 +37,19 @@
         }
 
         .dark {
-            --sb-track: #0f172a;
-            --sb-thumb: #334155;
+            --sb-track: #020617;
+            --sb-thumb: #1e293b;
         }
 
         html, body {
             scrollbar-width: thin;
             scrollbar-color: var(--sb-thumb) var(--sb-track);
             overflow-x: hidden;
+            background-color: #f8fafc; /* slate-50 default */
+        }
+
+        .dark body {
+            background-color: #020617; /* slate-950 default */
         }
 
         body { 
@@ -63,20 +72,6 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
-        }
-
-        /* Efeito Serrilhado do Cupom - Branco */
-        .serrated-top { position: relative; }
-        .serrated-top:before {
-            content: ""; position: absolute; top: -10px; left: 0; width: 100%; height: 10px;
-            background: linear-gradient(-135deg, transparent 5px, white 0), linear-gradient(135deg, transparent 5px, white 0);
-            background-size: 10px 10px; background-repeat: repeat-x;
-        }
-        .serrated-bottom { position: relative; }
-        .serrated-bottom:after {
-            content: ""; position: absolute; bottom: -10px; left: 0; width: 100%; height: 10px;
-            background: linear-gradient(-45deg, transparent 5px, white 0), linear-gradient(45deg, transparent 5px, white 0);
-            background-size: 10px 10px; background-repeat: repeat-x;
         }
 
         /* Efeito Serrilhado do Cupom - Preto */
@@ -107,7 +102,7 @@
 }
 </script>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
 </body>

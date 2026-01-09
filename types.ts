@@ -93,7 +93,7 @@ export interface Sale {
 }
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash';
-export type Theme = 'light' | 'dark' | 'retro';
+export type Theme = 'light' | 'dark';
 
 export const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
