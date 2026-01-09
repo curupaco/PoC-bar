@@ -18,15 +18,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const reportRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   
-  // Estados para Filtros Globais
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [periodLabel, setPeriodLabel] = useState('DIA');
 
-  // Estado para Seleção de Turno no Relatório de Fechamento
   const [selectedShiftId, setSelectedShiftId] = useState<string>(shifts[0]?.id || '');
 
-  // Vendas filtradas por data (para relatórios financeiros/gráficos)
   const filteredSales = useMemo<Sale[]>(() => {
     const start = new Date(startDate + 'T00:00:00').getTime();
     const end = new Date(endDate + 'T23:59:59').getTime();
@@ -50,7 +47,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const grandTotal = filteredSales.reduce((acc: number, s: Sale) => acc + (s.total ?? 0), 0);
     const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
-    // Vendas por Usuário
     const salesByUser = filteredSales.reduce((acc: Record<string, number>, s: Sale) => {
       const user = users.find(u => u.id === s.userId)?.displayName || 'Desconhecido';
       acc[user] = (acc[user] || 0) + (s.total || 0);
@@ -61,7 +57,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, total]): { name: string; total: number } => ({ name, total: Number(total) }))
       .sort((a: { total: number }, b: { total: number }) => b.total - a.total);
 
-    // Vendas por Categoria
     const productMap = products.reduce((acc, p) => { acc[p.id] = p.category; return acc; }, {} as Record<string, string>);
     const categoryAgg = filteredSales.flatMap(s => s.items || []).reduce((acc: Record<string, number>, item: SaleItem) => {
       const cat = productMap[item.productId] || 'Geral';
@@ -73,27 +68,30 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, total]): { name: string; total: number } => ({ name, total: Number(total) }))
       .sort((a: { total: number }, b: { total: number }) => b.total - a.total);
 
-    // Penduras Ativas (Saldo Líquido Acumulado)
+    // Lógica corrigida de Penduras
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
+      
+      // Se a venda foi feita como Pendura, soma ao débito
       if (s.paymentMethod === PaymentMethod.PENDURA) {
         acc[name] = (acc[name] || 0) + s.total;
       }
+      
+      // Se houver um item 'quitacao' na venda (de qualquer método), subtrai do débito
       const isQuitacao = s.items?.some(item => item.productId === 'quitacao');
       if (isQuitacao) {
         acc[name] = (acc[name] || 0) - s.total;
       }
+      
       return acc;
     }, {} as Record<string, number>);
 
-    // Fix: Explicitly cast Object.entries to handle potential unknown value inference in some TS versions
     const activePenduras = (Object.entries(penduraDebts) as [string, number][])
       .filter(([_, amount]) => amount > 0.01)
       .map(([name, amount]) => ({ name, amount }))
       .sort((a: { amount: number }, b: { amount: number }) => b.amount - a.amount);
 
-    // Dados do Turno Selecionado
     const selectedShift = shifts.find(sh => sh.id === selectedShiftId);
     const shiftSales = (sales || []).filter(s => s.shiftId === selectedShiftId);
     const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc, method) => {
@@ -116,10 +114,19 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const exportAsImage = () => {
     if (reportRef.current === null) return;
-    htmlToImage.toPng(reportRef.current, { backgroundColor: '#ffffff' })
+    
+    // Configurações para evitar cortes na exportação
+    htmlToImage.toPng(reportRef.current, { 
+        backgroundColor: '#ffffff',
+        style: {
+            transform: 'scale(1)',
+            padding: '20px'
+        },
+        pixelRatio: 2
+    })
       .then((dataUrl) => {
         const link = document.createElement('a');
-        link.download = `fechamento-${selectedShiftId}.png`;
+        link.download = `fechamento-botequista-${new Date().getTime()}.png`;
         link.href = dataUrl;
         link.click();
       });
@@ -159,85 +166,82 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                </div>
                <button onClick={exportAsImage} className="bg-black text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 hover:bg-slate-800 transition-all">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Exportar Imagem
+                  Salvar Comprovante
                </button>
             </div>
 
             {reportData.selectedShift ? (
-              <div ref={reportRef} className="bg-white dark:bg-slate-950 p-10 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl space-y-10 max-w-3xl mx-auto">
-                 <div className="text-center border-b border-slate-100 dark:border-slate-800 pb-8">
-                    <h2 className="text-4xl font-normal text-slate-800 dark:text-white tracking-tighter leading-none font-barrio mb-2">Botequista</h2>
-                    <p className="text-[10px] font-black text-red-500 uppercase tracking-[0.4em]">Conferência de Fechamento</p>
-                    <div className="mt-6 flex justify-center gap-8 text-[10px] font-bold uppercase text-slate-400">
-                       <p>ID: {reportData.selectedShift.id.split('-')[1]}</p>
-                       <p>Aberto em: {new Date(reportData.selectedShift.startTime).toLocaleString()}</p>
-                       {reportData.selectedShift.endTime && <p>Fechado em: {new Date(reportData.selectedShift.endTime).toLocaleString()}</p>}
-                    </div>
-                 </div>
+              <div className="flex justify-center py-10">
+                <div ref={reportRef} className="bg-white text-slate-900 w-full max-w-[400px] p-10 serrated-top serrated-bottom shadow-2xl space-y-6 font-mono border-x border-slate-100">
+                   <div className="text-center space-y-1">
+                      <h2 className="text-3xl font-black font-barrio leading-none uppercase tracking-tighter">Botequista</h2>
+                      <p className="text-[10px] font-bold">CNPJ: 00.000.000/0001-00</p>
+                      <div className="text-[10px] font-bold pt-4 border-t border-dashed border-slate-300">
+                         RESUMO DE FECHAMENTO DE TURNO
+                      </div>
+                   </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-6">
-                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Resumo Financeiro</h3>
-                       <div className="space-y-3">
-                          {/* Fix: Explicitly cast Object.entries to handle potential unknown value inference in some TS versions */}
-                          {(Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
-                             <div key={method} className="flex justify-between items-center text-sm">
-                                <span className="font-bold text-slate-500 uppercase">{method}</span>
-                                <span className="font-black text-slate-800 dark:text-white">{formatCurrency(total)}</span>
-                             </div>
-                          ))}
-                          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                             <span className="text-xs font-black uppercase text-red-600">Total Faturado</span>
-                             <span className="text-xl font-black text-red-600">{formatCurrency(reportData.shiftSales.reduce((acc, s) => acc + s.total, 0))}</span>
-                          </div>
-                       </div>
-                    </div>
+                   <div className="text-[11px] leading-tight space-y-1">
+                      <p>TURNO: {reportData.selectedShift.id.slice(-6).toUpperCase()}</p>
+                      <p>OPERADOR: @{reportData.selectedShift.openedBy.toUpperCase()}</p>
+                      <p>ABERTURA: {new Date(reportData.selectedShift.startTime).toLocaleString('pt-BR')}</p>
+                      {reportData.selectedShift.endTime && <p>FECHAMENTO: {new Date(reportData.selectedShift.endTime).toLocaleString('pt-BR')}</p>}
+                   </div>
 
-                    <div className="space-y-6">
-                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Conferência de Gaveta</h3>
-                       <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4">
-                          <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400">
-                             <span>Fundo de Troco (Gaveta)</span>
-                             <span>{formatCurrency(reportData.selectedShift.cashChange)}</span>
-                          </div>
-                          <div className="flex justify-between text-[10px] font-bold uppercase text-slate-400">
-                             <span>Vendas Dinheiro</span>
-                             <span>{formatCurrency(reportData.shiftTotalsByMethod[PaymentMethod.CASH] || 0)}</span>
-                          </div>
-                          <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                             <span className="text-xs font-black uppercase">Dinheiro Esperado</span>
-                             <span className="text-lg font-black text-emerald-600">
-                                {formatCurrency(reportData.selectedShift.cashChange + (reportData.shiftTotalsByMethod[PaymentMethod.CASH] || 0))}
-                             </span>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
+                   <div className="border-t border-dashed border-slate-300 pt-4 space-y-2">
+                      <div className="text-xs font-black uppercase text-center mb-2">VENDAS POR MÉTODO</div>
+                      {(Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
+                         <div key={method} className="flex justify-between text-[11px]">
+                            <span>{method.padEnd(15, '.')}</span>
+                            <span className="font-bold">{formatCurrency(total)}</span>
+                         </div>
+                      ))}
+                      <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-black">
+                         <span>TOTAL TURNO:</span>
+                         <span>{formatCurrency(reportData.shiftSales.reduce((acc, s) => acc + s.total, 0))}</span>
+                      </div>
+                   </div>
 
-                 <div className="space-y-6">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Produtos Vendidos no Turno</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                       {Object.entries(
+                   <div className="border-t border-dashed border-slate-300 pt-4 space-y-2">
+                      <div className="text-xs font-black uppercase text-center mb-2">CONFERÊNCIA DE GAVETA</div>
+                      <div className="flex justify-between text-[11px]">
+                         <span>FUNDO INICIAL</span>
+                         <span>{formatCurrency(reportData.selectedShift.cashChange)}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                         <span>VENDAS DINHEIRO</span>
+                         <span>{formatCurrency(reportData.shiftTotalsByMethod[PaymentMethod.CASH] || 0)}</span>
+                      </div>
+                      <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-black text-emerald-700">
+                         <span>ESPERADO GAVETA:</span>
+                         <span>{formatCurrency(reportData.selectedShift.cashChange + (reportData.shiftTotalsByMethod[PaymentMethod.CASH] || 0))}</span>
+                      </div>
+                   </div>
+
+                   <div className="border-t border-dashed border-slate-300 pt-4 space-y-1">
+                      <div className="text-xs font-black uppercase text-center mb-2">TOP PRODUTOS</div>
+                      {Object.entries(
                           reportData.shiftSales.flatMap(s => s.items).reduce((acc: any, item) => {
                              acc[item.productName] = (acc[item.productName] || 0) + item.quantity;
                              return acc;
                           }, {})
-                       ).slice(0, 10).map(([name, qty]: any) => (
-                          <div key={name} className="flex justify-between items-center px-4 py-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl">
-                             <span className="text-[10px] font-bold uppercase truncate pr-4">{name}</span>
-                             <span className="text-[10px] font-black text-red-500 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md">{qty}x</span>
+                       ).sort((a:any, b:any) => b[1] - a[1]).slice(0, 5).map(([name, qty]: any) => (
+                          <div key={name} className="flex justify-between text-[10px]">
+                             <span className="truncate max-w-[180px]">{name.toUpperCase()}</span>
+                             <span className="font-bold">{qty}x</span>
                           </div>
                        ))}
-                    </div>
-                 </div>
+                   </div>
 
-                 <div className="text-center pt-8 border-t border-slate-100 dark:border-slate-800">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Operador Responsável: @{reportData.selectedShift.openedBy}</p>
-                 </div>
+                   <div className="text-center pt-8 border-t border-dashed border-slate-300 text-[9px] font-bold">
+                      OBRIGADO PELA PREFERÊNCIA!<br/>
+                      BOTEQUISTA - GESTÃO INTELIGENTE
+                   </div>
+                </div>
               </div>
             ) : (
               <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest italic border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px]">
-                 Nenhum turno selecionado ou encontrado.
+                 Nenhum turno selecionado para conferência.
               </div>
             )}
           </div>
@@ -248,7 +252,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
              <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Faturamento por Método</h3>
                 <div className="space-y-4">
-                   {/* Fix: Explicitly cast Object.entries to handle potential unknown value inference in some TS versions */}
                    {(Object.entries(reportData.totalsByMethod) as [string, { count: number; total: number }][]).map(([method, data]) => (data.total > 0 && (
                      <div key={method} className="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-800 last:border-0">
                         <span className="text-sm font-bold uppercase text-slate-600 dark:text-slate-400">{method}</span>
@@ -308,6 +311,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                             </td>
                          </tr>
                       ))}
+                      {reportData.activePenduras.length === 0 && (
+                         <tr>
+                            <td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-bold italic uppercase">Nenhum fiado registrado.</td>
+                         </tr>
+                      )}
                    </tbody>
                 </table>
              </div>

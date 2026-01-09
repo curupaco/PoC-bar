@@ -15,6 +15,7 @@
                 sans: ['Inter', 'sans-serif'],
                 barrio: ['Barrio', 'system-ui', 'cursive'],
                 retro: ['"Press Start 2P"', 'cursive'],
+                mono: ['Courier New', 'Courier', 'monospace'],
               },
             }
           }
@@ -61,28 +62,34 @@
             border: 3px solid var(--sb-track) !important;
         }
 
-        input.no-spinner::-webkit-outer-spin-button,
-        input.no-spinner::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        /* Efeito Serrilhado do Cupom */
+        .serrated-top {
+            position: relative;
         }
-        input.no-spinner {
-            -moz-appearance: textfield;
+        .serrated-top:before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(-135deg, transparent 5px, white 0), linear-gradient(135deg, transparent 5px, white 0);
+            background-size: 10px 10px;
+            background-repeat: repeat-x;
         }
-
-        .retro {
-            --pixel-blue: #3db1ff;
-            --pixel-green: #00a800;
-            --pixel-red: #ff0000;
-            --pixel-yellow: #ffff00;
-            --pixel-white: #ffffff;
-            --pixel-black: #000000;
-            background-color: var(--pixel-blue) !important;
-            font-family: 'Press Start 2P', cursive !important;
+        .serrated-bottom {
+            position: relative;
         }
-        .retro * { image-rendering: pixelated; border-radius: 0 !important; }
-        .retro h1, .retro h2, .retro h3, .retro span, .retro p, .retro label, .retro button, .retro input, .retro select {
-            text-transform: uppercase; font-size: 0.75rem !important; color: var(--pixel-black);
+        .serrated-bottom:after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(-45deg, transparent 5px, white 0), linear-gradient(45deg, transparent 5px, white 0);
+            background-size: 10px 10px;
+            background-repeat: repeat-x;
         }
     </style>
 <script type="importmap">

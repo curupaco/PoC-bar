@@ -251,13 +251,13 @@ const POS: React.FC<POSProps> = ({
         timestamp: Date.now(),
         openedAt: activeTab.openedAt,
         items: isShortcut 
-          ? (index === 0 ? [{ productId: 'quitacao', productName: 'Pagamento de Pendura', quantity: 1, unitPrice: paidSoFar, totalPrice: paidSoFar }] : [])
+          ? [{ productId: 'quitacao', productName: 'Abatimento de Pendura', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }]
           : (index === 0 ? tabItems : []),
         paymentMethod: p.method,
         total: p.amount,
         tabName: activeTab.name,
-        customerName: p.customerName || shortcutCheckout?.name,
-        userId: '', // Será preenchido no App.tsx
+        customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+        userId: '', 
         shiftId: activeShift.id
       };
       onCompleteSale(sale);
@@ -365,9 +365,9 @@ const POS: React.FC<POSProps> = ({
              <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-600 mx-auto mb-4">
                 <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
              </div>
-             <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Quitação de Dívida</h2>
+             <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Recebimento de Pendura</h2>
              <p className="text-slate-600 dark:text-slate-400 max-w-sm mx-auto font-medium">
-               Recebendo pagamento de <span className="text-red-600 font-black">{shortcutCheckout.name}</span>.
+               Recebendo pagamento de <span className="text-red-600 font-black">{shortcutCheckout.name}</span> no valor de <span className="font-black">{formatCurrency(shortcutCheckout.amount)}</span>.
              </p>
           </div>
         ) : (
