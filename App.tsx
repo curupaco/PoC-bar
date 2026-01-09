@@ -47,11 +47,11 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
-  // Função para normalizar categorias (CACHETA -> Cacheta)
+  // Função para normalização agressiva de categorias (CACHETA -> Cacheta)
   const normalizeCategories = (prods: Product[]): Product[] => {
     return prods.map(p => ({
       ...p,
-      category: p.category === 'CACHETA' ? 'Cacheta' : p.category
+      category: (p.category === 'CACHETA' || p.category === 'Cacheta') ? 'Cacheta' : p.category
     }));
   };
 
@@ -129,21 +129,12 @@ const App: React.FC = () => {
     } catch (e) { console.error("Erro ao carregar cache local", e); }
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      const updated = users.find(u => u.id === currentUser.id);
-      if (updated && JSON.stringify(updated.permissions) !== JSON.stringify(currentUser.permissions)) {
-        setCurrentUser(updated);
-      }
-    }
-  }, [users, currentUser]);
-
   const handleLogin = (user: string, pass: string) => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
       setCurrentUser(found);
       if (!found.permissions.includes(activeView as any) && found.username !== 'admin') {
-        setActiveView(found.permissions.includes('pos') ? 'pos' : found.permissions[0] as any);
+        setActiveView(found.permissions.includes('pos') ? 'pos' : (found.permissions[0] as any) || 'pos');
       }
     } else {
       alert("Usuário ou senha inválidos.");
@@ -222,17 +213,12 @@ const App: React.FC = () => {
     const commonProps = { products, sales, openTabs };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => normalizeCategories([...prev, p]))} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? normalizeCategories([u])[0] : p))} currentUser={currentUser} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => normalizeCategories([...prev, p]))} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => normalizeCategories(prev.map(p => p.id === u.id ? u : p)))} currentUser={currentUser} />;
       case 'pos': return (
         <POS 
           products={products} 
           openTabs={openTabs} 
-          onUpdateTabs={onUpdateTabs => {
-            setOpenTabs(prev => {
-              const updated = onUpdateTabs(prev);
-              return updated;
-            });
-          }} 
+          onUpdateTabs={setOpenTabs} 
           onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
           shortcutCheckout={shortcutCheckout}
           onClearShortcut={() => setShortcutCheckout(null)}
