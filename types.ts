@@ -27,7 +27,8 @@ export type UserPermission =
   | 'export_report'
   | 'clear_fiado'
   | 'full_reset'
-  | 'manage_backup';
+  | 'manage_backup'
+  | 'help_view'; // Permissão para ver a ajuda
 
 export interface User {
   id: string;
@@ -92,7 +93,7 @@ export interface Sale {
   shiftId: string; // Turno vinculado
 }
 
-export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash';
+export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
 export type Theme = 'light' | 'dark';
 
 export const formatCurrency = (value: number) => {

@@ -11,6 +11,7 @@ import Settings from './components/Settings';
 import UserManagement from './components/UserManagement';
 import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
+import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
 
@@ -47,7 +48,6 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
-  // Função para normalização agressiva de categorias (CACHETA -> Cacheta)
   const normalizeCategories = (prods: Product[]): Product[] => {
     return prods.map(p => ({
       ...p,
@@ -55,7 +55,6 @@ const App: React.FC = () => {
     }));
   };
 
-  // Atualiza status de rede
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -232,6 +231,7 @@ const App: React.FC = () => {
       case 'shifts': return <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} />;
       case 'cash': return <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} />;
       case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} currentUser={currentUser} />;
+      case 'help': return <Help />;
       default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} onViewChange={setActiveView} />;
     }
   };
