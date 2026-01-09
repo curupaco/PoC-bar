@@ -34,7 +34,8 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
 
   const handleTransfer = () => {
     if (!activeShift) return;
-    const value = parseFloat(transferValue);
+    // Converte vírgula em ponto para processamento numérico
+    const value = parseFloat(transferValue.replace(',', '.'));
     if (isNaN(value) || value <= 0) {
       setToast({ msg: "VALOR INVÁLIDO", type: 'error' });
       return;
@@ -75,7 +76,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
     );
   }
 
-  const numericValue = parseFloat(transferValue) || 0;
+  const numericValue = parseFloat(transferValue.replace(',', '.')) || 0;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 relative">
@@ -135,13 +136,12 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                <div className="relative flex items-center">
                   <span className="absolute left-6 text-2xl font-black text-slate-400">R$</span>
                   <input 
-                    type="number" 
-                    step="0.01"
+                    type="text" 
                     inputMode="decimal" 
                     value={transferValue} 
-                    onChange={e => setTransferValue(e.target.value)} 
+                    onChange={e => setTransferValue(e.target.value.replace(/[^0-9,]/g, ''))} 
                     className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-6 rounded-3xl border-2 border-transparent focus:border-blue-500 font-black text-3xl outline-none transition-all" 
-                    placeholder="0.00" 
+                    placeholder="0,00" 
                   />
                </div>
                {numericValue > 0 && (

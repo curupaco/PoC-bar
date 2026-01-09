@@ -50,9 +50,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       startTime: Date.now(),
       openedBy: currentUser.username,
       status: 'open',
-      cashPrimary: parseFloat(valPrimary) || 0,
-      cashChange: parseFloat(valChange) || 0,
-      cashSecondary: parseFloat(valSecondary) || 0
+      cashPrimary: parseFloat(valPrimary.replace(',', '.')) || 0,
+      cashChange: parseFloat(valChange.replace(',', '.')) || 0,
+      cashSecondary: parseFloat(valSecondary.replace(',', '.')) || 0
     };
     onUpdateShifts([newShift, ...shifts]);
     setValPrimary('0');
@@ -163,8 +163,18 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
               ].map((item, idx) => (
                 <div key={idx} className="space-y-2">
                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{item.label}</label>
-                   <input type="number" step="0.01" value={item.val} onChange={e => item.set(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-2 focus:ring-blue-500" />
-                   {parseFloat(item.val) > 0 && <p className="text-[10px] font-black text-blue-500 uppercase ml-2">Confirmando: {formatCurrency(parseFloat(item.val))}</p>}
+                   <input 
+                    type="text" 
+                    inputMode="decimal" 
+                    value={item.val} 
+                    onChange={e => item.set(e.target.value.replace(/[^0-9,]/g, ''))} 
+                    className="w-full bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-2 focus:ring-blue-500" 
+                   />
+                   {parseFloat(item.val.replace(',', '.')) > 0 && (
+                     <p className="text-[10px] font-black text-blue-500 uppercase ml-2">
+                       Confirmando: {formatCurrency(parseFloat(item.val.replace(',', '.')))}
+                     </p>
+                   )}
                 </div>
               ))}
            </div>
