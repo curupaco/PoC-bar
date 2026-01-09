@@ -1,8 +1,7 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import { Sale, Product, PaymentMethod, formatCurrency, SaleItem, User, Shift } from '../types';
+import { Sale, Product, PaymentMethod, formatCurrency, User, Shift } from '../types';
 import * as htmlToImage from 'html-to-image';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
 
 interface ReportsProps {
   sales: Sale[];
@@ -43,7 +42,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, number>);
 
-    // Detalhamento do Dinheiro (Vendas vs Quitações)
     const cashSalesOnly = shiftSales
       .filter(s => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
       .reduce((acc, s) => acc + s.total, 0);
@@ -79,7 +77,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, number>);
 
-    // Fix: Cast Object.entries to solve 'unknown' type inference on line 83 and line 85.
     const activePenduras = (Object.entries(penduraDebts) as [string, number][])
       .filter(([_, amount]) => amount > 0.01)
       .map(([name, amount]) => ({ name, amount }))
@@ -88,11 +85,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     return { 
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod, cashSalesOnly, cashSettlementsOnly
     };
-  }, [filteredSales, sales, users, products, shifts, selectedShiftId]);
+  }, [filteredSales, sales, shifts, selectedShiftId]);
 
   const exportAsImage = () => {
-    if (!canExport) return;
-    if (reportRef.current === null) return;
+    if (!canExport || !reportRef.current) return;
     htmlToImage.toPng(reportRef.current, { backgroundColor: '#000000', pixelRatio: 2 })
     .then((dataUrl) => {
         const link = document.createElement('a');
@@ -146,7 +142,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
                       <div className="text-xs font-black uppercase text-center mb-2">RESUMO FINANCEIRO</div>
-                      {/* Fix: Explicitly cast Object.entries to [string, number][] to solve 'unknown' type error for total on line 151. */}
                       { (Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
                          <div key={method} className="flex justify-between text-[11px]">
                             <span className="text-slate-500 uppercase">{method}</span>
@@ -196,13 +191,14 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
              <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800">
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Faturamento Acumulado</h3>
                 <div className="space-y-4">
-                   {/* Fix: Explicitly cast Object.entries to [string, { count: number, total: number }][] to solve 'unknown' type error for data on line 197 and line 200. */}
-                   {(Object.entries(reportData.totalsByMethod) as [string, { count: number, total: number }][]).map(([method, data]) => (data.total > 0 && (
-                     <div key={method} className="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                        <span className="text-sm font-bold uppercase text-slate-500">{method}</span>
-                        <span className="font-black text-slate-900 dark:text-white">{formatCurrency(data.total)}</span>
-                     </div>
-                   )))}
+                   {(Object.entries(reportData.totalsByMethod) as [string, { count: number, total: number }][]).map(([method, data]) => (
+                     data.total > 0 ? (
+                       <div key={method} className="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-800 last:border-0">
+                          <span className="text-sm font-bold uppercase text-slate-500">{method}</span>
+                          <span className="font-black text-slate-900 dark:text-white">{formatCurrency(data.total)}</span>
+                       </div>
+                     ) : null
+                   ))}
                    <div className="pt-4 flex justify-between items-center text-2xl font-black text-red-600">
                       <span className="text-[10px] text-slate-400">TOTAL</span>
                       <span>{formatCurrency(reportData.grandTotal)}</span>

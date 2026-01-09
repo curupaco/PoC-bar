@@ -13,31 +13,50 @@ import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
-import { saveToFirebase, loadFromFirebase, AppFullData } from './services/firebaseService';
+import { saveToFirebase, loadFromFirebase } from './services/firebaseService';
 
-// IMPORTANTE: Configure a variável FIREBASE_URL no painel da Vercel para o deploy automático funcionar.
-const FIXED_FB_URL = process.env.FIREBASE_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
+// Proteção global contra falhas de build em ambientes Node.js (Vercel Build Step)
+const isBrowser = typeof window !== 'undefined';
+if (isBrowser && !(window as any).process) {
+  (window as any).process = { env: {} };
+}
+
+const getSafeEnv = (key: string): string | undefined => {
+  try {
+    return (process.env as any)[key];
+  } catch {
+    return undefined;
+  }
+};
+
+const FIXED_FB_URL = getSafeEnv('FIREBASE_URL') || 'https://poc-botequista-default-rtdb.firebaseio.com';
 const MASTER_KEY = "Tc@00216587";
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [encryptionKey] = useState<string>(MASTER_KEY);
-
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
+  const [isOnline, setIsOnline] = useState(isBrowser ? navigator.onLine : true);
   const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
   
   const isInitialMount = useRef(true);
   const isSyncingFromCloud = useRef(false);
 
-  const [fbUrl, setFbUrl] = useState(() => localStorage.getItem('bar_fb_url') || FIXED_FB_URL);
+  const [fbUrl, setFbUrl] = useState(() => {
+    if (isBrowser) {
+      return localStorage.getItem('bar_fb_url') || FIXED_FB_URL;
+    }
+    return FIXED_FB_URL;
+  });
   
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('bar_theme');
-    return (saved as Theme) || 'dark';
+    if (isBrowser) {
+      const saved = localStorage.getItem('bar_theme');
+      return (saved as Theme) || 'dark';
+    }
+    return 'dark';
   });
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,17 +67,6 @@ const App: React.FC = () => {
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
   const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
     'dashboard', 'pos', 'products', 'history', 'reports', 'settings', 
     'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 
@@ -67,6 +75,13 @@ const App: React.FC = () => {
   ];
 
   useEffect(() => {
+    if (!isBrowser) return;
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // Carregamento Inicial
     const p = localStorage.getItem('bar_products');
     const s = localStorage.getItem('bar_sales');
     const t = localStorage.getItem('bar_open_tabs');
@@ -75,57 +90,38 @@ const App: React.FC = () => {
     
     try {
       if (p) setProducts(JSON.parse(p));
-      else {
-        setProducts([
-          { id: '1', name: 'CERVEJA LATA 350ML', price: 6.00, category: 'BEBIDAS', sellType: 'unit' },
-          { id: '2', name: 'BATATA FRITA', price: 45.00, category: 'PORÇÕES', sellType: 'weight' },
-        ]);
-      }
+      else setProducts([{ id: '1', name: 'CERVEJA LATA 350ML', price: 6.00, category: 'BEBIDAS', sellType: 'unit' }]);
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
       
-      let initialUsers: User[] = [];
-      if (u) {
-        initialUsers = JSON.parse(u);
-        initialUsers = initialUsers.map(user => {
-          if (user.username === 'admin') {
-            return { ...user, permissions: ALL_ADMIN_PERMISSIONS };
-          }
-          return user;
-        });
-      } else {
-        initialUsers = [
-          { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS },
-          { id: 'ozzy', username: 'ozzy', password: 'ozzy', displayName: 'Ozzy Osbourne', permissions: ['dashboard', 'pos', 'history', 'help_view'] }
-        ];
-      }
-      setUsers(initialUsers);
+      let initialUsers: User[] = u ? JSON.parse(u) : [
+        { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }
+      ];
+      setUsers(initialUsers.map(usr => usr.username === 'admin' ? { ...usr, permissions: ALL_ADMIN_PERMISSIONS } : usr));
       if (sh) setShifts(JSON.parse(sh));
-    } catch (e) { console.error("Erro ao carregar cache local", e); }
+    } catch (e) { console.error("Cache error", e); }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   const handleLogin = (user: string, pass: string) => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
-      const userToLogin = found.username === 'admin' 
-        ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } 
-        : found;
-      
-      setCurrentUser(userToLogin);
-      
-      if (userToLogin.username !== 'admin' && !userToLogin.permissions.includes(activeView as any)) {
-        setActiveView(userToLogin.permissions.includes('pos') ? 'pos' : (userToLogin.permissions[0] as any) || 'pos');
-      }
+      setCurrentUser(found.username === 'admin' ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
     } else {
       alert("Usuário ou senha inválidos.");
     }
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
   useEffect(() => {
+    if (!isBrowser || isInitialMount.current) {
+      if (isInitialMount.current) isInitialMount.current = false;
+      return;
+    }
+
     localStorage.setItem('bar_products', JSON.stringify(products));
     localStorage.setItem('bar_sales', JSON.stringify(sales));
     localStorage.setItem('bar_open_tabs', JSON.stringify(openTabs));
@@ -133,30 +129,23 @@ const App: React.FC = () => {
     localStorage.setItem('bar_shifts', JSON.stringify(shifts));
     localStorage.setItem('bar_theme', theme);
     
-    const root = window.document.documentElement;
-    root.classList.remove('dark');
-    if (theme === 'dark') root.classList.add('dark');
+    document.documentElement.classList.toggle('dark', theme === 'dark');
 
-    if (fbUrl && !isInitialMount.current && !isSyncingFromCloud.current) {
+    if (fbUrl && !isSyncingFromCloud.current) {
       const timer = setTimeout(() => {
-        const fullData = { products, sales, openTabs, users, shifts, config: { fbUrl } };
-        saveToFirebase(fbUrl, fullData, encryptionKey)
+        saveToFirebase(fbUrl, { products, sales, openTabs, users, shifts, config: { fbUrl } }, encryptionKey)
           .then(() => setDbStatus('success'))
           .catch(() => setDbStatus('error'));
-      }, 1500); 
+      }, 2000); 
       return () => clearTimeout(timer);
     }
-    if (isInitialMount.current) isInitialMount.current = false;
   }, [products, sales, openTabs, users, shifts, fbUrl, theme]);
 
   useEffect(() => {
-    if (fbUrl) {
+    if (fbUrl && isBrowser) {
       setDbStatus('loading');
       loadFromFirebase(fbUrl, encryptionKey)
-        .then((data: any) => {
-          if (data) handleImportAll(data);
-          else setDbStatus('idle');
-        })
+        .then((data: any) => data ? handleImportAll(data) : setDbStatus('idle'))
         .catch(() => setDbStatus('error'));
     }
   }, []);
@@ -166,86 +155,45 @@ const App: React.FC = () => {
     if (data.products) setProducts(data.products);
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
-    if (data.users) {
-      const importedUsers = (data.users as User[]).map(u => 
-        u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u
-      );
-      setUsers(importedUsers);
-    }
+    if (data.users) setUsers((data.users as User[]).map(u => u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
   };
 
-  const handleQuitarPendura = (customerName: string, amount: number) => {
-    setShortcutCheckout({ name: customerName, amount });
-    setActiveView('pos');
-  };
-
-  if (!currentUser) {
-    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={null} />;
-  }
+  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={null} />;
 
   const renderContent = () => {
-    const commonProps = { products, sales, openTabs };
+    const props = { products, sales, openTabs, users, shifts, currentUser };
     switch (activeView) {
-      case 'dashboard': return <Dashboard {...commonProps} theme={theme} />;
-      case 'products': return <ProductList products={products} onAdd={p => setProducts(prev => [...prev, p])} onDelete={id => setProducts(prev => prev.filter(p => p.id !== id))} onUpdate={u => setProducts(prev => prev.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
-      case 'pos': return (
-        <POS 
-          products={products} 
-          openTabs={openTabs} 
-          onUpdateTabs={setOpenTabs} 
-          onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
-          shortcutCheckout={shortcutCheckout}
-          onClearShortcut={() => setShortcutCheckout(null)}
-          activeShift={activeShift}
-          onViewChange={setActiveView}
-        />
-      );
-      case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(prev => prev.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
-      case 'reports': return <Reports sales={sales} products={products} users={users} shifts={shifts} onQuitarPendura={handleQuitarPendura} currentUser={currentUser} />;
+      case 'dashboard': return <Dashboard {...props} theme={theme} />;
+      case 'pos': return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} activeShift={activeShift} onViewChange={setActiveView} />;
+      case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
+      case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
+      case 'reports': return <Reports {...props} onQuitarPendura={(n, a) => { setShortcutCheckout({ name: n, amount: a }); setActiveView('pos'); }} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
-      case 'shifts': return <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} />;
-      case 'cash': return <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} />;
-      case 'settings': return <Settings {...commonProps} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} currentUser={currentUser} />;
+      case 'shifts': return <ShiftControl {...props} onUpdateShifts={setShifts} />;
+      case 'cash': return <CashManagement {...props} onUpdateShifts={setShifts} />;
+      case 'settings': return <Settings {...props} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} />;
       case 'help': return <Help />;
-      default: return <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} onViewChange={setActiveView} />;
+      default: return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} activeShift={activeShift} />;
     }
   };
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Sidebar 
-        activeView={activeView} 
-        onViewChange={setActiveView} 
-        isOpen={isMobileMenuOpen} 
-        onClose={() => setIsMobileMenuOpen(false)} 
-        dbStatus={dbStatus} 
-        isOnline={isOnline}
-        currentUser={currentUser}
-        onLogout={() => setCurrentUser(null)}
-      />
+      <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} dbStatus={dbStatus} isOnline={isOnline} currentUser={currentUser} onLogout={() => setCurrentUser(null)} />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3 lg:px-8 lg:py-4 flex justify-between items-center ml-0 md:ml-64">
           <div className="flex items-center gap-3">
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
-            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase leading-none">
-              {menuItems.find(i => i.id === activeView)?.label}
-            </h1>
+            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-slate-100 tracking-tight uppercase leading-none">{menuItems.find(i => i.id === activeView)?.label}</h1>
           </div>
           <div className="flex items-center gap-4">
-            {activeShift && (
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full text-[10px] font-black uppercase">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                Turno Aberto
-              </div>
-            )}
-            <button onClick={toggleTheme} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:scale-105 active:scale-95 transition-all shadow-sm border border-slate-200 dark:border-slate-700">
-              {theme === 'light' ? '🌙' : '🌞'}
-            </button>
+            <div className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`} title={dbStatus === 'success' ? 'Nuvem Conectada' : 'Erro de Conexão'}></div>
+            <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 shadow-sm border border-slate-200 dark:border-slate-700">{theme === 'light' ? '🌙' : '🌞'}</button>
           </div>
         </header>
         <div className="p-4 lg:p-8 ml-0 md:ml-64 h-full overflow-y-auto">{renderContent()}</div>

@@ -2,8 +2,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Product, Sale } from "../types";
 
+const getApiKey = () => {
+  try { return process.env.API_KEY || ""; } catch (e) { return ""; }
+};
+
 export const getAIInsights = async (sales: Sale[], products: Product[]) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    return { insights: [{ title: "Configuração Pendente", description: "A chave da IA não foi configurada no ambiente. Adicione a variável API_KEY na Vercel para ativar as dicas." }] };
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const model = "gemini-3-flash-preview";
   
   const safeSales = sales ?? [];
