@@ -1,54 +1,39 @@
 
 # 🍺 Botequista - Documentação Oficial
 
-Este documento fornece uma visão detalhada, tanto funcional quanto técnica, do sistema **Botequista**, a solução definitiva para gestão de bares focada em agilidade e precisão.
+Este sistema foi projetado para ser "Zero Config" após o primeiro deploy.
 
 ---
 
-## 📋 1. Documentação Funcional (Guia do Usuário)
+## 🚀 1. Guia de Deploy (GitHub -> Vercel)
 
-### 1.1 Vendas e PDV (Ponto de Venda)
-- **Operação de Mesas:** Abertura rápida de comandas por nome ou número.
-- **Lançamento por Peso:** Produtos configurados como "Peso (Kg)" solicitam automaticamente o valor em gramas (ex: digitar `450` para 450g), realizando o cálculo monetário instantâneo.
-- **Fechamento de Conta:** Suporte a múltiplos métodos de pagamento em uma única comanda.
+Para que o sistema funcione perfeitamente na Vercel integrando com seu Banco de Dados, siga estes passos:
 
-### 1.2 Gestão Financeira e Caixa
-- **Padrão Monetário:** Rigoroso uso do padrão brasileiro (**R$ 1.234,56**) em todas as telas e comprovantes.
-- **Confirmação Visual:** Entradas de valores no Caixa e Abertura de Turno possuem um preview em tempo real do valor formatado para evitar erros de digitação.
-- **Tesouraria (Caixa):** Gerenciamento de três níveis de fluxo: Primário (Cofre), Gaveta (Troco/Operacional) e Secundário.
+### 1.1 Variáveis de Ambiente
+No painel da Vercel (Project Settings -> Environment Variables), adicione:
+1.  `FIREBASE_URL`: O link do seu Firebase Realtime Database (ex: `https://meu-projeto.firebaseio.com`).
+2.  `API_KEY`: Sua chave de API do Google Gemini (para os insights de IA).
 
-### 1.3 Relatórios Estratégicos
-O sistema agora conta com 6 categorias de análise:
-1.  **Fechamento:** Cupom estilo térmico para conferência de turno (exportável em PNG).
-2.  **Financeiro:** Faturamento bruto, ticket médio e mix de pagamentos.
-3.  **Penduras:** Gestão ativa de fiados com opção de quitação rápida.
-4.  **Equipe:** Ranking de vendas por colaborador e volume de atendimentos.
-5.  **Operacional:** Gráficos de fluxo horário e identificação de horários de pico.
-6.  **Produtos:** Ranking de vendas (Curva ABC) para identificar itens mais rentáveis.
-
-### 1.4 Central de Ajuda Expandida
-Guia ilustrado com 6 cards cobrindo: Vendas, Nuvem, Cardápio, Equipe, Tesouraria e Dashboard.
+### 1.2 Por que isso é importante?
+Ao adicionar essas chaves na Vercel, o sistema as injetará automaticamente no código. Você não precisará alterar nada nos arquivos `.ts` ou `.tsx`. O próximo commit no GitHub atualizará o sistema mantendo a conexão segura.
 
 ---
 
-## 🛠 2. Documentação Técnica (Guia do Desenvolvedor)
+## 🛠 2. Documentação Técnica
 
-### 2.1 Interface e UX
-- **Material Design 3:** O botão de troca de tema segue as diretrizes Material, com ícones animados e transições suaves entre Light e Dark mode.
-- **Sidebar Otimizada:** Menu lateral com alinhamento corrigido e labels simplificados (ex: "Caixa").
-- **Tipografia:** Uso da fonte `Barrio` para branding e `Inter` para dados operacionais.
-- **Case Sensitivity:** Interface forçada em **CAIXA ALTA** para legibilidade em ambientes escuros.
+### 2.1 Padrão Monetário Brasileiro
+O sistema utiliza rigorosamente a vírgula (`,`) para entradas e o formato `R$ 0,00` para exibição.
+- Internamente, as entradas são convertidas de `string` com vírgula para `number` (float) para cálculos.
+- A exibição utiliza `Intl.NumberFormat('pt-BR')`.
 
-### 2.2 Tecnologias e Bibliotecas
-- **Frontend:** React 19 + TypeScript.
-- **Gráficos:** Recharts para visualização de dados operacionais e financeiros.
-- **Exportação:** `html-to-image` para geração de cupons digitais em alta resolução.
-- **IA:** Integração com o SDK `GoogleGenAI` (Gemini 3 Flash) para geração de insights de gestão.
-
-### 2.3 Segurança e Persistência
-- **Sincronização Híbrida:** Persistência primária em `localStorage` com sincronização secundária em Firebase Realtime Database.
-- **Criptografia:** Dados sensíveis são criptografados com **AES-256** antes de serem enviados para a nuvem.
-- **Snapshots:** Sistema de backup local para restauração imediata em caso de falha de rede.
+### 2.2 Divisão de Conta (Lógica de Resiliência)
+- O sistema gerencia pagamentos parciais através de um estado temporário (`currentPayments`).
+- **Resiliência**: Se o operador sair da tela de fechamento ou trocar de mesa sem finalizar, esse estado é limpo, garantindo que o saldo devedor da mesa volte a ser o total original, evitando perdas financeiras por "pagamentos fantasmas".
 
 ---
-*Botequista: Gestão profissional com alma de botequim.*
+
+## 📋 3. Guia Operacional (Day-to-Day)
+
+- **Abertura de Turno**: Informe o troco inicial. Isso é essencial para o relatório de fechamento.
+- **Penduras**: Ao quitar uma pendura, o sistema gera automaticamente uma entrada no Caixa do turno atual.
+- **Peso**: Digite gramas puras (ex: 350) para produtos vendidos por quilo.

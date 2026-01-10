@@ -29,7 +29,9 @@ const getSafeEnv = (key: string): string | undefined => {
   }
 };
 
-const FIXED_FB_URL = getSafeEnv('FIREBASE_URL') || 'https://poc-botequista-default-rtdb.firebaseio.com';
+// Prioriza a variável de ambiente da Vercel sobre o valor padrão
+const ENV_FB_URL = getSafeEnv('FIREBASE_URL');
+const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const MASTER_KEY = "Tc@00216587";
 
 const App: React.FC = () => {
@@ -47,9 +49,11 @@ const App: React.FC = () => {
 
   const [fbUrl, setFbUrl] = useState(() => {
     if (isBrowser) {
-      return localStorage.getItem('bar_fb_url') || FIXED_FB_URL;
+      const saved = localStorage.getItem('bar_fb_url');
+      if (saved) return saved;
+      if (ENV_FB_URL) return ENV_FB_URL;
     }
-    return FIXED_FB_URL;
+    return DEFAULT_FB_URL;
   });
   
   const [theme, setTheme] = useState<Theme>(() => {
@@ -130,6 +134,7 @@ const App: React.FC = () => {
     localStorage.setItem('bar_users', JSON.stringify(users));
     localStorage.setItem('bar_shifts', JSON.stringify(shifts));
     localStorage.setItem('bar_theme', theme);
+    localStorage.setItem('bar_fb_url', fbUrl);
     
     document.documentElement.classList.toggle('dark', theme === 'dark');
 
