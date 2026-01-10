@@ -1,7 +1,7 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, Sale, Tab, formatCurrency, User } from '../types';
-import { saveToFirebase, loadFromFirebase, AppFullData } from '../services/firebaseService';
+import { saveToFirebase, loadFromFirebase, getFirebaseToken, AppFullData } from '../services/firebaseService';
 
 interface SettingsProps {
   products: Product[];
@@ -21,146 +21,168 @@ const Settings: React.FC<SettingsProps> = ({
   currentUser
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
-  const [fbMessage, setFbMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [snapshotInfo, setSnapshotInfo] = useState<{ date: string; count: number } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
   
-  const [confirmAction, setConfirmAction] = useState<{title: string, msg: string, onConfirm: () => void} | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('fb_api_key') || 'REMOVED_FIREBASE_API_KEY');
+  const [email, setEmail] = useState(() => localStorage.getItem('fb_auth_email') || 'curupaco@gmail.com');
+  const [pass, setPass] = useState(() => localStorage.getItem('fb_auth_pass') || 'REMOVED_FIREBASE_PASSWORD');
+  const [isAuthEnabled, setIsAuthEnabled] = useState(() => localStorage.getItem('fb_auth_enabled') === 'true');
 
-  const canBackup = currentUser.username === 'admin' || currentUser.permissions.includes('manage_backup');
-  const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
-
-  useEffect(() => {
-    const saved = localStorage.getItem('bar_snapshot');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setSnapshotInfo({ date: parsed.timestamp, count: (parsed.products?.length || 0) + (parsed.sales?.length || 0) });
-      } catch (e) { console.error("Snapshot corrompido"); }
-    }
-  }, []);
-
-  const showToast = (txt: string) => {
-    setToast(txt);
+  const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
+    setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const createRestorePoint = () => {
-    const timestamp = new Date().toLocaleString('pt-BR');
-    const snapshot = { timestamp, products, sales, openTabs, config: { fbUrl } };
-    localStorage.setItem('bar_snapshot', JSON.stringify(snapshot));
-    setSnapshotInfo({ date: timestamp, count: products.length + sales.length });
-    showToast("Snapshot local criado!");
+  const handleEnableSecurity = async () => {
+    if (!apiKey || !email || !pass) {
+      showToast("Preencha o e-mail e a senha que você criou!", 'error');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const token = await getFirebaseToken(email, pass, apiKey);
+      if (token) {
+        localStorage.setItem('fb_api_key', apiKey);
+        localStorage.setItem('fb_auth_email', email);
+        localStorage.setItem('fb_auth_pass', pass);
+        localStorage.setItem('fb_auth_enabled', 'true');
+        setIsAuthEnabled(true);
+        onStatusChange('success');
+        showToast("Segurança Ativada com Sucesso!");
+      }
+    } catch (err: any) {
+      showToast("Erro: Verifique se o E-mail e Senha estão certos no Firebase.", 'error');
+      onStatusChange('error');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
-  const restoreFromPoint = () => {
-    const saved = localStorage.getItem('bar_snapshot');
-    if (!saved) return;
-    setConfirmAction({
-      title: "Restaurar Snapshot?",
-      msg: "Os dados ATUAIS serão substituídos pela cópia de segurança. Deseja prosseguir?",
-      onConfirm: () => {
-        const data = JSON.parse(saved);
-        onImport(data);
-        showToast("Sistema Restaurado!");
-        setConfirmAction(null);
-      }
-    });
-  };
-
-  const hardResetTabs = async () => {
-    if (!canReset) return;
-    setConfirmAction({
-      title: "Zerar Mesas?",
-      msg: "Isso apagará TODAS as comandas abertas agora. O histórico permanece salvo.",
-      onConfirm: async () => {
-        setIsSyncing(true);
-        const fullData = { products, sales, openTabs: [], config: { fbUrl } };
-        await saveToFirebase(fbUrl, fullData, "REMOVED_FIREBASE_PASSWORD");
-        onImport(fullData as any);
-        setConfirmAction(null);
-        setIsSyncing(false);
-        showToast("Mesas Zeradas!");
-      }
-    });
-  };
-
-  const fullSystemReset = async () => {
-    if (!canReset) return;
-    setConfirmAction({
-      title: "HARD RESET TOTAL?",
-      msg: "LIMPEZA COMPLETA: Apaga Produtos, Vendas e Mesas de TODOS os lugares. Inevitável.",
-      onConfirm: async () => {
-        setIsSyncing(true);
-        const emptyData = { products: [], sales: [], openTabs: [], config: { fbUrl }, updatedAt: new Date().toISOString() };
-        localStorage.clear();
-        await saveToFirebase(fbUrl, emptyData, "REMOVED_FIREBASE_PASSWORD");
-        onImport(emptyData as any);
-        setConfirmAction(null);
-        setIsSyncing(false);
-        window.location.reload();
-      }
-    });
+  const handleDisableSecurity = () => {
+    localStorage.removeItem('fb_auth_enabled');
+    setIsAuthEnabled(false);
+    showToast("Segurança Desativada (Modo Público)");
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-24 relative">
-      {/* TOAST INTERNO */}
+    <div className="max-w-4xl mx-auto space-y-8 pb-24">
       {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-emerald-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">
-           {toast}
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`}>
+           {toast.msg}
         </div>
       )}
 
-      {/* DIÁLOGO DE CONFIRMAÇÃO CRÍTICA */}
-      {confirmAction && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setConfirmAction(null)} />
-           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-20 border-4 border-red-600 animate-in zoom-in-95">
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase text-center mb-4 tracking-tighter leading-none">{confirmAction.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-bold mb-10 leading-relaxed uppercase">{confirmAction.msg}</p>
-              <div className="flex flex-col gap-3">
-                 <button onClick={confirmAction.onConfirm} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">Sim, Executar</button>
-                 <button onClick={() => setConfirmAction(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">Cancelar</button>
+      {/* PAINEL DE SEGURANÇA AVANÇADA */}
+      <div className={`bg-white dark:bg-slate-900 p-8 rounded-[40px] border-4 shadow-2xl transition-all ${isAuthEnabled ? 'border-emerald-500/30' : 'border-red-500 animate-pulse'}`}>
+        <div className="flex items-center justify-between gap-4 mb-8">
+           <div className="flex items-center gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isAuthEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <div>
+                 <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Trava de Segurança</h3>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Proteja seus dados com login oficial</p>
               </div>
            </div>
+           {!isAuthEnabled && (
+             <button onClick={() => setShowGuide(!showGuide)} className="text-[10px] font-black text-blue-500 underline uppercase">Não acho a aba Authentication?</button>
+           )}
         </div>
-      )}
 
-      <div className="bg-slate-100 dark:bg-slate-900/50 p-8 rounded-3xl border-2 border-blue-500 shadow-lg space-y-6 relative overflow-hidden transition-all">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-blue-600"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg></div>
-          <div><h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Ponto de Restauração</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Snapshot de Segurança Local</p></div>
-        </div>
-        <div className="flex flex-col md:flex-row gap-4">
-          <button onClick={createRestorePoint} className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-blue-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2 active:scale-95"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>Criar Snapshot Agora</button>
-          {snapshotInfo && (
-            <button onClick={restoreFromPoint} className="flex-1 bg-white dark:bg-slate-800 text-blue-600 border border-blue-200 dark:border-blue-900/50 py-4 rounded-2xl font-black hover:bg-blue-50 transition-all text-xs tracking-widest uppercase flex flex-col items-center justify-center gap-1 active:scale-95"><span>Restaurar Snapshot</span><span className="text-[9px] opacity-60 font-medium">Salvo em: {snapshotInfo.date}</span></button>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border-2 border-orange-500 shadow-xl space-y-6 relative overflow-hidden transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-600"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.99 7.99 0 0120 13a7.98 7.98 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14l.879 2.121z" /></svg></div>
-            <div><h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter text-left">Firebase Cloud</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-left">Banco de Dados Ativo</p></div>
+        {showGuide && !isAuthEnabled && (
+          <div className="mb-8 p-6 bg-blue-50 dark:bg-blue-900/10 border-2 border-blue-200 dark:border-blue-800 rounded-3xl animate-in slide-in-from-top-2">
+             <h4 className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase mb-4">Como encontrar no Firebase:</h4>
+             <ul className="text-[11px] font-bold text-slate-600 dark:text-slate-300 space-y-3 uppercase">
+                <li className="flex gap-2"><span>1.</span> No menu da esquerda, procure por <strong className="text-blue-600">Criação</strong> (ou Build) e clique.</li>
+                <li className="flex gap-2"><span>2.</span> Clique em <strong className="text-blue-600">Authentication</strong> (primeiro item da lista).</li>
+                <li className="flex gap-2"><span>3.</span> Clique no botão <strong className="text-blue-600">Começar</strong>.</li>
+                <li className="flex gap-2"><span>4.</span> Vá em <strong className="text-blue-600">Sign-in Method</strong> e ative "E-mail/Senha".</li>
+                <li className="flex gap-2"><span>5.</span> Vá em <strong className="text-blue-600">Users</strong> e crie seu e-mail e senha.</li>
+             </ul>
           </div>
-          <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${dbStatus === 'success' ? 'bg-emerald-100 text-emerald-600' : dbStatus === 'error' ? 'bg-red-100 text-red-600' : 'bg-slate-100 text-slate-400'}`}>{dbStatus === 'success' ? '● CONECTADO' : dbStatus === 'error' ? '● ERRO' : '○ DISCONECTADO'}</div>
-        </div>
-        <div className="flex gap-2">
-          <input type="text" value={fbUrl} onChange={e => { setFbUrl(e.target.value); onStatusChange('idle'); setFbMessage(null); }} placeholder="URL do Banco de Dados" className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500" />
-        </div>
-        <button onClick={async () => { setIsSyncing(true); await saveToFirebase(fbUrl, {products, sales, openTabs}, "REMOVED_FIREBASE_PASSWORD"); showToast("Nuvem Atualizada!"); setIsSyncing(false); }} disabled={isSyncing || !fbUrl || !canBackup} className="w-full bg-orange-500 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-orange-600 uppercase transition-all disabled:opacity-50 text-xs tracking-widest active:scale-95">{isSyncing ? "Sincronizando..." : "Forçar Sincronização Cloud"}</button>
+        )}
+
+        {!isAuthEnabled ? (
+          <div className="space-y-6">
+            <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-800">
+               <p className="text-[11px] font-bold text-red-600 dark:text-red-400 leading-relaxed uppercase">
+                 ⚠️ O banco está quase pronto. Clique em "Ativar Segurança Agora" para testar suas novas credenciais.
+               </p>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">apiKey (Já configurada)</label>
+                  <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
+               </div>
+               
+               <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">E-mail (Criado por você no Firebase)</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-black text-xs outline-none focus:ring-2 focus:ring-red-500 shadow-inner" placeholder="ex: seu@email.com" />
+               </div>
+
+               <div className="md:col-span-2 space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Senha (Criada por você no Firebase)</label>
+                  <input type="password" value={pass} onChange={e => setPass(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-black text-xs outline-none focus:ring-2 focus:ring-red-500 shadow-inner" placeholder="••••••••" />
+               </div>
+            </div>
+
+            <button onClick={handleEnableSecurity} disabled={isSyncing} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl active:scale-95 disabled:opacity-50">
+               {isSyncing ? "Validando no Firebase..." : "Ativar Segurança Agora"}
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl flex flex-col md:flex-row items-center justify-between gap-4 border border-emerald-500/20">
+             <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div>
+                   <p className="text-[10px] font-black text-slate-400 uppercase">Acesso Seguro Ativado:</p>
+                   <p className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase">{email}</p>
+                </div>
+             </div>
+             <button onClick={handleDisableSecurity} className="text-[10px] font-black text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors">Voltar para Modo Público</button>
+          </div>
+        )}
       </div>
 
-      <div className="bg-red-50 dark:bg-red-900/10 p-8 rounded-3xl border-2 border-red-200 dark:border-red-900/30 space-y-6">
-        <div className="flex items-center gap-3 text-red-600 dark:text-red-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg><h3 className="font-black uppercase text-xs tracking-widest">Zona Crítica de Dados</h3></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <button disabled={!canReset} onClick={hardResetTabs} className="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/50 py-4 rounded-2xl font-black hover:bg-red-100 transition-all text-xs tracking-widest uppercase disabled:opacity-20 active:scale-95">Zerar Apenas Mesas</button>
-          <button disabled={!canReset} onClick={fullSystemReset} className="bg-red-600 text-white py-4 rounded-2xl font-black shadow-lg hover:bg-red-700 uppercase transition-all text-xs tracking-widest flex items-center justify-center gap-2 disabled:opacity-20 active:scale-95">Hard Reset Total</button>
+      {/* CONFIGURAÇÃO DE URL */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-2xl flex items-center justify-center text-orange-600">
+             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+          </div>
+          <div>
+             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">databaseURL</h3>
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">O endereço onde suas cervejas e vendas são salvas</p>
+          </div>
         </div>
+        <input type="text" value={fbUrl} onChange={e => { setFbUrl(e.target.value); onStatusChange('idle'); }} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm font-mono outline-none focus:ring-2 focus:ring-orange-500 shadow-inner" />
+        
+        <button 
+          onClick={async () => {
+            setIsSyncing(true);
+            try {
+               let token: string | undefined;
+               if (isAuthEnabled) token = await getFirebaseToken(email, pass, apiKey);
+               await saveToFirebase(fbUrl, {products, sales, openTabs}, "REMOVED_FIREBASE_PASSWORD", token);
+               onStatusChange('success');
+               showToast("Tudo salvo na Nuvem!");
+            } catch (e: any) {
+               onStatusChange('error');
+               showToast(e.message || "Erro de conexão", 'error');
+            } finally {
+               setIsSyncing(false);
+            }
+          }} 
+          disabled={isSyncing || !fbUrl} 
+          className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black shadow-lg hover:bg-orange-600 transition-all uppercase text-xs tracking-widest disabled:opacity-50 active:scale-95"
+        >
+          {isSyncing ? "Sincronizando..." : "Salvar Dados na Nuvem Agora"}
+        </button>
       </div>
     </div>
   );
