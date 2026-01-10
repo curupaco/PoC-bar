@@ -97,7 +97,9 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       acc[item.productName].total += item.totalPrice;
       return acc;
     }, {} as Record<string, { name: string, qty: number, total: number }>);
-    const topProducts = Object.values(productStats).sort((a, b) => b.total - a.total);
+
+    // FIX: Added explicit type cast to Object.values result to ensure correct type inference for sort parameters
+    const topProducts = (Object.values(productStats) as { name: string, qty: number, total: number }[]).sort((a, b) => b.total - a.total);
 
     const hourlyStats = Array.from({ length: 24 }).map((_, i) => ({ hour: i, total: 0, count: 0 }));
     filteredSales.forEach((s: Sale) => {

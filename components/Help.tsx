@@ -27,84 +27,79 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight">Vendas no Balcão</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>1. <span className="text-red-600 font-black">Abrir Mesa:</span> No PDV, clique em <FakeButton>Abrir Nova Mesa</FakeButton>.</p>
+            <p>1. <span className="text-red-600 font-black">Abrir Mesa:</span> No PDV, clique em <FakeButton>Abrir Mesa</FakeButton>.</p>
             <p>2. <span className="text-red-600 font-black">Lançamento:</span> Toque nos itens. Para peso, informe as gramas (ex: 450 para 450g).</p>
             <p>3. <span className="text-red-600 font-black">Pagamento:</span> Clique na mesa, aperte <FakeButton>Fechar Conta</FakeButton> e escolha a forma.</p>
           </div>
         </section>
 
-        {/* Card 2: Segurança */}
-        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900/30 shadow-sm space-y-6">
-          <div className="flex items-center gap-4 text-orange-600">
-            <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        {/* Card: Favoritos */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-amber-200 dark:border-amber-900/30 shadow-sm space-y-6">
+          <div className="flex items-center gap-4 text-amber-600">
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Dados na Nuvem</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight">Agilidade (Favoritos)</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>• <span className="text-orange-600 font-black">Sincronização:</span> Tudo é salvo automaticamente em seu Banco de Dados remoto.</p>
-            <p>• <span className="text-orange-600 font-black">Penduras:</span> Vá em <span className="font-black italic">Relatórios → Penduras</span> para gerenciar fiados.</p>
-            <p>• <span className="text-orange-600 font-black">Offline:</span> O sistema funciona sem internet e sincroniza assim que o sinal voltar.</p>
+            <p>• <span className="text-amber-600 font-black">Como Favoritar:</span> Em <span className="font-black">Produtos</span>, toque na estrela de cada item.</p>
+            <p>• <span className="text-amber-600 font-black">Atalho PDV:</span> Os favoritos ganham uma seção exclusiva no topo do PDV para vendas rápidas de itens com muita saída.</p>
           </div>
         </section>
 
-        {/* Card 3: Produtos */}
-        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-blue-200 dark:border-blue-900/30 shadow-sm space-y-6">
-          <div className="flex items-center gap-4 text-blue-600">
-            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M4 3h5.881L21.119 14.238a2 2 0 010 2.828l-4.053 4.053a2 2 0 01-2.828 0L3 9.882V4a1 1 0 011-1z" /></svg>
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Cardápio & Estoque</h3>
-          </div>
-          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>• <span className="text-blue-600 font-black">Categorias:</span> Use CAIXA ALTA para nomes. Melhora a leitura no escuro.</p>
-            <p>• <span className="text-blue-600 font-black">Venda por Peso:</span> Ideal para porções ou refeições self-service.</p>
-            <p>• <span className="text-blue-600 font-black">Organização:</span> Mantenha categorias limpas como BEBIDAS, DOSES ou COZINHA.</p>
-          </div>
-        </section>
-
-        {/* Card 4: Equipe */}
+        {/* Card: Divisão de Conta */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-200 dark:border-emerald-900/30 shadow-sm space-y-6">
           <div className="flex items-center gap-4 text-emerald-600">
             <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Equipe & Colaboração</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight">Divisão de Valores</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>• <span className="text-emerald-600 font-black">Usuários:</span> Cada atendente deve ter seu login para rastreabilidade de vendas.</p>
-            <p>• <span className="text-emerald-600 font-black">Permissões:</span> Limite quem pode excluir vendas ou alterar preços.</p>
-            <p>• <span className="text-emerald-600 font-black">Turnos:</span> Sempre encerre seu turno ao sair. Isso congela seu relatório do dia.</p>
+            <p>• <span className="text-emerald-600 font-black">Múltiplos Pagamentos:</span> Você pode adicionar vários pagamentos em uma só mesa (ex: R$ 10 no PIX e o resto no Dinheiro).</p>
+            <p>• <span className="text-emerald-600 font-black">Segurança:</span> Se desistir da divisão, basta clicar em <span className="font-black italic">Voltar</span>. O saldo total da mesa será restaurado.</p>
           </div>
         </section>
 
-        {/* Card 5: Tesouraria */}
-        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900/30 shadow-sm space-y-6">
-          <div className="flex items-center gap-4 text-indigo-600">
-            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        {/* Card: Padrão Brasileiro */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-blue-200 dark:border-blue-900/30 shadow-sm space-y-6">
+          <div className="flex items-center gap-4 text-blue-600">
+            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
+               <span className="font-black text-2xl">,00</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Caixa & Tesouraria</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight">Padrão de Vírgula</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>• <span className="text-indigo-600 font-black">Caixas:</span> Temos 3 níveis (Primário/Cofre, Gaveta e Secundário).</p>
-            <p>• <span className="text-indigo-600 font-black">Transferência:</span> Movimente dinheiro entre caixas na aba <span className="font-black italic">Caixa</span>.</p>
-            <p>• <span className="text-indigo-600 font-black">Fundo:</span> Nunca esqueça de informar o fundo de troco na abertura do turno.</p>
+            <p>• <span className="text-blue-600 font-black">Entrada BR:</span> Digite os centavos usando a vírgula (ex: 15,50). O sistema já está preparado para o teclado brasileiro.</p>
+            <p>• <span className="text-blue-600 font-black">Cuidado:</span> Não é necessário digitar o "R$". Apenas o número e a vírgula se houver centavos.</p>
           </div>
         </section>
 
-        {/* Card 6: Dashboard */}
+        {/* Card: Quitação de Fiado */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
           <div className="flex items-center gap-4 text-slate-600 dark:text-slate-300">
-            <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
+            <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Análise de Dados</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight">Quitar Fiado (Pendura)</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-            <p>• <span className="font-black">Dashboard:</span> Visão rápida de ticket médio e produtos mais vendidos.</p>
-            <p>• <span className="font-black">IA Insight:</span> Use o botão "Gerar Insights" para dicas de como vender mais.</p>
-            <p>• <span className="font-black">Relatórios:</span> Gere cupons de fechamento e salve em PNG para sua contabilidade.</p>
+            <p>• <span className="font-black">Abatimento:</span> Vá em <span className="font-black">Relatórios → Penduras</span> e clique em <FakeButton>Quitar</FakeButton>.</p>
+            <p>• <span className="font-black">Caixa:</span> O dinheiro da quitação entra automaticamente no caixa do turno atual como uma entrada positiva.</p>
+          </div>
+        </section>
+
+        {/* Card: Turnos */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-red-200 dark:border-red-900/30 shadow-sm space-y-6">
+          <div className="flex items-center gap-4 text-red-600">
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Abertura e Fechamento</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+            <p>• <span className="text-red-600 font-black">Conferência:</span> Ao fechar o turno, o sistema mostra quanto deveria ter na gaveta. Compare com o dinheiro físico.</p>
+            <p>• <span className="text-red-600 font-black">Importante:</span> Não finalize o turno se houver mesas abertas que você deseja cobrar no próximo período.</p>
           </div>
         </section>
       </div>
@@ -112,17 +107,14 @@ const Help: React.FC = () => {
       <div className="bg-slate-900 text-white p-10 rounded-[50px] shadow-2xl space-y-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <h3 className="text-2xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
-            <span className="text-red-500 text-4xl">★</span> Regras de Ouro do Botequista
+            <span className="text-red-500 text-4xl">★</span> Dicas de Ouro
           </h3>
-          <div className="bg-red-600 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest">Atenção Máxima</div>
+          <div className="bg-red-600 px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest">Operação Ágil</div>
         </div>
         <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-sm font-bold uppercase tracking-wide opacity-90">
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Feche o turno ao sair do bar para conferir a gaveta.</li>
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Tudo em CAIXA ALTA facilita a leitura no escuro.</li>
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Nunca compartilhe sua senha mestra.</li>
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Verifique o sinal da internet no topo da tela.</li>
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Quitar pendura gera uma entrada real no caixa.</li>
-          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Snapshot local é sua última linha de defesa.</li>
+          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Trocar de mesa limpa qualquer tentativa de divisão não finalizada.</li>
+          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Use o Gemini (IA) para ver quais dias da semana você fatura mais.</li>
+          <li className="flex items-start gap-3"><span className="text-red-500 text-lg">✔</span> Marque com estrela os itens que você mais vende para ganhar tempo no balcão.</li>
         </ul>
       </div>
     </div>

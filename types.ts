@@ -59,6 +59,7 @@ export interface Product {
   price: number;
   category: string;
   sellType: SellType;
+  isFavorite?: boolean;
 }
 
 export interface SaleItem {
