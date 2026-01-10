@@ -86,7 +86,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
           <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase mb-6">{editingUser ? 'Editar Usuário' : 'Novo Colaborador'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Usuário de Login</label>
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Usuário</label>
               <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div className="space-y-1">

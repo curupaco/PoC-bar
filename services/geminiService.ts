@@ -3,13 +3,16 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Product, Sale } from "../types";
 
 const getApiKey = () => {
-  try { return process.env.API_KEY || ""; } catch (e) { return ""; }
+  try { 
+    const val = (process.env as any).API_KEY;
+    return (val && val !== "undefined" && val !== "") ? val : "";
+  } catch (e) { return ""; }
 };
 
 export const getAIInsights = async (sales: Sale[], products: Product[]) => {
   const apiKey = getApiKey();
   if (!apiKey) {
-    return { insights: [{ title: "Configuração Pendente", description: "A chave da IA não foi configurada no ambiente. Adicione a variável API_KEY na Vercel para ativar as dicas." }] };
+    return { insights: [{ title: "IA Desativada", description: "A chave API_KEY não foi encontrada nas variáveis de ambiente. Configure para ativar insights inteligentes." }] };
   }
 
   const ai = new GoogleGenAI({ apiKey });
@@ -65,6 +68,6 @@ export const getAIInsights = async (sales: Sale[], products: Product[]) => {
     return JSON.parse(response.text || '{"insights": []}');
   } catch (error) {
     console.error("AI Insight Error:", error);
-    return { insights: [{ title: "Dica de Gestão", description: "Mantenha seu estoque sempre atualizado e analise quais produtos têm maior margem de lucro para criar promoções." }] };
+    return { insights: [{ title: "Dica de Gestão", description: "Analise quais produtos têm maior margem de lucro para criar promoções em dias de baixo movimento." }] };
   }
 };

@@ -28,8 +28,13 @@ const getFirebaseUrl = (url: string, token?: string) => {
  * Realiza o login no Firebase Auth via REST API para obter o token de acesso
  */
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string> => {
+  // Validação da API Key para evitar chamadas fúteis
+  if (!apiKey || apiKey.length < 10 || apiKey.includes("undefined")) {
+    throw new Error("API Key inválida ou não configurada.");
+  }
+  
   try {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`;
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey.trim()}`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,13 +43,18 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || "Falha na autenticação");
+      const msg = errorData.error?.message;
+      
+      if (msg === "INVALID_API_KEY") {
+        throw new Error("A API Key do Firebase informada é inválida.");
+      }
+      throw new Error(msg || "Erro na autenticação com o Firebase.");
     }
 
     const data = await response.json();
     return data.idToken;
   } catch (err: any) {
-    console.error("Auth Error:", err);
+    console.error("Firebase Auth Failure:", err.message);
     throw err;
   }
 };
@@ -56,38 +66,50 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
   const fullData = { ...data, updatedAt: new Date().toISOString() };
   const payload = encryptionKey ? { encrypted: encryptData(fullData, encryptionKey) } : fullData;
 
-  const response = await fetch(firebasePct, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  try {
+    const response = await fetch(firebasePct, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error("ACESSO NEGADO: O banco está trancado. Verifique as credenciais de segurança nos Ajustes.");
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error("Acesso negado ao Firebase Database. Verifique as regras de segurança.");
+      }
+      throw new Error(`Erro Firebase: ${response.status}`);
     }
-    throw new Error(`Erro Firebase: ${response.status}`);
+    return await response.json();
+  } catch (err: any) {
+    console.error("Firebase Save Error:", err.message);
+    throw err;
   }
-  return await response.json();
 };
 
 export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string): Promise<AppFullData | null> => {
   const firebasePct = getFirebaseUrl(url, token);
   if (!firebasePct) return null;
 
-  const response = await fetch(firebasePct);
-  
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error("ACESSO NEGADO: Configure a Segurança Avançada para ler os dados.");
+  try {
+    const response = await fetch(firebasePct);
+    
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        // Se falhar por 401/403 sem token, é esperado se o banco for privado.
+        // Se falhar com token, a permissão está errada.
+        return null;
+      }
+      return null;
     }
+
+    const rawData = await response.json();
+    if (rawData && rawData.encrypted) {
+      if (!encryptionKey) return null;
+      return decryptData(rawData.encrypted, encryptionKey);
+    }
+    return rawData;
+  } catch (err: any) {
+    console.error("Firebase Load Error:", err.message);
     return null;
   }
-
-  const rawData = await response.json();
-  if (rawData && rawData.encrypted) {
-    if (!encryptionKey) return null;
-    return decryptData(rawData.encrypted, encryptionKey);
-  }
-  return rawData;
 };

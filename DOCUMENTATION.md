@@ -1,39 +1,56 @@
 
-# 🍺 Botequista - Documentação Oficial
+# 🍺 Botequista - Guia de Deploy Profissional
 
-Este sistema foi projetado para ser "Zero Config" após o primeiro deploy.
-
----
-
-## 🚀 1. Guia de Deploy (GitHub -> Vercel)
-
-Para que o sistema funcione perfeitamente na Vercel integrando com seu Banco de Dados, siga estes passos:
-
-### 1.1 Variáveis de Ambiente
-No painel da Vercel (Project Settings -> Environment Variables), adicione:
-1.  `FIREBASE_URL`: O link do seu Firebase Realtime Database (ex: `https://meu-projeto.firebaseio.com`).
-2.  `API_KEY`: Sua chave de API do Google Gemini (para os insights de IA).
-
-### 1.2 Por que isso é importante?
-Ao adicionar essas chaves na Vercel, o sistema as injetará automaticamente no código. Você não precisará alterar nada nos arquivos `.ts` ou `.tsx`. O próximo commit no GitHub atualizará o sistema mantendo a conexão segura.
+O Botequista foi construído com arquitetura de nuvem resiliente para garantir que você tenha o controle total do seu bar em qualquer lugar do mundo.
 
 ---
 
-## 🛠 2. Documentação Técnica
+## 🚀 1. Deploy Instantâneo (GitHub -> Vercel)
 
-### 2.1 Padrão Monetário Brasileiro
-O sistema utiliza rigorosamente a vírgula (`,`) para entradas e o formato `R$ 0,00` para exibição.
-- Internamente, as entradas são convertidas de `string` com vírgula para `number` (float) para cálculos.
-- A exibição utiliza `Intl.NumberFormat('pt-BR')`.
+Para que o sistema conecte automaticamente com seu banco de dados e inteligência artificial sem mexer no código, siga estes passos:
 
-### 2.2 Divisão de Conta (Lógica de Resiliência)
-- O sistema gerencia pagamentos parciais através de um estado temporário (`currentPayments`).
-- **Resiliência**: Se o operador sair da tela de fechamento ou trocar de mesa sem finalizar, esse estado é limpo, garantindo que o saldo devedor da mesa volte a ser o total original, evitando perdas financeiras por "pagamentos fantasmas".
+### 1.1 Configuração na Vercel
+No painel da Vercel (Project Settings -> Environment Variables), adicione estas chaves:
+
+1.  **`FIREBASE_URL`**: O endereço do seu Firebase Realtime Database.
+    - Ex: `https://meu-bar-default-rtdb.firebaseio.com`
+2.  **`API_KEY`**: Sua chave da Google Gemini API (obtida em ai.google.dev).
+    - Essencial para os insights automáticos do Dashboard.
+
+### 1.2 Por que isso funciona?
+O sistema está programado para priorizar essas variáveis de ambiente. Ao fazer o deploy, a Vercel injeta esses valores, tornando a integração invisível e segura.
 
 ---
 
-## 📋 3. Guia Operacional (Day-to-Day)
+## 🛠 2. Segurança e Dados
 
-- **Abertura de Turno**: Informe o troco inicial. Isso é essencial para o relatório de fechamento.
-- **Penduras**: Ao quitar uma pendura, o sistema gera automaticamente uma entrada no Caixa do turno atual.
-- **Peso**: Digite gramas puras (ex: 350) para produtos vendidos por quilo.
+### 2.1 A Senha Master (`REMOVED_FIREBASE_PASSWORD`)
+Esta senha é o coração da segurança do seu bar. Ela é usada para:
+- Criptografar os dados antes de enviá-los para a nuvem.
+- Validar a conexão inicial de novos dispositivos.
+- **Dica:** Não altere esta chave a menos que tenha conhecimento técnico, pois ela protege a integridade do seu banco de dados.
+
+### 2.2 Sincronização Multi-Aparelho
+- O sistema usa um mecanismo de **Polling Inteligente**.
+- A cada 15 segundos, o app verifica se houve mudanças feitas por outros funcionários em outros celulares.
+- O salvamento é automático (debounced) a cada 3 segundos após qualquer alteração.
+
+---
+
+## 📊 3. Manutenção e Backups
+
+### 3.1 Backup Secundário (GitHub Gists)
+Além do Firebase, recomendamos configurar o backup via GitHub nos Ajustes.
+- Isso cria um arquivo `.json` privado na sua conta do GitHub.
+- É a sua garantia final contra qualquer falha catastrófica de banco de dados.
+
+### 3.2 Exportação Manual
+- Sempre que desejar, você pode baixar o estado completo do seu bar clicando em **Exportar JSON** nos Ajustes. Este arquivo pode ser reimportado em qualquer instalação limpa do Botequista.
+
+---
+
+## 📋 4. Padrões de Operação
+
+- **Moeda:** Sempre use a vírgula para centavos. O sistema formata automaticamente para `R$`.
+- **Peso:** O PDV espera gramas (números inteiros). O cálculo de preço é automático baseado no preço/kg cadastrado.
+- **Turnos:** O fechamento de turno é o momento mais importante. Ele consolida as vendas em dinheiro e valida o fundo de troco.
