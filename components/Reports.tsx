@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Sale, Product, PaymentMethod, formatCurrency, User, Shift } from '../types';
 import * as htmlToImage from 'html-to-image';
 
@@ -17,15 +17,47 @@ type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPE
 const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura }) => {
   const reportRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
+  const [toast, setToast] = useState<string | null>(null);
   
   const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [periodLabel, setPeriodLabel] = useState('DIA');
+  const [periodLabel, setPeriodLabel] = useState('HOJE');
 
   const [selectedShiftId, setSelectedShiftId] = useState<string>(shifts[0]?.id || '');
 
   const canExport = currentUser.username === 'admin' || currentUser.permissions.includes('export_report');
   const canSettle = currentUser.username === 'admin' || currentUser.permissions.includes('clear_fiado');
+
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  const showToast = (msg: string) => setToast(msg);
+
+  const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
+    const now = new Date();
+    let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (type === 'ONTEM') { 
+      start.setDate(now.getDate() - 1); 
+      end.setDate(now.getDate() - 1); 
+    }
+    else if (type === 'SEMANA') { 
+      start.setDate(now.getDate() - now.getDay()); 
+    }
+    else if (type === 'MÊS') { 
+      start = new Date(now.getFullYear(), now.getMonth(), 1); 
+    }
+
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+    setPeriodLabel(type);
+    showToast(`PERÍODO ALTERADO PARA: ${type}`);
+  };
 
   const filteredSales = useMemo<Sale[]>(() => {
     const start = new Date(startDate + 'T00:00:00').getTime();
@@ -42,18 +74,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, number>);
 
-    const cashSalesOnly = shiftSales
-      .filter((s: Sale) => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc: number, s: Sale) => acc + s.total, 0);
-
-    const cashSettlementsOnly = shiftSales
-      .filter((s: Sale) => s.paymentMethod === PaymentMethod.CASH && s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc: number, s: Sale) => acc + s.total, 0);
-
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
       acc[method] = { count: 0, total: 0 };
       return acc;
-    }, {} as Record<string, { count: number, total: number }>); // FIX: Adicionado parêntese de fechamento
+    }, {} as Record<string, { count: number, total: number }>);
 
     filteredSales.forEach((sale: Sale) => {
       if (totalsByMethod[sale.paymentMethod]) {
@@ -98,7 +122,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, { name: string, qty: number, total: number }>);
 
-    // FIX: Added explicit type cast to Object.values result to ensure correct type inference for sort parameters
     const topProducts = (Object.values(productStats) as { name: string, qty: number, total: number }[]).sort((a, b) => b.total - a.total);
 
     const hourlyStats = Array.from({ length: 24 }).map((_, i) => ({ hour: i, total: 0, count: 0 }));
@@ -109,37 +132,27 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     });
 
     return { 
-      totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod, cashSalesOnly, cashSettlementsOnly,
+      totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod,
       teamStats, topProducts, hourlyStats
     };
   }, [filteredSales, sales, shifts, selectedShiftId, users]);
 
   const exportAsImage = () => {
     if (!canExport || !reportRef.current) return;
+    showToast("GERANDO CUPOM...");
     htmlToImage.toPng(reportRef.current, { backgroundColor: '#000000', pixelRatio: 2 })
     .then((dataUrl) => {
         const link = document.createElement('a');
-        link.download = `comprovante-botequista-${new Date().getTime()}.png`;
+        link.download = `fechamento-${periodLabel}-${new Date().getTime()}.png`;
         link.href = dataUrl;
         link.click();
+        showToast("CUPOM SALVO COM SUCESSO!");
     });
   };
 
-  const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
-    const now = new Date();
-    let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    if (type === 'ONTEM') { start.setDate(now.getDate() - 1); end.setDate(now.getDate() - 1); }
-    else if (type === 'SEMANA') { start.setDate(now.getDate() - now.getDay()); }
-    else if (type === 'MÊS') { start = new Date(now.getFullYear(), now.getMonth(), 1); }
-    setStartDate(start.toISOString().split('T')[0]);
-    setEndDate(end.toISOString().split('T')[0]);
-    setPeriodLabel(type);
-  };
-
   const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px]">
-      Nenhum dado encontrado para o período.
+    <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in">
+      Nenhum dado para o período: {startDate} até {endDate}
     </div>
   );
 
@@ -154,7 +167,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
           <div className="space-y-6">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center gap-4">
                <div className="flex-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase mb-2">Selecionar Turno</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase mb-2">Selecionar Turno para Detalhar</label>
                   <select value={selectedShiftId} onChange={e => setSelectedShiftId(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none">
                     {shifts.map(s => <option key={s.id} value={s.id}>{new Date(s.startTime).toLocaleDateString()} {new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - @{s.openedBy}</option>)}
                   </select>
@@ -207,7 +220,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                      ) : null
                    ))}
                    <div className="pt-4 flex justify-between items-center text-2xl font-black text-red-600">
-                      <span className="text-[10px] text-slate-400">TOTAL</span>
+                      <span className="text-[10px] text-slate-400">TOTAL NO PERÍODO</span>
                       <span>{formatCurrency(reportData.grandTotal)}</span>
                    </div>
                 </div>
@@ -239,7 +252,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                          <td className="px-8 py-5 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
                          <td className="px-8 py-5 text-right font-black text-red-500">{formatCurrency(p.amount)}</td>
                          <td className="px-8 py-5 text-right">
-                            <button onClick={() => onQuitarPendura(p.name, p.amount)} disabled={!canSettle} className="bg-red-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase disabled:opacity-50">Quitar</button>
+                            <button onClick={() => { onQuitarPendura(p.name, p.amount); showToast(`QUITANDO PENDURA DE ${p.name}`); }} disabled={!canSettle} className="bg-red-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase disabled:opacity-50">Quitar</button>
                          </td>
                       </tr>
                    ))}
@@ -280,7 +293,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         return (
           <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden">
              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Ranking de Produtos (Curva ABC)</h3>
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Ranking de Produtos</h3>
              </div>
              <table className="w-full text-left text-xs">
                 <thead>
@@ -307,10 +320,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 h-64">
-               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Fluxo por Horário</h3>
+               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Fluxo por Horário (Quantidade)</h3>
                <div className="flex items-end justify-between h-32 gap-1">
                  {reportData.hourlyStats.map((h, i) => (
-                   <div key={i} className="flex-1 bg-red-500/20 hover:bg-red-500 transition-all rounded-t-sm" style={{ height: `${(h.count / (peakHour.count || 1)) * 100}%` }}></div>
+                   <div key={i} className="flex-1 bg-red-500/20 hover:bg-red-500 transition-all rounded-t-sm" title={`${h.hour}:00h - ${h.count} vendas`} style={{ height: `${(h.count / (peakHour.count || 1)) * 100}%` }}></div>
                  ))}
                </div>
             </div>
@@ -325,14 +338,40 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-24">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+    <div className="space-y-8 max-w-6xl mx-auto pb-24 relative">
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-slate-800 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">
+           {toast}
+        </div>
+      )}
+
+      {/* FILTRO DE PERÍODO SUPERIOR */}
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Período do Relatório</p>
+        <div className="flex bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          {(['HOJE', 'ONTEM', 'SEMANA', 'MÊS'] as const).map(type => (
+            <button 
+              key={type} 
+              onClick={() => setPreset(type)} 
+              className={`px-8 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${periodLabel === type ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+        <p className="text-[9px] font-black text-slate-400 uppercase italic">
+          {startDate} até {endDate}
+        </p>
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
         <div className="flex flex-wrap justify-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
           {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white dark:bg-slate-900 text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{cat}</button>
+            <button key={cat} onClick={() => { setActiveCategory(cat); showToast(`VISUALIZANDO: ${cat}`); }} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white dark:bg-slate-900 text-red-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{cat}</button>
           ))}
         </div>
       </div>
+      
       <div className="min-h-[500px] animate-in fade-in duration-500">{renderActiveReport()}</div>
     </div>
   );

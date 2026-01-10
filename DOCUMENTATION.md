@@ -7,15 +7,13 @@ O Botequista foi construído com arquitetura de nuvem resiliente para garantir q
 
 ## 🚀 1. Deploy Instantâneo (GitHub -> Vercel)
 
-Para que o sistema conecte automaticamente com seu banco de dados e inteligência artificial sem mexer no código, siga estes passos:
+Para que o sistema conecte automaticamente com seu banco de dados sem mexer no código, siga estes passos:
 
 ### 1.1 Configuração na Vercel
-No painel da Vercel (Project Settings -> Environment Variables), adicione estas chaves:
+No painel da Vercel (Project Settings -> Environment Variables), adicione esta chave:
 
 1.  **`FIREBASE_URL`**: O endereço do seu Firebase Realtime Database.
     - Ex: `https://meu-bar-default-rtdb.firebaseio.com`
-2.  **`API_KEY`**: Sua chave da Google Gemini API (obtida em ai.google.dev).
-    - Essencial para os insights automáticos do Dashboard.
 
 ### 1.2 Por que isso funciona?
 O sistema está programado para priorizar essas variáveis de ambiente. Ao fazer o deploy, a Vercel injeta esses valores, tornando a integração invisível e segura.

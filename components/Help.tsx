@@ -58,21 +58,7 @@ const Help: React.FC = () => {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
             <p>• <span className="text-emerald-600 font-black">Nuvem Ativa:</span> Seus dados estão no Firebase. Você pode abrir o sistema em quantos celulares quiser.</p>
-            <p>• <span className="text-emerald-600 font-black">Sincronização:</span> Quando um garçom lança um item, o dashboard do dono e o PDV do caixa atualizam em 15 segundos.</p>
-          </div>
-        </section>
-
-        {/* Card: IA Gemini */}
-        <section className="bg-indigo-600 p-8 rounded-[40px] shadow-xl space-y-6 text-white">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5,2L9,9L2,11.5L9,14L11.5,21L14,14L21,11.5L14,9L11.5,2M11.5,18.3L10.5,15.5L7.7,14.5L10.5,13.5L11.5,10.7L12.5,13.5L15.3,14.5L12.5,15.5L11.5,18.3M18,3.5L19.1,6.5L22.1,7.6L19.1,8.7L18,11.7L16.9,8.7L13.9,7.6L16.9,6.5L18,3.5Z" /></svg>
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Dicas da IA (Gemini)</h3>
-          </div>
-          <div className="space-y-4 text-sm font-medium leading-relaxed opacity-90">
-            <p>• Vá em <span className="font-black">Dashboard</span> e clique em <span className="underline">Gerar Insights</span>.</p>
-            <p>• O robô analisa suas vendas e sugere quais porções deveriam ter promoção ou quais dias o movimento está abaixo do esperado.</p>
+            <p>• <span className="text-emerald-600 font-black">Sincronização:</span> Quando um garçom lança um item, o dashboard do dono e o PDV do caixa atualizam automaticamente.</p>
           </div>
         </section>
 
@@ -100,7 +86,7 @@ const Help: React.FC = () => {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
             <p>• Em <span className="font-black">Ajustes</span>, configure seu Token do GitHub.</p>
-            <p>• O sistema salvará uma cópia de segurança em um "Gist" privado toda vez que você clicar em sincronizar, garantindo que você nunca perca o histórico do bar.</p>
+            <p>• O sistema salvará uma cópia de segurança em um "Gist" privado toda vez que você clicar em sincronizar.</p>
           </div>
         </section>
       </div>
