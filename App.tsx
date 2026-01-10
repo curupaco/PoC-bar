@@ -13,26 +13,24 @@ import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
-import { saveToFirebase, loadFromFirebase } from './services/firebaseService';
+import { saveToFirebase, loadFromFirebase, getFirebaseToken } from './services/firebaseService';
 
-// Proteção global contra falhas de build em ambientes Node.js (Vercel Build Step)
 const isBrowser = typeof window !== 'undefined';
 if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
 const getSafeEnv = (key: string): string | undefined => {
-  try {
-    return (process.env as any)[key];
-  } catch {
-    return undefined;
-  }
+  try { return (process.env as any)[key]; } catch { return undefined; }
 };
 
-// Prioriza a variável de ambiente da Vercel sobre o valor padrão
 const ENV_FB_URL = getSafeEnv('FIREBASE_URL');
+// CONFIGURAÇÃO REAL DO USUÁRIO
 const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const MASTER_KEY = "Tc@00216587";
+const DEFAULT_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs';
+const DEFAULT_EMAIL = 'curupaco@gmail.com';
+const DEFAULT_PASS = 'Tc@00216587';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -79,14 +77,10 @@ const App: React.FC = () => {
     'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
   ];
 
+  // Carregamento Inicial
   useEffect(() => {
     if (!isBrowser) return;
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
     
-    // Carregamento Inicial
     const p = localStorage.getItem('bar_products');
     const s = localStorage.getItem('bar_sales');
     const t = localStorage.getItem('bar_open_tabs');
@@ -95,33 +89,17 @@ const App: React.FC = () => {
     
     try {
       if (p) setProducts(JSON.parse(p));
-      else setProducts([{ id: '1', name: 'CERVEJA LATA 350ML', price: 6.00, category: 'BEBIDAS', sellType: 'unit' }]);
       if (s) setSales(JSON.parse(s));
       if (t) setOpenTabs(JSON.parse(t));
-      
       let initialUsers: User[] = u ? JSON.parse(u) : [
         { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }
       ];
       setUsers(initialUsers.map(usr => usr.username === 'admin' ? { ...usr, permissions: ALL_ADMIN_PERMISSIONS } : usr));
       if (sh) setShifts(JSON.parse(sh));
-    } catch (e) { console.error("Cache error", e); }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    } catch (e) { console.error("Cache local corrompido"); }
   }, []);
 
-  const handleLogin = (user: string, pass: string) => {
-    const found = users.find(u => u.username === user && u.password === pass);
-    if (found) {
-      setLoginError(null);
-      setCurrentUser(found.username === 'admin' ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
-    } else {
-      setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
-    }
-  };
-
+  // Sincronização com Cloud
   useEffect(() => {
     if (!isBrowser || isInitialMount.current) {
       if (isInitialMount.current) isInitialMount.current = false;
@@ -139,21 +117,51 @@ const App: React.FC = () => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
 
     if (fbUrl && !isSyncingFromCloud.current) {
-      const timer = setTimeout(() => {
-        saveToFirebase(fbUrl, { products, sales, openTabs, users, shifts, config: { fbUrl } }, encryptionKey)
-          .then(() => setDbStatus('success'))
-          .catch(() => setDbStatus('error'));
-      }, 2000); 
+      const timer = setTimeout(async () => {
+        try {
+          let token: string | undefined;
+          const isAuthEnabled = localStorage.getItem('fb_auth_enabled') === 'true' || true; // Forçamos true já que o usuário configurou
+          if (isAuthEnabled) {
+            const apiKey = localStorage.getItem('fb_api_key') || DEFAULT_API_KEY;
+            const email = localStorage.getItem('fb_auth_email') || DEFAULT_EMAIL;
+            const pass = localStorage.getItem('fb_auth_pass') || DEFAULT_PASS;
+            if (apiKey && email && pass) {
+              token = await getFirebaseToken(email, pass, apiKey);
+            }
+          }
+          await saveToFirebase(fbUrl, { products, sales, openTabs, users, shifts, config: { fbUrl } }, encryptionKey, token);
+          setDbStatus('success');
+        } catch (e) {
+          setDbStatus('error');
+        }
+      }, 3000); 
       return () => clearTimeout(timer);
     }
   }, [products, sales, openTabs, users, shifts, fbUrl, theme]);
 
+  // Carregamento de Inicialização (Cloud)
   useEffect(() => {
     if (fbUrl && isBrowser) {
       setDbStatus('loading');
-      loadFromFirebase(fbUrl, encryptionKey)
-        .then((data: any) => data ? handleImportAll(data) : setDbStatus('idle'))
-        .catch(() => setDbStatus('error'));
+      (async () => {
+        try {
+          let token: string | undefined;
+          const isAuthEnabled = localStorage.getItem('fb_auth_enabled') === 'true' || true;
+          if (isAuthEnabled) {
+            const apiKey = localStorage.getItem('fb_api_key') || DEFAULT_API_KEY;
+            const email = localStorage.getItem('fb_auth_email') || DEFAULT_EMAIL;
+            const pass = localStorage.getItem('fb_auth_pass') || DEFAULT_PASS;
+            if (apiKey && email && pass) {
+              token = await getFirebaseToken(email, pass, apiKey);
+            }
+          }
+          const data = await loadFromFirebase(fbUrl, encryptionKey, token);
+          if (data) handleImportAll(data);
+          else setDbStatus('idle');
+        } catch(e) {
+          setDbStatus('error');
+        }
+      })();
     }
   }, []);
 
@@ -166,6 +174,16 @@ const App: React.FC = () => {
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
+  };
+
+  const handleLogin = (user: string, pass: string) => {
+    const found = users.find(u => u.username === user && u.password === pass);
+    if (found) {
+      setLoginError(null);
+      setCurrentUser(found.username === 'admin' ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
+    } else {
+      setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
+    }
   };
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
