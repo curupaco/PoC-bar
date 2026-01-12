@@ -15,18 +15,21 @@ interface SettingsProps {
   dbStatus: 'idle' | 'loading' | 'success' | 'error';
   onStatusChange: (status: 'idle' | 'loading' | 'success' | 'error') => void;
   currentUser: User;
+  penduraThreshold: number;
+  setPenduraThreshold: (v: number) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({ 
   products, sales, openTabs, users, shifts,
   fbUrl, setFbUrl,
   onImport, dbStatus, onStatusChange,
-  currentUser
+  currentUser,
+  penduraThreshold, setPenduraThreshold
 }) => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
   
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('fb_api_key') || 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('fb_api_key') || '');
   const [email, setEmail] = useState(() => localStorage.getItem('fb_auth_email') || 'curupaco@gmail.com');
   const [pass, setPass] = useState(() => localStorage.getItem('fb_auth_pass') || 'Tc@00216587');
 
@@ -98,7 +101,7 @@ const Settings: React.FC<SettingsProps> = ({
     setIsBackingUp(true);
     try {
       await testGitHubToken(ghToken);
-      const newGistId = await syncToGitHub(ghToken, { products, sales, openTabs, users, shifts, config: { fbUrl } }, gistId);
+      const newGistId = await syncToGitHub(ghToken, { products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } }, gistId);
       setGistId(newGistId);
       localStorage.setItem('bar_gh_token', ghToken);
       localStorage.setItem('bar_gist_id', newGistId);
@@ -111,14 +114,42 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-24">
+    <div className="max-w-4xl mx-auto space-y-8 pb-24 animate-in fade-in duration-500">
       {toast && (
         <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-800 text-white'}`}>
            {toast.msg}
         </div>
       )}
 
-      {/* INFRAESTRUTURA */}
+      {/* REGRAS DE NEGÓCIO */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900/30 shadow-xl space-y-6">
+        <div className="flex items-center gap-4 text-orange-600">
+          <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          </div>
+          <h3 className="text-xl font-black uppercase tracking-tighter">Regras de Negócio</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Limite de Alerta de Pendura (R$)</label>
+              <div className="relative">
+                 <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                 <input 
+                    type="number" 
+                    value={penduraThreshold} 
+                    onChange={e => {
+                      const val = parseFloat(e.target.value);
+                      setPenduraThreshold(isNaN(val) ? 0 : val);
+                      showToast("LIMITE DE ALERTA ATUALIZADO");
+                    }} 
+                    className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-orange-500 font-black text-2xl outline-none transition-all" 
+                 />
+              </div>
+              <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 ml-2">Define quando o ícone ⚠️ aparecerá no menu.</p>
+           </div>
+        </div>
+      </div>
+
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
         <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Infraestrutura em Nuvem</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -136,7 +167,6 @@ const Settings: React.FC<SettingsProps> = ({
         </button>
       </div>
 
-      {/* MANUTENÇÃO - OS "ZERAR" */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
          <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Ferramentas de Manutenção (Zerar)</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,7 +185,6 @@ const Settings: React.FC<SettingsProps> = ({
          </div>
       </div>
 
-      {/* GITHUB BACKUP */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
         <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Cópia de Segurança GitHub</h3>
         <div className="space-y-4">

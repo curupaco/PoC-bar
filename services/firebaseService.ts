@@ -13,6 +13,8 @@ export interface AppFullData {
     fbApiKey?: string;
     fbEmail?: string;
     fbPass?: string;
+    // Adicionado penduraThreshold para persistência das configurações de negócio
+    penduraThreshold?: number;
   };
   updatedAt: string;
 }
@@ -28,9 +30,8 @@ const getFirebaseUrl = (url: string, token?: string) => {
  * Realiza o login no Firebase Auth via REST API para obter o token de acesso
  */
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string> => {
-  // Validação estrita da API Key: Chaves do Firebase costumam ser longas e começar com AIza
-  if (!apiKey || apiKey.length < 25 || !apiKey.startsWith("AIza")) {
-    throw new Error("API Key inválida para autenticação do Firebase.");
+  if (!apiKey || apiKey.length < 25) {
+    throw new Error("Chave de API do Firebase não configurada ou inválida.");
   }
   
   try {
@@ -41,20 +42,27 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
       body: JSON.stringify({ email, password: pass, returnSecureToken: true })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json();
-      const msg = errorData.error?.message;
+      const errorMsg = data.error?.message;
       
-      if (msg === "INVALID_API_KEY") {
-        throw new Error("A API Key informada não é válida para este projeto do Firebase.");
+      if (errorMsg === "INVALID_LOGIN_CREDENTIALS" || errorMsg === "BAD_CREDENTIALS") {
+        throw new Error("Usuário ou Senha do Firebase incorretos (Bad Credentials). Verifique as configurações de nuvem.");
       }
-      throw new Error(msg || "Erro na autenticação com o Firebase.");
+      if (errorMsg === "INVALID_API_KEY") {
+        throw new Error("A API Key informada não pertence a este projeto do Firebase.");
+      }
+      if (errorMsg === "OPERATION_NOT_ALLOWED") {
+        throw new Error("O provedor 'E-mail/Senha' está desativado no console do Firebase (Authentication).");
+      }
+      
+      throw new Error(errorMsg || "Erro na autenticação com o Firebase.");
     }
 
-    const data = await response.json();
     return data.idToken;
   } catch (err: any) {
-    console.error("Firebase Auth Failure:", err.message);
+    console.error("Firebase Auth Exception:", err.message);
     throw err;
   }
 };
@@ -75,9 +83,9 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error("Acesso negado. Configure as Rules do Firebase para permitir leitura/escrita.");
+        throw new Error("Erro 401/403: Acesso negado. Configure as Rules do Firebase para permitir leitura/escrita.");
       }
-      throw new Error(`Erro Firebase: ${response.status}`);
+      throw new Error(`Erro Firebase (${response.status})`);
     }
     return await response.json();
   } catch (err: any) {
