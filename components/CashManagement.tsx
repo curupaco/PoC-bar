@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Shift, User, Sale, formatCurrency, PaymentMethod } from '../types';
+import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface CashManagementProps {
   shifts: Shift[];
@@ -32,18 +32,9 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       .reduce((acc, s) => acc + s.total, 0);
   }, [activeShift, sales]);
 
-  const handleInputChange = (val: string) => {
-    // Permite apenas números e uma única vírgula
-    const cleaned = val.replace(/[^0-9,]/g, '');
-    const parts = cleaned.split(',');
-    if (parts.length > 2) return; // Impede múltiplas vírgulas
-    setTransferValue(cleaned);
-  };
-
   const handleTransfer = () => {
     if (!activeShift) return;
-    // Converte vírgula em ponto para processamento numérico
-    const value = parseFloat(transferValue.replace(',', '.'));
+    const value = parseCurrencyValue(transferValue);
     if (isNaN(value) || value <= 0) {
       setToast({ msg: "VALOR INVÁLIDO", type: 'error' });
       return;
@@ -84,12 +75,12 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
     );
   }
 
-  const numericValue = parseFloat(transferValue.replace(',', '.')) || 0;
+  const numericValue = parseCurrencyValue(transferValue);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 relative">
+    <div className="max-w-6xl mx-auto space-y-8 pb-32 relative">
       {toast && (
-        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
            {toast.msg}
         </div>
       )}
@@ -123,7 +114,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Sair de:</label>
-                  <select value={fromBox} onChange={e => setFromBox(e.target.value as any)} className="w-full bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={fromBox} onChange={e => setFromBox(e.target.value as any)} className="w-full bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">
                      <option value="Primary">Caixa Primário</option>
                      <option value="Change">Gaveta / Troco</option>
                      <option value="Secondary">Secundário</option>
@@ -131,7 +122,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                </div>
                <div className="space-y-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Entrar em:</label>
-                  <select value={toBox} onChange={e => setToBox(e.target.value as any)} className="w-full bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500">
+                  <select value={toBox} onChange={e => setToBox(e.target.value as any)} className="w-full bg-white dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500 shadow-inner">
                      <option value="Primary">Caixa Primário</option>
                      <option value="Change">Gaveta / Troco</option>
                      <option value="Secondary">Secundário</option>
@@ -147,8 +138,8 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                     type="text" 
                     inputMode="decimal" 
                     value={transferValue} 
-                    onChange={e => handleInputChange(e.target.value)} 
-                    className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-6 rounded-3xl border-2 border-transparent focus:border-blue-500 font-black text-3xl outline-none transition-all" 
+                    onChange={e => setTransferValue(sanitizeCurrencyInput(e.target.value))} 
+                    className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-6 rounded-3xl border-2 border-transparent focus:border-blue-500 font-black text-3xl outline-none transition-all shadow-inner" 
                     placeholder="0,00" 
                   />
                </div>

@@ -67,7 +67,7 @@ export interface Product {
 export interface SaleItem {
   productId: string;
   productName: string;
-  category: string; // Adicionado para histórico
+  category: string; 
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -107,4 +107,17 @@ export const generateUniqueId = (prefix: string = '') => {
   const ts = Date.now();
   const rand = Math.random().toString(36).substring(2, 9);
   return prefix ? `${prefix}-${ts}-${rand}` : `${ts}-${rand}`;
+};
+
+export const sanitizeCurrencyInput = (val: string): string => {
+  const cleaned = val.replace(/[^0-9,]/g, '');
+  const parts = cleaned.split(',');
+  if (parts.length > 2) return parts[0] + ',' + parts[1];
+  return cleaned;
+};
+
+export const parseCurrencyValue = (val: string): number => {
+  if (!val) return 0;
+  const normalized = val.replace(',', '.');
+  return parseFloat(normalized) || 0;
 };
