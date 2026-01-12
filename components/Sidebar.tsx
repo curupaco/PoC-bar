@@ -107,8 +107,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
 
         <div className="p-6 flex-1 overflow-y-auto space-y-4 no-scrollbar overflow-x-hidden">
           <div className={`flex flex-col mb-8 ${isCollapsed ? 'items-center' : 'px-2'}`}>
-             <span className={`font-normal text-slate-800 dark:text-slate-100 tracking-tighter leading-none font-barrio transition-all ${isCollapsed ? 'text-2xl' : 'text-4xl'}`}>{isCollapsed ? '🍺' : 'Botequista'}</span>
-             {!isCollapsed && <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mt-1">Sincronizado</span>}
+             <div className="flex items-center gap-2">
+                <img 
+                  src="https://img.icons8.com/fluency/512/beer.png" 
+                  alt="Logo" 
+                  className={`transition-all shrink-0 object-contain drop-shadow-sm ${isCollapsed ? 'w-10 h-10' : 'w-9 h-9'}`} 
+                />
+                {!isCollapsed && (
+                  <span className="font-normal text-slate-800 dark:text-white tracking-tighter leading-none font-barrio text-3xl whitespace-nowrap">
+                    Botequista
+                  </span>
+                )}
+             </div>
+             {!isCollapsed && <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mt-2 ml-11">Sincronizado</span>}
           </div>
           
           <NavGroup title="Operação" items={operationalItems} />
@@ -125,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
 
         <div className={`p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/30 ${isCollapsed ? 'flex justify-center' : ''}`}>
           <div className="flex items-center gap-3 p-1">
-            <div className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
+            <div className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all shrink-0 ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
               {currentUser?.username.slice(0, 2)}
             </div>
             {!isCollapsed && (
