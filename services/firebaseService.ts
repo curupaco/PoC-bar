@@ -28,9 +28,9 @@ const getFirebaseUrl = (url: string, token?: string) => {
  * Realiza o login no Firebase Auth via REST API para obter o token de acesso
  */
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string> => {
-  // Validação da API Key para evitar chamadas fúteis
-  if (!apiKey || apiKey.length < 10 || apiKey.includes("undefined")) {
-    throw new Error("API Key inválida ou não configurada.");
+  // Validação estrita da API Key: Chaves do Firebase costumam ser longas e começar com AIza
+  if (!apiKey || apiKey.length < 25 || !apiKey.startsWith("AIza")) {
+    throw new Error("API Key inválida para autenticação do Firebase.");
   }
   
   try {
@@ -46,7 +46,7 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
       const msg = errorData.error?.message;
       
       if (msg === "INVALID_API_KEY") {
-        throw new Error("A API Key do Firebase informada é inválida.");
+        throw new Error("A API Key informada não é válida para este projeto do Firebase.");
       }
       throw new Error(msg || "Erro na autenticação com o Firebase.");
     }
@@ -75,7 +75,7 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error("Acesso negado ao Firebase Database. Verifique as regras de segurança.");
+        throw new Error("Acesso negado. Configure as Rules do Firebase para permitir leitura/escrita.");
       }
       throw new Error(`Erro Firebase: ${response.status}`);
     }
@@ -95,8 +95,6 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
     
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        // Se falhar por 401/403 sem token, é esperado se o banco for privado.
-        // Se falhar com token, a permissão está errada.
         return null;
       }
       return null;
