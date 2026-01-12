@@ -191,6 +191,10 @@ const POS: React.FC<POSProps> = ({
   const favorites = filteredProducts.filter(p => p.isFavorite);
   const categories = Array.from(new Set(filteredProducts.map(p => p.category))).sort();
 
+  const formatPriceOnly = (val: number) => {
+    return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
   if (!activeShift) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-500">
@@ -317,9 +321,12 @@ const POS: React.FC<POSProps> = ({
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {favorites.map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-left flex flex-col justify-between h-28 group">
-                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2">{p.name}</p>
-                          <p className="text-lg font-black text-amber-600">{formatCurrency(p.price)}<span className="text-[8px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col justify-between h-28 group">
+                          <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2 px-1">{p.name}</p>
+                          <div className="flex flex-col items-center">
+                            <p className="text-lg font-black text-amber-600 leading-none">{formatPriceOnly(p.price)}</p>
+                            <span className="text-[8px] opacity-40 uppercase font-bold mt-0.5">{p.sellType === 'weight' ? '/kg' : 'un'}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -334,9 +341,12 @@ const POS: React.FC<POSProps> = ({
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {filteredProducts.filter(p => p.category === cat).map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-left flex flex-col justify-between h-28">
-                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2">{p.name}</p>
-                          <p className="text-lg font-black text-red-600">{formatCurrency(p.price)}<span className="text-[8px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col justify-between h-28">
+                          <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2 px-1">{p.name}</p>
+                          <div className="flex flex-col items-center">
+                            <p className="text-lg font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>
+                            <span className="text-[8px] opacity-40 uppercase font-bold mt-0.5">{p.sellType === 'weight' ? '/kg' : 'un'}</span>
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -346,7 +356,7 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-20 lg:pb-0">
+          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-32 lg:pb-0">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-full shadow-2xl relative">
               <div className="p-6 bg-red-600 text-white shrink-0 flex justify-between items-center shadow-lg">
                 <h3 className="font-black uppercase tracking-tight truncate leading-normal text-xs">{activeTab?.name}</h3>
