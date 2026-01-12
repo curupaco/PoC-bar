@@ -209,7 +209,7 @@ const POS: React.FC<POSProps> = ({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 relative h-full">
+    <div className="flex flex-col lg:flex-row gap-6 relative h-full pb-20 lg:pb-0">
       {toast && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[210] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">
            {toast}
@@ -217,9 +217,9 @@ const POS: React.FC<POSProps> = ({
       )}
 
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-[140] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
@@ -281,13 +281,13 @@ const POS: React.FC<POSProps> = ({
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-6 pb-20">
+          <div className="flex-1 space-y-6">
             <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
               <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               </button>
               <div className="flex-1 flex items-center gap-3">
-                <input type="text" placeholder="BUSCAR..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest" disabled={!!shortcutCheckout} />
+                <input type="text" placeholder="BUSCAR PRODUTO..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest" disabled={!!shortcutCheckout} />
               </div>
             </div>
 
@@ -303,9 +303,9 @@ const POS: React.FC<POSProps> = ({
                     <h3 className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">⭐ FAVORITOS</h3>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2">
                       {favorites.map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-amber-50 dark:bg-amber-900/10 p-2 rounded-xl border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all text-left">
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-amber-50 dark:bg-amber-900/10 p-2 rounded-xl border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all text-left group">
                           <p className="text-[9px] font-black text-amber-900 dark:text-amber-100 truncate uppercase leading-tight">{p.name}</p>
-                          <p className="text-xs font-black text-amber-600">{formatCurrency(p.price)}</p>
+                          <p className="text-xs font-black text-amber-600">{formatCurrency(p.price)}<span className="text-[7px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
                         </button>
                       ))}
                     </div>
@@ -319,7 +319,7 @@ const POS: React.FC<POSProps> = ({
                       {filteredProducts.filter(p => p.category === cat).map(p => (
                         <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left">
                           <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 truncate uppercase leading-tight">{p.name}</p>
-                          <p className="text-xs font-black text-red-600">{formatCurrency(p.price)}</p>
+                          <p className="text-xs font-black text-red-600">{formatCurrency(p.price)}<span className="text-[7px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
                         </button>
                       ))}
                     </div>
@@ -329,7 +329,7 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24">
+          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
               <div className="p-4 bg-red-600 text-white shrink-0 flex justify-between items-center">
                 <h3 className="font-black uppercase tracking-tight truncate leading-normal text-[11px]">{activeTab?.name}</h3>
@@ -345,7 +345,7 @@ const POS: React.FC<POSProps> = ({
                       const prod = products.find(p => p.id === item.productId);
                       const isWeight = prod?.sellType === 'weight';
                       return (
-                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2">
+                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2 animate-in slide-in-from-right-2">
                           <div className="flex items-center justify-between gap-2">
                              <div className="flex-1 min-w-0">
                                <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
@@ -356,38 +356,38 @@ const POS: React.FC<POSProps> = ({
                                <div className="flex items-center gap-0.5">
                                  {!isWeight ? (
                                    <>
-                                     <button onClick={() => updateItemQty(idx, -1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-black">-</button>
-                                     <button onClick={() => updateItemQty(idx, 1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-md transition-colors font-black">+</button>
+                                     <button onClick={() => updateItemQty(idx, -1)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-black">-</button>
+                                     <button onClick={() => updateItemQty(idx, 1)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-md transition-colors font-black">+</button>
                                    </>
                                  ) : (
-                                   <button onClick={() => updateItemQty(idx, 0)} className="w-6 h-6 flex items-center justify-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-md transition-colors">
-                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                   <button onClick={() => updateItemQty(idx, 0)} className="w-7 h-7 flex items-center justify-center text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-md transition-colors">
+                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                    </button>
                                  )}
                                </div>
                                
-                               <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 min-w-[45px] text-center border-l border-slate-100 dark:border-slate-800 pl-1.5">
+                               <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 min-w-[50px] text-center border-l border-slate-100 dark:border-slate-800 pl-1.5">
                                  {isWeight ? `${(item.quantity * 1000).toFixed(0)}g` : `${item.quantity}x`}
                                </span>
 
                                <div className="w-px h-4 bg-slate-100 dark:bg-slate-800 mx-1"></div>
-                               <button onClick={() => removeFromTab(idx)} className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
-                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               <button onClick={() => removeFromTab(idx)} className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                </button>
                              </div>
                           </div>
                         </div>
                       );
                     })}
-                    {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-10 opacity-30 italic text-[10px] text-center uppercase font-black">Mesa Vazia</div>}
+                    {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-[10px] text-center uppercase font-black">Mesa Vazia</div>}
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total</span>
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
                       <span className="text-xl font-black text-slate-900 dark:text-white">{formatCurrency(tabTotal)}</span>
                     </div>
                     {(tabItems.length > 0 || shortcutCheckout) && (
-                      <button onClick={() => setIsClosingTab(true)} className="w-full bg-red-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-red-700 uppercase text-[10px] tracking-widest">RECEBER PAGAMENTO</button>
+                      <button onClick={() => setIsClosingTab(true)} className="w-full bg-red-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-red-700 uppercase text-[10px] tracking-widest transition-all">RECEBER PAGAMENTO</button>
                     )}
                   </div>
                 </>
@@ -395,20 +395,20 @@ const POS: React.FC<POSProps> = ({
                 <div className="flex-1 flex flex-col overflow-hidden">
                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
                       <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
-                        ← Voltar
+                        ← Voltar para Consumo
                       </button>
                       <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Restante</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saldo Pendente</p>
                         <p className="text-2xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
                       </div>
                       
                       {/* CALCULADORA DE TROCO (DINHEIRO) */}
                       {paymentMethodInput === PaymentMethod.CASH && (
                         <div className="space-y-3 animate-in slide-in-from-top-2">
-                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Recebido (Calculadora de Troco)</p>
+                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center lg:text-left">Calculadora de Troco</p>
                            <div className="grid grid-cols-3 gap-1.5">
                               {[5, 10, 20, 50, 100, 200].map(val => (
-                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-2 rounded-lg font-black text-[10px] border transition-all ${receivedValueInput === val ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>R$ {val}</button>
+                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-2 rounded-lg font-black text-[10px] border transition-all ${receivedValueInput === val ? 'bg-emerald-500 border-emerald-500 text-white shadow-md scale-105' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>R$ {val}</button>
                               ))}
                            </div>
                            {receivedValueInput && receivedValueInput > 0 && (
@@ -421,11 +421,11 @@ const POS: React.FC<POSProps> = ({
                       )}
 
                       <div className="space-y-2">
-                        <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase outline-none">
+                        <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase outline-none focus:ring-2 focus:ring-red-500">
                           {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                         {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
-                          <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase" placeholder="NOME DO CLIENTE" />
+                          <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase" placeholder="IDENTIFICAR CLIENTE" />
                         )}
                         <div className="flex gap-2">
                           <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-lg outline-none" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
@@ -433,7 +433,7 @@ const POS: React.FC<POSProps> = ({
                              const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
                              if (isNaN(val) || val <= 0) return;
                              if ((paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && !customerNameInput.trim()) {
-                               setValidationError("NOME OBRIGATÓRIO!");
+                               setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
                                return;
                              }
                              setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val, customerName: customerNameInput.toUpperCase() || undefined }]);
@@ -459,6 +459,7 @@ const POS: React.FC<POSProps> = ({
                         const isShortcut = activeTabId === 'shortcut-payment';
                         const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
                         if (!activeTab || (!isShortcut && tabItems.length === 0) || !canFinish) return;
+                        
                         currentPayments.forEach((p, index) => {
                            onCompleteSale({
                               id: `${Date.now()}-${index}`,
@@ -473,14 +474,16 @@ const POS: React.FC<POSProps> = ({
                               shiftId: activeShift.id
                            });
                         });
+
                         if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
                         else if (onClearShortcut) onClearShortcut();
+                        
                         setActiveTabId(null);
                         setIsClosingTab(false);
                         setCurrentPayments([]);
                         setReceivedValueInput(null);
-                        showFeedback("VENDA FINALIZADA");
-                      }} disabled={remainingBalance > 0.01} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50">Finalizar</button>
+                        showFeedback("OPERACÃO FINALIZADA");
+                      }} disabled={remainingBalance > 0.01} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 shadow-lg">Finalizar e Baixar</button>
                    </div>
                 </div>
               )}
@@ -490,15 +493,16 @@ const POS: React.FC<POSProps> = ({
       )}
 
       {(weightModalProduct || editingWeightIndex !== null) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-8 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
-            <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Gramas</h4>
+            <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Inserir Peso (Gramas)</h4>
             <div className="relative">
                <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-6 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-red-500 outline-none" />
             </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase mt-4">Ex: 500 = 0,5kg | 1200 = 1,2kg</p>
             <div className="grid grid-cols-2 gap-4 mt-8">
-              <button onClick={() => { if (!inputGrams) return; addToTab(weightModalProduct!, parseFloat(inputGrams) / 1000); }} className="bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Lançar</button>
-              <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Sair</button>
+              <button onClick={() => { if (!inputGrams) return; addToTab(weightModalProduct!, parseFloat(inputGrams) / 1000); }} className="bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95">Lançar</button>
+              <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Cancelar</button>
             </div>
           </div>
         </div>

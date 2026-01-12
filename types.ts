@@ -51,6 +51,8 @@ export interface Shift {
   finalCashPrimary?: number;
   finalCashChange?: number;
   finalCashSecondary?: number;
+  actualCashCounted?: number; // Valor físico contado pelo operador
+  cashDifference?: number;    // Diferença entre esperado e contado
 }
 
 export interface Product {

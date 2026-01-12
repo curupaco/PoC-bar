@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
@@ -41,7 +41,6 @@ const App: React.FC = () => {
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toISOString());
   
-  // Estado para quitação rápida vindo do relatório
   const [pendingShortcut, setPendingShortcut] = useState<{name: string, amount: number} | null>(null);
 
   const [penduraThreshold, setPenduraThreshold] = useState(() => {
@@ -99,6 +98,23 @@ const App: React.FC = () => {
     return localStorage.getItem('fb_api_key') || DEFAULT_FB_API_KEY;
   };
 
+  const forceSyncToCloud = useCallback(async (currentData: any) => {
+    if (!isInitialLoadDone.current) return;
+    try {
+      const apiKey = getActiveFirebaseApiKey();
+      let token: string | undefined;
+      if (apiKey && apiKey.length > 20) {
+        try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
+      }
+      const now = new Date().toISOString();
+      await saveToFirebase(fbUrl, { ...currentData, updatedAt: now }, MASTER_KEY, token);
+      setLastSyncTime(now);
+      setDbStatus('success');
+    } catch (e) {
+      setDbStatus('error');
+    }
+  }, [fbUrl]);
+
   useEffect(() => {
     if (!isBrowser) return;
     const fetchInitialData = async () => {
@@ -134,22 +150,11 @@ const App: React.FC = () => {
     localStorage.setItem('bar_fb_url', fbUrl);
     localStorage.setItem('bar_pendura_threshold', penduraThreshold.toString());
 
-    const pushData = async () => {
-      try {
-        const apiKey = getActiveFirebaseApiKey();
-        let token: string | undefined;
-        if (apiKey && apiKey.length > 20) {
-          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
-        }
-        const now = new Date().toISOString();
-        await saveToFirebase(fbUrl, { products, sales, openTabs, users, shifts, updatedAt: now, config: { fbUrl, penduraThreshold } }, MASTER_KEY, token);
-        setLastSyncTime(now);
-        setDbStatus('success');
-      } catch (e) { setDbStatus('error'); }
-    };
-    const debounce = setTimeout(pushData, 3000);
+    const debounce = setTimeout(() => {
+      forceSyncToCloud({ products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
+    }, 3000);
     return () => clearTimeout(debounce);
-  }, [products, sales, openTabs, users, shifts, penduraThreshold]);
+  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud]);
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
@@ -177,15 +182,23 @@ const App: React.FC = () => {
     }
   };
 
+  const handleCompleteSale = (sale: Sale) => {
+    const newSales = [{ ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' }, ...sales];
+    setSales(newSales);
+    // Salvamento imediato para vendas
+    forceSyncToCloud({ products, sales: newSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
+  };
+
+  const handleUpdateShifts = (newShifts: Shift[]) => {
+    setShifts(newShifts);
+    // Salvamento imediato para alteração de turno (abertura/fechamento)
+    forceSyncToCloud({ products, sales, openTabs, users, shifts: newShifts, config: { fbUrl, penduraThreshold } });
+  };
+
   const toggleSidebar = () => {
     const newVal = !isSidebarCollapsed;
     setIsSidebarCollapsed(newVal);
     localStorage.setItem('bar_sidebar_collapsed', String(newVal));
-  };
-
-  const handleQuitarPendura = (name: string, amount: number) => {
-    setPendingShortcut({ name, amount });
-    setActiveView('pos');
   };
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
@@ -198,7 +211,7 @@ const App: React.FC = () => {
         <POS 
           {...props} 
           onUpdateTabs={setOpenTabs} 
-          onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
+          onCompleteSale={handleCompleteSale} 
           activeShift={activeShift} 
           onViewChange={setActiveView}
           shortcutCheckout={pendingShortcut}
@@ -207,15 +220,18 @@ const App: React.FC = () => {
       );
       case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
-      case 'reports': return <Reports {...props} onQuitarPendura={handleQuitarPendura} />;
+      case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
-      case 'shifts': return <ShiftControl {...props} onUpdateShifts={setShifts} />;
-      case 'cash': return <CashManagement {...props} onUpdateShifts={setShifts} />;
+      case 'shifts': return <ShiftControl {...props} onUpdateShifts={handleUpdateShifts} />;
+      case 'cash': return <CashManagement {...props} onUpdateShifts={handleUpdateShifts} />;
       case 'settings': return <Settings {...props} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
       case 'help': return <Help />;
-      default: return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [s, ...prev])} activeShift={activeShift} />;
+      default: return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={handleCompleteSale} activeShift={activeShift} />;
     }
   };
+
+  const canSeeReports = currentUser.username === 'admin' || currentUser.permissions.includes('reports');
+  const canSeeDashboard = currentUser.username === 'admin' || currentUser.permissions.includes('dashboard');
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -261,17 +277,21 @@ const App: React.FC = () => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
               <span className="text-[8px] font-black uppercase">Venda</span>
            </button>
+           {canSeeReports && (
+             <button onClick={() => setActiveView('reports')} className={`flex flex-col items-center gap-1 ${activeView === 'reports' ? 'text-red-600' : 'text-slate-400'}`}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                <span className="text-[8px] font-black uppercase">Relatórios</span>
+             </button>
+           )}
+           {canSeeDashboard && (
+             <button onClick={() => setActiveView('dashboard')} className={`flex flex-col items-center gap-1 ${activeView === 'dashboard' ? 'text-red-600' : 'text-slate-400'}`}>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" /></svg>
+                <span className="text-[8px] font-black uppercase">Painel</span>
+             </button>
+           )}
            <button onClick={() => setActiveView('shifts')} className={`flex flex-col items-center gap-1 ${activeView === 'shifts' ? 'text-red-600' : 'text-slate-400'}`}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <span className="text-[8px] font-black uppercase">Turno</span>
-           </button>
-           <button onClick={() => setActiveView('cash')} className={`flex flex-col items-center gap-1 ${activeView === 'cash' ? 'text-red-600' : 'text-slate-400'}`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span className="text-[8px] font-black uppercase">Caixa</span>
-           </button>
-           <button onClick={() => setActiveView('help')} className={`flex flex-col items-center gap-1 ${activeView === 'help' ? 'text-red-600' : 'text-slate-400'}`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              <span className="text-[8px] font-black uppercase">Guia</span>
            </button>
         </nav>
       </main>
