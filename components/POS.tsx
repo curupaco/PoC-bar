@@ -412,58 +412,53 @@ const POS: React.FC<POSProps> = ({
                   </div>
                 </>
               ) : (
-                <div className="flex-1 flex flex-col min-h-0">
-                   <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900">
+                   <div className="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar">
                       <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors">
                         ← Retornar à comanda
                       </button>
+
+                      {/* RESUMO DO PAGAMENTO */}
                       <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total a Pagar</p>
-                        <p className="text-4xl font-black text-red-600 tracking-tighter">{formatCurrency(remainingBalance)}</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Aguardando Pagamento</p>
+                        <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter text-center">{formatCurrency(remainingBalance)}</p>
                       </div>
                       
+                      {/* SELETOR DE MÉTODO */}
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Forma de Pagamento</label>
+                        <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase outline-none focus:ring-4 focus:ring-red-500/10 border border-slate-200 dark:border-slate-700 transition-all">
+                          {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </div>
+
                       {paymentMethodInput === PaymentMethod.CASH && (
                         <div className="space-y-4 animate-in slide-in-from-top-4">
-                           <div className="flex items-center gap-2">
-                             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor Recebido</p>
-                             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-                           </div>
+                           {/* ATALHOS DE DINHEIRO */}
                            <div className="grid grid-cols-3 gap-2">
+                              <button onClick={() => setReceivedValueInput(remainingBalance)} className="col-span-3 py-4 rounded-2xl font-black text-xs uppercase bg-emerald-600 text-white shadow-lg active:scale-95 transition-all border border-emerald-500">VALOR EXATO</button>
                               {[5, 10, 20, 50, 100, 200].map(val => (
-                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-3 rounded-xl font-black text-xs border transition-all active:scale-90 ${receivedValueInput === val ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-500'}`}>R$ {val}</button>
+                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-3 rounded-xl font-black text-xs border transition-all active:scale-90 ${receivedValueInput === val ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-500'}`}>R$ {val}</button>
                               ))}
                            </div>
-                           {receivedValueInput && receivedValueInput > 0 && (
-                             <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50 text-center">
-                                <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">TROCO A ENTREGAR:</span>
-                                <span className="text-3xl font-black tracking-tighter">{formatCurrency(changeDue)}</span>
-                             </div>
-                           )}
                         </div>
                       )}
 
+                      {/* CAMPOS ADICIONAIS */}
                       <div className="space-y-4">
-                        <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Forma de Pagamento</label>
-                          <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xs uppercase outline-none focus:ring-4 focus:ring-red-500/10 border border-transparent focus:border-red-500 transition-all">
-                            {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
-                          </select>
-                        </div>
-
                         {((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && (
-                          <div className="space-y-1">
+                          <div className="space-y-1 animate-in slide-in-from-right-4">
                             <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Identificar Cliente</label>
-                            <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xs uppercase border border-transparent focus:border-red-500 outline-none" placeholder="NOME DO CLIENTE..." />
+                            <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase border border-slate-200 dark:border-slate-700 outline-none" placeholder="NOME DO CLIENTE..." />
                           </div>
                         )}
 
                         <div className="space-y-1">
-                          <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Valor Parcial / Total</label>
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Lançar Valor Manual</label>
                           <div className="flex gap-2">
                             <div className="relative flex-1">
                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-red-500/10 border border-transparent focus:border-red-500 transition-all" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
+                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none border border-slate-200 dark:border-slate-700" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
                             </div>
                             <button onClick={() => {
                                const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
@@ -477,43 +472,82 @@ const POS: React.FC<POSProps> = ({
                                setReceivedValueInput(null);
                                if (!shortcutCheckout) setCustomerNameInput('');
                                setValidationError(null);
-                            }} className="bg-black text-white px-6 rounded-2xl font-black active:scale-95 transition-all shadow-lg shadow-black/20 text-xl">+</button>
+                               showFeedback("PAGAMENTO ADICIONADO");
+                            }} className="bg-black text-white px-6 rounded-2xl font-black active:scale-95 transition-all shadow-lg text-xl">+</button>
                           </div>
                         </div>
                       </div>
 
+                      {/* LISTA DE PAGAMENTOS PARCIAIS */}
                       {currentPayments.length > 0 && (
-                        <div className="space-y-3 pt-6 border-t border-slate-100 dark:border-slate-800">
-                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Pagamentos Registrados</p>
+                        <div className="space-y-2 pt-2">
+                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Recebidos</p>
                            {currentPayments.map((p, idx) => (
-                             <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2">
-                                <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300">{p.method} {p.customerName ? `(${p.customerName})` : ''}</span>
+                             <div key={idx} className="flex justify-between items-center bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-800/30 animate-in slide-in-from-bottom-2">
+                                <span className="text-[9px] font-black uppercase text-emerald-700 dark:text-emerald-400">{p.method} {p.customerName ? `(${p.customerName})` : ''}</span>
                                 <span className="text-xs font-black text-emerald-600">{formatCurrency(p.amount)}</span>
                              </div>
                            ))}
                         </div>
                       )}
                    </div>
-                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-16 lg:pb-8">
+
+                   {/* PAINEL DE CONCLUSAO (SEM ROLAGEM) */}
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-16 lg:pb-8 space-y-4">
+                      {/* PAINEL DE TROCO - SEMPRE VISÍVEL QUANDO HOUVER VALOR RECEBIDO */}
+                      {paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && (
+                        <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50 text-center">
+                            <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco a devolver:</span>
+                            <span className="text-4xl font-black tracking-tighter">{formatCurrency(changeDue)}</span>
+                        </div>
+                      )}
+
                       <button onClick={() => {
                         const isShortcut = activeTabId === 'shortcut-payment';
                         const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
-                        if (!activeTab || (!isShortcut && tabItems.length === 0) || !canFinish) return;
                         
-                        currentPayments.forEach((p, index) => {
-                           onCompleteSale({
-                              id: `${Date.now()}-${index}`,
-                              timestamp: Date.now(),
-                              openedAt: activeTab.openedAt,
-                              items: isShortcut ? [{ productId: 'quitacao', productName: 'Quitação Fiado', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] : (index === 0 ? tabItems : []),
-                              paymentMethod: p.method,
-                              total: p.amount,
-                              tabName: activeTab.name,
-                              customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
-                              userId: '', 
-                              shiftId: activeShift.id
+                        // Se for dinheiro e tiver valor recebido mas nao adicionou na lista ainda, adiciona automaticamente
+                        if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput && currentPayments.length === 0) {
+                           const valToPay = remainingBalance;
+                           setCurrentPayments([{ method: PaymentMethod.CASH, amount: valToPay, customerName: customerNameInput.toUpperCase() || undefined }]);
+                           // Recursão leve para processar após o state atualizar (ou apenas processar localmente)
+                        }
+
+                        if (!activeTab || (!isShortcut && tabItems.length === 0) || (remainingBalance > 0.01 && currentPayments.length === 0)) {
+                           if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput) {
+                             // Fallback: Adiciona o pagamento antes de fechar
+                             const finalEntry = { method: PaymentMethod.CASH, amount: remainingBalance, customerName: customerNameInput.toUpperCase() || undefined };
+                             onCompleteSale({
+                                id: `${Date.now()}-auto`,
+                                timestamp: Date.now(),
+                                openedAt: activeTab?.openedAt,
+                                items: isShortcut ? [{ productId: 'quitacao', productName: 'Quitação Fiado', quantity: 1, unitPrice: remainingBalance, totalPrice: remainingBalance }] : tabItems,
+                                paymentMethod: PaymentMethod.CASH,
+                                total: remainingBalance,
+                                tabName: activeTab?.name,
+                                customerName: finalEntry.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+                                userId: '', 
+                                shiftId: activeShift.id
+                             });
+                           } else {
+                             return;
+                           }
+                        } else {
+                           currentPayments.forEach((p, index) => {
+                              onCompleteSale({
+                                 id: `${Date.now()}-${index}`,
+                                 timestamp: Date.now(),
+                                 openedAt: activeTab.openedAt,
+                                 items: isShortcut ? [{ productId: 'quitacao', productName: 'Quitação Fiado', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] : (index === 0 ? tabItems : []),
+                                 paymentMethod: p.method,
+                                 total: p.amount,
+                                 tabName: activeTab.name,
+                                 customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+                                 userId: '', 
+                                 shiftId: activeShift.id
+                              });
                            });
-                        });
+                        }
 
                         if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
                         else if (onClearShortcut) onClearShortcut();
@@ -523,7 +557,10 @@ const POS: React.FC<POSProps> = ({
                         setCurrentPayments([]);
                         setReceivedValueInput(null);
                         showFeedback("OPERACÃO FINALIZADA");
-                      }} disabled={remainingBalance > 0.01 && (activeTabId !== 'shortcut-payment' || paidSoFar === 0)} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">CONCLUIR RECEBIMENTO</button>
+                      }} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex flex-col items-center justify-center gap-1">
+                        <span>CONCLUIR VENDA</span>
+                        <span className="text-[10px] opacity-70">Total: {formatCurrency(tabTotal)}</span>
+                      </button>
                    </div>
                 </div>
               )}
@@ -532,6 +569,7 @@ const POS: React.FC<POSProps> = ({
         </>
       )}
 
+      {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
