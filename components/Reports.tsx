@@ -60,9 +60,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   const filteredSales = useMemo<Sale[]>(() => {
-    const start = new Date(startDate + 'T00:00:00').getTime();
-    const end = new Date(endDate + 'T23:59:59').getTime();
-    return (sales || []).filter((s: Sale) => s.timestamp >= start && s.timestamp <= end);
+    // Usando Date.parse(ISO + "T00:00:00") para garantir fuso horário local correto
+    const startTs = new Date(`${startDate}T00:00:00`).getTime();
+    const endTs = new Date(`${endDate}T23:59:59`).getTime();
+    return (sales || []).filter((s: Sale) => s.timestamp >= startTs && s.timestamp <= endTs);
   }, [sales, startDate, endDate]);
 
   const reportData = useMemo(() => {
@@ -150,15 +151,13 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     });
   };
 
-  const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in">
-      Nenhum dado para o período: {startDate} até {endDate}
-    </div>
-  );
-
   const renderActiveReport = () => {
     if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO') {
-      return <EmptyState />;
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-bold uppercase tracking-widest border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in">
+          Nenhum dado para o período: {startDate} até {endDate}
+        </div>
+      );
     }
 
     switch(activeCategory) {
@@ -186,6 +185,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                       <p>TURNO: {reportData.selectedShift.id.slice(-6).toUpperCase()}</p>
                       <p>OPERADOR: @{reportData.selectedShift.openedBy.toUpperCase()}</p>
                       <p>ABERTURA: {new Date(reportData.selectedShift.startTime).toLocaleString('pt-BR')}</p>
+                      {reportData.selectedShift.endTime && <p>FECHAMENTO: {new Date(reportData.selectedShift.endTime).toLocaleString('pt-BR')}</p>}
                    </div>
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
                       <div className="text-xs font-black uppercase text-center mb-2">RESUMO FINANCEIRO</div>
@@ -200,9 +200,27 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                          <span>{formatCurrency(reportData.shiftSales.reduce((acc, s) => acc + s.total, 0))}</span>
                       </div>
                    </div>
+
+                   {reportData.selectedShift.status === 'closed' && (
+                     <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
+                        <div className="text-xs font-black uppercase text-center mb-2">CONFERÊNCIA DE GAVETA</div>
+                        <div className="flex justify-between text-[11px]">
+                           <span className="text-slate-500 uppercase">ESPERADO:</span>
+                           <span className="font-bold">{formatCurrency(reportData.selectedShift.finalCashChange || 0)}</span>
+                        </div>
+                        <div className="flex justify-between text-[11px]">
+                           <span className="text-slate-500 uppercase">CONTADO:</span>
+                           <span className="font-bold">{formatCurrency(reportData.selectedShift.actualCashCounted || 0)}</span>
+                        </div>
+                        <div className={`flex justify-between text-sm font-black pt-2 border-t border-slate-800 ${ (reportData.selectedShift.cashDifference || 0) < -0.01 ? 'text-red-500' : 'text-emerald-400'}`}>
+                           <span>QUEBRA/DIF:</span>
+                           <span>{formatCurrency(reportData.selectedShift.cashDifference || 0)}</span>
+                        </div>
+                     </div>
+                   )}
                 </div>
               </div>
-            ) : <EmptyState />}
+            ) : <div className="text-center py-20 opacity-30 italic text-sm">Selecione um turno acima</div>}
           </div>
         );
       case 'FINANCEIRO':
