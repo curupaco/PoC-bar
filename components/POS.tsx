@@ -350,7 +350,6 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          {/* LADO DIREITO (COMANDA) */}
           <div className="w-full lg:w-96 flex flex-col h-[75vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-24 lg:pb-0 z-10">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-full shadow-2xl relative">
               <div className="p-5 bg-red-600 text-white shrink-0 flex justify-between items-center shadow-lg">
@@ -402,7 +401,7 @@ const POS: React.FC<POSProps> = ({
                     })}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-24 opacity-30 italic text-[11px] text-center uppercase font-black">Nenhum consumo registrado</div>}
                   </div>
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-12 lg:pb-6">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-16 lg:pb-8">
                     <div className="flex justify-between items-center mb-5">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Atual</span>
                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(tabTotal)}</span>
@@ -414,7 +413,6 @@ const POS: React.FC<POSProps> = ({
                 </>
               ) : (
                 <div className="flex-1 flex flex-col min-h-0">
-                   {/* Interface de Pagamento */}
                    <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                       <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors">
                         ← Retornar à comanda
@@ -496,7 +494,7 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       )}
                    </div>
-                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-12 lg:pb-6">
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-16 lg:pb-8">
                       <button onClick={() => {
                         const isShortcut = activeTabId === 'shortcut-payment';
                         const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
@@ -534,7 +532,6 @@ const POS: React.FC<POSProps> = ({
         </>
       )}
 
-      {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
