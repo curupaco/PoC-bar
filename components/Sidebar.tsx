@@ -107,7 +107,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
 
         <div className="p-6 flex-1 overflow-y-auto space-y-4 no-scrollbar overflow-x-hidden">
           <div className={`flex flex-col mb-8 ${isCollapsed ? 'items-center' : 'px-2'}`}>
-             <span className={`font-normal text-slate-800 dark:text-slate-100 tracking-tighter leading-none font-barrio transition-all ${isCollapsed ? 'text-xl' : 'text-4xl'}`}>{isCollapsed ? 'BQ' : 'Botequista'}</span>
+             <span className={`font-normal text-slate-800 dark:text-slate-100 tracking-tighter leading-none font-barrio transition-all ${isCollapsed ? 'text-2xl' : 'text-4xl'}`}>{isCollapsed ? '🍺' : 'Botequista'}</span>
              {!isCollapsed && <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mt-1">Sincronizado</span>}
           </div>
           
