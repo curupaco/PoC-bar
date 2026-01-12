@@ -60,7 +60,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   const filteredSales = useMemo<Sale[]>(() => {
-    // Usando Date.parse(ISO + "T00:00:00") para garantir fuso horário local correto
     const startTs = new Date(`${startDate}T00:00:00`).getTime();
     const endTs = new Date(`${endDate}T23:59:59`).getTime();
     return (sales || []).filter((s: Sale) => s.timestamp >= startTs && s.timestamp <= endTs);
@@ -74,6 +73,16 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       acc[method] = shiftSales.filter((s: Sale) => s.paymentMethod === method).reduce((sum: number, s: Sale) => sum + s.total, 0);
       return acc;
     }, {} as Record<string, number>);
+
+    // Estatísticas de Categoria para o Turno
+    const shiftCategoryStats = shiftSales.flatMap(s => s.items || []).reduce((acc, item) => {
+      const product = products.find(p => p.id === item.productId);
+      const catName = product ? product.category.toUpperCase() : 'OUTROS';
+      acc[catName] = (acc[catName] || 0) + item.totalPrice;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const shiftTotalRevenue = shiftSales.reduce((acc, s) => acc + s.total, 0);
 
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
       acc[method] = { count: 0, total: 0 };
@@ -134,9 +143,9 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     return { 
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod,
-      teamStats, topProducts, hourlyStats
+      teamStats, topProducts, hourlyStats, shiftCategoryStats, shiftTotalRevenue
     };
-  }, [filteredSales, sales, shifts, selectedShiftId, users]);
+  }, [filteredSales, sales, shifts, selectedShiftId, users, products]);
 
   const exportAsImage = () => {
     if (!canExport || !reportRef.current) return;
@@ -187,6 +196,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                       <p>ABERTURA: {new Date(reportData.selectedShift.startTime).toLocaleString('pt-BR')}</p>
                       {reportData.selectedShift.endTime && <p>FECHAMENTO: {new Date(reportData.selectedShift.endTime).toLocaleString('pt-BR')}</p>}
                    </div>
+                   
+                   {/* RESUMO FINANCEIRO */}
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
                       <div className="text-xs font-black uppercase text-center mb-2">RESUMO FINANCEIRO</div>
                       { (Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
@@ -197,7 +208,38 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                       ))}
                       <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-black text-emerald-400">
                          <span>TOTAL LÍQUIDO:</span>
-                         <span>{formatCurrency(reportData.shiftSales.reduce((acc, s) => acc + s.total, 0))}</span>
+                         <span>{formatCurrency(reportData.shiftTotalRevenue)}</span>
+                      </div>
+                   </div>
+
+                   {/* CONSUMO POR CATEGORIA (BARRA VISUAL) */}
+                   <div className="border-t border-dashed border-slate-800 pt-4 space-y-4">
+                      <div className="text-xs font-black uppercase text-center mb-1">MIX DE VENDAS (CATEGORIAS)</div>
+                      <div className="space-y-3">
+                         {/* Fix: Explicitly cast Object.entries to [string, number][] to avoid 'unknown' type errors during arithmetic operations and formatting */}
+                         {(Object.entries(reportData.shiftCategoryStats) as [string, number][])
+                            .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+                            .map(([cat, val]: [string, number]) => {
+                               const percentage = reportData.shiftTotalRevenue > 0 ? (val / reportData.shiftTotalRevenue) * 100 : 0;
+                               return (
+                                  <div key={cat} className="space-y-1">
+                                     <div className="flex justify-between text-[9px] font-black uppercase">
+                                        <span className="text-slate-300">{cat}</span>
+                                        <span>{formatCurrency(val)} ({percentage.toFixed(0)}%)</span>
+                                     </div>
+                                     <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                        <div 
+                                           className="h-full bg-red-600 rounded-full" 
+                                           style={{ width: `${percentage}%` }}
+                                        />
+                                     </div>
+                                  </div>
+                               );
+                            })
+                         }
+                         {Object.keys(reportData.shiftCategoryStats).length === 0 && (
+                            <p className="text-[10px] text-center text-slate-600 italic">Nenhum consumo registrado no turno</p>
+                         )}
                       </div>
                    </div>
 
