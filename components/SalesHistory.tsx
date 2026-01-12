@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Sale, formatCurrency, User } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Sale, formatCurrency, User, PaymentMethod } from '../types';
 
 interface SalesHistoryProps {
   sales: Sale[];
@@ -11,7 +11,19 @@ interface SalesHistoryProps {
 
 const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, users, currentUser }) => {
   const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPendura, setFilterPendura] = useState(false);
+
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_sale');
+
+  const filteredSales = useMemo(() => {
+    return (sales || []).filter(s => {
+      const matchSearch = (s.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (s.tabName || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchPendura = filterPendura ? (s.paymentMethod === PaymentMethod.PENDURA || s.items?.some(i => i.productId === 'quitacao')) : true;
+      return matchSearch && matchPendura;
+    });
+  }, [sales, searchTerm, filterPendura]);
 
   const handleDelete = (id: string) => {
     if (!canDelete) {
@@ -19,22 +31,44 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
         setTimeout(() => setErrorToast(null), 3000);
         return;
     }
-    onDeleteSale(id);
+    if (confirm("Deseja realmente excluir este registro de venda?")) {
+      onDeleteSale(id);
+    }
   };
 
   return (
-    <div className="relative">
+    <div className="relative space-y-6">
       {errorToast && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">
            {errorToast}
         </div>
       )}
 
+      {/* FILTROS */}
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+           <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+           <input 
+              type="text" 
+              placeholder="BUSCAR POR CLIENTE OU MESA..." 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all"
+           />
+        </div>
+        <button 
+          onClick={() => setFilterPendura(!filterPendura)}
+          className={`px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all w-full md:w-auto ${filterPendura ? 'bg-orange-500 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
+        >
+          {filterPendura ? 'Exibindo: Apenas Fiados' : 'Filtrar: Todos os Tipos'}
+        </button>
+      </div>
+
       <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
-          <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm">Histórico Global de Vendas</h3>
+          <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm">Histórico Consolidado</h3>
           <span className="text-[10px] bg-red-600 text-white px-4 py-1 rounded-full font-black uppercase tracking-widest">
-            {(sales || []).length} registros
+            {filteredSales.length} registros
           </span>
         </div>
 
@@ -43,14 +77,14 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
             <thead>
               <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 text-[10px] uppercase font-bold tracking-widest">
                 <th className="px-8 py-5">Data/Hora</th>
-                <th className="px-8 py-5">Mesa / Operador</th>
+                <th className="px-8 py-5">Identificação</th>
                 <th className="px-8 py-5">Pagamento</th>
                 <th className="px-8 py-5">Total</th>
                 <th className="px-8 py-5 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {(sales || []).map((sale) => (
+              {filteredSales.map((sale) => (
                 <tr key={sale.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                   <td className="px-8 py-5 whitespace-nowrap">
                     <span className="block font-black text-slate-800 dark:text-slate-200">
@@ -62,20 +96,20 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
                   </td>
                   <td className="px-8 py-5">
                     <span className="font-black text-slate-800 dark:text-white uppercase">
-                      {sale.tabName || 'Venda Rápida'}
+                      {sale.customerName ? sale.customerName : (sale.tabName || 'Venda Rápida')}
                     </span>
                     <div className="flex items-center gap-1 mt-1">
-                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Operador:</span>
-                      <span className="text-[9px] text-blue-500 font-black uppercase">@{users.find(u => u.id === sale.userId)?.username || 'Admin'}</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Local:</span>
+                      <span className="text-[9px] text-slate-500 font-black uppercase">{sale.tabName || 'Balcão'}</span>
                     </div>
                   </td>
                   <td className="px-8 py-5">
                     <span className={`px-2 py-0.5 rounded text-[9px] font-black border uppercase ${sale.paymentMethod === 'Pendura' ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'}`}>
-                      {sale.paymentMethod}
+                      {sale.items?.some(i => i.productId === 'quitacao') ? 'QUITAÇÃO FIADO' : sale.paymentMethod}
                     </span>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                    <span className={`font-black text-sm ${sale.items?.some(i => i.productId === 'quitacao') ? 'text-blue-600' : 'text-emerald-600 dark:text-emerald-400'}`}>
                       {formatCurrency(sale.total)}
                     </span>
                   </td>
@@ -90,10 +124,10 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
                   </td>
                 </tr>
               ))}
-              {(sales || []).length === 0 && (
+              {filteredSales.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-8 py-20 text-center text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] italic">
-                    Nenhum registro no período.
+                    Nenhum registro encontrado para os filtros aplicados.
                   </td>
                 </tr>
               )}
