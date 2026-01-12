@@ -3,7 +3,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#ef4444">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     <title>Botequista - Gestão de Bar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -45,11 +49,21 @@
             scrollbar-width: thin;
             scrollbar-color: var(--sb-thumb) var(--sb-track);
             overflow-x: hidden;
-            background-color: #f8fafc; /* slate-50 default */
+            background-color: #f8fafc;
+            /* Evita bounce de scroll no iOS */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        #root {
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .dark body {
-            background-color: #020617; /* slate-950 default */
+            background-color: #020617;
         }
 
         body { 
@@ -74,7 +88,6 @@
             background: #94a3b8;
         }
 
-        /* Efeito Serrilhado do Cupom - Preto */
         .serrated-top-black { position: relative; }
         .serrated-top-black:before {
             content: ""; position: absolute; top: -10px; left: 0; width: 100%; height: 10px;
@@ -105,5 +118,14 @@
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado com sucesso!', reg))
+                    .catch(err => console.log('Falha ao registrar Service Worker:', err));
+            });
+        }
+    </script>
 </body>
 </html>
