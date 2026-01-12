@@ -219,15 +219,15 @@ const POS: React.FC<POSProps> = ({
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase text-center mb-2 tracking-tighter leading-none">Excluir Mesa?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-8">
                {deleteConfirmId.hasItems 
-                 ? `A mesa "${deleteConfirmId.name}" tem consumo. Apagar tudo?` 
-                 : `Excluir a mesa "${deleteConfirmId.name}"? ela está vazia.`}
+                 ? `A mesa "${deleteConfirmId.name}" possui consumo pendente. Tem certeza que deseja apagar tudo?` 
+                 : `Excluir a mesa "${deleteConfirmId.name}"? Ela está vazia.`}
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={() => {
