@@ -8,25 +8,25 @@ interface UserManagementProps {
 }
 
 const ALL_PERMISSIONS: { id: UserPermission, label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'pos', label: 'Vendas (PDV)' },
-  { id: 'products', label: 'Produtos' },
+  { id: 'dashboard', label: 'Painel Geral' },
+  { id: 'pos', label: 'PDV (Vendas)' },
+  { id: 'products', label: 'Gerenciar Cardápio' },
   { id: 'history', label: 'Histórico' },
   { id: 'reports', label: 'Relatórios' },
   { id: 'shifts_admin', label: 'Gestão de Turnos' },
-  { id: 'cash_admin', label: 'Gestão de Caixa' },
-  { id: 'users_admin', label: 'Gestão de Usuários' },
-  { id: 'settings', label: 'Ajustes' },
+  { id: 'cash_admin', label: 'Controle de Caixa' },
+  { id: 'users_admin', label: 'Gestão de Equipe' },
+  { id: 'settings', label: 'Ajustes e Regras' },
   { id: 'open_shift', label: 'Abrir Turno' },
   { id: 'close_shift', label: 'Fechar Turno' },
   { id: 'delete_sale', label: 'Excluir Venda' },
   { id: 'delete_product', label: 'Excluir Produto' },
   { id: 'edit_product', label: 'Editar Produto' },
   { id: 'export_report', label: 'Salvar Relatórios' },
-  { id: 'clear_fiado', label: 'Quitar Penduras' },
-  { id: 'full_reset', label: 'Reset Total' },
-  { id: 'manage_backup', label: 'Gerenciar Backup' },
-  { id: 'help_view', label: 'Ver Ajuda/Guia' },
+  { id: 'clear_fiado', label: 'Quitar Fiados' },
+  { id: 'full_reset', label: 'Reset do Sistema' },
+  { id: 'manage_backup', label: 'Gerenciar Nuvem' },
+  { id: 'help_view', label: 'Ver Manual' },
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers }) => {
@@ -91,7 +91,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Exibição</label>

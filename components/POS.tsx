@@ -79,9 +79,12 @@ const POS: React.FC<POSProps> = ({
 
   const normalizeId = (id: any) => id ? String(id).trim() : '';
 
-  const activeTab = shortcutCheckout 
-    ? { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() }
-    : openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
+  const activeTab = useMemo(() => {
+    if (shortcutCheckout) {
+      return { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
+    }
+    return openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
+  }, [activeTabId, openTabs, shortcutCheckout]);
     
   const tabItems = activeTab?.items ?? [];
   const tabTotal = shortcutCheckout ? shortcutCheckout.amount : tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
@@ -95,16 +98,26 @@ const POS: React.FC<POSProps> = ({
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const items = [...(tab.items ?? [])];
         if (editingWeightIndex !== null) {
-          items[editingWeightIndex] = { ...items[editingWeightIndex], quantity: quantity, totalPrice: quantity * items[editingWeightIndex].unitPrice };
+          items[editingWeightIndex] = { 
+            ...items[editingWeightIndex], 
+            quantity: quantity, 
+            totalPrice: Number((quantity * items[editingWeightIndex].unitPrice).toFixed(2)) 
+          };
           showFeedback(`${product.name} ATUALIZADO`);
         } else {
           const existingIndex = items.findIndex(i => i.productId === product.id);
           if (existingIndex > -1 && product.sellType === 'unit') {
             const newQty = items[existingIndex].quantity + quantity;
-            items[existingIndex] = { ...items[existingIndex], quantity: newQty, totalPrice: newQty * product.price };
+            items[existingIndex] = { ...items[existingIndex], quantity: newQty, totalPrice: Number((newQty * product.price).toFixed(2)) };
             showFeedback(`+1 ${product.name}`);
           } else {
-            items.push({ productId: product.id, productName: product.name, quantity: quantity, unitPrice: product.price, totalPrice: quantity * product.price });
+            items.push({ 
+              productId: product.id, 
+              productName: product.name, 
+              quantity: quantity, 
+              unitPrice: product.price, 
+              totalPrice: Number((quantity * product.price).toFixed(2)) 
+            });
             showFeedback(`${product.name} ADICIONADO`);
           }
         }
@@ -119,11 +132,13 @@ const POS: React.FC<POSProps> = ({
 
   const removeFromTab = (index: number) => {
     if (!activeTabId) return;
-    onUpdateTabs(prev => prev.map(tab => {
+    onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const items = [...tab.items];
         const removed = items.splice(index, 1);
-        showFeedback(`${removed[0].productName} REMOVIDO`);
+        if (removed.length > 0) {
+          showFeedback(`${removed[0].productName} REMOVIDO`);
+        }
         return { ...tab, items };
       }
       return tab;
@@ -132,13 +147,13 @@ const POS: React.FC<POSProps> = ({
 
   const updateItemQty = (index: number, delta: number) => {
     if (!activeTabId) return;
-    onUpdateTabs(prev => prev.map(tab => {
+    onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const items = [...tab.items];
         const item = items[index];
         const prod = products.find(p => p.id === item.productId);
         
-        if (prod?.sellType === 'weight' && delta !== 0) {
+        if (prod?.sellType === 'weight' && delta === 0) {
            setWeightModalProduct(prod);
            setEditingWeightIndex(index);
            setInputGrams((item.quantity * 1000).toFixed(0));
@@ -150,7 +165,7 @@ const POS: React.FC<POSProps> = ({
            items.splice(index, 1);
            showFeedback(`${item.productName} REMOVIDO`);
         } else {
-           items[index] = { ...item, quantity: newQty, totalPrice: newQty * item.unitPrice };
+           items[index] = { ...item, quantity: newQty, totalPrice: Number((newQty * item.unitPrice).toFixed(2)) };
            showFeedback(`${item.productName}: ${newQty}x`);
         }
         return { ...tab, items };
@@ -204,7 +219,7 @@ const POS: React.FC<POSProps> = ({
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-sm rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
@@ -212,7 +227,7 @@ const POS: React.FC<POSProps> = ({
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-8">
                {deleteConfirmId.hasItems 
                  ? `A mesa "${deleteConfirmId.name}" tem consumo. Apagar tudo?` 
-                 : `Excluir a mesa "${deleteConfirmId.name}"?`}
+                 : `Excluir a mesa "${deleteConfirmId.name}"? ela está vazia.`}
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={() => {
@@ -318,7 +333,7 @@ const POS: React.FC<POSProps> = ({
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
               <div className="p-4 bg-red-600 text-white shrink-0 flex justify-between items-center">
                 <h3 className="font-black uppercase tracking-tight truncate leading-normal text-[11px]">{activeTab?.name}</h3>
-                <button type="button" onClick={() => setDeleteConfirmId({ id: activeTabId, name: activeTab?.name || 'Mesa', hasItems: tabItems.length > 0 })} className="p-2 text-white/50 hover:text-white transition-colors">
+                <button type="button" onClick={() => setDeleteConfirmId({ id: activeTabId!, name: activeTab?.name || 'Mesa', hasItems: tabItems.length > 0 })} className="p-2 text-white/50 hover:text-white transition-colors">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -326,28 +341,44 @@ const POS: React.FC<POSProps> = ({
               {!isClosingTab ? (
                 <>
                   <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[250px]">
-                    {tabItems.map((item, idx) => (
-                      <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2">
-                        <div className="flex items-center justify-between gap-2">
-                           <div className="flex-1 min-w-0">
-                             <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
-                             <p className="text-[9px] font-bold text-slate-400 uppercase">{formatCurrency(item.totalPrice)}</p>
-                           </div>
-                           
-                           <div className="flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
-                             <button onClick={() => updateItemQty(idx, -1)} className="w-6 h-6 flex items-center justify-center text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-black">-</button>
-                             <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 min-w-[20px] text-center">
-                               {products.find(p => p.id === item.productId)?.sellType === 'unit' ? `${item.quantity}` : `${(item.quantity * 1000).toFixed(0)}g`}
-                             </span>
-                             <button onClick={() => updateItemQty(idx, 1)} className="w-6 h-6 flex items-center justify-center text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-md transition-colors font-black">+</button>
-                             <div className="w-px h-4 bg-slate-100 dark:bg-slate-800 mx-1"></div>
-                             <button onClick={() => removeFromTab(idx)} className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                             </button>
-                           </div>
+                    {tabItems.map((item, idx) => {
+                      const prod = products.find(p => p.id === item.productId);
+                      const isWeight = prod?.sellType === 'weight';
+                      return (
+                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2">
+                          <div className="flex items-center justify-between gap-2">
+                             <div className="flex-1 min-w-0">
+                               <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
+                               <p className="text-[9px] font-bold text-slate-400 uppercase">{formatCurrency(item.totalPrice)}</p>
+                             </div>
+                             
+                             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
+                               <div className="flex items-center gap-0.5">
+                                 {!isWeight ? (
+                                   <>
+                                     <button onClick={() => updateItemQty(idx, -1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-black">-</button>
+                                     <button onClick={() => updateItemQty(idx, 1)} className="w-6 h-6 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-md transition-colors font-black">+</button>
+                                   </>
+                                 ) : (
+                                   <button onClick={() => updateItemQty(idx, 0)} className="w-6 h-6 flex items-center justify-center text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded-md transition-colors">
+                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                   </button>
+                                 )}
+                               </div>
+                               
+                               <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 min-w-[45px] text-center border-l border-slate-100 dark:border-slate-800 pl-1.5">
+                                 {isWeight ? `${(item.quantity * 1000).toFixed(0)}g` : `${item.quantity}x`}
+                               </span>
+
+                               <div className="w-px h-4 bg-slate-100 dark:bg-slate-800 mx-1"></div>
+                               <button onClick={() => removeFromTab(idx)} className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               </button>
+                             </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-10 opacity-30 italic text-[10px] text-center uppercase font-black">Mesa Vazia</div>}
                   </div>
                   <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
