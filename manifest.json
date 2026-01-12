@@ -10,16 +10,22 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/931/931949.png",
+      "src": "https://ui-avatars.com/api/?name=BQ&background=ef4444&color=fff&bold=true&size=512&font-size=0.45",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/931/931949.png",
+      "src": "https://ui-avatars.com/api/?name=BQ&background=ef4444&color=fff&bold=true&size=192&font-size=0.45",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "https://ui-avatars.com/api/?name=BQ&background=ef4444&color=fff&bold=true&size=512&font-size=0.45&rounded=true",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
