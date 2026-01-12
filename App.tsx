@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod } from './types';
+import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod, generateUniqueId } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
 import POS from './components/POS';
@@ -21,7 +21,6 @@ if (isBrowser && !(window as any).process) {
 }
 
 const MASTER_KEY = "Tc@00216587";
-// Lógica de leitura das chaves configuradas na Vercel
 const ENV_FB_URL = (process.env as any).FIREBASE_URL;
 const ENV_FB_API_KEY = (process.env as any).FIREBASE_API_KEY; 
 
@@ -77,17 +76,18 @@ const App: React.FC = () => {
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
 
-  // Prioriza a URL do servidor se existir
   const [fbUrl, setFbUrl] = useState(() => ENV_FB_URL || (isBrowser && localStorage.getItem('bar_fb_url')) || DEFAULT_FB_URL);
-  const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
+  const activeShift = useMemo(() => (shifts || []).find(s => s.status === 'open'), [shifts]);
 
-  const activeTabsCount = useMemo(() => openTabs.filter(t => t.items.length > 0).length, [openTabs]);
+  const activeTabsCount = useMemo(() => (openTabs || []).filter(t => (t.items || []).length > 0).length, [openTabs]);
   const totalPendura = useMemo(() => {
-    return sales.reduce((acc, s) => {
-      if (s.paymentMethod === PaymentMethod.PENDURA) return acc + s.total;
-      if (s.items?.some(i => i.productId === 'quitacao')) return acc - s.total;
-      return acc;
-    }, 0);
+    let total = 0;
+    for (let i = 0; i < sales.length; i++) {
+       const s = sales[i];
+       if (s.paymentMethod === PaymentMethod.PENDURA) total += s.total;
+       else if (s.items?.some(it => it.productId === 'quitacao')) total -= s.total;
+    }
+    return Math.max(0, total);
   }, [sales]);
 
   const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
@@ -180,7 +180,7 @@ const App: React.FC = () => {
     if (data.users && data.users.length > 0) {
       setUsers((data.users as User[]).map(u => u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
     } else if (users.length === 0) {
-      setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
+      setUsers([{ id: generateUniqueId('user'), username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
     }
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
@@ -198,9 +198,13 @@ const App: React.FC = () => {
   };
 
   const handleCompleteSale = (sale: Sale) => {
-    const newSales = [{ ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' }, ...sales];
-    setSales(newSales);
-    forceSyncToCloud({ products, sales: newSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
+    const saleWithContext = { ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' };
+    setSales(prev => {
+       const updatedSales = [saleWithContext, ...prev];
+       // Dispara salvamento imediato para vendas para evitar perdas em fechamento de aba
+       forceSyncToCloud({ products, sales: updatedSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
+       return updatedSales;
+    });
   };
 
   const handleUpdateShifts = (newShifts: Shift[]) => {

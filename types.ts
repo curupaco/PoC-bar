@@ -51,8 +51,8 @@ export interface Shift {
   finalCashPrimary?: number;
   finalCashChange?: number;
   finalCashSecondary?: number;
-  actualCashCounted?: number; // Valor físico contado pelo operador
-  cashDifference?: number;    // Diferença entre esperado e contado
+  actualCashCounted?: number; 
+  cashDifference?: number;    
 }
 
 export interface Product {
@@ -67,6 +67,7 @@ export interface Product {
 export interface SaleItem {
   productId: string;
   productName: string;
+  category: string; // Adicionado para histórico
   quantity: number;
   unitPrice: number;
   totalPrice: number;
@@ -100,4 +101,10 @@ export const formatCurrency = (value: number) => {
     style: 'currency',
     currency: 'BRL',
   }).format(value);
+};
+
+export const generateUniqueId = (prefix: string = '') => {
+  const ts = Date.now();
+  const rand = Math.random().toString(36).substring(2, 9);
+  return prefix ? `${prefix}-${ts}-${rand}` : `${ts}-${rand}`;
 };
