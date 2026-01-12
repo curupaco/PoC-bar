@@ -252,7 +252,7 @@ const POS: React.FC<POSProps> = ({
       )}
 
       {!activeTabId ? (
-        <div className="flex-1 space-y-6 pb-24">
+        <div className="flex-1 space-y-6 pb-24 overflow-y-auto no-scrollbar">
           <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
             <div>
               <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestão de Mesas</h2>
@@ -276,7 +276,7 @@ const POS: React.FC<POSProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
             {(openTabs || []).map(tab => (
               <div key={tab.id} className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col relative h-48 group">
-                <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId({ id: tab.id, name: tab.name, hasItems: tab.items.length > 0 }); }} className="absolute top-2 right-2 p-3 z-20 text-slate-300 hover:text-red-500 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100">
+                <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId({ id: tab.id, name: tab.name, hasItems: tab.items.length > 0 }); }} className="absolute top-2 right-2 p-3 z-30 text-slate-300 hover:text-red-500 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
                 <div onClick={() => setActiveTabId(tab.id)} className="p-6 cursor-pointer flex-1 flex flex-col justify-between">
@@ -294,8 +294,8 @@ const POS: React.FC<POSProps> = ({
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-6 pb-32">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+          <div className="flex-1 space-y-6 pb-32 overflow-y-auto no-scrollbar h-full">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 sticky top-0 z-20">
               <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-3.5 rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-90">
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               </button>
@@ -321,9 +321,9 @@ const POS: React.FC<POSProps> = ({
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {favorites.map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-3 rounded-[24px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
-                          <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 mb-1 px-1">{p.name}</p>
-                          <p className="text-xl font-black text-amber-600 leading-none">{formatPriceOnly(p.price)}</p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
+                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
+                          <p className="text-2xl font-black text-amber-600 leading-none">{formatPriceOnly(p.price)}</p>
                         </button>
                       ))}
                     </div>
@@ -338,9 +338,9 @@ const POS: React.FC<POSProps> = ({
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {filteredProducts.filter(p => p.category === cat).map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-3 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
-                          <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 mb-1 px-1">{p.name}</p>
-                          <p className="text-xl font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
+                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
+                          <p className="text-2xl font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>
                         </button>
                       ))}
                     </div>
@@ -350,7 +350,8 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          <div className="w-full lg:w-96 flex flex-col h-[60vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-10 lg:pb-0">
+          {/* LADO DIREITO (COMANDA) */}
+          <div className="w-full lg:w-96 flex flex-col h-[75vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-24 lg:pb-0 z-10">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-full shadow-2xl relative">
               <div className="p-5 bg-red-600 text-white shrink-0 flex justify-between items-center shadow-lg">
                 <h3 className="font-black uppercase tracking-tight truncate leading-normal text-xs">{activeTab?.name}</h3>
@@ -401,7 +402,7 @@ const POS: React.FC<POSProps> = ({
                     })}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-24 opacity-30 italic text-[11px] text-center uppercase font-black">Nenhum consumo registrado</div>}
                   </div>
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-12 lg:pb-6">
                     <div className="flex justify-between items-center mb-5">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Atual</span>
                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(tabTotal)}</span>
@@ -413,6 +414,7 @@ const POS: React.FC<POSProps> = ({
                 </>
               ) : (
                 <div className="flex-1 flex flex-col min-h-0">
+                   {/* Interface de Pagamento */}
                    <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
                       <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors">
                         ← Retornar à comanda
@@ -435,9 +437,9 @@ const POS: React.FC<POSProps> = ({
                               ))}
                            </div>
                            {receivedValueInput && receivedValueInput > 0 && (
-                             <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50">
-                                <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1 text-center">TROCO A ENTREGAR:</span>
-                                <span className="text-3xl font-black tracking-tighter text-center">{formatCurrency(changeDue)}</span>
+                             <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50 text-center">
+                                <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">TROCO A ENTREGAR:</span>
+                                <span className="text-3xl font-black tracking-tighter">{formatCurrency(changeDue)}</span>
                              </div>
                            )}
                         </div>
@@ -494,7 +496,7 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       )}
                    </div>
-                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto">
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-12 lg:pb-6">
                       <button onClick={() => {
                         const isShortcut = activeTabId === 'shortcut-payment';
                         const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
@@ -532,6 +534,7 @@ const POS: React.FC<POSProps> = ({
         </>
       )}
 
+      {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">

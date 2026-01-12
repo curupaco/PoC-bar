@@ -29,13 +29,12 @@ const Settings: React.FC<SettingsProps> = ({
   const [isSyncing, setIsSyncing] = useState(false);
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
   
+  // Detecção de variáveis configuradas na Vercel
+  const isEnvFixed = !!(process.env as any).FIREBASE_URL;
+
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('fb_api_key') || '');
   const [email, setEmail] = useState(() => localStorage.getItem('fb_auth_email') || 'curupaco@gmail.com');
   const [pass, setPass] = useState(() => localStorage.getItem('fb_auth_pass') || 'REMOVED_FIREBASE_PASSWORD');
-
-  const [ghToken, setGhToken] = useState(() => localStorage.getItem('bar_gh_token') || '');
-  const [gistId, setGistId] = useState(() => localStorage.getItem('bar_gist_id') || '');
-  const [isBackingUp, setIsBackingUp] = useState(false);
 
   const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
 
@@ -45,6 +44,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleGlobalSync = async () => {
+    if (isEnvFixed) { showToast("Configuração travada pelo servidor.", 'error'); return; }
     if (!apiKey || !fbUrl) { showToast("Preencha a chave e o endereço!", 'error'); return; }
     setIsSyncing(true);
     try {
@@ -54,7 +54,7 @@ const Settings: React.FC<SettingsProps> = ({
         localStorage.setItem('fb_auth_email', email);
         localStorage.setItem('fb_auth_pass', pass);
         onStatusChange('success');
-        showToast("Conexão com o Banco de Dados Atualizada!");
+        showToast("Banco de Dados Conectado!");
       }
     } catch (err: any) {
       showToast(err.message || "Erro na conexão", 'error');
@@ -96,23 +96,6 @@ const Settings: React.FC<SettingsProps> = ({
     }
   };
 
-  const handleGitHubBackup = async () => {
-    if (!ghToken) { showToast("Token do GitHub é obrigatório!", 'error'); return; }
-    setIsBackingUp(true);
-    try {
-      await testGitHubToken(ghToken);
-      const newGistId = await syncToGitHub(ghToken, { products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } }, gistId);
-      setGistId(newGistId);
-      localStorage.setItem('bar_gh_token', ghToken);
-      localStorage.setItem('bar_gist_id', newGistId);
-      showToast("Backup concluído!");
-    } catch (err: any) {
-      showToast(err.message, 'error');
-    } finally {
-      setIsBackingUp(false);
-    }
-  };
-
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-24 animate-in fade-in duration-500">
       {toast && (
@@ -121,7 +104,7 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
-      {/* REGRAS DE NEGÓCIO */}
+      {/* Regras de Negócio */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900/30 shadow-xl space-y-6">
         <div className="flex items-center gap-4 text-orange-600">
           <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
@@ -145,36 +128,64 @@ const Settings: React.FC<SettingsProps> = ({
                     className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-orange-500 font-black text-2xl outline-none transition-all" 
                  />
               </div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase mt-1 ml-2">Define quando o ícone ⚠️ aparecerá no menu.</p>
            </div>
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Infraestrutura do Bar</h3>
+      {/* Cloud Settings */}
+      <div className={`bg-white dark:bg-slate-900 p-8 rounded-[40px] border shadow-xl space-y-6 ${isEnvFixed ? 'border-emerald-500/50' : 'border-slate-200 dark:border-slate-800'}`}>
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-4 text-emerald-600">
+             <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+                {isEnvFixed ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg>
+                )}
+             </div>
+             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Conexão com Nuvem</h3>
+          </div>
+          {isEnvFixed && (
+            <span className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/20 px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border border-emerald-200 dark:border-emerald-800 flex items-center gap-2">
+               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+               Ativo via Servidor
+            </span>
+          )}
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Chave do Banco de Dados</label>
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Chave da API do Banco</label>
               <input 
+                disabled={isEnvFixed}
                 type="password" 
-                value={apiKey} 
+                value={isEnvFixed ? "PROTEGIDO PELO SERVIDOR" : apiKey} 
                 onChange={e => setApiKey(e.target.value)} 
-                placeholder="Insira a chave de segurança..."
-                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500" 
+                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50" 
               />
            </div>
            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Endereço do Banco de Dados</label>
-              <input type="text" value={fbUrl} onChange={e => setFbUrl(e.target.value)} placeholder="https://..." className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-orange-500" />
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">URL do Banco (Firebase)</label>
+              <input 
+                disabled={isEnvFixed}
+                type="text" 
+                value={isEnvFixed ? "Protegido pelo Sistema" : fbUrl} 
+                onChange={e => setFbUrl(e.target.value)} 
+                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50" 
+              />
            </div>
         </div>
-        <button onClick={handleGlobalSync} disabled={isSyncing} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl disabled:opacity-50">
-           {isSyncing ? "Validando..." : "Salvar Configuração"}
-        </button>
+        
+        {!isEnvFixed && (
+          <button onClick={handleGlobalSync} disabled={isSyncing} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl disabled:opacity-50">
+             {isSyncing ? "Validando..." : "Salvar Configuração"}
+          </button>
+        )}
       </div>
 
+      {/* Manutenção */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-         <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Ferramentas de Manutenção (Zerar)</h3>
+         <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">Ferramentas de Manutenção</h3>
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button onClick={handleResetTables} disabled={!canReset} className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 text-amber-600 font-black uppercase text-[10px] tracking-widest border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all disabled:opacity-30">
                Zerar Mesas Abertas
@@ -189,19 +200,6 @@ const Settings: React.FC<SettingsProps> = ({
                Reset Total do Sistema
             </button>
          </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Cópia de Segurança GitHub</h3>
-        <div className="space-y-4">
-           <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Token do GitHub</label>
-              <input type="password" value={ghToken} onChange={e => setGhToken(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-slate-500" placeholder="ghp_..." />
-           </div>
-           <button onClick={handleGitHubBackup} disabled={isBackingUp} className="w-full bg-slate-800 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all">
-              {isBackingUp ? "Sincronizando..." : "Sincronizar Agora"}
-           </button>
-        </div>
       </div>
     </div>
   );

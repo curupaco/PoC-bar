@@ -21,6 +21,7 @@ if (isBrowser && !(window as any).process) {
 }
 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
+// Lógica de leitura das chaves configuradas na Vercel
 const ENV_FB_URL = (process.env as any).FIREBASE_URL;
 const ENV_FB_API_KEY = (process.env as any).FIREBASE_API_KEY; 
 
@@ -28,6 +29,19 @@ const DEFAULT_FB_URL = ENV_FB_URL || 'https://poc-botequista-default-rtdb.fireba
 const DEFAULT_FB_API_KEY = ENV_FB_API_KEY || ''; 
 const DEFAULT_EMAIL = 'curupaco@gmail.com';
 const DEFAULT_PASS = 'REMOVED_FIREBASE_PASSWORD';
+
+const viewTitles: Record<View, string> = {
+  dashboard: 'Painel de Controle',
+  pos: 'Vendas (PDV)',
+  products: 'Cardápio de Itens',
+  history: 'Histórico de Vendas',
+  reports: 'Relatórios Financeiros',
+  settings: 'Ajustes do Sistema',
+  users: 'Gestão de Equipe',
+  shifts: 'Controle de Turnos',
+  cash: 'Tesouraria',
+  help: 'Guia de Operação'
+};
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -63,7 +77,8 @@ const App: React.FC = () => {
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
 
-  const [fbUrl, setFbUrl] = useState(() => (isBrowser && localStorage.getItem('bar_fb_url')) || DEFAULT_FB_URL);
+  // Prioriza a URL do servidor se existir
+  const [fbUrl, setFbUrl] = useState(() => ENV_FB_URL || (isBrowser && localStorage.getItem('bar_fb_url')) || DEFAULT_FB_URL);
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
   const activeTabsCount = useMemo(() => openTabs.filter(t => t.items.length > 0).length, [openTabs]);
@@ -94,12 +109,12 @@ const App: React.FC = () => {
     localStorage.setItem('bar_theme', theme);
   }, [theme]);
 
-  const getActiveFirebaseApiKey = () => {
-    return localStorage.getItem('fb_api_key') || DEFAULT_FB_API_KEY;
-  };
+  const getActiveFirebaseApiKey = useCallback(() => {
+    return ENV_FB_API_KEY || localStorage.getItem('fb_api_key') || DEFAULT_FB_API_KEY;
+  }, []);
 
   const forceSyncToCloud = useCallback(async (currentData: any) => {
-    if (!isInitialLoadDone.current) return;
+    if (!isInitialLoadDone.current || !fbUrl) return;
     try {
       const apiKey = getActiveFirebaseApiKey();
       let token: string | undefined;
@@ -113,7 +128,7 @@ const App: React.FC = () => {
     } catch (e) {
       setDbStatus('error');
     }
-  }, [fbUrl]);
+  }, [fbUrl, getActiveFirebaseApiKey]);
 
   useEffect(() => {
     if (!isBrowser) return;
@@ -141,7 +156,7 @@ const App: React.FC = () => {
       } catch (e) { setDbStatus('error'); } finally { isInitialLoadDone.current = true; }
     };
     fetchInitialData();
-  }, [fbUrl]);
+  }, [fbUrl, getActiveFirebaseApiKey]);
 
   useEffect(() => {
     if (!isInitialLoadDone.current || isSyncingFromCloud.current) return;
@@ -154,7 +169,7 @@ const App: React.FC = () => {
       forceSyncToCloud({ products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
     }, 3000);
     return () => clearTimeout(debounce);
-  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud]);
+  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud, fbUrl]);
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
@@ -185,13 +200,11 @@ const App: React.FC = () => {
   const handleCompleteSale = (sale: Sale) => {
     const newSales = [{ ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' }, ...sales];
     setSales(newSales);
-    // Salvamento imediato para vendas
     forceSyncToCloud({ products, sales: newSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
   };
 
   const handleUpdateShifts = (newShifts: Shift[]) => {
     setShifts(newShifts);
-    // Salvamento imediato para alteração de turno (abertura/fechamento)
     forceSyncToCloud({ products, sales, openTabs, users, shifts: newShifts, config: { fbUrl, penduraThreshold } });
   };
 
@@ -258,7 +271,7 @@ const App: React.FC = () => {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
             </button>
-            <h1 className="text-lg lg:text-2xl font-bold text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">{activeView}</h1>
+            <h1 className="text-lg lg:text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">{viewTitles[activeView]}</h1>
           </div>
           <div className="flex items-center gap-4">
             <div className={`w-2 h-2 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`}></div>
