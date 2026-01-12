@@ -20,10 +20,14 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-// CONFIGURAÇÕES MESTRE DO FIREBASE (Fornecidas pelo usuário)
+// CONFIGURAÇÕES MESTRE - Prioriza ENV VARS da Vercel de forma estrita
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
-const DEFAULT_FB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
-const DEFAULT_FB_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
+// ATENÇÃO: FIREBASE_API_KEY deve ser configurada na Vercel para o deploy automático funcionar.
+const ENV_FB_URL = (process.env as any).FIREBASE_URL;
+const ENV_FB_API_KEY = (process.env as any).FIREBASE_API_KEY; 
+
+const DEFAULT_FB_URL = ENV_FB_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
+const DEFAULT_FB_API_KEY = ENV_FB_API_KEY || ''; // Não usa a chave do Gemini como fallback para o Firebase
 const DEFAULT_EMAIL = 'curupaco@gmail.com';
 const DEFAULT_PASS = 'REMOVED_FIREBASE_PASSWORD';
 
@@ -38,14 +42,11 @@ const App: React.FC = () => {
   const isSyncingFromCloud = useRef(false);
   const isInitialLoadDone = useRef(false);
 
-  // Estados dos Dados
   const [products, setProducts] = useState<Product[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  
-  // TEMA: Forçado 'dark' se não houver preferência salva
   const [theme, setTheme] = useState<Theme>(() => {
     if (!isBrowser) return 'dark';
     const saved = localStorage.getItem('bar_theme');
@@ -53,7 +54,6 @@ const App: React.FC = () => {
   });
 
   const [fbUrl, setFbUrl] = useState(() => (isBrowser && localStorage.getItem('bar_fb_url')) || DEFAULT_FB_URL);
-
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
   const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
@@ -63,7 +63,6 @@ const App: React.FC = () => {
     'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
   ];
 
-  // Aplica a classe 'dark' imediatamente no carregamento e mudanças
   useEffect(() => {
     if (!isBrowser) return;
     if (theme === 'dark') {
@@ -76,29 +75,25 @@ const App: React.FC = () => {
     localStorage.setItem('bar_theme', theme);
   }, [theme]);
 
-  // Função auxiliar para obter a chave API do Firebase
   const getActiveFirebaseApiKey = () => {
     return localStorage.getItem('fb_api_key') || DEFAULT_FB_API_KEY;
   };
 
-  // 1. CARREGAMENTO INICIAL DE DADOS
   useEffect(() => {
     if (!isBrowser) return;
-    
     const fetchInitialData = async () => {
       setDbStatus('loading');
       try {
         const apiKey = getActiveFirebaseApiKey();
         let token: string | undefined;
-        
-        if (apiKey) {
+        // Só tenta o token se a chave existir e não for a do Gemini (que geralmente começa diferente ou é curta)
+        if (apiKey && apiKey.length > 20) {
           try {
             token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey);
-          } catch (err) {
-            console.warn("Auth Firebase falhou no boot. Usando cache local.");
+          } catch (err) { 
+            console.warn("Auth do Firebase ignorada ou falhou. Verifique se o projeto tem Identity Toolkit ativo."); 
           }
         }
-        
         const cloudData = await loadFromFirebase(fbUrl, MASTER_KEY, token);
         if (cloudData) {
           handleImportAll(cloudData);
@@ -119,45 +114,32 @@ const App: React.FC = () => {
         isInitialLoadDone.current = true;
       }
     };
-
     fetchInitialData();
   }, [fbUrl]);
 
-  // 2. POLLING (Sincronização a cada 15s)
   useEffect(() => {
     if (!isBrowser || !currentUser) return;
-
     const interval = setInterval(async () => {
       if (isSyncingFromCloud.current) return;
-      
       try {
         const apiKey = getActiveFirebaseApiKey();
         let token: string | undefined;
-        
-        if (apiKey) {
-          try {
-            token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey);
-          } catch (e) { /* ignore */ }
+        if (apiKey && apiKey.length > 20) {
+          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
         }
-        
         const cloudData = await loadFromFirebase(fbUrl, MASTER_KEY, token);
         if (cloudData && cloudData.updatedAt && cloudData.updatedAt > lastSyncTime) {
           handleImportAll(cloudData);
           setLastSyncTime(cloudData.updatedAt);
         }
         setDbStatus('success');
-      } catch (e) {
-        setDbStatus('error');
-      }
+      } catch (e) { setDbStatus('error'); }
     }, 15000);
-
     return () => clearInterval(interval);
   }, [currentUser, fbUrl, lastSyncTime]);
 
-  // 3. PERSISTÊNCIA AUTOMÁTICA
   useEffect(() => {
     if (!isInitialLoadDone.current || isSyncingFromCloud.current) return;
-
     localStorage.setItem('bar_products', JSON.stringify(products));
     localStorage.setItem('bar_users', JSON.stringify(users));
     localStorage.setItem('bar_fb_url', fbUrl);
@@ -166,22 +148,15 @@ const App: React.FC = () => {
       try {
         const apiKey = getActiveFirebaseApiKey();
         let token: string | undefined;
-        
-        if (apiKey) {
-          try {
-            token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey);
-          } catch (e) { /* silent fail */ }
+        if (apiKey && apiKey.length > 20) {
+          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
         }
-        
         const now = new Date().toISOString();
         await saveToFirebase(fbUrl, { products, sales, openTabs, users, shifts, updatedAt: now }, MASTER_KEY, token);
         setLastSyncTime(now);
         setDbStatus('success');
-      } catch (e) {
-        setDbStatus('error');
-      }
+      } catch (e) { setDbStatus('error'); }
     };
-
     const debounce = setTimeout(pushData, 3000);
     return () => clearTimeout(debounce);
   }, [products, sales, openTabs, users, shifts]);
@@ -245,9 +220,9 @@ const App: React.FC = () => {
             <div className="flex flex-col items-end hidden sm:flex">
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`}></div>
-                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{dbStatus === 'success' ? 'BAR SINCRONIZADO' : 'BUSCANDO NUVEM'}</span>
+                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">{dbStatus === 'success' ? 'SINC. OK' : 'BUSCANDO'}</span>
               </div>
-              <p className="text-[8px] font-bold text-slate-300 uppercase tracking-tight">Sincronizado: {new Date(lastSyncTime).toLocaleTimeString()}</p>
+              <p className="text-[8px] font-bold text-slate-300 uppercase tracking-tight">{new Date(lastSyncTime).toLocaleTimeString()}</p>
             </div>
             <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:scale-105 active:scale-95 transition-all">
               {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
