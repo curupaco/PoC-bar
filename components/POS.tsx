@@ -37,6 +37,7 @@ const POS: React.FC<POSProps> = ({
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [currentPayments, setCurrentPayments] = useState<PaymentEntry[]>([]);
   const [paymentAmountInput, setPaymentAmountInput] = useState('');
+  const [receivedValueInput, setReceivedValueInput] = useState<number | null>(null);
   const [customerNameInput, setCustomerNameInput] = useState('');
   const [paymentMethodInput, setPaymentMethodInput] = useState<PaymentMethod>(PaymentMethod.CASH);
 
@@ -60,6 +61,7 @@ const POS: React.FC<POSProps> = ({
   useEffect(() => {
     setCurrentPayments([]);
     setPaymentAmountInput('');
+    setReceivedValueInput(null);
     setIsClosingTab(false);
     setValidationError(null);
   }, [activeTabId]);
@@ -163,6 +165,12 @@ const POS: React.FC<POSProps> = ({
     if (parts.length > 2) return;
     setPaymentAmountInput(cleaned);
   };
+
+  const changeDue = useMemo(() => {
+    if (paymentMethodInput !== PaymentMethod.CASH || !receivedValueInput) return 0;
+    const amountToPay = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
+    return Math.max(0, receivedValueInput - amountToPay);
+  }, [receivedValueInput, paymentAmountInput, remainingBalance, paymentMethodInput]);
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
@@ -355,24 +363,43 @@ const POS: React.FC<POSProps> = ({
               ) : (
                 <div className="flex-1 flex flex-col overflow-hidden">
                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); }} className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
+                      <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
                         ← Voltar
                       </button>
                       <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl">
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Restante</p>
                         <p className="text-2xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
                       </div>
+                      
+                      {/* CALCULADORA DE TROCO (DINHEIRO) */}
+                      {paymentMethodInput === PaymentMethod.CASH && (
+                        <div className="space-y-3 animate-in slide-in-from-top-2">
+                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Recebido (Calculadora de Troco)</p>
+                           <div className="grid grid-cols-3 gap-1.5">
+                              {[5, 10, 20, 50, 100, 200].map(val => (
+                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-2 rounded-lg font-black text-[10px] border transition-all ${receivedValueInput === val ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>R$ {val}</button>
+                              ))}
+                           </div>
+                           {receivedValueInput && receivedValueInput > 0 && (
+                             <div className="bg-emerald-500 text-white p-3 rounded-xl flex justify-between items-center shadow-lg animate-in zoom-in-95">
+                                <span className="text-[9px] font-black uppercase tracking-widest">TROCO:</span>
+                                <span className="text-lg font-black">{formatCurrency(changeDue)}</span>
+                             </div>
+                           )}
+                        </div>
+                      )}
+
                       <div className="space-y-2">
-                        <select value={paymentMethodInput} onChange={e => setPaymentMethodInput(e.target.value as any)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase outline-none">
+                        <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase outline-none">
                           {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                         {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
                           <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase" placeholder="NOME DO CLIENTE" />
                         )}
                         <div className="flex gap-2">
-                          <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-lg outline-none" placeholder="0,00" />
+                          <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-lg outline-none" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
                           <button onClick={() => {
-                             const val = parseFloat(paymentAmountInput.replace(',', '.'));
+                             const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
                              if (isNaN(val) || val <= 0) return;
                              if ((paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && !customerNameInput.trim()) {
                                setValidationError("NOME OBRIGATÓRIO!");
@@ -380,6 +407,7 @@ const POS: React.FC<POSProps> = ({
                              }
                              setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val, customerName: customerNameInput.toUpperCase() || undefined }]);
                              setPaymentAmountInput('');
+                             setReceivedValueInput(null);
                              if (!shortcutCheckout) setCustomerNameInput('');
                           }} className="bg-black text-white px-4 rounded-xl font-black">+</button>
                         </div>
@@ -419,6 +447,7 @@ const POS: React.FC<POSProps> = ({
                         setActiveTabId(null);
                         setIsClosingTab(false);
                         setCurrentPayments([]);
+                        setReceivedValueInput(null);
                         showFeedback("VENDA FINALIZADA");
                       }} disabled={remainingBalance > 0.01} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50">Finalizar</button>
                    </div>
