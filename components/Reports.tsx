@@ -23,7 +23,14 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const [endDate, setEndDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [periodLabel, setPeriodLabel] = useState('HOJE');
 
-  const [selectedShiftId, setSelectedShiftId] = useState<string>(shifts[0]?.id || '');
+  const [selectedShiftId, setSelectedShiftId] = useState<string>('');
+
+  // Sincroniza o turno selecionado quando a lista de turnos carregar ou mudar
+  useEffect(() => {
+    if (!selectedShiftId && shifts && shifts.length > 0) {
+      setSelectedShiftId(shifts[0].id);
+    }
+  }, [shifts, selectedShiftId]);
 
   const canExport = currentUser.username === 'admin' || currentUser.permissions.includes('export_report');
   const canSettle = currentUser.username === 'admin' || currentUser.permissions.includes('clear_fiado');
@@ -66,7 +73,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   }, [sales, startDate, endDate]);
 
   const reportData = useMemo(() => {
-    const selectedShift = shifts.find(sh => sh.id === selectedShiftId);
+    const selectedShift = (shifts || []).find(sh => sh.id === selectedShiftId);
     const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId);
 
     const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, number>, method) => {
@@ -74,15 +81,32 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, number>);
 
-    // Estatísticas de Categoria para o Turno
-    const shiftCategoryStats = shiftSales.flatMap(s => s.items || []).reduce((acc, item) => {
-      const product = products.find(p => p.id === item.productId);
-      const catName = product ? product.category.toUpperCase() : 'OUTROS';
-      acc[catName] = (acc[catName] || 0) + item.totalPrice;
-      return acc;
-    }, {} as Record<string, number>);
+    // Estatísticas de Categoria para o Turno - Melhorada para ser mais resiliente
+    const shiftCategoryStats = shiftSales
+      .filter(s => !s.items?.some(i => i.productId === 'quitacao')) // Ignora quitações puras no mix de produtos
+      .flatMap(s => s.items || [])
+      .reduce((acc, item) => {
+        const product = products.find(p => p.id === item.productId);
+        let catName = 'OUTROS';
+        
+        if (product && product.category) {
+          catName = product.category.toUpperCase().trim();
+        } else if (item.productName) {
+           // Tenta inferir se for algo óbvio e o produto não existir mais
+           const lowerName = item.productName.toLowerCase();
+           if (lowerName.includes('cerveja') || lowerName.includes('chopp')) catName = 'CERVEJAS';
+           else if (lowerName.includes('coca') || lowerName.includes('suco') || lowerName.includes('agua')) catName = 'BEBIDAS';
+        }
 
-    const shiftTotalRevenue = shiftSales.reduce((acc, s) => acc + s.total, 0);
+        acc[catName] = (acc[catName] || 0) + (item.totalPrice || 0);
+        return acc;
+      }, {} as Record<string, number>);
+
+    // Faturamento apenas de consumo (para bater com o gráfico)
+    // Fix line 106 error: Explicitly type reduce parameters to avoid unknown types inference
+    const shiftConsumptionTotal = Object.values(shiftCategoryStats).reduce((a: number, b: number) => a + b, 0);
+    // Explicitly type reduce parameters for revenue calculation
+    const shiftTotalRevenue = shiftSales.reduce((acc: number, s: Sale) => acc + s.total, 0);
 
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
       acc[method] = { count: 0, total: 0 };
@@ -116,7 +140,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
 
-    const teamStats = users.map(u => {
+    const teamStats = (users || []).map(u => {
       const uSales = filteredSales.filter((s: Sale) => s.userId === u.id);
       return {
         name: u.displayName,
@@ -143,7 +167,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     return { 
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftSales, shiftTotalsByMethod,
-      teamStats, topProducts, hourlyStats, shiftCategoryStats, shiftTotalRevenue
+      teamStats, topProducts, hourlyStats, shiftCategoryStats, shiftTotalRevenue, shiftConsumptionTotal
     };
   }, [filteredSales, sales, shifts, selectedShiftId, users, products]);
 
@@ -153,7 +177,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     htmlToImage.toPng(reportRef.current, { backgroundColor: '#000000', pixelRatio: 2 })
     .then((dataUrl) => {
         const link = document.createElement('a');
-        link.download = `fechamento-${periodLabel}-${new Date().getTime()}.png`;
+        link.download = `fechamento-turno-${selectedShiftId.slice(-6)}.png`;
         link.href = dataUrl;
         link.click();
         showToast("CUPOM SALVO COM SUCESSO!");
@@ -177,10 +201,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                <div className="flex-1">
                   <label className="text-[10px] font-black text-slate-400 uppercase mb-2">Selecionar Turno para Detalhar</label>
                   <select value={selectedShiftId} onChange={e => setSelectedShiftId(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none">
+                    <option value="">Escolha um turno...</option>
                     {shifts.map(s => <option key={s.id} value={s.id}>{new Date(s.startTime).toLocaleDateString()} {new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - @{s.openedBy}</option>)}
                   </select>
                </div>
-               <button onClick={exportAsImage} disabled={!canExport} className="bg-black text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50">Salvar Cupom (PNG)</button>
+               <button onClick={exportAsImage} disabled={!canExport || !selectedShiftId} className="bg-black text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all disabled:opacity-50">Salvar Cupom (PNG)</button>
             </div>
 
             {reportData.selectedShift ? (
@@ -215,22 +240,21 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                    {/* CONSUMO POR CATEGORIA (BARRA VISUAL) */}
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-4">
                       <div className="text-xs font-black uppercase text-center mb-1">MIX DE VENDAS (CATEGORIAS)</div>
-                      <div className="space-y-3">
-                         {/* Fix: Explicitly cast Object.entries to [string, number][] to avoid 'unknown' type errors during arithmetic operations and formatting */}
+                      <div className="space-y-4">
                          {(Object.entries(reportData.shiftCategoryStats) as [string, number][])
-                            .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
-                            .map(([cat, val]: [string, number]) => {
-                               const percentage = reportData.shiftTotalRevenue > 0 ? (val / reportData.shiftTotalRevenue) * 100 : 0;
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([cat, val]) => {
+                               const percentage = reportData.shiftConsumptionTotal > 0 ? (val / reportData.shiftConsumptionTotal) * 100 : 0;
                                return (
-                                  <div key={cat} className="space-y-1">
-                                     <div className="flex justify-between text-[9px] font-black uppercase">
-                                        <span className="text-slate-300">{cat}</span>
-                                        <span>{formatCurrency(val)} ({percentage.toFixed(0)}%)</span>
+                                  <div key={cat} className="space-y-1.5">
+                                     <div className="flex justify-between text-[10px] font-black uppercase">
+                                        <span className="text-slate-200">{cat}</span>
+                                        <span className="text-white">{formatCurrency(val)} ({percentage.toFixed(0)}%)</span>
                                      </div>
-                                     <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                     <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                                         <div 
-                                           className="h-full bg-red-600 rounded-full" 
-                                           style={{ width: `${percentage}%` }}
+                                           className="h-full bg-red-600 rounded-full shadow-[0_0_10px_rgba(220,38,38,0.5)]" 
+                                           style={{ width: `${Math.max(2, percentage)}%` }}
                                         />
                                      </div>
                                   </div>
@@ -238,7 +262,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                             })
                          }
                          {Object.keys(reportData.shiftCategoryStats).length === 0 && (
-                            <p className="text-[10px] text-center text-slate-600 italic">Nenhum consumo registrado no turno</p>
+                            <p className="text-[10px] text-center text-slate-600 italic py-4">Nenhum consumo registrado no turno</p>
                          )}
                       </div>
                    </div>
@@ -262,7 +286,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                    )}
                 </div>
               </div>
-            ) : <div className="text-center py-20 opacity-30 italic text-sm">Selecione um turno acima</div>}
+            ) : (
+              <div className="bg-white dark:bg-slate-900 p-20 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center">
+                 <p className="text-slate-400 font-black uppercase tracking-widest text-xs italic">Aguardando seleção de turno ou carregamento de dados...</p>
+              </div>
+            )}
           </div>
         );
       case 'FINANCEIRO':
