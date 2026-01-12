@@ -209,7 +209,7 @@ const POS: React.FC<POSProps> = ({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 relative h-full pb-20 lg:pb-0">
+    <div className="flex flex-col lg:flex-row gap-6 relative h-full pb-20 lg:pb-0 overflow-hidden">
       {toast && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[210] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">
            {toast}
@@ -248,31 +248,40 @@ const POS: React.FC<POSProps> = ({
       )}
 
       {!activeTabId ? (
-        <div className="flex-1 space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Mesas Abertas</h2>
+        <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar pb-24">
+          <div className="flex justify-between items-center bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div>
+              <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Gestão de Mesas</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{(openTabs || []).length} mesas monitoradas</p>
+            </div>
             {!isAddingTab && (
-              <button onClick={() => setIsAddingTab(true)} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-black shadow-lg transition-all active:scale-95 uppercase text-xs tracking-widest">Abrir Mesa</button>
+              <button onClick={() => setIsAddingTab(true)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-black shadow-lg transition-all active:scale-95 uppercase text-xs tracking-widest">Abrir Mesa</button>
             )}
           </div>
+
           {isAddingTab && (
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border-2 border-red-500 shadow-xl flex gap-3 animate-in fade-in zoom-in-95">
-              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="Mesa ou Cliente" className="flex-1 px-4 py-2 rounded-xl bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 outline-none font-bold uppercase" onKeyDown={e => e.key === 'Enter' && (() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } })()} />
-              <button onClick={() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } }} className="bg-red-600 text-white px-6 rounded-xl font-black hover:bg-red-700 uppercase text-xs">Criar</button>
-              <button onClick={() => setIsAddingTab(false)} className="text-slate-400 font-bold px-4 uppercase text-xs">Sair</button>
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in fade-in zoom-in-95">
+              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME DA MESA OU CLIENTE..." className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-none outline-none font-black uppercase text-lg tracking-widest" onKeyDown={e => e.key === 'Enter' && (() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } })()} />
+              <div className="flex gap-2">
+                <button onClick={() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-red-700 uppercase text-xs tracking-widest">Criar</button>
+                <button onClick={() => setIsAddingTab(false)} className="bg-slate-100 dark:bg-slate-800 text-slate-400 font-black px-6 py-4 rounded-2xl uppercase text-xs tracking-widest">Sair</button>
+              </div>
             </div>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
             {(openTabs || []).map(tab => (
-              <div key={tab.id} className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col relative h-36 group">
-                <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId({ id: tab.id, name: tab.name, hasItems: tab.items.length > 0 }); }} className="absolute top-0 right-0 p-3 z-20 text-slate-300 hover:text-red-500 transition-all">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              <div key={tab.id} className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col relative h-48 group">
+                <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId({ id: tab.id, name: tab.name, hasItems: tab.items.length > 0 }); }} className="absolute top-2 right-2 p-3 z-20 text-slate-300 hover:text-red-500 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
-                <div onClick={() => setActiveTabId(tab.id)} className="p-4 cursor-pointer flex-1 flex flex-col justify-between">
-                  <h3 className="text-[12px] font-black text-slate-800 dark:text-white uppercase truncate tracking-tight">{tab.name}</h3>
+                <div onClick={() => setActiveTabId(tab.id)} className="p-6 cursor-pointer flex-1 flex flex-col justify-between">
                   <div>
-                    <p className="text-red-600 dark:text-red-400 font-black text-lg">{formatCurrency((tab.items ?? []).reduce((acc, i) => acc + (i.totalPrice ?? 0), 0))}</p>
-                    <span className="text-[8px] text-slate-400 font-black uppercase tracking-widest">{(tab.items ?? []).length} ITENS</span>
+                    <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase truncate tracking-tight">{tab.name}</h3>
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest">{(tab.items ?? []).length} ITENS</span>
+                  </div>
+                  <div>
+                    <p className="text-red-600 dark:text-red-400 font-black text-2xl tracking-tighter">{formatCurrency((tab.items ?? []).reduce((acc, i) => acc + (i.totalPrice ?? 0), 0))}</p>
                   </div>
                 </div>
               </div>
@@ -281,31 +290,36 @@ const POS: React.FC<POSProps> = ({
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-6">
-            <div className="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-3">
-              <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-2.5 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar pb-32">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
+              <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-3.5 rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-90">
+                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               </button>
-              <div className="flex-1 flex items-center gap-3">
-                <input type="text" placeholder="BUSCAR PRODUTO..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="flex-1 bg-transparent border-none outline-none text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest" disabled={!!shortcutCheckout} />
+              <div className="flex-1 relative">
+                <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" placeholder="LOCALIZAR PRODUTO NO CARDÁPIO..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none text-slate-900 dark:text-white font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all" disabled={!!shortcutCheckout} />
               </div>
             </div>
 
             {shortcutCheckout ? (
-              <div className="bg-orange-50 dark:bg-orange-900/10 border-2 border-orange-200 dark:border-orange-800 rounded-3xl p-12 text-center space-y-4 animate-in zoom-in-95">
-                 <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Quitação de Fiado</h2>
-                 <p className="text-slate-600 dark:text-slate-400 font-medium">Cliente: <span className="text-red-600 font-black">{shortcutCheckout.name}</span> | Valor: <span className="font-black">{formatCurrency(shortcutCheckout.amount)}</span></p>
+              <div className="bg-orange-50 dark:bg-orange-900/10 border-4 border-orange-200 dark:border-orange-800 rounded-[40px] p-12 text-center space-y-4 animate-in zoom-in-95">
+                 <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Quitação de Pendura</h2>
+                 <p className="text-slate-600 dark:text-slate-400 font-medium text-lg">Cliente: <span className="text-orange-600 font-black">{shortcutCheckout.name}</span></p>
+                 <div className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(shortcutCheckout.amount)}</div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-10">
                 {favorites.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] pl-1">⭐ FAVORITOS</h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2">
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] pl-2">⭐ FAVORITOS</h3>
+                      <div className="flex-1 h-px bg-amber-100 dark:bg-amber-900/20"></div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {favorites.map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-amber-50 dark:bg-amber-900/10 p-2 rounded-xl border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all text-left group">
-                          <p className="text-[9px] font-black text-amber-900 dark:text-amber-100 truncate uppercase leading-tight">{p.name}</p>
-                          <p className="text-xs font-black text-amber-600">{formatCurrency(p.price)}<span className="text-[7px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-left flex flex-col justify-between h-28 group">
+                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2">{p.name}</p>
+                          <p className="text-lg font-black text-amber-600">{formatCurrency(p.price)}<span className="text-[8px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
                         </button>
                       ))}
                     </div>
@@ -313,13 +327,16 @@ const POS: React.FC<POSProps> = ({
                 )}
 
                 {categories.map(cat => (
-                  <div key={cat} className="space-y-2">
-                    <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] pl-1">{cat}</h3>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-2">
+                  <div key={cat} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2">{cat}</h3>
+                      <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800/30"></div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {filteredProducts.filter(p => p.category === cat).map(p => (
-                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 active:scale-95 transition-all text-left">
-                          <p className="text-[9px] font-black text-slate-800 dark:text-slate-100 truncate uppercase leading-tight">{p.name}</p>
-                          <p className="text-xs font-black text-red-600">{formatCurrency(p.price)}<span className="text-[7px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
+                        <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-5 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-left flex flex-col justify-between h-28">
+                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-tight line-clamp-2">{p.name}</p>
+                          <p className="text-lg font-black text-red-600">{formatCurrency(p.price)}<span className="text-[8px] ml-0.5 opacity-40">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
                         </button>
                       ))}
                     </div>
@@ -329,132 +346,152 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden flex flex-col h-full shadow-2xl">
-              <div className="p-4 bg-red-600 text-white shrink-0 flex justify-between items-center">
-                <h3 className="font-black uppercase tracking-tight truncate leading-normal text-[11px]">{activeTab?.name}</h3>
+          <div className="w-full lg:w-96 flex flex-col h-auto lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-20 lg:pb-0">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-full shadow-2xl relative">
+              <div className="p-6 bg-red-600 text-white shrink-0 flex justify-between items-center shadow-lg">
+                <h3 className="font-black uppercase tracking-tight truncate leading-normal text-xs">{activeTab?.name}</h3>
                 <button type="button" onClick={() => setDeleteConfirmId({ id: activeTabId!, name: activeTab?.name || 'Mesa', hasItems: tabItems.length > 0 })} className="p-2 text-white/50 hover:text-white transition-colors">
-                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               
               {!isClosingTab ? (
                 <>
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[250px]">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] no-scrollbar">
                     {tabItems.map((item, idx) => {
                       const prod = products.find(p => p.id === item.productId);
                       const isWeight = prod?.sellType === 'weight';
                       return (
-                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-2 animate-in slide-in-from-right-2">
+                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-3 animate-in slide-in-from-right-2">
                           <div className="flex items-center justify-between gap-2">
                              <div className="flex-1 min-w-0">
-                               <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
-                               <p className="text-[9px] font-bold text-slate-400 uppercase">{formatCurrency(item.totalPrice)}</p>
+                               <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
+                               <p className="text-[10px] font-black text-red-600 mt-1">{formatCurrency(item.totalPrice)}</p>
                              </div>
                              
-                             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-950 p-1 rounded-lg border border-slate-200 dark:border-slate-800">
-                               <div className="flex items-center gap-0.5">
+                             <div className="flex items-center gap-2 bg-white dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                               <div className="flex items-center gap-1">
                                  {!isWeight ? (
                                    <>
-                                     <button onClick={() => updateItemQty(idx, -1)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-md transition-colors font-black">-</button>
-                                     <button onClick={() => updateItemQty(idx, 1)} className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-md transition-colors font-black">+</button>
+                                     <button onClick={() => updateItemQty(idx, -1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all font-black active:scale-90">-</button>
+                                     <button onClick={() => updateItemQty(idx, 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 rounded-xl transition-all font-black active:scale-90">+</button>
                                    </>
                                  ) : (
-                                   <button onClick={() => updateItemQty(idx, 0)} className="w-7 h-7 flex items-center justify-center text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-md transition-colors">
-                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                   <button onClick={() => updateItemQty(idx, 0)} className="w-8 h-8 flex items-center justify-center text-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-xl transition-all active:scale-90">
+                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                    </button>
                                  )}
                                </div>
                                
-                               <span className="text-[10px] font-black text-slate-700 dark:text-slate-300 min-w-[50px] text-center border-l border-slate-100 dark:border-slate-800 pl-1.5">
+                               <span className="text-[11px] font-black text-slate-700 dark:text-slate-300 min-w-[60px] text-center border-l border-slate-100 dark:border-slate-800 pl-2">
                                  {isWeight ? `${(item.quantity * 1000).toFixed(0)}g` : `${item.quantity}x`}
                                </span>
 
-                               <div className="w-px h-4 bg-slate-100 dark:bg-slate-800 mx-1"></div>
-                               <button onClick={() => removeFromTab(idx)} className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-500 transition-colors">
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                               <button onClick={() => removeFromTab(idx)} className="w-8 h-8 flex items-center justify-center text-slate-300 hover:text-red-500 transition-all ml-1">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                </button>
                              </div>
                           </div>
                         </div>
                       );
                     })}
-                    {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-[10px] text-center uppercase font-black">Mesa Vazia</div>}
+                    {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-24 opacity-30 italic text-[11px] text-center uppercase font-black">Nenhum consumo registrado</div>}
                   </div>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Geral</span>
-                      <span className="text-xl font-black text-slate-900 dark:text-white">{formatCurrency(tabTotal)}</span>
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
+                    <div className="flex justify-between items-center mb-5">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Atual</span>
+                      <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(tabTotal)}</span>
                     </div>
                     {(tabItems.length > 0 || shortcutCheckout) && (
-                      <button onClick={() => setIsClosingTab(true)} className="w-full bg-red-600 text-white py-4 rounded-xl font-black shadow-lg hover:bg-red-700 uppercase text-[10px] tracking-widest transition-all">RECEBER PAGAMENTO</button>
+                      <button onClick={() => setIsClosingTab(true)} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black shadow-xl hover:bg-red-700 uppercase text-xs tracking-widest transition-all active:scale-95 shadow-red-500/20">RECEBER PAGAMENTO</button>
                     )}
                   </div>
                 </>
               ) : (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                   <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                      <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[9px] font-black text-slate-400 uppercase flex items-center gap-1">
-                        ← Voltar para Consumo
+                   <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+                      <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); }} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors">
+                        ← Retornar à comanda
                       </button>
-                      <div className="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Saldo Pendente</p>
-                        <p className="text-2xl font-black text-red-600">{formatCurrency(remainingBalance)}</p>
+                      <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total a Pagar</p>
+                        <p className="text-4xl font-black text-red-600 tracking-tighter">{formatCurrency(remainingBalance)}</p>
                       </div>
                       
-                      {/* CALCULADORA DE TROCO (DINHEIRO) */}
+                      {/* CALCULADORA DE TROCO - Ativa tanto para venda quanto para quitação de pendura */}
                       {paymentMethodInput === PaymentMethod.CASH && (
-                        <div className="space-y-3 animate-in slide-in-from-top-2">
-                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1 text-center lg:text-left">Calculadora de Troco</p>
-                           <div className="grid grid-cols-3 gap-1.5">
+                        <div className="space-y-4 animate-in slide-in-from-top-4">
+                           <div className="flex items-center gap-2">
+                             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+                             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Valor Recebido</p>
+                             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+                           </div>
+                           <div className="grid grid-cols-3 gap-2">
                               {[5, 10, 20, 50, 100, 200].map(val => (
-                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-2 rounded-lg font-black text-[10px] border transition-all ${receivedValueInput === val ? 'bg-emerald-500 border-emerald-500 text-white shadow-md scale-105' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'}`}>R$ {val}</button>
+                                <button key={val} onClick={() => setReceivedValueInput(val)} className={`py-3 rounded-xl font-black text-xs border transition-all active:scale-90 ${receivedValueInput === val ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:border-emerald-500'}`}>R$ {val}</button>
                               ))}
                            </div>
                            {receivedValueInput && receivedValueInput > 0 && (
-                             <div className="bg-emerald-500 text-white p-3 rounded-xl flex justify-between items-center shadow-lg animate-in zoom-in-95">
-                                <span className="text-[9px] font-black uppercase tracking-widest">TROCO:</span>
-                                <span className="text-lg font-black">{formatCurrency(changeDue)}</span>
+                             <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50">
+                                <span className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">TROCO A ENTREGAR:</span>
+                                <span className="text-3xl font-black tracking-tighter">{formatCurrency(changeDue)}</span>
                              </div>
                            )}
                         </div>
                       )}
 
-                      <div className="space-y-2">
-                        <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-[10px] uppercase outline-none focus:ring-2 focus:ring-red-500">
-                          {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
-                        </select>
-                        {(paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && (
-                          <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-bold text-xs uppercase" placeholder="IDENTIFICAR CLIENTE" />
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Forma de Pagamento</label>
+                          <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xs uppercase outline-none focus:ring-4 focus:ring-red-500/10 border border-transparent focus:border-red-500 transition-all">
+                            {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                        </div>
+
+                        {((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && (
+                          <div className="space-y-1">
+                            <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Identificar Cliente</label>
+                            <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xs uppercase border border-transparent focus:border-red-500 outline-none" placeholder="NOME DO CLIENTE..." />
+                          </div>
                         )}
-                        <div className="flex gap-2">
-                          <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="flex-1 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 font-black text-lg outline-none" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
-                          <button onClick={() => {
-                             const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
-                             if (isNaN(val) || val <= 0) return;
-                             if ((paymentMethodInput === PaymentMethod.PENDURA || shortcutCheckout) && !customerNameInput.trim()) {
-                               setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
-                               return;
-                             }
-                             setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val, customerName: customerNameInput.toUpperCase() || undefined }]);
-                             setPaymentAmountInput('');
-                             setReceivedValueInput(null);
-                             if (!shortcutCheckout) setCustomerNameInput('');
-                          }} className="bg-black text-white px-4 rounded-xl font-black">+</button>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Valor Parcial / Total</label>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                               <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-red-500/10 border border-transparent focus:border-red-500 transition-all" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
+                            </div>
+                            <button onClick={() => {
+                               const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
+                               if (isNaN(val) || val <= 0) return;
+                               if (((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && !customerNameInput.trim()) {
+                                 setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
+                                 return;
+                               }
+                               setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val, customerName: customerNameInput.toUpperCase() || undefined }]);
+                               setPaymentAmountInput('');
+                               setReceivedValueInput(null);
+                               if (!shortcutCheckout) setCustomerNameInput('');
+                               setValidationError(null);
+                            }} className="bg-black text-white px-6 rounded-2xl font-black active:scale-95 transition-all shadow-lg shadow-black/20 text-xl">+</button>
+                          </div>
                         </div>
                       </div>
+
                       {currentPayments.length > 0 && (
-                        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <div className="space-y-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Pagamentos Registrados</p>
                            {currentPayments.map((p, idx) => (
-                             <div key={idx} className="flex justify-between items-center text-[9px] font-black text-slate-700 dark:text-slate-300">
-                                <span className="uppercase">{p.method} {p.customerName ? `(${p.customerName})` : ''}</span>
-                                <span>{formatCurrency(p.amount)}</span>
+                             <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-2">
+                                <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300">{p.method} {p.customerName ? `(${p.customerName})` : ''}</span>
+                                <span className="text-xs font-black text-emerald-600">{formatCurrency(p.amount)}</span>
                              </div>
                            ))}
                         </div>
                       )}
                    </div>
-                   <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
                       <button onClick={() => {
                         const isShortcut = activeTabId === 'shortcut-payment';
                         const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
@@ -483,7 +520,7 @@ const POS: React.FC<POSProps> = ({
                         setCurrentPayments([]);
                         setReceivedValueInput(null);
                         showFeedback("OPERACÃO FINALIZADA");
-                      }} disabled={remainingBalance > 0.01} className="w-full bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest disabled:opacity-50 shadow-lg">Finalizar e Baixar</button>
+                      }} disabled={remainingBalance > 0.01 && (activeTabId !== 'shortcut-payment' || paidSoFar === 0)} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest disabled:opacity-50 shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">CONCLUIR RECEBIMENTO</button>
                    </div>
                 </div>
               )}
@@ -494,15 +531,15 @@ const POS: React.FC<POSProps> = ({
 
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-8 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
-            <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Inserir Peso (Gramas)</h4>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
+            <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter italic">Lançar Peso (Gramas)</h4>
             <div className="relative">
-               <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-6 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-red-500 outline-none" />
+               <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none shadow-inner" placeholder="0" />
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase mt-4">Ex: 500 = 0,5kg | 1200 = 1,2kg</p>
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <button onClick={() => { if (!inputGrams) return; addToTab(weightModalProduct!, parseFloat(inputGrams) / 1000); }} className="bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95">Lançar</button>
-              <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Cancelar</button>
+            <p className="text-[10px] font-black text-slate-400 uppercase mt-6 tracking-widest">Ex: 500 = 0.5kg | 1000 = 1.0kg</p>
+            <div className="grid grid-cols-2 gap-4 mt-10">
+              <button onClick={() => { if (!inputGrams) return; addToTab(weightModalProduct!, parseFloat(inputGrams) / 1000); }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 shadow-red-500/20">Lançar</button>
+              <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95">Cancelar</button>
             </div>
           </div>
         </div>
