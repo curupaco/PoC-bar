@@ -45,7 +45,7 @@ const Settings: React.FC<SettingsProps> = ({
   };
 
   const handleGlobalSync = async () => {
-    if (!apiKey || !fbUrl) { showToast("Preencha a apiKey e a URL!", 'error'); return; }
+    if (!apiKey || !fbUrl) { showToast("Preencha a chave e o endereço!", 'error'); return; }
     setIsSyncing(true);
     try {
       const token = await getFirebaseToken(email, pass, apiKey);
@@ -54,10 +54,10 @@ const Settings: React.FC<SettingsProps> = ({
         localStorage.setItem('fb_auth_email', email);
         localStorage.setItem('fb_auth_pass', pass);
         onStatusChange('success');
-        showToast("Configuração Atualizada!");
+        showToast("Conexão com o Banco de Dados Atualizada!");
       }
     } catch (err: any) {
-      showToast(err.message || "Erro na autenticação", 'error');
+      showToast(err.message || "Erro na conexão", 'error');
       onStatusChange('error');
     } finally {
       setIsSyncing(false);
@@ -105,7 +105,7 @@ const Settings: React.FC<SettingsProps> = ({
       setGistId(newGistId);
       localStorage.setItem('bar_gh_token', ghToken);
       localStorage.setItem('bar_gist_id', newGistId);
-      showToast("Backup no GitHub concluído!");
+      showToast("Backup concluído!");
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -151,15 +151,21 @@ const Settings: React.FC<SettingsProps> = ({
       </div>
 
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Infraestrutura em Nuvem</h3>
+        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Infraestrutura do Bar</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">API Key do Bar</label>
-              <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500" />
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Chave do Banco de Dados</label>
+              <input 
+                type="password" 
+                value={apiKey} 
+                onChange={e => setApiKey(e.target.value)} 
+                placeholder="Insira a chave de segurança..."
+                className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-emerald-500" 
+              />
            </div>
            <div className="space-y-1">
-              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">URL do Banco</label>
-              <input type="text" value={fbUrl} onChange={e => setFbUrl(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-orange-500" />
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Endereço do Banco de Dados</label>
+              <input type="text" value={fbUrl} onChange={e => setFbUrl(e.target.value)} placeholder="https://..." className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border-none font-mono text-xs outline-none focus:ring-2 focus:ring-orange-500" />
            </div>
         </div>
         <button onClick={handleGlobalSync} disabled={isSyncing} className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl disabled:opacity-50">
