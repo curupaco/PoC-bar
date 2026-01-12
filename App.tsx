@@ -41,7 +41,9 @@ const App: React.FC = () => {
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toISOString());
   
-  // CONFIGURAÇÕES DO BAR
+  // Estado para quitação rápida vindo do relatório
+  const [pendingShortcut, setPendingShortcut] = useState<{name: string, amount: number} | null>(null);
+
   const [penduraThreshold, setPenduraThreshold] = useState(() => {
     if (!isBrowser) return 500;
     const saved = localStorage.getItem('bar_pendura_threshold');
@@ -181,16 +183,31 @@ const App: React.FC = () => {
     localStorage.setItem('bar_sidebar_collapsed', String(newVal));
   };
 
+  const handleQuitarPendura = (name: string, amount: number) => {
+    setPendingShortcut({ name, amount });
+    setActiveView('pos');
+  };
+
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
 
   const renderContent = () => {
     const props = { products, sales, openTabs, users, shifts, currentUser };
     switch (activeView) {
       case 'dashboard': return <Dashboard {...props} theme={theme} />;
-      case 'pos': return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} activeShift={activeShift} onViewChange={setActiveView} />;
+      case 'pos': return (
+        <POS 
+          {...props} 
+          onUpdateTabs={setOpenTabs} 
+          onCompleteSale={s => setSales(prev => [{ ...s, userId: currentUser.id, shiftId: activeShift?.id || '' }, ...prev])} 
+          activeShift={activeShift} 
+          onViewChange={setActiveView}
+          shortcutCheckout={pendingShortcut}
+          onClearShortcut={() => setPendingShortcut(null)}
+        />
+      );
       case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
-      case 'reports': return <Reports {...props} onQuitarPendura={(n, a) => {}} />;
+      case 'reports': return <Reports {...props} onQuitarPendura={handleQuitarPendura} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
       case 'shifts': return <ShiftControl {...props} onUpdateShifts={setShifts} />;
       case 'cash': return <CashManagement {...props} onUpdateShifts={setShifts} />;
@@ -248,13 +265,13 @@ const App: React.FC = () => {
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <span className="text-[8px] font-black uppercase">Turno</span>
            </button>
-           <button onClick={() => setActiveView('dashboard')} className={`flex flex-col items-center gap-1 ${activeView === 'dashboard' ? 'text-red-600' : 'text-slate-400'}`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-              <span className="text-[8px] font-black uppercase">Painel</span>
-           </button>
            <button onClick={() => setActiveView('cash')} className={`flex flex-col items-center gap-1 ${activeView === 'cash' ? 'text-red-600' : 'text-slate-400'}`}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               <span className="text-[8px] font-black uppercase">Caixa</span>
+           </button>
+           <button onClick={() => setActiveView('help')} className={`flex flex-col items-center gap-1 ${activeView === 'help' ? 'text-red-600' : 'text-slate-400'}`}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <span className="text-[8px] font-black uppercase">Guia</span>
            </button>
         </nav>
       </main>
