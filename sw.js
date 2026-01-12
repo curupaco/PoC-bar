@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'botequista-v2';
+const CACHE_NAME = 'botequista-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -10,9 +10,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+          return caches.delete(cacheName);
         })
       );
     }).then(() => self.clients.claim())
@@ -20,6 +18,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Apenas repassa a requisição para a rede
+  // Se for a navegação para a raiz, garante que busque o index.html se falhar
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('./') || caches.match('index.html');
+      })
+    );
+    return;
+  }
+  
   event.respondWith(fetch(event.request));
 });
