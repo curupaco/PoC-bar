@@ -236,7 +236,7 @@ const App: React.FC = () => {
           onClearShortcut={() => setPendingShortcut(null)}
         />
       );
-      // Fix: Changed the onUpdate handler to correctly replace the updated product u and use the original p if ID doesn't match, removing the reference to undefined x
+      // Fix: Changed the onUpdate handler to correctly replace the updated product u and use the original p if ID doesn't match
       case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
       case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
