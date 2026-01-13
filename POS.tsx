@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue } from './types';
 
 interface POSProps {
   products: Product[];
@@ -203,16 +203,40 @@ const POS: React.FC<POSProps> = ({
 
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-500">
-        <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl">
-           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="relative">
+          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl border border-red-200 dark:border-red-900/30">
+             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="5" y="11" width="14" height="10" rx="2" strokeWidth="2.5" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" />
+             </svg>
+          </div>
+          <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-2 border-white dark:border-slate-900 animate-ping opacity-20"></div>
         </div>
-        <div className="max-w-md space-y-4">
-           <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Vendas Bloqueadas</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium">Inicie um turno para começar a vender.</p>
+        
+        <div className="max-w-xs space-y-4">
+           <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">Operação Bloqueada</h2>
+           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm px-4">
+             O caixa está fechado. Para começar a vender, você precisa <span className="text-red-600 dark:text-red-400 font-bold">abrir um novo turno</span>.
+           </p>
+        </div>
+
+        <div className="flex flex-col gap-3 w-full max-w-[240px]">
            {onViewChange && (
-             <button onClick={() => onViewChange('shifts')} className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Abrir Turno Agora</button>
+             <button 
+               onClick={() => onViewChange('shifts')} 
+               className="bg-red-600 hover:bg-red-700 text-white w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all animate-bounce"
+             >
+               Abrir Turno Agora
+             </button>
            )}
+           <button 
+             onClick={() => window.location.reload()}
+             className="text-slate-400 dark:text-slate-600 font-black uppercase text-[10px] tracking-widest py-2"
+           >
+             Recarregar Sistema
+           </button>
         </div>
       </div>
     );
@@ -285,7 +309,9 @@ const POS: React.FC<POSProps> = ({
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-[410] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase text-center mb-2 tracking-tighter leading-none">Excluir Mesa?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-8">
@@ -569,7 +595,7 @@ const POS: React.FC<POSProps> = ({
       {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
             <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter italic">Lançar Peso (Gramas)</h4>
             <div className="relative">
                <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none shadow-inner" placeholder="0" />
