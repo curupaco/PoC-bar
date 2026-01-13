@@ -24,8 +24,9 @@ const MASTER_KEY = "Tc@00216587";
 const ENV_FB_URL = (process.env as any).FIREBASE_URL;
 const ENV_FB_API_KEY = (process.env as any).FIREBASE_API_KEY; 
 
+// URL e API Key fornecidas pelo usuário para o projeto Firebase
 const DEFAULT_FB_URL = ENV_FB_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
-const DEFAULT_FB_API_KEY = ENV_FB_API_KEY || ''; 
+const DEFAULT_FB_API_KEY = ENV_FB_API_KEY || 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
 const DEFAULT_EMAIL = 'curupaco@gmail.com';
 const DEFAULT_PASS = 'Tc@00216587';
 
@@ -47,20 +48,13 @@ const App: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (!isBrowser) return false;
-    return localStorage.getItem('bar_sidebar_collapsed') === 'true';
-  });
+  
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toISOString());
   
   const [pendingShortcut, setPendingShortcut] = useState<{name: string, amount: number} | null>(null);
-
-  const [penduraThreshold, setPenduraThreshold] = useState(() => {
-    if (!isBrowser) return 500;
-    const saved = localStorage.getItem('bar_pendura_threshold');
-    return saved ? parseFloat(saved) : 500;
-  });
+  const [penduraThreshold, setPenduraThreshold] = useState(500);
 
   const isSyncingFromCloud = useRef(false);
   const isInitialLoadDone = useRef(false);
@@ -70,16 +64,17 @@ const App: React.FC = () => {
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (!isBrowser) return 'dark';
-    const saved = localStorage.getItem('bar_theme');
-    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
-  });
+  const [theme, setTheme] = useState<Theme>('dark');
 
-  const [fbUrl, setFbUrl] = useState(() => ENV_FB_URL || (isBrowser && localStorage.getItem('bar_fb_url')) || DEFAULT_FB_URL);
+  const [fbUrl, setFbUrl] = useState(() => DEFAULT_FB_URL);
+  const [fbApiKey, setFbApiKey] = useState(() => DEFAULT_FB_API_KEY);
+
   const activeShift = useMemo(() => (shifts || []).find(s => s.status === 'open'), [shifts]);
-
   const activeTabsCount = useMemo(() => (openTabs || []).filter(t => (t.items || []).length > 0).length, [openTabs]);
+  
+  const canSeeDashboard = useMemo(() => currentUser?.permissions.includes('dashboard'), [currentUser]);
+  const canSeeReports = useMemo(() => currentUser?.permissions.includes('reports'), [currentUser]);
+
   const totalPendura = useMemo(() => {
     let total = 0;
     for (let i = 0; i < sales.length; i++) {
@@ -106,21 +101,20 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
     }
-    localStorage.setItem('bar_theme', theme);
   }, [theme]);
-
-  const getActiveFirebaseApiKey = useCallback(() => {
-    return ENV_FB_API_KEY || localStorage.getItem('fb_api_key') || DEFAULT_FB_API_KEY;
-  }, []);
 
   const forceSyncToCloud = useCallback(async (currentData: any) => {
     if (!isInitialLoadDone.current || !fbUrl) return;
     try {
       setDbStatus('loading');
-      const apiKey = getActiveFirebaseApiKey();
       let token: string | undefined;
-      if (apiKey && apiKey.length > 20) {
-        try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
+      // Sempre tenta autenticar com a chave padrão se estiver configurada
+      if (fbApiKey && fbApiKey.length > 20) {
+        try { 
+          token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, fbApiKey); 
+        } catch (e) { 
+          console.error("Token Auth Error:", e);
+        }
       }
       const now = new Date().toISOString();
       await saveToFirebase(fbUrl, { ...currentData, updatedAt: now }, MASTER_KEY, token);
@@ -129,17 +123,16 @@ const App: React.FC = () => {
     } catch (e) {
       setDbStatus('error');
     }
-  }, [fbUrl, getActiveFirebaseApiKey]);
+  }, [fbUrl, fbApiKey]);
 
   useEffect(() => {
     if (!isBrowser) return;
     const fetchInitialData = async () => {
       setDbStatus('loading');
       try {
-        const apiKey = getActiveFirebaseApiKey();
         let token: string | undefined;
-        if (apiKey && apiKey.length > 20) {
-          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, apiKey); } catch (e) {}
+        if (fbApiKey && fbApiKey.length > 20) {
+          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, fbApiKey); } catch (e) {}
         }
         const cloudData = await loadFromFirebase(fbUrl, MASTER_KEY, token);
         if (cloudData) {
@@ -148,30 +141,34 @@ const App: React.FC = () => {
           setLastSyncTime(cloudData.updatedAt || new Date().toISOString());
           setDbStatus('success');
         } else {
+          setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
           setDbStatus('idle');
-          const p = localStorage.getItem('bar_products');
-          if (p) setProducts(JSON.parse(p));
-          const u = localStorage.getItem('bar_users');
-          if (u) setUsers(JSON.parse(u));
         }
-      } catch (e) { setDbStatus('error'); } finally { isInitialLoadDone.current = true; }
+      } catch (e) { 
+        setDbStatus('error'); 
+      } finally { 
+        isInitialLoadDone.current = true; 
+      }
     };
     fetchInitialData();
-  }, [fbUrl, getActiveFirebaseApiKey]);
+  }, [fbUrl, fbApiKey]);
 
   useEffect(() => {
     if (!isInitialLoadDone.current || isSyncingFromCloud.current) return;
-    localStorage.setItem('bar_products', JSON.stringify(products));
-    localStorage.setItem('bar_users', JSON.stringify(users));
-    localStorage.setItem('bar_fb_url', fbUrl);
-    localStorage.setItem('bar_pendura_threshold', penduraThreshold.toString());
 
-    setDbStatus('pending'); // Mudança detectada, aguardando debounce
+    setDbStatus('pending');
     const debounce = setTimeout(() => {
-      forceSyncToCloud({ products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
+      forceSyncToCloud({ 
+        products, 
+        sales, 
+        openTabs, 
+        users, 
+        shifts, 
+        config: { fbUrl, fbApiKey, penduraThreshold } 
+      });
     }, 1500);
     return () => clearTimeout(debounce);
-  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud, fbUrl]);
+  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud, fbUrl, fbApiKey]);
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
@@ -179,11 +176,16 @@ const App: React.FC = () => {
     if (data.sales) setSales(data.sales);
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.config?.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
+    
+    if (data.config?.fbApiKey && (!fbApiKey || fbApiKey === DEFAULT_FB_API_KEY)) setFbApiKey(data.config.fbApiKey);
+    if (data.config?.fbUrl && fbUrl === DEFAULT_FB_URL) setFbUrl(data.config.fbUrl);
+
     if (data.users && data.users.length > 0) {
       setUsers((data.users as User[]).map(u => (u.username === 'admin' || u.id === 'admin') ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
-    } else if (users.length === 0) {
+    } else {
       setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
     }
+    
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
     setTimeout(() => { isSyncingFromCloud.current = false; }, 500);
@@ -201,22 +203,15 @@ const App: React.FC = () => {
 
   const handleCompleteSale = (sale: Sale) => {
     const saleWithContext = { ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' };
-    setSales(prev => {
-       const updatedSales = [saleWithContext, ...prev];
-       forceSyncToCloud({ products, sales: updatedSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
-       return updatedSales;
-    });
+    setSales(prev => [saleWithContext, ...prev]);
   };
 
   const handleUpdateShifts = (newShifts: Shift[]) => {
     setShifts(newShifts);
-    forceSyncToCloud({ products, sales, openTabs, users, shifts: newShifts, config: { fbUrl, penduraThreshold } });
   };
 
   const toggleSidebar = () => {
-    const newVal = !isSidebarCollapsed;
-    setIsSidebarCollapsed(newVal);
-    localStorage.setItem('bar_sidebar_collapsed', String(newVal));
+    setIsSidebarCollapsed(!isSidebarCollapsed);
   };
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
@@ -236,21 +231,17 @@ const App: React.FC = () => {
           onClearShortcut={() => setPendingShortcut(null)}
         />
       );
-      // Fix: Changed the onUpdate handler to correctly replace the updated product u and use the original p if ID doesn't match
       case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
       case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
       case 'shifts': return <ShiftControl {...props} onUpdateShifts={handleUpdateShifts} />;
       case 'cash': return <CashManagement {...props} onUpdateShifts={handleUpdateShifts} />;
-      case 'settings': return <Settings {...props} fbUrl={fbUrl} setFbUrl={setFbUrl} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
+      case 'settings': return <Settings {...props} fbUrl={fbUrl} setFbUrl={setFbUrl} fbApiKey={fbApiKey} setFbApiKey={setFbApiKey} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
       case 'help': return <Help />;
       default: return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={handleCompleteSale} activeShift={activeShift} />;
     }
   };
-
-  const canSeeReports = currentUser.username === 'admin' || currentUser.permissions.includes('reports');
-  const canSeeDashboard = currentUser.username === 'admin' || currentUser.permissions.includes('dashboard');
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -281,7 +272,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <div 
-              title={dbStatus === 'success' ? 'Tudo Salvo' : dbStatus === 'pending' ? 'Salvando Alterações...' : 'Erro ao Sincronizar'} 
+              title={dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'pending' ? 'Salvando...' : 'Erro de Autenticação'} 
               className={`w-3 h-3 rounded-full transition-colors duration-500 ${dbStatus === 'success' ? 'bg-emerald-500' : dbStatus === 'pending' ? 'bg-orange-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}
             ></div>
             <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:scale-105 active:scale-95 transition-all">
