@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface POSProps {
@@ -186,6 +186,31 @@ const POS: React.FC<POSProps> = ({
       return tab;
     }));
   };
+
+  // Lógica centralizada para adicionar pagamento manual (via botão ou Enter)
+  const addManualPayment = useCallback(() => {
+    const val = parseCurrencyValue(paymentAmountInput) || remainingBalance;
+    if (isNaN(val) || val <= 0.01) return;
+    
+    const isPendura = (paymentMethodInput === PaymentMethod.PENDURA) || !!shortcutCheckout;
+    
+    if (isPendura && !customerNameInput.trim()) {
+      setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
+      return;
+    }
+
+    setCurrentPayments(prev => [...prev, { 
+      method: paymentMethodInput, 
+      amount: val, 
+      customerName: customerNameInput.toUpperCase() || undefined 
+    }]);
+    
+    setPaymentAmountInput('');
+    setReceivedValueInput(null);
+    if (!shortcutCheckout) setCustomerNameInput('');
+    setValidationError(null);
+    showFeedback("PAGAMENTO ADICIONADO");
+  }, [paymentAmountInput, remainingBalance, paymentMethodInput, shortcutCheckout, customerNameInput]);
 
   const changeDue = useMemo(() => {
     if (paymentMethodInput !== PaymentMethod.CASH || !receivedValueInput) return 0;
@@ -530,7 +555,14 @@ const POS: React.FC<POSProps> = ({
                         {((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && (
                           <div className="space-y-1 animate-in slide-in-from-right-4">
                             <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Identificar Cliente</label>
-                            <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase border border-slate-200 dark:border-slate-700 outline-none" placeholder="NOME DO CLIENTE..." />
+                            <input 
+                              type="text" 
+                              value={customerNameInput} 
+                              onChange={e => setCustomerNameInput(e.target.value)} 
+                              onKeyDown={e => e.key === 'Enter' && addManualPayment()}
+                              className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase border border-slate-200 dark:border-slate-700 outline-none" 
+                              placeholder="NOME DO CLIENTE..." 
+                            />
                           </div>
                         )}
 
@@ -539,22 +571,17 @@ const POS: React.FC<POSProps> = ({
                           <div className="flex gap-2">
                             <div className="relative flex-1">
                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none border border-slate-200 dark:border-slate-700" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
+                               <input 
+                                  type="text" 
+                                  inputMode="decimal" 
+                                  value={paymentAmountInput} 
+                                  onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} 
+                                  onKeyDown={e => e.key === 'Enter' && addManualPayment()}
+                                  className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none border border-slate-200 dark:border-slate-700" 
+                                  placeholder={remainingBalance.toFixed(2).replace('.', ',')} 
+                               />
                             </div>
-                            <button onClick={() => {
-                               const val = parseCurrencyValue(paymentAmountInput) || remainingBalance;
-                               if (isNaN(val) || val <= 0) return;
-                               if (((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && !customerNameInput.trim()) {
-                                 setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
-                                 return;
-                               }
-                               setCurrentPayments(prev => [...prev, { method: paymentMethodInput, amount: val, customerName: customerNameInput.toUpperCase() || undefined }]);
-                               setPaymentAmountInput('');
-                               setReceivedValueInput(null);
-                               if (!shortcutCheckout) setCustomerNameInput('');
-                               setValidationError(null);
-                               showFeedback("PAGAMENTO ADICIONADO");
-                            }} className="bg-black text-white px-6 rounded-2xl font-black active:scale-95 transition-all shadow-lg text-xl">+</button>
+                            <button onClick={addManualPayment} className="bg-black text-white px-6 rounded-2xl font-black active:scale-95 transition-all shadow-lg text-xl">+</button>
                           </div>
                         </div>
                       </div>
@@ -598,7 +625,25 @@ const POS: React.FC<POSProps> = ({
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
             <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter italic">Lançar Peso (Gramas)</h4>
             <div className="relative">
-               <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none shadow-inner" placeholder="0" />
+               <input 
+                  autoFocus 
+                  type="number" 
+                  inputMode="numeric" 
+                  value={inputGrams} 
+                  onChange={e => setInputGrams(e.target.value)} 
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      const grams = parseFloat(inputGrams);
+                      if (!inputGrams || isNaN(grams) || grams <= 0) {
+                        showFeedback("PESO INVÁLIDO!");
+                        return;
+                      }
+                      addToTab(weightModalProduct!, grams / 1000); 
+                    }
+                  }}
+                  className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none shadow-inner" 
+                  placeholder="0" 
+               />
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase mt-6 tracking-widest text-center">Ex: 500 = 0.5kg | 1000 = 1.0kg</p>
             <div className="grid grid-cols-2 gap-4 mt-10">
