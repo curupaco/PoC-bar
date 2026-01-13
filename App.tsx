@@ -51,7 +51,7 @@ const App: React.FC = () => {
     if (!isBrowser) return false;
     return localStorage.getItem('bar_sidebar_collapsed') === 'true';
   });
-  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error'>('idle');
   const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toISOString());
   
   const [pendingShortcut, setPendingShortcut] = useState<{name: string, amount: number} | null>(null);
@@ -116,6 +116,7 @@ const App: React.FC = () => {
   const forceSyncToCloud = useCallback(async (currentData: any) => {
     if (!isInitialLoadDone.current || !fbUrl) return;
     try {
+      setDbStatus('loading');
       const apiKey = getActiveFirebaseApiKey();
       let token: string | undefined;
       if (apiKey && apiKey.length > 20) {
@@ -165,9 +166,10 @@ const App: React.FC = () => {
     localStorage.setItem('bar_fb_url', fbUrl);
     localStorage.setItem('bar_pendura_threshold', penduraThreshold.toString());
 
+    setDbStatus('pending'); // Mudança detectada, aguardando debounce
     const debounce = setTimeout(() => {
       forceSyncToCloud({ products, sales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
-    }, 3000);
+    }, 1500);
     return () => clearTimeout(debounce);
   }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud, fbUrl]);
 
@@ -178,9 +180,9 @@ const App: React.FC = () => {
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.config?.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
     if (data.users && data.users.length > 0) {
-      setUsers((data.users as User[]).map(u => u.username === 'admin' ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
+      setUsers((data.users as User[]).map(u => (u.username === 'admin' || u.id === 'admin') ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
     } else if (users.length === 0) {
-      setUsers([{ id: generateUniqueId('user'), username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
+      setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
     }
     if (data.shifts) setShifts(data.shifts);
     setDbStatus('success');
@@ -191,7 +193,7 @@ const App: React.FC = () => {
     const found = users.find(u => u.username === user && u.password === pass);
     if (found) {
       setLoginError(null);
-      setCurrentUser(found.username === 'admin' ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
+      setCurrentUser((found.username === 'admin' || found.id === 'admin') ? { ...found, permissions: ALL_ADMIN_PERMISSIONS } : found);
     } else {
       setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
     }
@@ -201,7 +203,6 @@ const App: React.FC = () => {
     const saleWithContext = { ...sale, userId: currentUser?.id || '', shiftId: activeShift?.id || '' };
     setSales(prev => {
        const updatedSales = [saleWithContext, ...prev];
-       // Dispara salvamento imediato para vendas para evitar perdas em fechamento de aba
        forceSyncToCloud({ products, sales: updatedSales, openTabs, users, shifts, config: { fbUrl, penduraThreshold } });
        return updatedSales;
     });
@@ -235,6 +236,7 @@ const App: React.FC = () => {
           onClearShortcut={() => setPendingShortcut(null)}
         />
       );
+      // Fix: Changed the onUpdate handler to correctly replace the updated product u and use the original p if ID doesn't match, removing the reference to undefined x
       case 'products': return <ProductList products={products} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} />;
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
       case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
@@ -278,7 +280,10 @@ const App: React.FC = () => {
             <h1 className="text-lg lg:text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">{viewTitles[activeView]}</h1>
           </div>
           <div className="flex items-center gap-4">
-            <div className={`w-2 h-2 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500'} animate-pulse`}></div>
+            <div 
+              title={dbStatus === 'success' ? 'Tudo Salvo' : dbStatus === 'pending' ? 'Salvando Alterações...' : 'Erro ao Sincronizar'} 
+              className={`w-3 h-3 rounded-full transition-colors duration-500 ${dbStatus === 'success' ? 'bg-emerald-500' : dbStatus === 'pending' ? 'bg-orange-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}
+            ></div>
             <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:scale-105 active:scale-95 transition-all">
               {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M7.929 7.929l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
             </button>

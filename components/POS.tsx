@@ -196,7 +196,6 @@ const POS: React.FC<POSProps> = ({
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
   
-  // Normalização agressiva das categorias para evitar duplicatas visuais
   const categories = useMemo(() => {
     return Array.from(new Set(filteredProducts.map(p => (p.category || 'GERAL').toUpperCase().trim()))).sort();
   }, [filteredProducts]);
@@ -408,7 +407,7 @@ const POS: React.FC<POSProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {favorites.map(p => (
                         <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-amber-200 dark:border-amber-900/30 hover:border-amber-400 hover:shadow-xl hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
-                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
+                          <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
                           <p className="text-2xl font-black text-amber-600 leading-none">{formatPriceOnly(p.price)}</p>
                         </button>
                       ))}
@@ -425,7 +424,7 @@ const POS: React.FC<POSProps> = ({
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
                       {filteredProducts.filter(p => (p.category || 'GERAL').toUpperCase().trim() === cat).map(p => (
                         <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
-                          <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
+                          <p className="text-[10px] font-black text-slate-800 dark:text-white uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
                           <p className="text-2xl font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>
                         </button>
                       ))}
@@ -455,7 +454,7 @@ const POS: React.FC<POSProps> = ({
                         <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-3 animate-in slide-in-from-right-2">
                           <div className="flex items-center justify-between gap-2">
                              <div className="flex-1 min-w-0">
-                               <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
+                               <p className="text-[11px] font-black text-slate-800 dark:text-white uppercase truncate leading-tight">{item.productName}</p>
                                <p className="text-[10px] font-black text-red-600 mt-1">{formatCurrency(item.totalPrice)}</p>
                              </div>
                              

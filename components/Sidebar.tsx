@@ -7,7 +7,7 @@ interface SidebarProps {
   onViewChange: (view: View) => void;
   isOpen: boolean; // Mobile open state
   onClose: () => void;
-  dbStatus: 'idle' | 'loading' | 'success' | 'error';
+  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error';
   isOnline: boolean;
   currentUser: User | null;
   onLogout: () => void;
@@ -45,7 +45,7 @@ const adminItems: MenuItem[] = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onClose, dbStatus, currentUser, onLogout, isShiftOpen, activeTabsCount, totalPendura, penduraThreshold, isCollapsed, onToggleCollapse }) => {
-  const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
+  const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.id === 'admin' || currentUser?.permissions.includes(perm as any);
 
   const NavGroup = ({ title, items }: { title: string, items: MenuItem[] }) => {
     const visibleItems = items.filter(i => hasPerm(i.perm));
@@ -56,7 +56,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
         {!isCollapsed && <h3 className="px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</h3>}
         <div className={`space-y-1 w-full ${isCollapsed ? 'px-2' : ''}`}>
           {visibleItems.map((item) => (
-            <button key={item.id} onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center transition-all group relative ${isCollapsed ? 'justify-center py-4 rounded-xl' : 'justify-between px-4 py-3 rounded-2xl'} ${activeView === item.id ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+            <button 
+              key={item.id} 
+              title={isCollapsed ? item.label : ''} // Tooltip fix
+              onClick={() => { onViewChange(item.id); onClose(); }} 
+              className={`w-full flex items-center transition-all group relative ${isCollapsed ? 'justify-center py-4 rounded-xl' : 'justify-between px-4 py-3 rounded-2xl'} ${activeView === item.id ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            >
               <div className={`flex items-center ${isCollapsed ? '' : 'space-x-3'}`}>
                 <span className={`${activeView === item.id ? 'text-white' : 'text-slate-400 group-hover:text-red-500'}`}>{item.icon}</span>
                 {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
@@ -99,9 +104,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'}`}>
+      <aside 
+        title={isCollapsed ? "Menu do Sistema" : ""} // Sidebar Tooltip
+        className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'}`}
+      >
         
-        <button onClick={onToggleCollapse} className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center shadow-md text-slate-400 hover:text-red-500 z-[60] transition-transform" style={{ transform: isCollapsed ? 'rotate(180deg)' : 'none' }}>
+        <button 
+          onClick={onToggleCollapse} 
+          title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
+          className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center shadow-md text-slate-400 hover:text-red-500 z-[60] transition-transform" 
+          style={{ transform: isCollapsed ? 'rotate(180deg)' : 'none' }}
+        >
            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
 
@@ -125,26 +138,37 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
           <NavGroup title="Operação" items={operationalItems} />
           <NavGroup title="Análise" items={managementItems} />
           <NavGroup title="Gestão" items={adminItems} />
-          
-          <div className={`pt-6 border-t border-slate-100 dark:border-slate-800 mt-4 ${isCollapsed ? 'px-2' : ''}`}>
-             <button onClick={() => { onViewChange('help'); onClose(); }} className={`w-full flex items-center rounded-2xl transition-all ${isCollapsed ? 'justify-center py-4' : 'space-x-3 px-4 py-3'} ${activeView === 'help' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold' : 'text-slate-400'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                {!isCollapsed && <span className="text-[11px] uppercase font-black">Guia</span>}
-             </button>
-          </div>
         </div>
 
-        <div className={`p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/30 ${isCollapsed ? 'flex justify-center' : ''}`}>
-          <div className="flex items-center gap-3 p-1">
-            <div className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all shrink-0 ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
-              {currentUser?.username.slice(0, 2)}
+        {/* Seção Fixa Inferior - Garante que o Guia não some */}
+        <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/30">
+           <div className={`p-4 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
+             <button 
+              onClick={() => { onViewChange('help'); onClose(); }} 
+              title={isCollapsed ? "Guia de Operação" : "Abrir Manual"}
+              className={`w-full flex items-center rounded-2xl transition-all ${isCollapsed ? 'justify-center py-4' : 'space-x-3 px-4 py-3'} ${activeView === 'help' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold' : 'text-slate-400 hover:text-red-500'}`}
+             >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {!isCollapsed && <span className="text-[11px] uppercase font-black">Guia de Uso</span>}
+             </button>
+           </div>
+
+           <div className={`p-4 border-t border-slate-100 dark:border-slate-800 ${isCollapsed ? 'flex justify-center' : ''}`}>
+            <div className="flex items-center gap-3 p-1">
+              <button 
+                onClick={onLogout}
+                title={isCollapsed ? `Sair (${currentUser?.displayName})` : "Encerrar Sessão"}
+                className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all shrink-0 hover:scale-105 active:scale-95 ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}
+              >
+                {currentUser?.username.slice(0, 2).toUpperCase()}
+              </button>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-slate-800 dark:text-white truncate uppercase">{currentUser?.displayName}</p>
+                  <button onClick={onLogout} className="text-[9px] font-black text-red-500 hover:text-red-600 uppercase tracking-widest transition-colors">Sair</button>
+                </div>
+              )}
             </div>
-            {!isCollapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-black text-slate-800 dark:text-white truncate uppercase">{currentUser?.displayName}</p>
-                <button onClick={onLogout} className="text-[9px] font-black text-red-500 hover:text-red-600 uppercase tracking-widest transition-colors">Sair</button>
-              </div>
-            )}
           </div>
         </div>
       </aside>
