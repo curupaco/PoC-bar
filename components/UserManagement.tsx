@@ -37,6 +37,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [selectedPerms, setSelectedPerms] = useState<UserPermission[]>([]);
+  
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+
+  const togglePasswordVisibility = (id: string) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const resetForm = () => {
     setUsername('');
@@ -126,18 +132,25 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
           <div key={user.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between group">
             <div className="flex items-center gap-4">
                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 font-black uppercase">
-                 {user.username.slice(0, 2)}
+                 {user.username.slice(0, 2).toUpperCase()}
                </div>
                <div>
                   <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm">{user.displayName}</h4>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username}</p>
-                  <p className="text-[9px] text-red-500 font-bold uppercase mt-1">
-                    {user.permissions.length} privilégios ativos
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                     <span className="text-[9px] font-black text-slate-500 uppercase">Senha:</span>
+                     <span className="text-[10px] font-mono tracking-tighter">
+                        {visiblePasswords[user.id] ? user.password : '••••••••'}
+                     </span>
+                     <button onClick={() => togglePasswordVisibility(user.id)} className="text-[9px] text-blue-500 hover:text-blue-600 uppercase font-black">
+                        {visiblePasswords[user.id] ? '[Ocultar]' : '[Ver]'}
+                     </button>
+                  </div>
                </div>
             </div>
             <div className="flex gap-2">
                <button 
+                title="Editar Usuário"
                 onClick={() => {
                   setEditingUser(user);
                   setUsername(user.username);
@@ -150,7 +163,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                >
                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                </button>
-               {user.username !== 'admin' && (
+               {user.username !== 'admin' && user.id !== 'admin' && (
                  <button onClick={() => onUpdateUsers(users.filter(u => u.id !== user.id))} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                  </button>
