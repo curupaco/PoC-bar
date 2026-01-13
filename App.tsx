@@ -215,7 +215,7 @@ const App: React.FC = () => {
       case 'history': return <SalesHistory sales={sales} onDeleteSale={id => setSales(v => v.filter(s => s.id !== id))} users={users} currentUser={currentUser} />;
       case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
-      case 'shifts': return <ShiftControl {...props} onUpdateShifts={handleUpdateShifts} />;
+      case 'shifts': return <ShiftControl {...props} onUpdateShifts={handleUpdateShifts} activeTabsCount={activeTabsCount} />;
       case 'cash': return <CashManagement {...props} onUpdateShifts={handleUpdateShifts} onViewChange={setActiveView} />;
       case 'settings': return <Settings {...props} onImport={handleImportAll} dbStatus={dbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
       case 'help': return <Help />;

@@ -13,6 +13,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
   const [errorToast, setErrorToast] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPendura, setFilterPendura] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_sale');
 
@@ -31,9 +32,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
         setTimeout(() => setErrorToast(null), 3000);
         return;
     }
-    if (confirm("Deseja realmente excluir este registro de venda?")) {
-      onDeleteSale(id);
-    }
+    setDeleteConfirmId(id);
   };
 
   return (
@@ -41,6 +40,28 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
       {errorToast && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">
            {errorToast}
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão de Venda */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[410] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+             </div>
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-none">Excluir Registro?</h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed px-2">
+               Esta venda será apagada permanentemente do histórico e dos relatórios financeiros.
+             </p>
+             <div className="flex flex-col gap-3">
+                <button onClick={() => { onDeleteSale(deleteConfirmId); setDeleteConfirmId(null); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Confirmar Exclusão</button>
+                <button onClick={() => setDeleteConfirmId(null)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancelar</button>
+             </div>
+          </div>
         </div>
       )}
 
