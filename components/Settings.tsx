@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Product, Sale, Tab, User, Shift } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Product, Sale, Tab, User, Shift, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface SettingsProps {
   products: Product[];
@@ -21,6 +21,11 @@ const Settings: React.FC<SettingsProps> = ({
   penduraThreshold, setPenduraThreshold
 }) => {
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
+  const [thresholdInput, setThresholdInput] = useState(() => penduraThreshold.toFixed(2).replace('.', ','));
+
+  useEffect(() => {
+    setThresholdInput(penduraThreshold.toFixed(2).replace('.', ','));
+  }, [penduraThreshold]);
 
   const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
 
@@ -31,34 +36,41 @@ const Settings: React.FC<SettingsProps> = ({
 
   const handleResetTables = () => {
     if (!canReset) return;
-    if (confirm("CONFIRMAR: Deseja ZERAR todas as mesas abertas?")) {
+    if (confirm("⚠️ CUIDADO: Deseja ZERAR todas as mesas abertas agora? Esta ação não pode ser desfeita.")) {
       onImport({ products, sales, users, shifts, openTabs: [] });
-      showToast("MESAS ZERADAS!");
+      showToast("MESAS ZERADAS COM SUCESSO!");
     }
   };
 
   const handleResetProducts = () => {
     if (!canReset) return;
-    if (confirm("CONFIRMAR: Deseja APAGAR todos os produtos do cardápio?")) {
+    if (confirm("⚠️ CUIDADO: Deseja APAGAR TODO o cardápio de produtos? Você terá que cadastrar tudo novamente.")) {
       onImport({ products: [], sales, users, shifts, openTabs });
-      showToast("CARDÁPIO ZERADO!");
+      showToast("CARDÁPIO TOTALMENTE APAGADO!");
     }
   };
 
   const handleResetSales = () => {
     if (!canReset) return;
-    if (confirm("CONFIRMAR: Deseja APAGAR todo o histórico de vendas?")) {
+    if (confirm("⚠️ CUIDADO: Deseja LIMPAR todo o histórico de vendas? Seus relatórios ficarão zerados.")) {
       onImport({ products, sales: [], users, shifts, openTabs });
-      showToast("HISTÓRICO ZERADO!");
+      showToast("HISTÓRICO DE VENDAS ZERADO!");
     }
   };
 
   const handleFullReset = () => {
     if (!canReset) return;
-    if (confirm("PERIGO: Isso resetará TODO o sistema para o estado inicial. Continuar?")) {
+    if (confirm("🚨 PERIGO EXTREMO: Isso resetará TODO o sistema para o estado original de fábrica. Todos os dados (usuários, vendas, produtos) serão perdidos. Continuar?")) {
       onImport({ products: [], sales: [], openTabs: [], shifts: [], users: [] });
-      showToast("SISTEMA RESETADO!");
+      showToast("SISTEMA RESETADO TOTALMENTE!");
     }
+  };
+
+  const handleThresholdChange = (val: string) => {
+    const sanitized = sanitizeCurrencyInput(val);
+    setThresholdInput(sanitized);
+    const numeric = parseCurrencyValue(sanitized);
+    setPenduraThreshold(numeric);
   };
 
   return (
@@ -83,15 +95,15 @@ const Settings: React.FC<SettingsProps> = ({
               <div className="relative">
                  <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
                  <input 
-                    type="number" 
-                    value={penduraThreshold} 
-                    onChange={e => {
-                      const val = parseFloat(e.target.value);
-                      setPenduraThreshold(isNaN(val) ? 0 : val);
-                    }} 
-                    className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-orange-500 font-black text-2xl outline-none transition-all" 
+                    type="text" 
+                    inputMode="decimal"
+                    value={thresholdInput} 
+                    onChange={e => handleThresholdChange(e.target.value)} 
+                    className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-orange-500 font-black text-2xl outline-none transition-all shadow-inner" 
+                    placeholder="0,00"
                  />
               </div>
+              <p className="text-[8px] text-slate-400 uppercase font-bold ml-2">O sistema exibirá um aviso visual (⚠️) no menu se os fiados ativos excederem este valor.</p>
            </div>
         </div>
       </div>
@@ -106,16 +118,16 @@ const Settings: React.FC<SettingsProps> = ({
          </div>
          
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button onClick={handleResetTables} disabled={!canReset} className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 text-amber-600 font-black uppercase text-[10px] tracking-widest border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all disabled:opacity-30">
+            <button onClick={handleResetTables} disabled={!canReset} className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 text-amber-600 font-black uppercase text-[10px] tracking-widest border border-amber-200 dark:border-amber-900/30 hover:bg-amber-100 transition-all disabled:opacity-30 active:scale-95">
                Zerar Mesas Abertas
             </button>
-            <button onClick={handleResetProducts} disabled={!canReset} className="p-6 rounded-3xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 font-black uppercase text-[10px] tracking-widest border border-blue-200 dark:border-blue-900/30 hover:bg-blue-100 transition-all disabled:opacity-30">
+            <button onClick={handleResetProducts} disabled={!canReset} className="p-6 rounded-3xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 font-black uppercase text-[10px] tracking-widest border border-blue-200 dark:border-blue-900/30 hover:bg-blue-100 transition-all disabled:opacity-30 active:scale-95">
                Zerar Cardápio
             </button>
-            <button onClick={handleResetSales} disabled={!canReset} className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black uppercase text-[10px] tracking-widest border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all disabled:opacity-30">
+            <button onClick={handleResetSales} disabled={!canReset} className="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black uppercase text-[10px] tracking-widest border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-all disabled:opacity-30 active:scale-95">
                Zerar Histórico de Vendas
             </button>
-            <button onClick={handleFullReset} disabled={!canReset} className="p-6 rounded-3xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all shadow-lg disabled:opacity-30">
+            <button onClick={handleFullReset} disabled={!canReset} className="p-6 rounded-3xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest hover:bg-red-700 transition-all shadow-lg disabled:opacity-30 active:scale-95">
                Reset Total do Sistema
             </button>
          </div>

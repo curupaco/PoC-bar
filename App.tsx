@@ -21,7 +21,7 @@ if (isBrowser && !(window as any).process) {
 }
 
 const MASTER_KEY = "Tc@00216587";
-// Credenciais fixas e definitivas do sistema
+// Credenciais internas do sistema (Invisíveis ao usuário)
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
 const SYSTEM_AUTH_EMAIL = 'curupaco@gmail.com';

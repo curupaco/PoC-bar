@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, SellType, formatCurrency, User } from '../types';
+import { Product, SellType, formatCurrency, User, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface ProductListProps {
   products: Product[];
@@ -23,7 +23,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   const [catToRename, setCatToRename] = useState('');
   const [newCatName, setNewCatName] = useState('');
 
-  // Novo estado para filtro de índice e busca
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<string>('TODOS');
   const [searchProduct, setSearchProduct] = useState('');
 
@@ -38,7 +37,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     }
   }, [showModal, deleteConfirmId, isRenamingCategory]);
 
-  // Índice de categorias únicas normalizadas para o filtro rápido
   const categoriesList = useMemo(() => {
     const cats = new Set(['GERAL', 'BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'TABACARIA']);
     products.forEach(p => {
@@ -47,7 +45,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     return Array.from(cats).sort();
   }, [products]);
 
-  // Agrupamento indexado para acesso rápido e filtragem de busca
   const groupedProducts = useMemo(() => {
     const groups: Record<string, Product[]> = {};
     const normalizedSearch = searchProduct.toLowerCase().trim();
@@ -64,7 +61,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     return groups;
   }, [products, searchProduct]);
 
-  // Categorias que serão efetivamente exibidas baseadas no índice selecionado
   const sortedCategories = useMemo(() => {
     const allCats = Object.keys(groupedProducts).sort();
     if (selectedCategoryIndex === 'TODOS') return allCats;
@@ -73,8 +69,8 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
 
   const handleSave = () => {
     if (!name || !price) return;
-    const priceNum = parseFloat(price.replace(',', '.'));
-    if (isNaN(priceNum)) return;
+    const priceNum = parseCurrencyValue(price);
+    if (isNaN(priceNum) || priceNum <= 0) return;
 
     const productData: Product = {
       id: editingId || Date.now().toString(),
@@ -123,7 +119,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     if (!canEdit) return;
     setEditingId(p.id);
     setName(p.name);
-    setPrice(p.price.toString().replace('.', ','));
+    setPrice(p.price.toFixed(2).replace('.', ','));
     setCategory(p.category);
     setSellType(p.sellType);
     setShowModal(true);
@@ -131,7 +127,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
 
   return (
     <div className="space-y-6 relative">
-      {/* HEADER E BARRA DE BUSCA INDEXADA */}
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
@@ -160,7 +155,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
         </div>
       </div>
 
-      {/* ÍNDICE DE CATEGORIAS (FILTRO RÁPIDO - STICKY) */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-3 -mx-4 px-4 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
         <button 
           onClick={() => setSelectedCategoryIndex('TODOS')}
@@ -179,7 +173,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
         ))}
       </div>
 
-      {/* LISTAGEM AGRUPADA E FILTRADA PELO ÍNDICE */}
       <div className="grid grid-cols-1 gap-10 pb-20">
         {sortedCategories.map(cat => (
           <div key={cat} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -216,18 +209,8 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
              </div>
           </div>
         ))}
-        
-        {sortedCategories.length === 0 && (
-          <div className="py-20 text-center space-y-4">
-             <div className="text-slate-300 dark:text-slate-700 flex justify-center">
-                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-             </div>
-             <p className="text-slate-400 font-black uppercase text-xs tracking-widest">Nenhum item encontrado no cardápio</p>
-          </div>
-        )}
       </div>
 
-      {/* FERRAMENTA DE CATEGORIA EM LOTE */}
       {isRenamingCategory && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setIsRenamingCategory(false)} />
@@ -252,7 +235,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
         </div>
       )}
 
-      {/* MODAL DE EXCLUSÃO */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
@@ -272,7 +254,6 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
         </div>
       )}
 
-      {/* MODAL DE PRODUTO */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
@@ -311,7 +292,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Preço de Venda</label>
                   <div className="relative">
                     <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-base">R$</span>
-                    <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9,]/g, ''))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl" />
+                    <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(sanitizeCurrencyInput(e.target.value))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl shadow-inner" />
                   </div>
                 </div>
               </div>
