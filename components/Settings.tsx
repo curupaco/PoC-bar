@@ -9,9 +9,10 @@ interface SettingsProps {
   users: User[];
   shifts: Shift[];
   fbUrl: string; setFbUrl: (v: string) => void;
+  fbApiKey: string; setFbApiKey: (v: string) => void;
   onImport: (data: any) => void;
-  dbStatus: 'idle' | 'loading' | 'success' | 'error';
-  onStatusChange: (status: 'idle' | 'loading' | 'success' | 'error') => void;
+  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error';
+  onStatusChange: (status: any) => void;
   currentUser: User;
   penduraThreshold: number;
   setPenduraThreshold: (v: number) => void;
@@ -19,6 +20,7 @@ interface SettingsProps {
 
 const Settings: React.FC<SettingsProps> = ({ 
   products, sales, openTabs, users, shifts,
+  fbUrl, setFbUrl, fbApiKey, setFbApiKey,
   onImport, currentUser,
   penduraThreshold, setPenduraThreshold
 }) => {
@@ -71,6 +73,40 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
+      {/* Configurações de Nuvem */}
+      <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
+        <div className="flex items-center gap-4 text-blue-500">
+          <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+          </div>
+          <h3 className="text-xl font-black uppercase tracking-tighter text-slate-800 dark:text-white">Conexão Blindada (Firebase)</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 gap-6">
+           <div className="space-y-1">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">URL do Banco de Dados</label>
+              <input 
+                type="text" 
+                value={fbUrl} 
+                onChange={e => setFbUrl(e.target.value)}
+                className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs outline-none" 
+                placeholder="https://seu-projeto.firebaseio.com"
+              />
+           </div>
+           <div className="space-y-1">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2">API Key do Firebase (Necessário para Auth)</label>
+              <input 
+                type="password" 
+                value={fbApiKey} 
+                onChange={e => setFbApiKey(e.target.value)}
+                className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs outline-none" 
+                placeholder="Cole aqui a sua Web API Key..."
+              />
+              <p className="text-[8px] text-slate-400 font-bold uppercase mt-2 px-2 italic">As chaves inseridas acima são mantidas apenas em memória e sincronizadas com a nuvem.</p>
+           </div>
+        </div>
+      </div>
+
       {/* Regras de Negócio */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900/30 shadow-xl space-y-6">
         <div className="flex items-center gap-4 text-orange-600">
@@ -90,7 +126,6 @@ const Settings: React.FC<SettingsProps> = ({
                     onChange={e => {
                       const val = parseFloat(e.target.value);
                       setPenduraThreshold(isNaN(val) ? 0 : val);
-                      showToast("LIMITE DE ALERTA ATUALIZADO");
                     }} 
                     className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-orange-500 font-black text-2xl outline-none transition-all" 
                  />
@@ -125,7 +160,7 @@ const Settings: React.FC<SettingsProps> = ({
       </div>
       
       <div className="text-center opacity-20">
-         <p className="text-[10px] font-black uppercase tracking-[0.5em]">Botequista v2.5 • Conexão Blindada</p>
+         <p className="text-[10px] font-black uppercase tracking-[0.5em]">Botequista v3.0 • Stateless Cloud</p>
       </div>
     </div>
   );
