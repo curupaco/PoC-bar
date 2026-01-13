@@ -49,6 +49,21 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* Card 10: Continuidade da Casa - NOVO CONCEITO */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-500 dark:border-emerald-900 shadow-lg space-y-6 flex flex-col h-full ring-4 ring-emerald-500/10">
+          <div className="flex items-center gap-4 text-emerald-600">
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Turno vs. Mesas</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-emerald-600 font-black">Independência:</span> Turnos são do <span className="font-black">operador</span>. Mesas são do <span className="font-black">cliente</span>.</p>
+            <p>• <span className="text-emerald-600 font-black">Troca de Turno:</span> Você pode fechar o caixa e conferir o dinheiro mesmo com mesas abertas. O novo operador assumirá o caixa com as mesas intactas.</p>
+            <p>• <span className="text-emerald-600 font-black">Flexibilidade:</span> O bar não para durante a troca de equipe.</p>
+          </div>
+        </section>
+
         {/* Card 3: Crédito e Fiados */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900/30 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-orange-600">
@@ -128,7 +143,7 @@ const Help: React.FC = () => {
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-slate-700 dark:text-slate-300">
             <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
             </div>
             <h3 className="text-xl font-black uppercase tracking-tight">Segurança</h3>
           </div>
@@ -136,21 +151,6 @@ const Help: React.FC = () => {
             <p>• <span className="font-black">Senha Master:</span> É a sua chave de criptografia. Nunca a compartilhe; ela protege seus dados no banco de dados.</p>
             <p>• <span className="font-black">Backup GitHub:</span> Configure o Token em Ajustes para ter uma cópia de segurança em nuvem externa.</p>
             <p>• <span className="font-black">Exportar:</span> Baixe o relatório em JSON ou o cupom em imagem para seus registros pessoais.</p>
-          </div>
-        </section>
-
-        {/* Card 9: Atendimento Ágil */}
-        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-cyan-100 dark:border-cyan-900/30 shadow-sm space-y-6 flex flex-col h-full">
-          <div className="flex items-center gap-4 text-cyan-600">
-            <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/20 rounded-2xl flex items-center justify-center">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Agilidade</h3>
-          </div>
-          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-cyan-600 font-black">Picos:</span> Em horários lotados, use o campo de busca no PDV para encontrar produtos específicos rapidamente.</p>
-            <p>• <span className="text-cyan-600 font-black">Calculadora de Troco:</span> Na finalização em Dinheiro, use os botões de valores (R$ 50, R$ 100) para calcular o troco sem erros.</p>
-            <p>• <span className="text-cyan-600 font-black">Multi-dispositivo:</span> Vários atendentes podem usar o sistema ao mesmo tempo.</p>
           </div>
         </section>
       </div>
