@@ -449,7 +449,10 @@ const POS: React.FC<POSProps> = ({
                       const prod = products.find(p => p.id === item.productId);
                       const isWeight = prod?.sellType === 'weight';
                       return (
-                        <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-3 animate-in slide-in-from-right-2">
+                        <div 
+                          key={`${item.productId}-${idx}-${item.quantity}`} 
+                          className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl border border-slate-100 dark:border-slate-800/50 flex flex-col gap-3 animate-in fade-in zoom-in-[0.98] duration-300"
+                        >
                           <div className="flex items-center justify-between gap-2">
                              <div className="flex-1 min-w-0">
                                <p className="text-[11px] font-black text-slate-800 dark:text-slate-100 uppercase truncate leading-tight">{item.productName}</p>
