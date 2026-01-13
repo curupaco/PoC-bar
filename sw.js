@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'botequista-v15';
+const CACHE_NAME = 'botequista-v17';
 const ASSETS = [
   'index.html',
   './index.html',

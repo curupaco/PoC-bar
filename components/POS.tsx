@@ -126,7 +126,7 @@ const POS: React.FC<POSProps> = ({
             items.push({ 
               productId: product.id, 
               productName: product.name, 
-              category: product.category || 'GERAL',
+              category: (product.category || 'GERAL').toUpperCase().trim(),
               quantity: quantity, 
               unitPrice: product.price, 
               totalPrice: Number((quantity * product.price).toFixed(2)) 
@@ -195,7 +195,11 @@ const POS: React.FC<POSProps> = ({
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
-  const categories = Array.from(new Set(filteredProducts.map(p => p.category))).sort();
+  
+  // Normalização agressiva das categorias para evitar duplicatas visuais
+  const categories = useMemo(() => {
+    return Array.from(new Set(filteredProducts.map(p => (p.category || 'GERAL').toUpperCase().trim()))).sort();
+  }, [filteredProducts]);
 
   const formatPriceOnly = (val: number) => {
     return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -205,11 +209,10 @@ const POS: React.FC<POSProps> = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="relative">
-          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-600 shadow-xl border border-red-200 dark:border-red-900/30">
+          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl border border-red-200 dark:border-red-900/30">
              <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z" />
-                <path d="m15 9-6 6" />
-                <path d="m9 9 6 6" />
+                <path d="M12 2L3 7v10l9 5 9-5V7l-9-5z M12 22V12 M3 7l9 5 9-5 M12 12l9-5 M12 12L3 7" strokeOpacity="0.2" />
+                <path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z M15 9l-6 6 M9 9l6 6" />
              </svg>
           </div>
           <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-2 border-white dark:border-slate-900 animate-ping opacity-20"></div>
@@ -309,9 +312,7 @@ const POS: React.FC<POSProps> = ({
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-[410] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase text-center mb-2 tracking-tighter leading-none">Excluir Mesa?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-8">
@@ -422,7 +423,7 @@ const POS: React.FC<POSProps> = ({
                       <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800/30"></div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                      {filteredProducts.filter(p => p.category === cat).map(p => (
+                      {filteredProducts.filter(p => (p.category || 'GERAL').toUpperCase().trim() === cat).map(p => (
                         <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
                           <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
                           <p className="text-2xl font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>
