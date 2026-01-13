@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo } from 'react';
-// Fix: Import generateUniqueId from types
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../types';
 
 interface ShiftControlProps {
@@ -8,9 +7,10 @@ interface ShiftControlProps {
   onUpdateShifts: (shifts: Shift[]) => void;
   currentUser: User;
   sales: Sale[];
+  activeTabsCount: number;
 }
 
-const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts, currentUser, sales = [] }) => {
+const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts, currentUser, sales = [], activeTabsCount }) => {
   const activeShift = shifts.find(s => s.status === 'open');
   const [showConferral, setShowConferral] = useState(false);
   
@@ -62,6 +62,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     setValPrimary('');
     setValChange('');
     setValSecondary('');
+  };
+
+  const handleTryClose = () => {
+    if (!canClose) return;
+    setShowConferral(true);
   };
 
   const handleConfirmClose = () => {
@@ -171,7 +176,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                  </div>
               </div>
               <div className="pt-4">
-                <button onClick={() => setShowConferral(true)} className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl shadow-red-900/40 active:scale-95">FECHAR TURNO E CONFERIR CAIXA</button>
+                <button onClick={handleTryClose} className="w-full bg-red-600 hover:bg-red-700 py-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-xl shadow-red-900/40 active:scale-95">FECHAR TURNO E CONFERIR CAIXA</button>
               </div>
            </div>
         </div>
