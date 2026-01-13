@@ -134,7 +134,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
                   </span>
                 )}
              </div>
-             {!isCollapsed && <span className="text-[9px] font-black text-red-500 uppercase tracking-[0.2em] mt-2 ml-11">Sincronizado</span>}
           </div>
           
           <NavGroup title="Operação" items={operationalItems} />
