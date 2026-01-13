@@ -66,6 +66,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const handleTryClose = () => {
     if (!canClose) return;
+    // Removida validação de mesas abertas para permitir troca de turno durante a operação
     setShowConferral(true);
   };
 
