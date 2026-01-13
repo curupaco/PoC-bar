@@ -55,47 +55,50 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
       <div className={`space-y-2 pt-4 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
         {!isCollapsed && <h3 className="px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{title}</h3>}
         <div className={`space-y-1 w-full ${isCollapsed ? 'px-2' : ''}`}>
-          {visibleItems.map((item) => (
-            <button 
-              key={item.id} 
-              title={isCollapsed ? item.label : ''} // Tooltip fix
-              onClick={() => { onViewChange(item.id); onClose(); }} 
-              className={`w-full flex items-center transition-all group relative ${isCollapsed ? 'justify-center py-4 rounded-xl' : 'justify-between px-4 py-3 rounded-2xl'} ${activeView === item.id ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-            >
-              <div className={`flex items-center ${isCollapsed ? '' : 'space-x-3'}`}>
-                <span className={`${activeView === item.id ? 'text-white' : 'text-slate-400 group-hover:text-red-500'}`}>{item.icon}</span>
-                {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
-              </div>
-              
-              {!isCollapsed ? (
-                 <div className="flex items-center gap-1.5">
+          {visibleItems.map((item) => {
+            const isActive = activeView === item.id;
+            return (
+              <button 
+                key={item.id} 
+                title={isCollapsed ? item.label : ''} 
+                onClick={() => { onViewChange(item.id); onClose(); }} 
+                className={`w-full flex items-center transition-all group relative rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'justify-between px-4 py-3'} ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+              >
+                <div className={`flex items-center ${isCollapsed ? '' : 'space-x-3'}`}>
+                  <span className={`transition-colors ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-red-500'}`}>{item.icon}</span>
+                  {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
+                </div>
+                
+                {!isCollapsed ? (
+                   <div className="flex items-center gap-1.5">
+                      {item.id === 'pos' && activeTabsCount > 0 && (
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'}`}>
+                          ({activeTabsCount})
+                        </span>
+                      )}
+                      {item.id === 'shifts' && isShiftOpen && (
+                        <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isActive ? 'bg-white' : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'}`}></div>
+                      )}
+                      {item.id === 'reports' && totalPendura >= penduraThreshold && (
+                        <span title={`Fiados altos: ${formatCurrency(totalPendura)}`} className={`${isActive ? 'text-white' : 'text-orange-500'} animate-bounce`}>⚠️</span>
+                      )}
+                   </div>
+                ) : (
+                  <>
                     {item.id === 'pos' && activeTabsCount > 0 && (
-                      <span className="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-2 py-0.5 rounded-lg text-[9px] font-black">
-                        ({activeTabsCount})
-                      </span>
+                      <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900 shadow-sm">{activeTabsCount}</span>
                     )}
                     {item.id === 'shifts' && isShiftOpen && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"></div>
+                      <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900 animate-pulse"></div>
                     )}
                     {item.id === 'reports' && totalPendura >= penduraThreshold && (
-                      <span title={`Fiados altos: ${formatCurrency(totalPendura)}`} className="text-orange-500 animate-bounce">⚠️</span>
+                      <span className="absolute bottom-1 right-1 text-[8px]">⚠️</span>
                     )}
-                 </div>
-              ) : (
-                <>
-                  {item.id === 'pos' && activeTabsCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-900">{activeTabsCount}</span>
-                  )}
-                  {item.id === 'shifts' && isShiftOpen && (
-                    <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-slate-900 animate-pulse"></div>
-                  )}
-                  {item.id === 'reports' && totalPendura >= penduraThreshold && (
-                    <span className="absolute bottom-1 right-1 text-[8px]">⚠️</span>
-                  )}
-                </>
-              )}
-            </button>
-          ))}
+                  </>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -105,7 +108,6 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-300" onClick={onClose} />}
       <aside 
-        title={isCollapsed ? "Menu do Sistema" : ""} // Sidebar Tooltip
         className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'}`}
       >
         
@@ -140,13 +142,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
           <NavGroup title="Gestão" items={adminItems} />
         </div>
 
-        {/* Seção Fixa Inferior - Garante que o Guia não some */}
         <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-950/30">
            <div className={`p-4 ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
              <button 
               onClick={() => { onViewChange('help'); onClose(); }} 
               title={isCollapsed ? "Guia de Operação" : "Abrir Manual"}
-              className={`w-full flex items-center rounded-2xl transition-all ${isCollapsed ? 'justify-center py-4' : 'space-x-3 px-4 py-3'} ${activeView === 'help' ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold' : 'text-slate-400 hover:text-red-500'}`}
+              className={`w-full flex items-center rounded-2xl transition-all ${isCollapsed ? 'justify-center p-4' : 'space-x-3 px-4 py-3'} ${activeView === 'help' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-red-500'}`}
              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 {!isCollapsed && <span className="text-[11px] uppercase font-black">Guia de Uso</span>}
@@ -158,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, isOpen, onC
               <button 
                 onClick={onLogout}
                 title={isCollapsed ? `Sair (${currentUser?.displayName})` : "Encerrar Sessão"}
-                className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all shrink-0 hover:scale-105 active:scale-95 ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}
+                className={`rounded-2xl bg-slate-900 dark:bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs shadow-lg transition-all shrink-0 hover:scale-105 active:scale-95 w-10 h-10`}
               >
                 {currentUser?.username.slice(0, 2).toUpperCase()}
               </button>
