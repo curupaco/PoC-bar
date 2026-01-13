@@ -9,11 +9,10 @@ export interface AppFullData {
   users?: User[];
   shifts?: Shift[];
   config: {
-    fbUrl: string;
+    fbUrl?: string;
     fbApiKey?: string;
     fbEmail?: string;
     fbPass?: string;
-    // Adicionado penduraThreshold para persistência das configurações de negócio
     penduraThreshold?: number;
   };
   updatedAt: string;
@@ -26,12 +25,9 @@ const getFirebaseUrl = (url: string, token?: string) => {
   return token ? `${baseUrl}?auth=${token}` : baseUrl;
 };
 
-/**
- * Realiza o login no Firebase Auth via REST API para obter o token de acesso
- */
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string> => {
   if (!apiKey || apiKey.length < 25) {
-    throw new Error("Chave de API do Firebase não configurada ou inválida.");
+    throw new Error("Conexão de dados não configurada.");
   }
   
   try {
@@ -46,36 +42,28 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
 
     if (!response.ok) {
       const errorMsg = data.error?.message;
-      
       if (errorMsg === "INVALID_LOGIN_CREDENTIALS" || errorMsg === "BAD_CREDENTIALS") {
-        throw new Error("Usuário ou Senha do Firebase incorretos (Bad Credentials). Verifique as configurações de nuvem.");
+        throw new Error("Erro de Acesso: Credenciais de sincronização inválidas.");
       }
-      if (errorMsg === "INVALID_API_KEY") {
-        throw new Error("A API Key informada não pertence a este projeto do Firebase.");
-      }
-      if (errorMsg === "OPERATION_NOT_ALLOWED") {
-        throw new Error("O provedor 'E-mail/Senha' está desativado no console do Firebase (Authentication).");
-      }
-      
-      throw new Error(errorMsg || "Erro na autenticação com o Firebase.");
+      throw new Error("Falha na autenticação do canal de dados.");
     }
 
     return data.idToken;
   } catch (err: any) {
-    console.error("Firebase Auth Exception:", err.message);
+    console.error("Auth Exception:", err.message);
     throw err;
   }
 };
 
 export const saveToFirebase = async (url: string, data: any, encryptionKey?: string, token?: string) => {
-  const firebasePct = getFirebaseUrl(url, token);
-  if (!firebasePct) return;
+  const targetUrl = getFirebaseUrl(url, token);
+  if (!targetUrl) return;
 
   const fullData = { ...data, updatedAt: new Date().toISOString() };
   const payload = encryptionKey ? { encrypted: encryptData(fullData, encryptionKey) } : fullData;
 
   try {
-    const response = await fetch(firebasePct, {
+    const response = await fetch(targetUrl, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -83,28 +71,25 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
 
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error("Erro 401/403: Acesso negado. Configure as Rules do Firebase para permitir leitura/escrita.");
+        throw new Error("Erro de Sincronização: Acesso negado.");
       }
-      throw new Error(`Erro Firebase (${response.status})`);
+      throw new Error(`Erro de Dados (${response.status})`);
     }
     return await response.json();
   } catch (err: any) {
-    console.error("Firebase Save Error:", err.message);
+    console.error("Save Error:", err.message);
     throw err;
   }
 };
 
 export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string): Promise<AppFullData | null> => {
-  const firebasePct = getFirebaseUrl(url, token);
-  if (!firebasePct) return null;
+  const targetUrl = getFirebaseUrl(url, token);
+  if (!targetUrl) return null;
 
   try {
-    const response = await fetch(firebasePct);
+    const response = await fetch(targetUrl);
     
     if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        return null;
-      }
       return null;
     }
 
@@ -115,7 +100,7 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
     }
     return rawData;
   } catch (err: any) {
-    console.error("Firebase Load Error:", err.message);
+    console.error("Load Error:", err.message);
     return null;
   }
 };

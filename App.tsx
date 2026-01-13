@@ -21,14 +21,11 @@ if (isBrowser && !(window as any).process) {
 }
 
 const MASTER_KEY = "Tc@00216587";
-const ENV_FB_URL = (process.env as any).FIREBASE_URL;
-const ENV_FB_API_KEY = (process.env as any).FIREBASE_API_KEY; 
-
-// URL e API Key fornecidas pelo usuário para o projeto Firebase
-const DEFAULT_FB_URL = ENV_FB_URL || 'https://poc-botequista-default-rtdb.firebaseio.com';
-const DEFAULT_FB_API_KEY = ENV_FB_API_KEY || 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
-const DEFAULT_EMAIL = 'curupaco@gmail.com';
-const DEFAULT_PASS = 'Tc@00216587';
+// Credenciais fixas e definitivas do sistema
+const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
+const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
+const SYSTEM_AUTH_EMAIL = 'curupaco@gmail.com';
+const SYSTEM_AUTH_PASS = 'Tc@00216587';
 
 const viewTitles: Record<View, string> = {
   dashboard: 'Painel de Controle',
@@ -66,9 +63,6 @@ const App: React.FC = () => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [theme, setTheme] = useState<Theme>('dark');
 
-  const [fbUrl, setFbUrl] = useState(() => DEFAULT_FB_URL);
-  const [fbApiKey, setFbApiKey] = useState(() => DEFAULT_FB_API_KEY);
-
   const activeShift = useMemo(() => (shifts || []).find(s => s.status === 'open'), [shifts]);
   const activeTabsCount = useMemo(() => (openTabs || []).filter(t => (t.items || []).length > 0).length, [openTabs]);
   
@@ -104,37 +98,26 @@ const App: React.FC = () => {
   }, [theme]);
 
   const forceSyncToCloud = useCallback(async (currentData: any) => {
-    if (!isInitialLoadDone.current || !fbUrl) return;
+    if (!isInitialLoadDone.current) return;
     try {
       setDbStatus('loading');
-      let token: string | undefined;
-      // Sempre tenta autenticar com a chave padrão se estiver configurada
-      if (fbApiKey && fbApiKey.length > 20) {
-        try { 
-          token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, fbApiKey); 
-        } catch (e) { 
-          console.error("Token Auth Error:", e);
-        }
-      }
+      const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
       const now = new Date().toISOString();
-      await saveToFirebase(fbUrl, { ...currentData, updatedAt: now }, MASTER_KEY, token);
+      await saveToFirebase(SYSTEM_DB_URL, { ...currentData, updatedAt: now }, MASTER_KEY, token);
       setLastSyncTime(now);
       setDbStatus('success');
     } catch (e) {
       setDbStatus('error');
     }
-  }, [fbUrl, fbApiKey]);
+  }, []);
 
   useEffect(() => {
     if (!isBrowser) return;
     const fetchInitialData = async () => {
       setDbStatus('loading');
       try {
-        let token: string | undefined;
-        if (fbApiKey && fbApiKey.length > 20) {
-          try { token = await getFirebaseToken(DEFAULT_EMAIL, DEFAULT_PASS, fbApiKey); } catch (e) {}
-        }
-        const cloudData = await loadFromFirebase(fbUrl, MASTER_KEY, token);
+        const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
+        const cloudData = await loadFromFirebase(SYSTEM_DB_URL, MASTER_KEY, token);
         if (cloudData) {
           handleImportAll(cloudData);
           if (cloudData.config?.penduraThreshold) setPenduraThreshold(cloudData.config.penduraThreshold);
@@ -151,7 +134,7 @@ const App: React.FC = () => {
       }
     };
     fetchInitialData();
-  }, [fbUrl, fbApiKey]);
+  }, []);
 
   useEffect(() => {
     if (!isInitialLoadDone.current || isSyncingFromCloud.current) return;
@@ -164,11 +147,11 @@ const App: React.FC = () => {
         openTabs, 
         users, 
         shifts, 
-        config: { fbUrl, fbApiKey, penduraThreshold } 
+        config: { penduraThreshold } 
       });
     }, 1500);
     return () => clearTimeout(debounce);
-  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud, fbUrl, fbApiKey]);
+  }, [products, sales, openTabs, users, shifts, penduraThreshold, forceSyncToCloud]);
 
   const handleImportAll = (data: any) => {
     isSyncingFromCloud.current = true;
@@ -177,9 +160,6 @@ const App: React.FC = () => {
     if (data.openTabs) setOpenTabs(data.openTabs);
     if (data.config?.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
     
-    if (data.config?.fbApiKey && (!fbApiKey || fbApiKey === DEFAULT_FB_API_KEY)) setFbApiKey(data.config.fbApiKey);
-    if (data.config?.fbUrl && fbUrl === DEFAULT_FB_URL) setFbUrl(data.config.fbUrl);
-
     if (data.users && data.users.length > 0) {
       setUsers((data.users as User[]).map(u => (u.username === 'admin' || u.id === 'admin') ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
     } else {
@@ -236,8 +216,8 @@ const App: React.FC = () => {
       case 'reports': return <Reports {...props} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} />;
       case 'users': return <UserManagement users={users} onUpdateUsers={setUsers} />;
       case 'shifts': return <ShiftControl {...props} onUpdateShifts={handleUpdateShifts} />;
-      case 'cash': return <CashManagement {...props} onUpdateShifts={handleUpdateShifts} />;
-      case 'settings': return <Settings {...props} fbUrl={fbUrl} setFbUrl={setFbUrl} fbApiKey={fbApiKey} setFbApiKey={setFbApiKey} onImport={handleImportAll} dbStatus={dbStatus} onStatusChange={setDbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
+      case 'cash': return <CashManagement {...props} onUpdateShifts={handleUpdateShifts} onViewChange={setActiveView} />;
+      case 'settings': return <Settings {...props} onImport={handleImportAll} dbStatus={dbStatus} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />;
       case 'help': return <Help />;
       default: return <POS {...props} onUpdateTabs={setOpenTabs} onCompleteSale={handleCompleteSale} activeShift={activeShift} />;
     }
@@ -272,7 +252,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <div 
-              title={dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'pending' ? 'Salvando...' : 'Erro de Autenticação'} 
+              title={dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'pending' ? 'Salvando...' : 'Erro de Conexão'} 
               className={`w-3 h-3 rounded-full transition-colors duration-500 ${dbStatus === 'success' ? 'bg-emerald-500' : dbStatus === 'pending' ? 'bg-orange-500 animate-pulse' : 'bg-red-500 animate-pulse'}`}
             ></div>
             <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:scale-105 active:scale-95 transition-all">
