@@ -205,11 +205,11 @@ const POS: React.FC<POSProps> = ({
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="relative">
-          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl border border-red-200 dark:border-red-900/30">
-             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="5" y="11" width="14" height="10" rx="2" strokeWidth="2.5" />
-                <path d="M8 11V7a4 4 0 0 1 8 0v4" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none" />
+          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-600 shadow-xl border border-red-200 dark:border-red-900/30">
+             <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
              </svg>
           </div>
           <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-2 border-white dark:border-slate-900 animate-ping opacity-20"></div>

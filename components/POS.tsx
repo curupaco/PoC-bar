@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency } from '../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface POSProps {
   products: Product[];
@@ -92,6 +92,18 @@ const POS: React.FC<POSProps> = ({
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
 
+  const handleQuickDelete = (tabId: string, name: string, items: any[]) => {
+    if (items.length === 0) {
+      onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== normalizeId(tabId)));
+      if (normalizeId(activeTabId) === normalizeId(tabId)) {
+        setActiveTabId(null);
+      }
+      showFeedback(`MESA ${name} ABANDONADA`);
+    } else {
+      setDeleteConfirmId({ id: tabId, name, hasItems: true });
+    }
+  };
+
   const addToTab = (product: Product, quantity: number = 1) => {
     if (!activeTabId || activeTabId === 'shortcut-payment') return;
     onUpdateTabs(prev => (prev || []).map(tab => {
@@ -114,6 +126,7 @@ const POS: React.FC<POSProps> = ({
             items.push({ 
               productId: product.id, 
               productName: product.name, 
+              category: product.category || 'GERAL',
               quantity: quantity, 
               unitPrice: product.price, 
               totalPrice: Number((quantity * product.price).toFixed(2)) 
@@ -174,16 +187,9 @@ const POS: React.FC<POSProps> = ({
     }));
   };
 
-  const handlePaymentInputChange = (val: string) => {
-    const cleaned = val.replace(/[^0-9,]/g, '');
-    const parts = cleaned.split(',');
-    if (parts.length > 2) return;
-    setPaymentAmountInput(cleaned);
-  };
-
   const changeDue = useMemo(() => {
     if (paymentMethodInput !== PaymentMethod.CASH || !receivedValueInput) return 0;
-    const amountToPay = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
+    const amountToPay = parseCurrencyValue(paymentAmountInput) || remainingBalance;
     return Math.max(0, receivedValueInput - amountToPay);
   }, [receivedValueInput, paymentAmountInput, remainingBalance, paymentMethodInput]);
 
@@ -197,47 +203,126 @@ const POS: React.FC<POSProps> = ({
 
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-8 animate-in fade-in duration-500">
-        <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-[32px] flex items-center justify-center text-red-500 shadow-xl">
-           <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002-2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="relative">
+          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-600 shadow-xl border border-red-200 dark:border-red-900/30">
+             <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86L7.86 2z" />
+                <path d="m15 9-6 6" />
+                <path d="m9 9 6 6" />
+             </svg>
+          </div>
+          <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-2 border-white dark:border-slate-900 animate-ping opacity-20"></div>
         </div>
-        <div className="max-w-md space-y-4">
-           <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Vendas Bloqueadas</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium">Inicie um turno para começar a vender.</p>
+        
+        <div className="max-w-xs space-y-4">
+           <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">Operação Bloqueada</h2>
+           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm px-4">
+             O caixa está fechado. Para começar a vender, você precisa <span className="text-red-600 dark:text-red-400 font-bold">abrir um novo turno</span>.
+           </p>
+        </div>
+
+        <div className="flex flex-col gap-3 w-full max-w-[240px]">
            {onViewChange && (
-             <button onClick={() => onViewChange('shifts')} className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all">Abrir Turno Agora</button>
+             <button 
+               onClick={() => onViewChange('shifts')} 
+               className="bg-red-600 hover:bg-red-700 text-white w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all animate-bounce"
+             >
+               Abrir Turno Agora
+             </button>
            )}
+           <button 
+             onClick={() => window.location.reload()}
+             className="text-slate-400 dark:text-slate-600 font-black uppercase text-[10px] tracking-widest py-2"
+           >
+             Recarregar Sistema
+           </button>
         </div>
       </div>
     );
   }
 
+  const handleFinishSale = () => {
+    const isShortcut = activeTabId === 'shortcut-payment';
+    let finalPayments = [...currentPayments];
+
+    if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && finalPayments.length === 0) {
+       finalPayments.push({ 
+         method: PaymentMethod.CASH, 
+         amount: remainingBalance, 
+         customerName: customerNameInput.toUpperCase() || undefined 
+       });
+    }
+
+    const currentTotalPaid = finalPayments.reduce((acc, p) => acc + p.amount, 0);
+
+    if (!activeTab || (!isShortcut && tabItems.length === 0) || (currentTotalPaid < 0.01)) {
+       setValidationError("ADICIONE UM PAGAMENTO PARA CONCLUIR!");
+       return;
+    }
+
+    if (!isShortcut && (tabTotal - currentTotalPaid) > 0.05) {
+       setValidationError(`FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}!`);
+       return;
+    }
+
+    finalPayments.forEach((p, index) => {
+       onCompleteSale({
+          id: generateUniqueId('sale'),
+          timestamp: Date.now(),
+          openedAt: activeTab.openedAt,
+          items: isShortcut 
+            ? [{ productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] 
+            : (index === 0 ? tabItems : []),
+          paymentMethod: p.method,
+          total: p.amount,
+          tabName: activeTab.name,
+          customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+          userId: '', 
+          shiftId: activeShift.id
+       });
+    });
+
+    if (!isShortcut) {
+      onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
+    } else if (onClearShortcut) {
+      onClearShortcut();
+    }
+    
+    setActiveTabId(null);
+    setIsClosingTab(false);
+    setCurrentPayments([]);
+    setReceivedValueInput(null);
+    showFeedback("OPERACÃO FINALIZADA");
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6 relative h-full">
       {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[210] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">
            {toast}
         </div>
       )}
 
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-[140] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl relative z-[410] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 max-sm:absolute max-sm:bottom-0">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-500 mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase text-center mb-2 tracking-tighter leading-none">Excluir Mesa?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-8">
-               {deleteConfirmId.hasItems 
-                 ? `A mesa "${deleteConfirmId.name}" possui consumo pendente. Tem certeza que deseja apagar tudo?` 
-                 : `Excluir a mesa "${deleteConfirmId.name}"? Ela está vazia.`}
+               A mesa "<span className="font-bold">{deleteConfirmId.name}</span>" possui consumo pendente. Tem certeza que deseja apagar tudo?
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={() => {
                    onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(deleteConfirmId.id)));
                    if (normalizeId(activeTabId) === normalizeId(deleteConfirmId.id)) { setActiveTabId(null); setIsClosingTab(false); }
                    setDeleteConfirmId(null);
+                   showFeedback("MESA EXCLUÍDA");
                 }} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Sim, Excluir</button>
                 <button onClick={() => setDeleteConfirmId(null)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Cancelar</button>
              </div>
@@ -246,7 +331,7 @@ const POS: React.FC<POSProps> = ({
       )}
 
       {validationError && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4" onClick={() => setValidationError(null)}>
            {validationError}
         </div>
       )}
@@ -265,9 +350,9 @@ const POS: React.FC<POSProps> = ({
 
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in fade-in zoom-in-95">
-              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME DA MESA OU CLIENTE..." className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-none outline-none font-black uppercase text-lg tracking-widest" onKeyDown={e => e.key === 'Enter' && (() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } })()} />
+              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME DA MESA OU CLIENTE..." className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-none outline-none font-black uppercase text-lg tracking-widest" onKeyDown={e => e.key === 'Enter' && (() => { if(newTabName.trim()){ const newId = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } })()} />
               <div className="flex gap-2">
-                <button onClick={() => { if(newTabName.trim()){ const newId = `tab-${Date.now()}`; onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-red-700 uppercase text-xs tracking-widest">Criar</button>
+                <button onClick={() => { if(newTabName.trim()){ const newId = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: newId, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(newId); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-red-700 uppercase text-xs tracking-widest">Criar</button>
                 <button onClick={() => setIsAddingTab(false)} className="bg-slate-100 dark:bg-slate-800 text-slate-400 font-black px-6 py-4 rounded-2xl uppercase text-xs tracking-widest">Sair</button>
               </div>
             </div>
@@ -276,7 +361,7 @@ const POS: React.FC<POSProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
             {(openTabs || []).map(tab => (
               <div key={tab.id} className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl transition-all flex flex-col relative h-48 group">
-                <button type="button" onClick={(e) => { e.stopPropagation(); setDeleteConfirmId({ id: tab.id, name: tab.name, hasItems: tab.items.length > 0 }); }} className="absolute top-2 right-2 p-3 z-30 text-slate-300 hover:text-red-500 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100">
+                <button type="button" onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name, tab.items); }} className="absolute top-2 right-2 p-3 z-30 text-slate-300 hover:text-red-500 transition-all opacity-100 lg:opacity-0 group-hover:opacity-100">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
                 <div onClick={() => setActiveTabId(tab.id)} className="p-6 cursor-pointer flex-1 flex flex-col justify-between">
@@ -294,7 +379,7 @@ const POS: React.FC<POSProps> = ({
         </div>
       ) : (
         <>
-          <div className="flex-1 space-y-6 pb-32 overflow-y-auto no-scrollbar h-full">
+          <div className="flex-1 space-y-6 pb-40 overflow-y-auto no-scrollbar h-full">
             <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 sticky top-0 z-20">
               <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if (onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-3.5 rounded-2xl hover:bg-red-500 hover:text-white transition-all active:scale-90">
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -350,11 +435,11 @@ const POS: React.FC<POSProps> = ({
             )}
           </div>
           
-          <div className="w-full lg:w-96 flex flex-col h-[75vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-24 lg:pb-0 z-10">
+          <div className="w-full lg:w-96 flex flex-col h-[75vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24 mt-6 lg:mt-0 pb-32 lg:pb-0 z-10">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[40px] overflow-hidden flex flex-col h-full shadow-2xl relative">
               <div className="p-5 bg-red-600 text-white shrink-0 flex justify-between items-center shadow-lg">
                 <h3 className="font-black uppercase tracking-tight truncate leading-normal text-xs">{activeTab?.name}</h3>
-                <button type="button" onClick={() => setDeleteConfirmId({ id: activeTabId!, name: activeTab?.name || 'Mesa', hasItems: tabItems.length > 0 })} className="p-2 text-white/50 hover:text-white transition-colors">
+                <button type="button" onClick={() => handleQuickDelete(activeTabId!, activeTab?.name || 'Mesa', tabItems)} className="p-2 text-white/50 hover:text-white transition-colors">
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -401,7 +486,7 @@ const POS: React.FC<POSProps> = ({
                     })}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-24 opacity-30 italic text-[11px] text-center uppercase font-black">Nenhum consumo registrado</div>}
                   </div>
-                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-16 lg:pb-8">
+                  <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-8">
                     <div className="flex justify-between items-center mb-5">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo Atual</span>
                       <span className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter">{formatCurrency(tabTotal)}</span>
@@ -418,13 +503,11 @@ const POS: React.FC<POSProps> = ({
                         ← Retornar à comanda
                       </button>
 
-                      {/* RESUMO DO PAGAMENTO */}
                       <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Aguardando Pagamento</p>
                         <p className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter text-center">{formatCurrency(remainingBalance)}</p>
                       </div>
                       
-                      {/* SELETOR DE MÉTODO */}
                       <div className="space-y-1">
                         <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Forma de Pagamento</label>
                         <select value={paymentMethodInput} onChange={e => { setPaymentMethodInput(e.target.value as any); setReceivedValueInput(null); }} className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase outline-none focus:ring-4 focus:ring-red-500/10 border border-slate-200 dark:border-slate-700 transition-all">
@@ -434,7 +517,6 @@ const POS: React.FC<POSProps> = ({
 
                       {paymentMethodInput === PaymentMethod.CASH && (
                         <div className="space-y-4 animate-in slide-in-from-top-4">
-                           {/* ATALHOS DE DINHEIRO */}
                            <div className="grid grid-cols-3 gap-2">
                               <button onClick={() => setReceivedValueInput(remainingBalance)} className="col-span-3 py-4 rounded-2xl font-black text-xs uppercase bg-emerald-600 text-white shadow-lg active:scale-95 transition-all border border-emerald-500">VALOR EXATO</button>
                               {[5, 10, 20, 50, 100, 200].map(val => (
@@ -444,7 +526,6 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       )}
 
-                      {/* CAMPOS ADICIONAIS */}
                       <div className="space-y-4">
                         {((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && (
                           <div className="space-y-1 animate-in slide-in-from-right-4">
@@ -458,10 +539,10 @@ const POS: React.FC<POSProps> = ({
                           <div className="flex gap-2">
                             <div className="relative flex-1">
                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => handlePaymentInputChange(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none border border-slate-200 dark:border-slate-700" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
+                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none border border-slate-200 dark:border-slate-700" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
                             </div>
                             <button onClick={() => {
-                               const val = parseFloat(paymentAmountInput.replace(',', '.')) || remainingBalance;
+                               const val = parseCurrencyValue(paymentAmountInput) || remainingBalance;
                                if (isNaN(val) || val <= 0) return;
                                if (((paymentMethodInput === PaymentMethod.PENDURA) || shortcutCheckout) && !customerNameInput.trim()) {
                                  setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
@@ -478,7 +559,6 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       </div>
 
-                      {/* LISTA DE PAGAMENTOS PARCIAIS */}
                       {currentPayments.length > 0 && (
                         <div className="space-y-2 pt-2">
                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Recebidos</p>
@@ -492,9 +572,7 @@ const POS: React.FC<POSProps> = ({
                       )}
                    </div>
 
-                   {/* PAINEL DE CONCLUSAO (SEM ROLAGEM) */}
-                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-16 lg:pb-8 space-y-4">
-                      {/* PAINEL DE TROCO - SEMPRE VISÍVEL QUANDO HOUVER VALOR RECEBIDO */}
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0 shadow-[0_-8px_20px_rgba(0,0,0,0.05)] mt-auto pb-8 space-y-4">
                       {paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && (
                         <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50 text-center">
                             <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco a devolver:</span>
@@ -502,62 +580,7 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       )}
 
-                      <button onClick={() => {
-                        const isShortcut = activeTabId === 'shortcut-payment';
-                        const canFinish = isShortcut ? paidSoFar > 0 : remainingBalance <= 0.01;
-                        
-                        // Se for dinheiro e tiver valor recebido mas nao adicionou na lista ainda, adiciona automaticamente
-                        if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput && currentPayments.length === 0) {
-                           const valToPay = remainingBalance;
-                           setCurrentPayments([{ method: PaymentMethod.CASH, amount: valToPay, customerName: customerNameInput.toUpperCase() || undefined }]);
-                           // Recursão leve para processar após o state atualizar (ou apenas processar localmente)
-                        }
-
-                        if (!activeTab || (!isShortcut && tabItems.length === 0) || (remainingBalance > 0.01 && currentPayments.length === 0)) {
-                           if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput) {
-                             // Fallback: Adiciona o pagamento antes de fechar
-                             const finalEntry = { method: PaymentMethod.CASH, amount: remainingBalance, customerName: customerNameInput.toUpperCase() || undefined };
-                             onCompleteSale({
-                                id: `${Date.now()}-auto`,
-                                timestamp: Date.now(),
-                                openedAt: activeTab?.openedAt,
-                                items: isShortcut ? [{ productId: 'quitacao', productName: 'Quitação Fiado', quantity: 1, unitPrice: remainingBalance, totalPrice: remainingBalance }] : tabItems,
-                                paymentMethod: PaymentMethod.CASH,
-                                total: remainingBalance,
-                                tabName: activeTab?.name,
-                                customerName: finalEntry.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
-                                userId: '', 
-                                shiftId: activeShift.id
-                             });
-                           } else {
-                             return;
-                           }
-                        } else {
-                           currentPayments.forEach((p, index) => {
-                              onCompleteSale({
-                                 id: `${Date.now()}-${index}`,
-                                 timestamp: Date.now(),
-                                 openedAt: activeTab.openedAt,
-                                 items: isShortcut ? [{ productId: 'quitacao', productName: 'Quitação Fiado', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] : (index === 0 ? tabItems : []),
-                                 paymentMethod: p.method,
-                                 total: p.amount,
-                                 tabName: activeTab.name,
-                                 customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
-                                 userId: '', 
-                                 shiftId: activeShift.id
-                              });
-                           });
-                        }
-
-                        if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
-                        else if (onClearShortcut) onClearShortcut();
-                        
-                        setActiveTabId(null);
-                        setIsClosingTab(false);
-                        setCurrentPayments([]);
-                        setReceivedValueInput(null);
-                        showFeedback("OPERACÃO FINALIZADA");
-                      }} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex flex-col items-center justify-center gap-1">
+                      <button onClick={handleFinishSale} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-500/20 active:scale-95 transition-all flex flex-col items-center justify-center gap-1">
                         <span>CONCLUIR VENDA</span>
                         <span className="text-[10px] opacity-70">Total: {formatCurrency(tabTotal)}</span>
                       </button>
@@ -571,15 +594,22 @@ const POS: React.FC<POSProps> = ({
 
       {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
             <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter italic">Lançar Peso (Gramas)</h4>
             <div className="relative">
                <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none shadow-inner" placeholder="0" />
             </div>
             <p className="text-[10px] font-black text-slate-400 uppercase mt-6 tracking-widest text-center">Ex: 500 = 0.5kg | 1000 = 1.0kg</p>
             <div className="grid grid-cols-2 gap-4 mt-10">
-              <button onClick={() => { if (!inputGrams) return; addToTab(weightModalProduct!, parseFloat(inputGrams) / 1000); }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 shadow-red-500/20">Lançar</button>
+              <button onClick={() => { 
+                const grams = parseFloat(inputGrams);
+                if (!inputGrams || isNaN(grams) || grams <= 0) {
+                  showFeedback("PESO INVÁLIDO!");
+                  return;
+                }
+                addToTab(weightModalProduct!, grams / 1000); 
+              }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 shadow-red-500/20">Lançar</button>
               <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95">Cancelar</button>
             </div>
           </div>
