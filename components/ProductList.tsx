@@ -15,7 +15,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [category, setCategory] = useState('GERAL');
+  const [category, setCategory] = useState(''); 
   const [sellType, setSellType] = useState<SellType>('unit');
   
   const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string} | null>(null);
@@ -25,6 +25,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
 
   const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<string>('TODOS');
   const [searchProduct, setSearchProduct] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
@@ -38,7 +39,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   }, [showModal, deleteConfirmId, isRenamingCategory]);
 
   const categoriesList = useMemo(() => {
-    const cats = new Set(['GERAL', 'BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'TABACARIA']);
+    const cats = new Set(['BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'TABACARIA']);
     products.forEach(p => {
       if (p.category) cats.add(p.category.toUpperCase().trim());
     });
@@ -50,7 +51,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     const normalizedSearch = searchProduct.toLowerCase().trim();
 
     products.forEach(p => {
-      const cat = (p.category || 'GERAL').toUpperCase().trim();
+      const cat = (p.category || 'SEM CATEGORIA').toUpperCase().trim();
       const matchesSearch = p.name.toLowerCase().includes(normalizedSearch);
       
       if (matchesSearch) {
@@ -68,9 +69,12 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   }, [groupedProducts, selectedCategoryIndex]);
 
   const handleSave = () => {
-    if (!name || !price) return;
+    setFormError(null);
+    if (!name.trim()) { setFormError("NOME OBRIGATÓRIO"); return; }
+    if (!category.trim()) { setFormError("CATEGORIA OBRIGATÓRIA"); return; }
+    
     const priceNum = parseCurrencyValue(price);
-    if (isNaN(priceNum) || priceNum <= 0) return;
+    if (isNaN(priceNum) || priceNum <= 0) { setFormError("PREÇO INVÁLIDO"); return; }
 
     const productData: Product = {
       id: editingId || Date.now().toString(),
@@ -105,13 +109,14 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   const closeModal = () => {
     setShowModal(false);
     setEditingId(null);
+    setFormError(null);
     resetForm();
   };
 
   const resetForm = () => {
     setName('');
     setPrice('');
-    setCategory('GERAL');
+    setCategory(''); 
     setSellType('unit');
   };
 
@@ -228,7 +233,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Novo Nome</label>
                     <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="EX: BEBIDAS GELADAS" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500" />
                  </div>
-                 <button onClick={handleRenameCategoryBatch} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Alterar Todos os Itens</button>
+                 <button onClick={handleRenameCategoryBatch} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg">Alterar Todos os Itens</button>
                  <button onClick={() => setIsRenamingCategory(false)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Fechar</button>
               </div>
            </div>
@@ -238,7 +243,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[32px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
@@ -247,7 +252,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                O produto <span className="text-red-600 font-black uppercase">"{deleteConfirmId.name}"</span> será removido permanentemente do cardápio.
              </p>
              <div className="flex flex-col gap-3">
-                <button onClick={() => { onDelete(deleteConfirmId.id); setDeleteConfirmId(null); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg">Confirmar Exclusão</button>
+                <button onClick={() => { onDelete(deleteConfirmId.id); setDeleteConfirmId(null); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-red-600/20">Confirmar Exclusão</button>
                 <button onClick={() => setDeleteConfirmId(null)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
              </div>
           </div>
@@ -269,6 +274,11 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
               </button>
             </div>
             <div className="p-8 space-y-6">
+              {formError && (
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30 animate-in shake">
+                  ⚠️ ERRO: {formError}
+                </div>
+              )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome Comercial</label>
@@ -276,7 +286,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Categoria</label>
-                  <input type="text" list="cat-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Ex: BEBIDAS" className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all uppercase text-xs font-black" />
+                  <input type="text" list="cat-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Selecione ou Digite..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all uppercase text-xs font-black" />
                   <datalist id="cat-suggestions">
                      {categoriesList.map(c => <option key={c} value={c} />)}
                   </datalist>
@@ -297,7 +307,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                 </div>
               </div>
               <div className="pt-6 flex flex-col md:flex-row gap-4 border-t border-slate-100 dark:border-slate-800">
-                <button onClick={handleSave} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95">Salvar</button>
+                <button onClick={handleSave} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95">Salvar Produto</button>
                 <button onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Cancelar</button>
               </div>
             </div>
