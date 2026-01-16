@@ -64,7 +64,7 @@ const Help: React.FC = () => {
           </div>
         </section>
 
-        {/* NOVO Card 4: Sincronização e Rede */}
+        {/* Card 4: Sincronização */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-violet-200 dark:border-violet-900 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-violet-600">
             <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-2xl flex items-center justify-center">
@@ -73,13 +73,13 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight">Sincronização</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-violet-600 font-black">Múltiplos Aparelhos:</span> O sistema atualiza os dados automaticamente a cada 30 segundos entre todos os celulares e tablets conectados.</p>
-            <p>• <span className="text-violet-600 font-black">Divergência:</span> Se uma mesa aberta em outro aparelho não aparecer para você, clique no botão <FakeButton color="blue">Sincronizar Nuvem</FakeButton> no topo da tela.</p>
-            <p>• <span className="text-violet-600 font-black">Cuidado:</span> Limpar o cache do navegador remove mesas que ainda não foram enviadas para a nuvem. Evite fazer isso com mesas abertas.</p>
+            <p>• <span className="text-violet-600 font-black">Múltiplos Aparelhos:</span> O sistema atualiza os dados automaticamente a cada 30 segundos entre todos os aparelhos.</p>
+            <p>• <span className="text-violet-600 font-black">Divergência:</span> Se uma mesa aberta em outro aparelho não aparecer, clique em <FakeButton color="blue">Sincronizar Nuvem</FakeButton>.</p>
+            <p>• <span className="text-violet-600 font-black">Cuidado:</span> Limpar o cache remove mesas que ainda não subiram para a rede. Evite isso com mesas abertas.</p>
           </div>
         </section>
 
-        {/* NOVO Card 5: Penduras (Fiados) */}
+        {/* Card 5: Penduras */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-orange-600">
             <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
@@ -88,24 +88,69 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight">Gestão de Fiados</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-orange-600 font-black">Identificação:</span> Sempre peça o nome e o telefone do cliente para lançar uma "Pendura". Sem isso, fica impossível cobrar depois.</p>
-            <p>• <span className="text-orange-600 font-black">Limite do Bar:</span> O sistema avisará com um ⚠️ se o total de fiados do bar passar do limite definido pelo dono em "Ajustes".</p>
-            <p>• <span className="text-orange-600 font-black">Quitação:</span> Quando o cliente pagar, use a aba "Relatórios > Penduras" para dar baixa no saldo devedor.</p>
+            <p>• <span className="text-orange-600 font-black">Identificação:</span> Sempre peça o nome do cliente para lançar uma "Pendura". Sem isso, não há como cobrar.</p>
+            <p>• <span className="text-orange-600 font-black">Limite:</span> O sistema avisa com ⚠️ se o total de fiados passar do limite definido em "Ajustes".</p>
+            <p>• <span className="text-orange-600 font-black">Quitação:</span> Use "Relatórios > Penduras" para dar baixa quando o cliente vier pagar.</p>
           </div>
         </section>
 
-        {/* NOVO Card 6: Movimentações (Sangrias) */}
+        {/* Card 6: Sangrias */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-indigo-600">
             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">Sangrias e Segurança</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight">Tesouraria</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-indigo-600 font-black">Sangria de Caixa:</span> Retirou notas de R$ 50 ou R$ 100 da gaveta para guardar no cofre? Registre na aba "Tesouraria".</p>
-            <p>• <span className="text-indigo-600 font-black">Suprimento:</span> Se o troco acabar, mova dinheiro do "Caixa Reserva" para a "Gaveta" usando a ferramenta de transferência.</p>
-            <p>• <span className="text-indigo-600 font-black">Conferência:</span> Movimentações registradas evitam que o caixa "feche errado" no final da noite.</p>
+            <p>• <span className="text-indigo-600 font-black">Sangria:</span> Retirou notas altas para o cofre? Registre na aba "Tesouraria" para não dar falta no caixa.</p>
+            <p>• <span className="text-indigo-600 font-black">Suprimento:</span> Se o troco acabar, mova dinheiro do "Caixa Reserva" para a "Gaveta" no sistema.</p>
+            <p>• <span className="text-indigo-600 font-black">Segurança:</span> Evite deixar grandes valores em espécie na gaveta do balcão durante a noite.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 7: Estoque e Reposição */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-amber-200 dark:border-amber-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-amber-600">
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Estoque e Gelados</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-amber-600 font-black">Reposição:</span> Reponha as cervejas e refris sempre que o movimento baixar. Bebida quente é prejuízo.</p>
+            <p>• <span className="text-amber-600 font-black">Giro:</span> Coloque os itens novos atrás dos que já estão gelados (Regra do Primeiro que Entra, Primeiro que Sai).</p>
+            <p>• <span className="text-amber-600 font-black">Conferência:</span> Uma vez por semana, confira se o que tem no freezer bate com o que você registrou de entrada.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 8: Excelência no Atendimento */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-rose-200 dark:border-rose-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-rose-600">
+            <div className="w-12 h-12 bg-rose-50 dark:bg-rose-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Noite de Movimento</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-rose-600 font-black">Mesas Grandes:</span> Para grupos, anote o nome de quem pediu cada rodada na comanda para facilitar a divisão final.</p>
+            <p>• <span className="text-rose-600 font-black">Agilidade:</span> Use a barra de <span className="font-bold italic">Busca Rápida</span> no topo do PDV para encontrar itens fora dos favoritos.</p>
+            <p>• <span className="text-rose-600 font-black">Erros:</span> Lançou errado? Peça ao gerente para excluir o item imediatamente para manter o ticket real.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 9: Higiene e Ambiente */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-cyan-200 dark:border-cyan-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-cyan-600">
+            <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Padrão do Balcão</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-cyan-600 font-black">Limpeza:</span> Balcão molhado afasta cliente. Tenha sempre um pano limpo e seco à mão.</p>
+            <p>• <span className="text-cyan-600 font-black">Banheiros:</span> Verifique o estado dos banheiros a cada hora. Bar limpo é bar que vende mais.</p>
+            <p>• <span className="text-cyan-600 font-black">Organização:</span> Mantenha abridores, guardanapos e cinzeiros sempre no mesmo lugar para ganhar tempo.</p>
           </div>
         </section>
       </div>
