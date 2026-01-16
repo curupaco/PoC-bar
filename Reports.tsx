@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Sale, Product, PaymentMethod, formatCurrency, User, Shift } from '../types';
+import { Sale, Product, PaymentMethod, formatCurrency, User, Shift } from './types';
 import * as htmlToImage from 'html-to-image';
 
 interface ReportsProps {
@@ -68,7 +68,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const filteredSales = useMemo<Sale[]>(() => {
     const startTs = new Date(`${startDate}T00:00:00`).getTime();
     const endTs = new Date(`${endDate}T23:59:59`).getTime();
-    // Filtro simplificado para performance
     const res = [];
     for (let i = 0; i < sales.length; i++) {
       const s = sales[i];
@@ -90,7 +89,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .filter(s => !s.items?.some(i => i.productId === 'quitacao'))
       .flatMap(s => s.items || [])
       .reduce((acc, item) => {
-        // Prioriza categoria salva no item (histórico), se não houver, busca no produto atual, senão tenta inferir
         let catName = (item.category || '').toUpperCase().trim();
         
         if (!catName || catName === 'GERAL') {
@@ -129,12 +127,14 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const grandTotal = filteredSales.reduce((acc: number, s: Sale) => acc + s.total, 0);
     const avgTicket = filteredSales.length > 0 ? grandTotal / filteredSales.length : 0;
 
+    // LÓGICA DE PENDURAS REVISADA: Agrega todo o histórico para saldo real
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
       if (s.paymentMethod === PaymentMethod.PENDURA) {
         acc[name] = (acc[name] || 0) + s.total;
       }
+      // Se a venda contém item de quitação, abate do saldo do cliente
       if (s.items?.some(item => item.productId === 'quitacao')) {
         acc[name] = (acc[name] || 0) - s.total;
       }
@@ -142,7 +142,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }, {} as Record<string, number>);
 
     const activePenduras = (Object.entries(penduraDebts) as [string, number][])
-      .filter(([_, amount]) => amount > 0.01)
+      .filter(([_, amount]) => amount > 0.05) // Tolerância para arredondamentos
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
 
@@ -328,13 +328,13 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         return (
           <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden">
              <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-orange-50/30 dark:bg-orange-900/10 flex justify-between items-center">
-                <h3 className="text-xs font-black text-orange-600 uppercase tracking-widest">Controle de Fiados Ativos</h3>
+                <h3 className="text-xs font-black text-orange-600 uppercase tracking-widest">Controle de Fiados Ativos (Saldo Real Histórico)</h3>
              </div>
              <table className="w-full text-left text-xs">
                 <thead>
                    <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-bold tracking-widest text-[10px]">
                       <th className="px-8 py-5">Cliente</th>
-                      <th className="px-8 py-5 text-right">Saldo</th>
+                      <th className="px-8 py-5 text-right">Saldo Devedor</th>
                       <th className="px-8 py-5 text-right">Ação</th>
                    </tr>
                 </thead>
@@ -344,12 +344,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                          <td className="px-8 py-5 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
                          <td className="px-8 py-5 text-right font-black text-red-500">{formatCurrency(p.amount)}</td>
                          <td className="px-8 py-5 text-right">
-                            <button onClick={() => { onQuitarPendura(p.name, p.amount); showToast(`QUITANDO PENDURA DE ${p.name}`); }} disabled={!canSettle} className="bg-red-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase disabled:opacity-50">Quitar</button>
+                            <button onClick={() => { onQuitarPendura(p.name, p.amount); showToast(`QUITANDO PENDURA DE ${p.name}`); }} disabled={!canSettle} className="bg-red-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase disabled:opacity-50 transition-all hover:scale-105 active:scale-95">Receber / Quitar</button>
                          </td>
                       </tr>
                    ))}
                    {reportData.activePenduras.length === 0 && (
-                     <tr><td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-bold uppercase">Nenhuma pendura ativa</td></tr>
+                     <tr><td colSpan={3} className="px-8 py-20 text-center text-slate-400 font-bold uppercase">Nenhuma pendura ativa no momento</td></tr>
                    )}
                 </tbody>
              </table>
