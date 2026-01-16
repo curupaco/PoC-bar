@@ -19,6 +19,7 @@ const Help: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Card 1: Vendas */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-red-600">
             <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center">
@@ -33,6 +34,7 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* Card 2: Cadastro */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-blue-100 dark:border-blue-900/30 shadow-sm space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-blue-600">
             <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
@@ -42,12 +44,13 @@ const Help: React.FC = () => {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
             <p>• <span className="text-blue-600 font-black">Organização:</span> Use as categorias para separar cervejas de porções, facilitando a busca no PDV.</p>
-            <p>• <span className="text-blue-600 font-black">Favoritos:</span> Marque com a estrela os itens mais vendidos (como a cerveja principal) para que fiquem no topo da tela.</p>
+            <p>• <span className="text-blue-600 font-black">Favoritos:</span> Marque com a estrela os itens mais vendidos para que fiquem no topo da tela.</p>
             <p>• <span className="text-blue-600 font-black">Preços:</span> Mantenha seu cardápio atualizado para que os relatórios de faturamento sejam precisos.</p>
           </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-500 dark:border-emerald-900 shadow-lg space-y-6 flex flex-col h-full ring-4 ring-emerald-500/10">
+        {/* Card 3: Turnos */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-500 dark:border-emerald-900 shadow-lg space-y-6 flex flex-col h-full">
           <div className="flex items-center gap-4 text-emerald-600">
             <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
@@ -57,7 +60,52 @@ const Help: React.FC = () => {
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
             <p>• <span className="text-emerald-600 font-black">Abertura:</span> Informe o fundo de troco na gaveta ao iniciar o dia.</p>
             <p>• <span className="text-emerald-600 font-black">Conferência:</span> No fim do expediente, conte o dinheiro físico e compare com o saldo que o sistema indica.</p>
-            <p>• <span className="text-emerald-600 font-black">Quebra:</span> O sistema aponta automaticamente se houve diferença (falta ou sobra) de valores na gaveta.</p>
+            <p>• <span className="text-emerald-600 font-black">Quebra:</span> O sistema aponta automaticamente se houve diferença (falta ou sobra) de valores.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 4: Sincronização e Rede */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-violet-200 dark:border-violet-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-violet-600">
+            <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16a3 3 0 01-3 3H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v1a3 3 0 013 3v1m-3 0a3 3 0 01-3 3H8a3 3 0 01-3-3V8a3 3 0 013-3h5M8 12h1" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Sincronização</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-violet-600 font-black">Múltiplos Aparelhos:</span> O sistema atualiza os dados automaticamente a cada 30 segundos entre todos os celulares e tablets conectados.</p>
+            <p>• <span className="text-violet-600 font-black">Divergência:</span> Se uma mesa aberta em outro aparelho não aparecer para você, clique no botão <FakeButton color="blue">Sincronizar Nuvem</FakeButton> no topo da tela.</p>
+            <p>• <span className="text-violet-600 font-black">Cuidado:</span> Limpar o cache do navegador remove mesas que ainda não foram enviadas para a nuvem. Evite fazer isso com mesas abertas.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 5: Penduras (Fiados) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-200 dark:border-orange-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-orange-600">
+            <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Gestão de Fiados</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-orange-600 font-black">Identificação:</span> Sempre peça o nome e o telefone do cliente para lançar uma "Pendura". Sem isso, fica impossível cobrar depois.</p>
+            <p>• <span className="text-orange-600 font-black">Limite do Bar:</span> O sistema avisará com um ⚠️ se o total de fiados do bar passar do limite definido pelo dono em "Ajustes".</p>
+            <p>• <span className="text-orange-600 font-black">Quitação:</span> Quando o cliente pagar, use a aba "Relatórios > Penduras" para dar baixa no saldo devedor.</p>
+          </div>
+        </section>
+
+        {/* NOVO Card 6: Movimentações (Sangrias) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900 shadow-sm space-y-6 flex flex-col h-full">
+          <div className="flex items-center gap-4 text-indigo-600">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight">Sangrias e Segurança</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-indigo-600 font-black">Sangria de Caixa:</span> Retirou notas de R$ 50 ou R$ 100 da gaveta para guardar no cofre? Registre na aba "Tesouraria".</p>
+            <p>• <span className="text-indigo-600 font-black">Suprimento:</span> Se o troco acabar, mova dinheiro do "Caixa Reserva" para a "Gaveta" usando a ferramenta de transferência.</p>
+            <p>• <span className="text-indigo-600 font-black">Conferência:</span> Movimentações registradas evitam que o caixa "feche errado" no final da noite.</p>
           </div>
         </section>
       </div>
