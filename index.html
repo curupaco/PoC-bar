@@ -113,7 +113,8 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "crypto-js": "https://esm.sh/crypto-js@^4.2.0",
-    "html-to-image": "https://esm.sh/html-to-image@^1.11.11"
+    "html-to-image": "https://esm.sh/html-to-image@^1.11.11",
+    "jspdf": "https://esm.sh/jspdf@^2.5.1"
   }
 }
 </script>
@@ -127,7 +128,6 @@
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => {
                         console.log('Service Worker registrado!');
-                        // Forçar verificação de atualização no Service Worker
                         reg.update();
                     })
                     .catch(err => console.log('Falha ao registrar Service Worker:', err));
