@@ -1,89 +1,75 @@
 
-# 🍺 Botequista - Documentação Oficial do Sistema
+# 🍺 Botequista - Manual de Gestão e Operação
 
-O Botequista é um ecossistema de gestão para bares focado em **alta disponibilidade**, **estética funcional** e **integridade financeira total**. Esta documentação serve como guia técnico e operacional para proprietários e administradores.
-
----
-
-## 🚀 1. Arquitetura de Nuvem e Dados
-
-O sistema utiliza uma abordagem **Stateless-First**, garantindo que seus dados estejam seguros e sincronizados em tempo real.
-
-### 1.1 Persistência (Firebase)
-- **Sincronização Ativa**: O sistema salva o estado global (Produtos, Vendas, Mesas e Turnos) automaticamente a cada 1.5 segundos após qualquer alteração.
-- **Criptografia AES-256**: Todos os dados são criptografados com a sua **Senha Master (`REMOVED_FIREBASE_PASSWORD`)** antes de saírem do seu dispositivo. Isso garante privacidade total contra acessos externos.
-
-### 1.2 Status de Conexão
-- No topo da tela, o indicador de sincronização mostra o estado da sua conexão:
-  - 🟢 **Sincronizado**: Tudo salvo na nuvem.
-  - 🟠 **Pendente**: Salvando alterações recentes.
-  - 🔴 **Erro**: Falha de conexão (verifique sua internet).
+O Botequista é um sistema profissional para gestão de bares e botecos, focado em **agilidade no atendimento**, **segurança financeira** e **controle total de estoque e caixa**.
 
 ---
 
-## 🛠 2. Operação de Turnos e Mesas
+## 🚀 1. Gestão de Dados e Segurança
 
-O Botequista separa o **fluxo de caixa** (responsabilidade do operador) do **fluxo de consumo** (conta do cliente).
+O sistema opera com um motor de sincronização em tempo real para que você possa usar vários aparelhos ao mesmo tempo no bar.
 
-### 2.1 Turnos (Operação)
-- Representa o "caixa aberto". O operador deve abrir um turno informando o fundo de reserva e troco.
-- **Fechamento**: Exige a conferência física do dinheiro. O sistema calcula a diferença (Quebra de Caixa) automaticamente.
+### 1.1 Persistência e Criptografia
+- **Segurança Máxima**: Seus dados são criptografados antes de serem enviados para a nuvem. Somente quem possui a Senha Master do seu bar pode ler as informações.
+- **Sincronização Ativa**: O sistema verifica mudanças na nuvem a cada 30 segundos. Se outro aparelho salvar dados novos, você verá um aviso de sincronização no topo da tela.
 
-### 2.2 Mesas e Comandas
-- O bar pode operar com inúmeras mesas abertas simultaneamente.
-- **Independência**: Você pode fechar um turno e abrir outro sem precisar fechar as mesas dos clientes que ainda estão consumindo. As mesas "migram" para o próximo turno automaticamente.
-
----
-
-## 💰 3. Ponto de Venda (PDV) e Regras Financeiras
-
-O PDV conta com travas de segurança para evitar prejuízos operacionais.
-
-### 3.1 Validação Estrita de Pagamento
-- **Trava de Recebimento**: O sistema impede o fechamento de qualquer comanda se o **Total Pago** for menor que o **Total da Conta**.
-- Caso o valor seja insuficiente, um alerta vermelho indicará quanto falta para completar o pagamento.
-- **Troco**: O cálculo de troco é exibido automaticamente apenas para pagamentos em **Dinheiro**.
-
-### 3.2 Venda por Peso
-- Itens como porções por quilo ou refeições utilizam a escala de **Gramas**.
-- Ao lançar, informe o valor em gramas (ex: `500` para 0,5kg). O sistema faz o cálculo monetário instantâneo.
+### 1.2 Controle de Versão (Obrigatório)
+- **Trava de Obsolecência**: Para evitar que operadores usem versões antigas (que podem causar conflitos de mesas abertas), o sistema exige a atualização sempre que uma nova versão crítica é lançada. Se vir a tela de "Atualização Obrigatória", apenas recarregue a página.
 
 ---
 
-## 📊 4. Gestão de Fiados (Pendura)
+## 💻 2. Compatibilidade e Acesso
 
-A gestão de crédito é um dos pilares de segurança do Botequista.
+### 2.1 Navegadores Suportados
+- **Google Chrome**: Recomendado.
+- **Microsoft Edge**: 100% Compatível (Baseado em Chromium). O Edge oferece excelente desempenho nos relatórios gráficos e na gestão de tesouraria.
+- **Safari (iOS)**: Totalmente funcional em iPhones e iPads.
 
-### 4.1 Identificação Obrigatória
-- Para lançar uma venda como **Pendura**, é obrigatório informar o nome do cliente.
-- O mesmo vale para **Quitações** (quando o cliente vem apenas para pagar uma dívida antiga).
-
-### 4.2 Saldo Histórico (Real)
-- O saldo exibido no relatório de "Penduras" não se limita ao turno atual. Ele varre **todo o histórico de vendas** para encontrar o débito real do cliente, subtraindo todas as quitações já realizadas.
-
-### 4.3 Alerta de Risco
-- Em **Ajustes**, você define o limite máximo de fiados que o bar suporta. Se a soma de todas as penduras do bar ultrapassar esse valor, um ícone de alerta ⚠️ aparecerá permanentemente no menu **Relatórios**.
+### 2.2 Offline e PWA
+- O Botequista pode ser instalado como um aplicativo (PWA). No Android (Chrome) ou Windows (Edge/Chrome), clique em "Instalar Aplicativo" no menu do navegador para ter o ícone na sua tela inicial.
 
 ---
 
-## 👤 5. Gestão de Equipe
+## 🛠 3. Cadastro de Cardápio (Produtos)
 
-O sistema permite criar usuários com níveis de acesso específicos:
-- **Administradores**: Acesso total, incluindo exclusão de vendas e reset de sistema.
-- **Operadores**: Acesso limitado ao PDV e abertura/fechamento de turnos.
-- **Segurança de Senha**: No painel de Equipe, o administrador pode visualizar as senhas atuais dos colaboradores caso eles as esqueçam.
+O pilar do seu bar é o cadastro correto de itens e preços.
+
+### 3.1 Cadastro de Itens
+- **Nome e Preço**: Cada produto deve ter um nome comercial claro e um preço de venda definido.
+- **Venda por Peso**: Ideal para porções ou refeições. O sistema calcula o valor baseado no peso em gramas informado no PDV.
+
+---
+
+## 💰 4. Ponto de Venda (PDV) e Regras de Caixa
+
+O PDV foi desenhado para ser operado sob pressão e com rapidez.
+
+### 4.1 Operação de Mesas
+- Você pode abrir mesas ilimitadas. 
+- **Sincronia de Mesas**: Graças ao polling ativo, se você abrir uma mesa no seu celular, ela aparecerá no tablet do bar em instantes.
+
+### 4.2 Gestão de Turnos
+- O sistema trabalha com o conceito de "Turnos Operacionais". 
+- Um turno registra quem abriu o caixa, com quanto dinheiro começou e quanto dinheiro terminou após a conferência.
 
 ---
 
-## ☁️ 6. Deploy e Manutenção
+## 📊 5. Relatórios e Controle Financeiro
 
-### 6.1 Variáveis de Ambiente
-Para rodar em servidores próprios (Vercel/Netlify), configure:
-- `FIREBASE_URL`: Endpoint do Realtime Database.
-- `FIREBASE_API_KEY`: Chave de autenticação do Google.
+Acompanhe a saúde do seu bar através de dados consolidados.
 
-### 6.2 Limpeza de Dados
-Na aba de **Ajustes**, existem comandos de "limpeza pesada" para preparar o bar para uma nova temporada ou zerar o cardápio. **Atenção**: Estas ações são irreversíveis e exigem nível de Administrador.
+### 5.1 Controle de Fiados (Penduras)
+- O sistema mantém um histórico rigoroso de devedores. Para lançar um fiado, a identificação do cliente é obrigatória.
+- O saldo devedor é calculado de forma histórica, considerando todas as compras e todos os pagamentos já realizados pelo cliente.
 
 ---
-**Botequista v3.0** - *Gestão de Bar Inteligente e Segura.*
+
+## 👤 6. Gestão de Equipe
+
+Crie usuários específicos para seus garçons e gerentes:
+- **Administradores**: Acesso total às configurações e limpeza de dados.
+- **Operadores**: Acesso apenas para realizar vendas e gerenciar mesas.
+
+---
+**Botequista - Versão Profissional**
+*Gestão de Bar Eficiente, Segura e Sem Complicações.*

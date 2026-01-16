@@ -1,4 +1,5 @@
 
+// @google/genai guidelines: Ensure valid types are exported for synchronization data
 import { Product, Sale, Tab, User, Shift } from "../types";
 import { encryptData, decryptData } from "./cryptoService";
 
@@ -8,6 +9,8 @@ export interface AppFullData {
   openTabs: Tab[];
   users?: User[];
   shifts?: Shift[];
+  // Minimum required version of the app to process this data. Added to support remote version checks in App.tsx.
+  minRequiredVersion?: string;
   config: {
     fbUrl?: string;
     fbApiKey?: string;

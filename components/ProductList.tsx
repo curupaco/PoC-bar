@@ -70,11 +70,11 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
 
   const handleSave = () => {
     setFormError(null);
-    if (!name.trim()) { setFormError("NOME OBRIGATÓRIO"); return; }
-    if (!category.trim()) { setFormError("CATEGORIA OBRIGATÓRIA"); return; }
+    if (!name.trim()) { setFormError("NOME DO PRODUTO É OBRIGATÓRIO"); return; }
+    if (!category.trim()) { setFormError("INFORME UMA CATEGORIA PARA ORGANIZAR O CARDÁPIO"); return; }
     
     const priceNum = parseCurrencyValue(price);
-    if (isNaN(priceNum) || priceNum <= 0) { setFormError("PREÇO INVÁLIDO"); return; }
+    if (isNaN(priceNum) || priceNum <= 0) { setFormError("INFORME UM PREÇO DE VENDA VÁLIDO"); return; }
 
     const productData: Product = {
       id: editingId || Date.now().toString(),
@@ -135,15 +135,15 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
       <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div>
-             <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Gestão de Cardápio</h2>
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{products.length} Itens Cadastrados</p>
+             <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Produtos e Preços</h2>
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{products.length} Itens no Cardápio</p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
              {canEdit && (
-               <button onClick={() => setIsRenamingCategory(true)} className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Categorias</button>
+               <button onClick={() => setIsRenamingCategory(true)} className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Organizar Categorias</button>
              )}
              {canEdit && (
-               <button onClick={() => { resetForm(); setShowModal(true); }} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg transition-all active:scale-95 uppercase text-[10px] tracking-widest">Novo Item</button>
+               <button onClick={() => { resetForm(); setShowModal(true); }} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg transition-all active:scale-95 uppercase text-[10px] tracking-widest">Cadastrar Novo</button>
              )}
           </div>
         </div>
@@ -152,7 +152,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
            <input 
              type="text" 
-             placeholder="FILTRAR POR NOME DO PRODUTO..." 
+             placeholder="BUSCAR PRODUTO..." 
              value={searchProduct}
              onChange={e => setSearchProduct(e.target.value)}
              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all"
@@ -195,7 +195,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                     <div className="flex justify-between items-start z-10">
                        <div className="pr-4">
                           <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase leading-tight mb-1">{p.name}</h4>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{p.sellType === 'unit' ? 'Unidade' : 'Peso (Kg)'}</span>
+                          <span className="text-[9px] font-bold text-slate-400 uppercase">{p.sellType === 'unit' ? 'Venda por Unidade' : 'Venda por Peso (Kg)'}</span>
                        </div>
                        <button onClick={() => onUpdate({ ...p, isFavorite: !p.isFavorite })} className={`transition-all ${p.isFavorite ? 'text-amber-400 scale-125' : 'text-slate-200 dark:text-slate-800 hover:text-amber-200'}`}>
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
@@ -214,13 +214,19 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
              </div>
           </div>
         ))}
+        {products.length === 0 && (
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800">
+             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Nenhum produto cadastrado ainda.</p>
+             <button onClick={() => setShowModal(true)} className="mt-4 text-red-600 font-black uppercase text-[10px] tracking-[0.2em] underline">Cadastrar Primeiro Item</button>
+          </div>
+        )}
       </div>
 
       {isRenamingCategory && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setIsRenamingCategory(false)} />
            <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter">Renomear em Lote</h3>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter">Alterar Nome de Categoria</h3>
               <div className="space-y-4">
                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Categoria Atual</label>
@@ -233,7 +239,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Novo Nome</label>
                     <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="EX: BEBIDAS GELADAS" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500" />
                  </div>
-                 <button onClick={handleRenameCategoryBatch} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg">Alterar Todos os Itens</button>
+                 <button onClick={handleRenameCategoryBatch} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg">Atualizar Todos os Produtos</button>
                  <button onClick={() => setIsRenamingCategory(false)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Fechar</button>
               </div>
            </div>
@@ -243,13 +249,13 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
-             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-none">Excluir Item?</h3>
+             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-none">Excluir Produto?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-               O produto <span className="text-red-600 font-black uppercase">"{deleteConfirmId.name}"</span> será removido permanentemente do cardápio.
+               O item <span className="text-red-600 font-black uppercase">"{deleteConfirmId.name}"</span> será removido definitivamente do seu cardápio.
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={() => { onDelete(deleteConfirmId.id); setDeleteConfirmId(null); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-red-600/20">Confirmar Exclusão</button>
@@ -266,7 +272,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
               <div>
                 <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none">
-                  {editingId ? 'Editar Produto' : 'Novo Produto'}
+                  {editingId ? 'Editar Detalhes' : 'Cadastrar Produto'}
                 </h3>
               </div>
               <button onClick={closeModal} className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all active:scale-90">
@@ -276,12 +282,12 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
             <div className="p-8 space-y-6">
               {formError && (
                 <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30 animate-in shake">
-                  ⚠️ ERRO: {formError}
+                  ⚠️ ERRO NO FORMULÁRIO: {formError}
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome Comercial</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome do Produto</label>
                   <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cerveja IPA 600ml" className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all font-bold" />
                 </div>
                 <div className="space-y-2">
@@ -292,14 +298,14 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                   </datalist>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Modelo de Venda</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipo de Venda</label>
                   <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <button onClick={() => setSellType('unit')} className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>Unidade</button>
                     <button onClick={() => setSellType('weight')} className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>Peso (Kg)</button>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Preço de Venda</label>
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Preço de Venda (R$)</label>
                   <div className="relative">
                     <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-base">R$</span>
                     <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(sanitizeCurrencyInput(e.target.value))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl shadow-inner" />
@@ -307,7 +313,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                 </div>
               </div>
               <div className="pt-6 flex flex-col md:flex-row gap-4 border-t border-slate-100 dark:border-slate-800">
-                <button onClick={handleSave} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95">Salvar Produto</button>
+                <button onClick={handleSave} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95">Salvar no Sistema</button>
                 <button onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Cancelar</button>
               </div>
             </div>
