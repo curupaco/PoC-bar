@@ -60,6 +60,13 @@ const Sidebar: React.FC<SidebarProps> = ({
     { title: 'GESTÃO', items: ['products', 'users', 'settings'] }
   ];
 
+  const Tooltip = ({ text }: { text: string }) => (
+    <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[100] shadow-2xl border border-slate-700/50 invisible group-hover:visible translate-x-2 group-hover:translate-x-0 duration-200">
+      {text}
+      <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900"></div>
+    </div>
+  );
+
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in" onClick={onClose} />}
@@ -68,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
            <svg className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
 
-        <div className="p-6 flex-1 overflow-y-auto space-y-8 no-scrollbar">
+        <div className={`p-6 flex-1 space-y-8 no-scrollbar ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto'}`}>
           <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
              <img src="https://img.icons8.com/fluency/512/beer.png" alt="Logo" className="w-9 h-9 object-contain" />
              {!isCollapsed && <span className="font-normal text-slate-800 dark:text-white tracking-tighter leading-none font-barrio text-3xl">Botequista</span>}
@@ -86,17 +93,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                     .map((item) => {
                       const isActive = activeView === item.id;
                       return (
-                        <button key={item.id} onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-                          <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
-                          {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
-                          {!isCollapsed && item.id === 'pos' && activeTabsCount > 0 && (
-                            <span className="ml-auto text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-lg">({activeTabsCount})</span>
-                          )}
-                          {item.id === 'shifts' && isShiftOpen && (
-                            <span className={`w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] ${isCollapsed ? 'absolute top-2 right-2' : 'ml-auto'}`}></span>
-                          )}
-                          {!isCollapsed && item.id === 'reports' && totalPendura >= penduraThreshold && <span className="ml-auto text-[10px] animate-bounce">⚠️</span>}
-                        </button>
+                        <div key={item.id} className="relative group">
+                          <button onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                            <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
+                            {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
+                            {!isCollapsed && item.id === 'pos' && activeTabsCount > 0 && (
+                              <span className="ml-auto text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-lg">({activeTabsCount})</span>
+                            )}
+                            {item.id === 'shifts' && isShiftOpen && (
+                              <span className={`w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] ${isCollapsed ? 'absolute top-2 right-2' : 'ml-auto'}`}></span>
+                            )}
+                            {!isCollapsed && item.id === 'reports' && totalPendura >= penduraThreshold && <span className="ml-auto text-[10px] animate-bounce">⚠️</span>}
+                          </button>
+                          {isCollapsed && <Tooltip text={item.label} />}
+                        </div>
                       );
                     })}
                 </div>
@@ -105,11 +115,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2 bg-slate-50/50 dark:bg-slate-900/50">
-           <button onClick={() => { onViewChange('help'); onClose(); }} className={`w-full flex items-center gap-3 rounded-2xl transition-all ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${activeView === 'help' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-red-500'}`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              {!isCollapsed && <span className="text-[11px] uppercase font-black">GUIA DE OPERAÇÃO</span>}
-           </button>
+        <div className="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2 bg-slate-50/50 dark:bg-slate-900/50 overflow-visible">
+           <div className="relative group">
+             <button onClick={() => { onViewChange('help'); onClose(); }} className={`w-full flex items-center gap-3 rounded-2xl transition-all ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${activeView === 'help' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-red-500'}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                {!isCollapsed && <span className="text-[11px] uppercase font-black">GUIA DE OPERAÇÃO</span>}
+             </button>
+             {isCollapsed && <Tooltip text="GUIA DE OPERAÇÃO" />}
+           </div>
            <div className={`flex items-center gap-3 p-1 ${isCollapsed ? 'justify-center' : ''}`}>
              <button onClick={onLogout} className="rounded-2xl bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md">
                {currentUser?.username.slice(0, 2).toUpperCase()}
