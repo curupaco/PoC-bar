@@ -126,7 +126,8 @@ const POS: React.FC<POSProps> = ({
             items.push({ 
               productId: product.id, 
               productName: product.name, 
-              category: product.category || 'GERAL',
+              // NORMALIZAÇÃO: Grava a categoria normalizada no item da mesa
+              category: (product.category || 'GERAL').toUpperCase().trim(),
               quantity: quantity, 
               unitPrice: product.price, 
               totalPrice: Number((quantity * product.price).toFixed(2)) 
@@ -195,7 +196,11 @@ const POS: React.FC<POSProps> = ({
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
-  const categories = Array.from(new Set(filteredProducts.map(p => p.category))).sort();
+  
+  // NORMALIZAÇÃO: Unifica categorias duplicadas (caixa alta/espaços) na exibição das abas
+  const categories = useMemo(() => {
+    return Array.from(new Set(filteredProducts.map(p => (p.category || 'GERAL').toUpperCase().trim()))).sort();
+  }, [filteredProducts]);
 
   const formatPriceOnly = (val: number) => {
     return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -261,9 +266,8 @@ const POS: React.FC<POSProps> = ({
        return;
     }
 
-    // Validação estrita: total pago deve ser igual ou maior que o total da conta
-    if (currentTotalPaid < tabTotal) {
-       setValidationError(`VALOR INSUFICIENTE! FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}`);
+    if (!isShortcut && (tabTotal - currentTotalPaid) > 0.05) {
+       setValidationError(`FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}!`);
        return;
     }
 
@@ -423,7 +427,7 @@ const POS: React.FC<POSProps> = ({
                       <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800/30"></div>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                      {filteredProducts.filter(p => p.category === cat).map(p => (
+                      {filteredProducts.filter(p => (p.category || 'GERAL').toUpperCase().trim() === cat).map(p => (
                         <button key={p.id} onClick={() => p.sellType === 'weight' ? setWeightModalProduct(p) : addToTab(p, 1)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-center flex flex-col items-center justify-center h-24 group">
                           <p className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase leading-[1.1] line-clamp-2 px-1 mb-0.5">{p.name}</p>
                           <p className="text-2xl font-black text-red-600 leading-none">{formatPriceOnly(p.price)}</p>

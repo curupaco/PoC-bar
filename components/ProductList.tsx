@@ -38,14 +38,18 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     }
   }, [showModal, deleteConfirmId, isRenamingCategory]);
 
+  // NORMALIZAÇÃO: Garante que a lista de categorias para o filtro seja única e em caixa alta
   const categoriesList = useMemo(() => {
     const cats = new Set(['BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'TABACARIA']);
     products.forEach(p => {
-      if (p.category) cats.add(p.category.toUpperCase().trim());
+      if (p.category) {
+        cats.add(p.category.toUpperCase().trim());
+      }
     });
     return Array.from(cats).sort();
   }, [products]);
 
+  // NORMALIZAÇÃO: Agrupa produtos tratando chaves de categoria de forma insensível a caixa/espaços
   const groupedProducts = useMemo(() => {
     const groups: Record<string, Product[]> = {};
     const normalizedSearch = searchProduct.toLowerCase().trim();
@@ -65,7 +69,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
   const sortedCategories = useMemo(() => {
     const allCats = Object.keys(groupedProducts).sort();
     if (selectedCategoryIndex === 'TODOS') return allCats;
-    return allCats.filter(c => c === selectedCategoryIndex);
+    return allCats.filter(c => c === selectedCategoryIndex.toUpperCase().trim());
   }, [groupedProducts, selectedCategoryIndex]);
 
   const handleSave = () => {
@@ -80,6 +84,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
       id: editingId || Date.now().toString(),
       name: name.toUpperCase().trim(),
       price: priceNum,
+      // NORMALIZAÇÃO: Força gravação padronizada
       category: category.toUpperCase().trim(),
       sellType,
       isFavorite: editingId ? products.find(p => p.id === editingId)?.isFavorite : false
@@ -251,7 +256,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-none">Excluir Produto?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
@@ -288,11 +293,11 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome do Produto</label>
-                  <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cerveja IPA 600ml" className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all font-bold" />
+                  <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cerveja IPA 600ml" className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all font-bold uppercase" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Categoria</label>
-                  <input type="text" list="cat-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Selecione ou Digite..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all uppercase text-xs font-black" />
+                  <input type="text" list="cat-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Selecione ou Digite..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all uppercase text-xs font-black" />
                   <datalist id="cat-suggestions">
                      {categoriesList.map(c => <option key={c} value={c} />)}
                   </datalist>
@@ -308,7 +313,7 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
                   <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Preço de Venda (R$)</label>
                   <div className="relative">
                     <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-base">R$</span>
-                    <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(sanitizeCurrencyInput(e.target.value))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl shadow-inner" />
+                    <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(sanitizeCurrencyInput(e.target.value))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl shadow-inner" />
                   </div>
                 </div>
               </div>

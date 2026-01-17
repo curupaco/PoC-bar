@@ -81,7 +81,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       return acc;
     }, {} as Record<string, number>);
 
-    // Estatísticas de Categoria para o Turno - Melhorada para ser mais resiliente
+    // Estatísticas de Categoria para o Turno - NORMALIZAÇÃO: Limpa duplicatas no Mix de Vendas
     const shiftCategoryStats = shiftSales
       .filter(s => !s.items?.some(i => i.productId === 'quitacao')) // Ignora quitações puras no mix de produtos
       .flatMap(s => s.items || [])
@@ -89,7 +89,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         const product = products.find(p => p.id === item.productId);
         let catName = 'OUTROS';
         
-        if (product && product.category) {
+        // NORMALIZAÇÃO: Sempre força Uppercase e Trim ao processar categorias
+        if (item.category) {
+          catName = item.category.toUpperCase().trim();
+        } else if (product && product.category) {
           catName = product.category.toUpperCase().trim();
         } else if (item.productName) {
            // Tenta inferir se for algo óbvio e o produto não existir mais
@@ -102,10 +105,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         return acc;
       }, {} as Record<string, number>);
 
-    // Faturamento apenas de consumo (para bater com o gráfico)
-    // Fix line 106 error: Explicitly type reduce parameters to avoid unknown types inference
     const shiftConsumptionTotal = Object.values(shiftCategoryStats).reduce((a: number, b: number) => a + b, 0);
-    // Explicitly type reduce parameters for revenue calculation
     const shiftTotalRevenue = shiftSales.reduce((acc: number, s: Sale) => acc + s.total, 0);
 
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
@@ -222,7 +222,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                       {reportData.selectedShift.endTime && <p>FECHAMENTO: {new Date(reportData.selectedShift.endTime).toLocaleString('pt-BR')}</p>}
                    </div>
                    
-                   {/* RESUMO FINANCEIRO */}
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
                       <div className="text-xs font-black uppercase text-center mb-2">RESUMO FINANCEIRO</div>
                       { (Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
@@ -237,7 +236,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
                       </div>
                    </div>
 
-                   {/* CONSUMO POR CATEGORIA (BARRA VISUAL) */}
                    <div className="border-t border-dashed border-slate-800 pt-4 space-y-4">
                       <div className="text-xs font-black uppercase text-center mb-1">MIX DE VENDAS (CATEGORIAS)</div>
                       <div className="space-y-4">
