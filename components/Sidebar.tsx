@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const Tooltip = ({ text }: { text: string }) => (
-    <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[100] shadow-2xl border border-slate-700/50 invisible group-hover:visible translate-x-2 group-hover:translate-x-0 duration-200">
+    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[9999] shadow-2xl border border-slate-700 invisible group-hover:visible translate-x-2 group-hover:translate-x-0">
       {text}
       <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900"></div>
     </div>
@@ -69,13 +69,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-40 md:hidden animate-in fade-in" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-50 transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'}`}>
-        <button onClick={onToggleCollapse} className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center shadow-md text-slate-400 z-[60]">
+      {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90] md:hidden" onClick={onClose} />}
+      <aside className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20 overflow-visible' : 'w-64'}`}>
+        <button onClick={onToggleCollapse} className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center shadow-md text-slate-400 z-[110]">
            <svg className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
 
-        <div className={`p-6 flex-1 space-y-8 no-scrollbar ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto'}`}>
+        <div className={`p-6 flex-1 space-y-8 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto no-scrollbar'}`}>
           <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
              <img src="https://img.icons8.com/fluency/512/beer.png" alt="Logo" className="w-9 h-9 object-contain" />
              {!isCollapsed && <span className="font-normal text-slate-800 dark:text-white tracking-tighter leading-none font-barrio text-3xl">Botequista</span>}

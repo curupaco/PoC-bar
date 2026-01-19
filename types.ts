@@ -55,6 +55,18 @@ export interface Shift {
   cashDifference?: number;    
 }
 
+export interface ModifierOption {
+  name: string;
+  price: number;
+}
+
+export interface ModifierGroup {
+  id: string;
+  name: string;
+  category: string;
+  options: ModifierOption[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -62,6 +74,7 @@ export interface Product {
   category: string;
   sellType: SellType;
   isFavorite?: boolean;
+  modifierGroupId?: string;
 }
 
 export interface SaleItem {
@@ -71,6 +84,7 @@ export interface SaleItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  modifier?: ModifierOption;
 }
 
 export interface Tab {

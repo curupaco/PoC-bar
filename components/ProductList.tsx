@@ -1,64 +1,58 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Product, SellType, formatCurrency, User, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Product, SellType, formatCurrency, User, ModifierGroup, ModifierOption, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 
 interface ProductListProps {
   products: Product[];
+  modifierGroups: ModifierGroup[];
+  setModifierGroups: (groups: ModifierGroup[]) => void;
   onAdd: (product: Product) => void;
   onDelete: (id: string) => void;
   onUpdate: (product: Product) => void;
   currentUser: User;
 }
 
-const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelete, onUpdate, currentUser }) => {
+const ProductList: React.FC<ProductListProps> = ({ 
+  products = [], 
+  modifierGroups = [], 
+  setModifierGroups, 
+  onAdd, 
+  onDelete, 
+  onUpdate, 
+  currentUser 
+}) => {
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS'>('ITEMS');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // States Produto
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState(''); 
   const [sellType, setSellType] = useState<SellType>('unit');
-  
-  const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string} | null>(null);
-  const [isRenamingCategory, setIsRenamingCategory] = useState(false);
-  const [catToRename, setCatToRename] = useState('');
-  const [newCatName, setNewCatName] = useState('');
-
-  const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<string>('TODOS');
+  const [modGroupId, setModGroupId] = useState<string>('');
   const [searchProduct, setSearchProduct] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
+
+  // States Grupos de Modificadores/Serviços
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState('');
+  const [groupCategory, setGroupCategory] = useState('GERAL');
+  const [options, setOptions] = useState<ModifierOption[]>([{ name: '', price: 0 }]);
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
-  const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
 
-  useEffect(() => {
-    if (showModal || deleteConfirmId || isRenamingCategory) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [showModal, deleteConfirmId, isRenamingCategory]);
-
-  // NORMALIZAÇÃO: Garante que a lista de categorias para o filtro seja única e em caixa alta
   const categoriesList = useMemo(() => {
-    const cats = new Set(['BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'TABACARIA']);
-    products.forEach(p => {
-      if (p.category) {
-        cats.add(p.category.toUpperCase().trim());
-      }
-    });
+    const cats = new Set(['BEBIDAS', 'CERVEJAS', 'PORÇÕES', 'REFEIÇÕES', 'DOSES', 'COMBOS']);
+    products.forEach(p => { if (p.category) cats.add(p.category.toUpperCase().trim()); });
     return Array.from(cats).sort();
   }, [products]);
 
-  // NORMALIZAÇÃO: Agrupa produtos tratando chaves de categoria de forma insensível a caixa/espaços
   const groupedProducts = useMemo(() => {
     const groups: Record<string, Product[]> = {};
-    const normalizedSearch = searchProduct.toLowerCase().trim();
-
     products.forEach(p => {
       const cat = (p.category || 'SEM CATEGORIA').toUpperCase().trim();
-      const matchesSearch = p.name.toLowerCase().includes(normalizedSearch);
-      
-      if (matchesSearch) {
+      if (p.name.toLowerCase().includes(searchProduct.toLowerCase())) {
         if (!groups[cat]) groups[cat] = [];
         groups[cat].push(p);
       }
@@ -66,264 +60,229 @@ const ProductList: React.FC<ProductListProps> = ({ products = [], onAdd, onDelet
     return groups;
   }, [products, searchProduct]);
 
-  const sortedCategories = useMemo(() => {
-    const allCats = Object.keys(groupedProducts).sort();
-    if (selectedCategoryIndex === 'TODOS') return allCats;
-    return allCats.filter(c => c === selectedCategoryIndex.toUpperCase().trim());
-  }, [groupedProducts, selectedCategoryIndex]);
-
-  const handleSave = () => {
-    setFormError(null);
-    if (!name.trim()) { setFormError("NOME DO PRODUTO É OBRIGATÓRIO"); return; }
-    if (!category.trim()) { setFormError("INFORME UMA CATEGORIA PARA ORGANIZAR O CARDÁPIO"); return; }
-    
+  const handleSaveProduct = () => {
+    if (!name.trim() || !category.trim()) return;
     const priceNum = parseCurrencyValue(price);
-    if (isNaN(priceNum) || priceNum <= 0) { setFormError("INFORME UM PREÇO DE VENDA VÁLIDO"); return; }
-
     const productData: Product = {
       id: editingId || Date.now().toString(),
       name: name.toUpperCase().trim(),
       price: priceNum,
-      // NORMALIZAÇÃO: Força gravação padronizada
       category: category.toUpperCase().trim(),
       sellType,
+      modifierGroupId: modGroupId || undefined,
       isFavorite: editingId ? products.find(p => p.id === editingId)?.isFavorite : false
     };
-
-    if (editingId) onUpdate(productData);
-    else onAdd(productData);
+    if (editingId) onUpdate(productData); else onAdd(productData);
     closeModal();
   };
 
-  const handleRenameCategoryBatch = () => {
-    if (!catToRename || !newCatName) return;
-    const catUpper = catToRename.toUpperCase().trim();
-    const newUpper = newCatName.toUpperCase().trim();
-    
-    products.forEach(p => {
-      if ((p.category || 'GERAL').toUpperCase().trim() === catUpper) {
-        onUpdate({ ...p, category: newUpper });
-      }
-    });
-    
-    setIsRenamingCategory(false);
-    setCatToRename('');
-    setNewCatName('');
-  };
-
   const closeModal = () => {
-    setShowModal(false);
-    setEditingId(null);
-    setFormError(null);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setName('');
-    setPrice('');
-    setCategory(''); 
-    setSellType('unit');
+    setShowModal(false); setEditingId(null);
+    setName(''); setPrice(''); setCategory(''); setSellType('unit'); setModGroupId('');
   };
 
   const startEdit = (p: Product) => {
     if (!canEdit) return;
-    setEditingId(p.id);
-    setName(p.name);
-    setPrice(p.price.toFixed(2).replace('.', ','));
-    setCategory(p.category);
-    setSellType(p.sellType);
+    setEditingId(p.id); setName(p.name); setPrice(p.price.toFixed(2).replace('.', ','));
+    setCategory(p.category); setSellType(p.sellType); setModGroupId(p.modifierGroupId || '');
     setShowModal(true);
   };
 
+  // Funções de Gestão de Modificadores
+  const handleAddOption = () => setOptions([...options, { name: '', price: 0 }]);
+  const handleRemoveOption = (index: number) => setOptions(options.filter((_, i) => i !== index));
+  const handleOptionChange = (index: number, field: keyof ModifierOption, value: any) => {
+    const newOptions = [...options];
+    if (field === 'price') {
+      newOptions[index][field] = parseCurrencyValue(value);
+    } else {
+      newOptions[index][field] = value;
+    }
+    setOptions(newOptions);
+  };
+
+  const handleSaveGroup = () => {
+    if (!groupName.trim()) return;
+    const cleanOptions = options.filter(o => o.name.trim() !== '');
+    const newGroup: ModifierGroup = {
+      id: editingGroupId || `mod-${Date.now()}`,
+      name: groupName.toUpperCase(),
+      category: groupCategory.toUpperCase(),
+      options: cleanOptions
+    };
+    if (editingGroupId) setModifierGroups(modifierGroups.map(g => g.id === editingGroupId ? newGroup : g));
+    else setModifierGroups([...modifierGroups, newGroup]);
+    setShowGroupModal(false);
+    setGroupName(''); setGroupCategory('GERAL'); setOptions([{ name: '', price: 0 }]); setEditingGroupId(null);
+  };
+
   return (
-    <div className="space-y-6 relative">
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div>
-             <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Produtos e Preços</h2>
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{products.length} Itens no Cardápio</p>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-             {canEdit && (
-               <button onClick={() => setIsRenamingCategory(true)} className="flex-1 sm:flex-none bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-4 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Organizar Categorias</button>
-             )}
-             {canEdit && (
-               <button onClick={() => { resetForm(); setShowModal(true); }} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg transition-all active:scale-95 uppercase text-[10px] tracking-widest">Cadastrar Novo</button>
-             )}
-          </div>
-        </div>
-
-        <div className="relative">
-           <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-           <input 
-             type="text" 
-             placeholder="BUSCAR PRODUTO..." 
-             value={searchProduct}
-             onChange={e => setSearchProduct(e.target.value)}
-             className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all"
-           />
-        </div>
+    <div className="space-y-6">
+      <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm w-fit">
+         <button onClick={() => setActiveTab('ITEMS')} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'ITEMS' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400'}`}>Produtos</button>
+         <button onClick={() => setActiveTab('GROUPS')} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'GROUPS' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400'}`}>Serviços e Adicionais</button>
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-3 -mx-4 px-4 sticky top-0 z-20 bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/50 dark:border-slate-800/50">
-        <button 
-          onClick={() => setSelectedCategoryIndex('TODOS')}
-          className={`shrink-0 px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all border ${selectedCategoryIndex === 'TODOS' ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:border-slate-400'}`}
-        >
-          Todos
-        </button>
-        {categoriesList.map(cat => (
-          <button 
-            key={cat}
-            onClick={() => setSelectedCategoryIndex(cat)}
-            className={`shrink-0 px-6 py-2.5 rounded-full font-black text-[10px] uppercase tracking-widest transition-all border ${selectedCategoryIndex === cat ? 'bg-red-600 border-red-600 text-white shadow-lg' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400 hover:border-red-400'}`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {activeTab === 'ITEMS' ? (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tighter italic">Itens à Venda</h2>
+              {canEdit && <button onClick={() => setShowModal(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg uppercase text-[10px] tracking-widest">Novo Item</button>}
+            </div>
+            <input type="text" placeholder="BUSCAR NO CARDÁPIO..." value={searchProduct} onChange={e => setSearchProduct(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all" />
+          </div>
 
-      <div className="grid grid-cols-1 gap-10 pb-20">
-        {sortedCategories.map(cat => (
-          <div key={cat} className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-             <div className="flex items-center gap-4">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.3em] pl-2">{cat}</h3>
-                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800/50"></div>
-                <span className="text-[9px] font-black text-slate-300 uppercase">{groupedProducts[cat].length} ITENS</span>
-             </div>
-
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-               {groupedProducts[cat].sort((a,b) => (a.isFavorite === b.isFavorite ? 0 : a.isFavorite ? -1 : 1)).map(p => (
-                 <div key={p.id} className="bg-white dark:bg-slate-900 rounded-[32px] p-5 border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-red-500 transition-all flex flex-col justify-between h-44 relative overflow-hidden">
-                    {p.isFavorite && <div className="absolute -top-6 -right-6 w-12 h-12 bg-amber-400/10 rotate-45 pointer-events-none"></div>}
-                    
-                    <div className="flex justify-between items-start z-10">
-                       <div className="pr-4">
-                          <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase leading-tight mb-1">{p.name}</h4>
-                          <span className="text-[9px] font-bold text-slate-400 uppercase">{p.sellType === 'unit' ? 'Venda por Unidade' : 'Venda por Peso (Kg)'}</span>
+          <div className="space-y-8 pb-24">
+            {Object.keys(groupedProducts).sort().map(cat => (
+              <div key={cat} className="space-y-4">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-4">{cat}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groupedProducts[cat].map(p => (
+                    <div key={p.id} className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 transition-all group flex justify-between items-center">
+                       <div>
+                          <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase">{p.name}</h4>
+                          <p className="text-xl font-black text-red-600 mt-1">{formatCurrency(p.price)}</p>
+                          {p.modifierGroupId && (
+                             <span className="text-[8px] bg-blue-50 dark:bg-blue-900/20 text-blue-500 px-2 py-0.5 rounded font-black uppercase mt-2 inline-block">Possui Serviços</span>
+                          )}
                        </div>
-                       <button onClick={() => onUpdate({ ...p, isFavorite: !p.isFavorite })} className={`transition-all ${p.isFavorite ? 'text-amber-400 scale-125' : 'text-slate-200 dark:text-slate-800 hover:text-amber-200'}`}>
-                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                       </button>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 z-10">
-                       <p className="text-2xl font-black text-red-600 dark:text-red-400">{formatCurrency(p.price)}<span className="text-[10px] ml-1 opacity-50">{p.sellType === 'weight' ? '/kg' : ''}</span></p>
-                       <div className="flex gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button onClick={() => startEdit(p)} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-blue-500 hover:bg-blue-500 hover:text-white transition-all shadow-sm"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                          <button onClick={() => setDeleteConfirmId({id: p.id, name: p.name})} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                       <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => startEdit(p)} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                          <button onClick={() => onDelete(p.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                        </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-6 animate-in fade-in duration-500">
+           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 flex justify-between items-center shadow-sm">
+              <div>
+                 <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Serviços e Modificadores</h2>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Ex: Opções de Gelo, Ponto da Carne, Adicionais Pagos</p>
+              </div>
+              <button onClick={() => setShowGroupModal(true)} className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-blue-600/20 active:scale-95">Criar Grupo</button>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {modifierGroups.map(g => (
+                 <div key={g.id} className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm group">
+                    <div className="flex justify-between items-start mb-6">
+                       <div>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{g.category}</p>
+                          <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm tracking-tight">{g.name}</h4>
+                       </div>
+                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                          <button onClick={() => { setEditingGroupId(g.id); setGroupName(g.name); setGroupCategory(g.category); setOptions(g.options.length ? g.options : [{ name: '', price: 0 }]); setShowGroupModal(true); }} className="text-blue-500 p-1.5"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15.232 5.232" /></svg></button>
+                          <button onClick={() => setModifierGroups(modifierGroups.filter(x => x.id !== g.id))} className="text-red-500 p-1.5"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862" /></svg></button>
+                       </div>
+                    </div>
+                    <div className="space-y-3">
+                       {g.options.map((opt, i) => (
+                          <div key={i} className="flex justify-between items-center text-[11px] font-bold text-slate-500 uppercase border-b border-slate-50 dark:border-slate-800 pb-2 last:border-0">
+                             <span>{opt.name}</span>
+                             <span className={opt.price > 0 ? 'text-emerald-500' : 'text-slate-300'}>{opt.price > 0 ? `+${formatCurrency(opt.price)}` : 'Grátis'}</span>
+                          </div>
+                       ))}
+                    </div>
                  </div>
-               ))}
-             </div>
-          </div>
-        ))}
-        {products.length === 0 && (
-          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800">
-             <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Nenhum produto cadastrado ainda.</p>
-             <button onClick={() => setShowModal(true)} className="mt-4 text-red-600 font-black uppercase text-[10px] tracking-[0.2em] underline">Cadastrar Primeiro Item</button>
-          </div>
-        )}
-      </div>
+              ))}
+              {modifierGroups.length === 0 && (
+                <div className="col-span-full py-24 text-center text-slate-400 font-black uppercase text-[10px] italic border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px]">Nenhum serviço cadastrado</div>
+              )}
+           </div>
+        </div>
+      )}
 
-      {isRenamingCategory && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setIsRenamingCategory(false)} />
-           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] p-8 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-6 tracking-tighter">Alterar Nome de Categoria</h3>
-              <div className="space-y-4">
-                 <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Categoria Atual</label>
-                    <select value={catToRename} onChange={e => setCatToRename(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none">
-                       <option value="">Selecione...</option>
-                       {categoriesList.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+      {/* Modal Cadastro Item */}
+      {showModal && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+           <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+              <div className="px-10 py-8 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center border-b dark:border-slate-800">
+                 <h3 className="text-xl font-black uppercase tracking-tighter text-slate-800 dark:text-white italic">{editingId ? 'Editar Detalhes' : 'Novo Produto'}</h3>
+                 <button onClick={closeModal} className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+              </div>
+              <div className="p-10 space-y-6">
+                 <div className="grid grid-cols-2 gap-6">
+                    <div className="col-span-2 space-y-1">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nome Comercial</label>
+                       <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-bold uppercase text-slate-800 dark:text-white border dark:border-slate-800" />
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Categoria</label>
+                       <input list="cats" type="text" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-bold uppercase text-xs border dark:border-slate-800" />
+                       <datalist id="cats">{categoriesList.map(c => <option key={c} value={c} />)}</datalist>
+                    </div>
+                    <div className="space-y-1">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Preço R$</label>
+                       <input type="text" inputMode="decimal" value={price} onChange={e => setPrice(sanitizeCurrencyInput(e.target.value))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black text-xl border dark:border-slate-800 text-red-600" />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest italic">Vincular Grupo de Serviços/Adicionais</label>
+                       <select value={modGroupId} onChange={e => setModGroupId(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-bold uppercase text-xs border dark:border-slate-800 text-blue-500 outline-none">
+                          <option value="">NENHUM SERVIÇO VINCULADO</option>
+                          {modifierGroups.map(g => <option key={g.id} value={g.id}>{g.name} ({g.category})</option>)}
+                       </select>
+                    </div>
                  </div>
-                 <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Novo Nome</label>
-                    <input type="text" value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="EX: BEBIDAS GELADAS" className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-blue-500" />
+                 <div className="pt-6 flex gap-4">
+                    <button onClick={handleSaveProduct} className="flex-1 bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Salvar Item</button>
+                    <button onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs tracking-widest">Cancelar</button>
                  </div>
-                 <button onClick={handleRenameCategoryBatch} className="w-full bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg">Atualizar Todos os Produtos</button>
-                 <button onClick={() => setIsRenamingCategory(false)} className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Fechar</button>
               </div>
            </div>
         </div>
       )}
 
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-20 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
-                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-             </div>
-             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-none">Excluir Produto?</h3>
-             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed">
-               O item <span className="text-red-600 font-black uppercase">"{deleteConfirmId.name}"</span> será removido definitivamente do seu cardápio.
-             </p>
-             <div className="flex flex-col gap-3">
-                <button onClick={() => { onDelete(deleteConfirmId.id); setDeleteConfirmId(null); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all shadow-lg shadow-red-600/20">Confirmar Exclusão</button>
-                <button onClick={() => setDeleteConfirmId(null)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600">Cancelar</button>
-             </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Grupo de Serviços / Modificadores */}
+      {showGroupModal && (
+         <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border dark:border-slate-800 animate-in zoom-in-95">
+               <div className="px-10 py-8 border-b dark:border-slate-800 bg-blue-50 dark:bg-blue-900/10">
+                  <h3 className="text-xl font-black uppercase tracking-tighter text-blue-600">{editingGroupId ? 'Editar Serviços' : 'Novo Grupo de Serviços'}</h3>
+               </div>
+               <div className="p-10 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Título do Grupo</label>
+                        <input autoFocus type="text" value={groupName} onChange={e => setGroupName(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-bold border dark:border-slate-800" placeholder="EX: OPÇÕES DE BEBIDA" />
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Categoria do Serviço</label>
+                        <input type="text" value={groupCategory} onChange={e => setGroupCategory(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-bold border dark:border-slate-800" placeholder="EX: BAR" />
+                     </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                     <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest">Opções de Serviço e Preços</label>
+                        <button onClick={handleAddOption} className="text-blue-500 text-[10px] font-black uppercase hover:underline">+ Adicionar Linha</button>
+                     </div>
+                     <div className="max-h-60 overflow-y-auto space-y-3 no-scrollbar pr-2">
+                        {options.map((opt, idx) => (
+                           <div key={idx} className="flex gap-2 animate-in slide-in-from-right-2" style={{ animationDelay: `${idx * 50}ms` }}>
+                              <input type="text" value={opt.name} onChange={e => handleOptionChange(idx, 'name', e.target.value)} className="flex-1 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 font-bold uppercase text-xs border dark:border-slate-800" placeholder="Nome do Serviço (ex: Só Gelo)" />
+                              <div className="relative w-32">
+                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                                 <input type="text" value={opt.price === 0 ? '' : opt.price.toFixed(2).replace('.', ',')} onChange={e => handleOptionChange(idx, 'price', e.target.value)} className="w-full pl-9 pr-3 py-3 rounded-xl bg-slate-50 dark:bg-slate-950 font-black text-xs border dark:border-slate-800 text-emerald-600" placeholder="0,00" />
+                              </div>
+                              <button onClick={() => handleRemoveOption(idx)} className="p-3 text-red-400 hover:text-red-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6" /></svg></button>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300" onClick={closeModal} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[40px] shadow-2xl relative z-10 overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
-            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-              <div>
-                <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none">
-                  {editingId ? 'Editar Detalhes' : 'Cadastrar Produto'}
-                </h3>
-              </div>
-              <button onClick={closeModal} className="w-12 h-12 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-red-500 transition-all active:scale-90">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            </div>
-            <div className="p-8 space-y-6">
-              {formError && (
-                <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30 animate-in shake">
-                  ⚠️ ERRO NO FORMULÁRIO: {formError}
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Nome do Produto</label>
-                  <input autoFocus type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Cerveja IPA 600ml" className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all font-bold uppercase" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Categoria</label>
-                  <input type="text" list="cat-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Selecione ou Digite..." className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none transition-all uppercase text-xs font-black" />
-                  <datalist id="cat-suggestions">
-                     {categoriesList.map(c => <option key={c} value={c} />)}
-                  </datalist>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Tipo de Venda</label>
-                  <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button onClick={() => setSellType('unit')} className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>Unidade</button>
-                    <button onClick={() => setSellType('weight')} className={`flex-1 py-3.5 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>Peso (Kg)</button>
+                  <div className="pt-4 flex gap-4">
+                     <button onClick={handleSaveGroup} className="flex-1 bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Salvar Grupo</button>
+                     <button onClick={() => { setShowGroupModal(false); setEditingGroupId(null); }} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-400 py-5 rounded-2xl font-black uppercase text-xs tracking-widest">Cancelar</button>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Preço de Venda (R$)</label>
-                  <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-base">R$</span>
-                    <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(sanitizeCurrencyInput(e.target.value))} placeholder="0,00" className="w-full pl-14 pr-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white border-2 border-transparent focus:border-red-500 outline-none font-black text-2xl shadow-inner" />
-                  </div>
-                </div>
-              </div>
-              <div className="pt-6 flex flex-col md:flex-row gap-4 border-t border-slate-100 dark:border-slate-800">
-                <button onClick={handleSave} className="flex-[2] bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-red-700 transition-all shadow-xl shadow-red-500/20 active:scale-95">Salvar no Sistema</button>
-                <button onClick={closeModal} className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-slate-200 transition-all">Cancelar</button>
-              </div>
+               </div>
             </div>
-          </div>
-        </div>
+         </div>
       )}
     </div>
   );
