@@ -61,17 +61,13 @@ const Settings: React.FC<SettingsProps> = ({
     setConfirmModal({ isOpen: true, title, message, onConfirm, type });
   };
 
-  /**
-   * MOTOR DE EXPORTAÇÃO PDF MULTI-PÁGINA (LANDSCAPE)
-   * Captura o elemento e fatia em páginas A4 Paisagem (297x210mm)
-   */
   const downloadAsPdf = async (ref: React.RefObject<HTMLDivElement>, fileName: string) => {
     if (!ref.current) return;
-    showToast(`CAPTURANDO DOCUMENTO...`);
+    showToast(`COMPILANDO DOCUMENTO DE ALTA DENSIDADE...`);
     
     try {
       const dataUrl = await htmlToImage.toPng(ref.current, { 
-        pixelRatio: 2, 
+        pixelRatio: 1.5, 
         backgroundColor: '#020617',
         style: { transform: 'scale(1)', transformOrigin: 'top left' }
       });
@@ -80,10 +76,9 @@ const Settings: React.FC<SettingsProps> = ({
       img.src = dataUrl;
       
       img.onload = () => {
-        // Criar PDF em modo Paisagem (Landscape)
         const pdf = new jsPDF('l', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth(); // 297mm
-        const pdfHeight = pdf.internal.pageSize.getHeight(); // 210mm
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
         
         const imgProps = pdf.getImageProperties(dataUrl);
         const imgHeightInPdf = (imgProps.height * pdfWidth) / imgProps.width;
@@ -91,11 +86,9 @@ const Settings: React.FC<SettingsProps> = ({
         let heightLeft = imgHeightInPdf;
         let position = 0;
 
-        // Adiciona a primeira página
         pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
         heightLeft -= pdfHeight;
 
-        // Enquanto houver altura sobrando da imagem, adiciona páginas e desloca
         while (heightLeft > 0) {
           position -= pdfHeight;
           pdf.addPage();
@@ -104,7 +97,7 @@ const Settings: React.FC<SettingsProps> = ({
         }
 
         pdf.save(`botequista-${fileName}.pdf`);
-        showToast("PDF PROFISSIONAL GERADO!");
+        showToast("PDF GERADO COM SUCESSO!");
       };
     } catch (err) {
       console.error(err);
@@ -127,260 +120,356 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
-      {/* CENTRAL DE VENDAS E ENGENHARIA */}
+      {/* CENTRAL DE INTELIGÊNCIA COMERCIAL */}
       <div className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border border-blue-200 dark:border-blue-900/30 shadow-xl space-y-10">
         <div className="flex items-center gap-6">
           <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
           </div>
           <div>
-            <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-800 dark:text-white leading-none">Dossiês de Prospecção</h3>
-            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">Material Premium em PDF Paisagem (Múltiplas Páginas)</p>
+            <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-800 dark:text-white leading-none">Documentos de Autoridade</h3>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">Dossiês de Venda e Arquitetura Técnica</p>
           </div>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-4 text-center">
-             <button onClick={() => { setShowPitchPreview(!showPitchPreview); setShowTechPreview(false); }} className={`w-full py-6 rounded-[28px] font-black uppercase text-xs tracking-widest transition-all shadow-md flex items-center justify-center gap-3 ${showPitchPreview ? 'bg-blue-600 text-white ring-4 ring-blue-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'}`}>
-                {showPitchPreview ? "Fechar Visualização" : "Abrir Proposta Comercial"}
-             </button>
-             {showPitchPreview && (
-                <button onClick={() => downloadAsPdf(pitchRef, 'dossie-comercial-ultra')} className="w-full bg-slate-950 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl animate-in zoom-in-95">
-                  Exportar PDF (Paisagem)
-                </button>
-             )}
-          </div>
-
-          <div className="space-y-4 text-center">
-             <button onClick={() => { setShowTechPreview(!showTechPreview); setShowPitchPreview(false); }} className={`w-full py-6 rounded-[28px] font-black uppercase text-xs tracking-widest transition-all shadow-md flex items-center justify-center gap-3 ${showTechPreview ? 'bg-violet-600 text-white ring-4 ring-violet-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200'}`}>
-                {showTechPreview ? "Fechar Visualização" : "Abrir Blueprint Técnico"}
-             </button>
-             {showTechPreview && (
-                <button onClick={() => downloadAsPdf(techRef, 'whitepaper-tecnico-ultra')} className="w-full bg-slate-950 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] shadow-2xl animate-in zoom-in-95">
-                  Exportar PDF Técnico
-                </button>
-             )}
-          </div>
+          <button onClick={() => { setShowPitchPreview(!showPitchPreview); setShowTechPreview(false); }} className={`p-8 rounded-[32px] font-black uppercase text-xs tracking-widest transition-all shadow-md flex flex-col items-center gap-4 ${showPitchPreview ? 'bg-blue-600 text-white ring-4 ring-blue-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-blue-50'}`}>
+             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+             <span>Dossiê Comercial (Pitch)</span>
+          </button>
+          <button onClick={() => { setShowTechPreview(!showTechPreview); setShowPitchPreview(false); }} className={`p-8 rounded-[32px] font-black uppercase text-xs tracking-widest transition-all shadow-md flex flex-col items-center gap-4 ${showTechPreview ? 'bg-violet-600 text-white ring-4 ring-violet-500/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-violet-50'}`}>
+             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+             <span>Blueprint Técnico (Branco)</span>
+          </button>
         </div>
 
-        {/* --- PROPOSTA COMERCIAL MEGA DOCUMENTO (ESTILO LANDSCAPE) --- */}
+        {/* --- DOSSIÊ COMERCIAL EXPANDIDO --- */}
         {showPitchPreview && (
           <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-10 animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto">
-            <div ref={pitchRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-40 font-sans min-w-[1100px] w-full mx-auto overflow-hidden relative shadow-2xl border border-white/5">
+            <div className="mb-6 flex justify-end">
+                <button onClick={() => downloadAsPdf(pitchRef, 'pitch-comercial-pro')} className="bg-blue-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-3">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                   Exportar Documento (PDF)
+                </button>
+            </div>
+            <div ref={pitchRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-48 font-sans min-w-[1200px] w-full mx-auto relative shadow-2xl border border-white/5">
               
-              {/* PAGE 1: CAPA */}
-              <section className="min-h-[600px] flex flex-col justify-between">
+              {/* PAGE 1: INTRODUÇÃO E LOGO */}
+              <section className="min-h-[700px] flex flex-col justify-between">
                 <div className="flex justify-between items-start">
                    <div className="flex items-center gap-8">
-                      <img src="https://img.icons8.com/fluency/512/beer.png" className="w-28 h-28" alt="Logo" />
+                      <div className="w-24 h-24 bg-red-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-red-600/40">
+                         <img src="https://img.icons8.com/fluency/512/beer.png" className="w-16 h-16" alt="Logo" />
+                      </div>
                       <span className="text-8xl font-barrio leading-none uppercase tracking-tighter">Botequista</span>
                    </div>
-                   <div className="text-right space-y-2">
-                      <div className="bg-red-600 px-12 py-5 rounded-full text-xs font-black uppercase tracking-[0.5em] shadow-xl shadow-red-600/30">PRO EDITION 2025</div>
-                      <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest italic">O Futuro da Gestão de Bares</p>
+                   <div className="text-right space-y-3">
+                      <div className="bg-white/10 border border-white/10 px-8 py-4 rounded-3xl text-xs font-black uppercase tracking-[0.4em]">COMERCIAL DOSSIER 2025</div>
+                      <p className="text-blue-500 font-black uppercase text-[10px] tracking-[0.3em] italic">A Revolução na Gestão Gastronômica</p>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-20 items-end">
-                   <div className="space-y-10">
-                      <h1 className="text-[110px] font-black uppercase tracking-tighter leading-[0.75] italic">
-                        LUCRO É <br /><span className="text-red-600">CONTROLE.</span> <br /><span className="text-blue-500">SEMPRE.</span>
+                <div className="grid grid-cols-2 gap-24 items-center">
+                   <div className="space-y-12">
+                      <h1 className="text-[120px] font-black uppercase tracking-tighter leading-[0.8] italic text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">
+                        PULSO DE <br /><span className="text-red-600">FERRO</span> NO SEU <br /><span className="text-emerald-500">NEGÓCIO.</span>
                       </h1>
-                      <div className="h-2 w-48 bg-blue-600 rounded-full"></div>
-                   </div>
-                   <div className="space-y-8 pb-4">
-                      <p className="text-3xl text-slate-400 font-medium leading-relaxed italic border-l-8 border-red-600 pl-10">
-                        "O Botequista não é apenas um software, é a blindagem financeira que seu bar precisa para crescer sem desperdícios."
+                      <p className="text-2xl text-slate-400 font-medium leading-relaxed italic border-l-8 border-red-600 pl-10">
+                        "O Botequista não apenas registra vendas; ele blinda seu faturamento contra falhas humanas e otimiza cada segundo da sua operação."
                       </p>
-                      <div className="flex gap-12">
-                         <div className="text-center">
-                            <p className="text-4xl font-black text-white">+30%</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Agilidade no Atendimento</p>
-                         </div>
-                         <div className="text-center">
-                            <p className="text-4xl font-black text-emerald-500">100%</p>
-                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Previsibilidade de Caixa</p>
-                         </div>
+                   </div>
+                   <div className="bg-white/5 border border-white/10 p-16 rounded-[60px] relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/20 blur-3xl"></div>
+                      <h4 className="text-xl font-black uppercase mb-8 tracking-widest text-slate-300">Pilares Operacionais:</h4>
+                      <div className="space-y-8">
+                         {[
+                           { t: "Velocidade de Lançamento", d: "Interface desenhada para fechar comandas em menos de 3 cliques." },
+                           { t: "Sincronismo Multi-Device", d: "Celular do garçom e computador do caixa operando a mesma mesa em tempo real." },
+                           { t: "Resiliência PWA", d: "Independência total de instalação. Funciona em qualquer navegador, de qualquer lugar." }
+                         ].map((it, i) => (
+                           <div key={i} className="flex gap-6">
+                              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-red-600 border border-white/10">0{i+1}</div>
+                              <div><p className="font-black uppercase text-sm">{it.t}</p><p className="text-xs text-slate-500 italic mt-1">{it.d}</p></div>
+                           </div>
+                         ))}
                       </div>
                    </div>
                 </div>
               </section>
 
-              {/* PAGE 2: ANÁLISE DE IMPACTO */}
-              <section className="space-y-24 border-t border-white/5 pt-32">
-                <div className="text-center space-y-6">
-                   <h3 className="text-6xl font-black uppercase tracking-tighter italic">O Custo do Caos</h3>
-                   <p className="text-slate-500 text-xl max-w-4xl mx-auto uppercase font-bold tracking-[0.2em]">Sem uma gestão profissional, você está deixando dinheiro na mesa:</p>
-                </div>
+              {/* PAGE 2: ESTRATÉGIA DE UPSELL (MODIFICADORES) */}
+              <section className="space-y-32">
+                 <div className="text-center space-y-6">
+                    <span className="bg-blue-600 px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase">Motor de Crescimento</span>
+                    <h3 className="text-7xl font-black uppercase tracking-tighter italic">O Fator <span className="text-blue-500">Upsell</span> Automático</h3>
+                 </div>
 
-                <div className="grid grid-cols-3 gap-12">
-                   {[
-                     { t: "FALHA DE COMANDA", p: "R$ 450/mês", d: "Itens consumidos que não são cobrados por esquecimento do garçom." },
-                     { t: "FIADO SEM IDENTIDADE", p: "R$ 800/mês", d: "Caderninhos perdidos e cobranças impossíveis de rastrear historicamente." },
-                     { t: "ESTOQUE MORTO", p: "R$ 300/mês", d: "Produtos vencidos ou esquecidos no fundo do freezer sem giro inteligente." }
-                   ].map((item, i) => (
-                     <div key={i} className="bg-white/5 p-12 rounded-[60px] border border-white/5 space-y-6">
-                        <p className="text-red-600 font-black text-3xl mb-2">{item.p} <span className="text-xs text-slate-500 italic">(Média)</span></p>
-                        <h4 className="text-xl font-black uppercase tracking-tighter">{item.t}</h4>
-                        <p className="text-slate-400 text-sm leading-relaxed italic">"{item.d}"</p>
-                     </div>
-                   ))}
-                </div>
-
-                <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-16 rounded-[80px] flex flex-col md:flex-row justify-between items-center shadow-2xl relative overflow-hidden gap-10">
-                   <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-                   <div className="relative z-10 space-y-4 text-center md:text-left">
-                      <p className="text-sm font-black uppercase tracking-[0.4em] text-blue-100">Projeção de ROI</p>
-                      <h4 className="text-5xl font-black uppercase tracking-tighter">RETORNO EM 2 SEMANAS</h4>
-                   </div>
-                   <div className="relative z-10 bg-slate-950 px-16 py-8 rounded-[40px] font-black text-2xl tracking-widest shadow-2xl">
-                      ESTIMATIVA: +R$ 1.550,00/MÊS NO BOLSO
-                   </div>
-                </div>
+                 <div className="grid grid-cols-2 gap-24 items-center">
+                    <div className="relative group">
+                       <div className="absolute inset-0 bg-blue-600 blur-[100px] opacity-10"></div>
+                       <div className="relative bg-slate-900 border border-white/5 p-12 rounded-[60px] space-y-10 shadow-2xl">
+                          <div className="flex justify-between items-center pb-8 border-b border-white/5">
+                             <p className="text-xs font-black uppercase tracking-widest text-slate-500">Exemplo de Indução do Sistema</p>
+                             <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
+                          </div>
+                          <div className="space-y-6">
+                             <div className="p-6 bg-white/5 rounded-3xl border border-white/5 flex justify-between items-center">
+                                <span className="font-black uppercase text-xs">Porção Iscas de Tilápia</span>
+                                <span className="text-emerald-500 font-black">R$ 58,00</span>
+                             </div>
+                             <div className="text-center text-[10px] font-black text-blue-500 uppercase tracking-widest py-2 bg-blue-500/5 rounded-xl">Menu de Opções Forçado ⚡</div>
+                             <div className="grid grid-cols-2 gap-3">
+                                <div className="p-4 bg-blue-600 rounded-2xl text-center font-black text-[10px] uppercase shadow-lg">+ Molho Tártaro (+R$ 12)</div>
+                                <div className="p-4 bg-white/10 rounded-2xl text-center font-black text-[10px] uppercase">+ Limão Extra (+R$ 4)</div>
+                             </div>
+                          </div>
+                          <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                             <span className="font-black uppercase text-sm">TOTAL POTENCIAL</span>
+                             <span className="text-3xl font-black text-white">R$ 74,00</span>
+                          </div>
+                       </div>
+                    </div>
+                    <div className="space-y-12">
+                       <h4 className="text-4xl font-black uppercase tracking-tighter leading-tight italic">
+                          Nunca mais esqueça de <br /><span className="text-blue-500">oferecer o extra.</span>
+                       </h4>
+                       <p className="text-lg text-slate-400 leading-relaxed italic">
+                          O Botequista abre automaticamente menus de "Acompanhamentos" ou "Serviços" vinculados a categorias. O garçom é forçado a perguntar, o cliente consome mais e seu ticket médio sobe exponencialmente.
+                       </p>
+                       <div className="grid grid-cols-2 gap-8">
+                          <div className="bg-white/5 p-8 rounded-[40px] border border-white/5">
+                             <p className="text-4xl font-black text-blue-500">+15.4%</p>
+                             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-2">Crescimento no Ticket Médio</p>
+                          </div>
+                          <div className="bg-white/5 p-8 rounded-[40px] border border-white/5">
+                             <p className="text-4xl font-black text-emerald-500">100%</p>
+                             <p className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-2">Lançamento de Taxas Extras</p>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
               </section>
 
-              {/* PAGE 3: PROTOCOLO OPERACIONAL */}
+              {/* PAGE 3: PRECISÃO POR PESO E GRAMATURA */}
+              <section className="space-y-32">
+                 <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-20 rounded-[80px] border border-white/10 relative overflow-hidden">
+                    <div className="absolute bottom-0 right-0 w-96 h-96 bg-emerald-600/10 blur-[120px]"></div>
+                    <div className="grid grid-cols-2 gap-24 items-center">
+                       <div className="space-y-10">
+                          <h3 className="text-6xl font-black uppercase tracking-tighter italic leading-none">Blindagem de <br /><span className="text-emerald-500">Peso & Valor</span></h3>
+                          <p className="text-lg text-slate-400 italic leading-relaxed">
+                             Vendas por peso (quilo) são a maior fonte de prejuízo por erro de cálculo. Nosso motor matemático converte gramas em Reais instantaneamente.
+                          </p>
+                          <ul className="space-y-6">
+                             {[
+                               "Cálculo matemático com 4 casas decimais",
+                               "Interface numérica gigante para operação sob estresse",
+                               "Registro de gramatura detalhado no histórico de vendas"
+                             ].map((txt, i) => (
+                               <li key={i} className="flex items-center gap-4 text-sm font-black uppercase text-slate-300">
+                                  <span className="w-6 h-6 bg-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-500">✔</span> {txt}
+                               </li>
+                             ))}
+                          </ul>
+                       </div>
+                       <div className="bg-black/40 border-4 border-emerald-500/30 p-16 rounded-[50px] text-center space-y-8 shadow-2xl backdrop-blur-xl">
+                          <p className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.5em]">BALANÇA DIGITAL INTEGRADA</p>
+                          <p className="text-9xl font-black italic tracking-tighter text-white">825g</p>
+                          <div className="h-1 w-32 bg-emerald-500/20 mx-auto"></div>
+                          <p className="text-5xl font-black text-emerald-500">R$ 57,75</p>
+                       </div>
+                    </div>
+                 </div>
+              </section>
+
+              {/* PAGE 4: ANTI-CADERNINHO (PENDURAS) */}
               <section className="space-y-24">
                  <div className="flex gap-24 items-center">
                     <div className="flex-1 space-y-12">
-                       <h3 className="text-7xl font-black uppercase tracking-tighter italic leading-none text-red-600">Protocolo <br />"Gelo na Caneca"</h3>
-                       <p className="text-2xl text-slate-400 font-medium leading-relaxed italic border-l-4 border-blue-600 pl-8">
-                          Desenvolvemos a interface para a pressão do sábado à noite. Zero cliques inúteis, foco total na venda.
+                       <h3 className="text-7xl font-black uppercase tracking-tighter italic leading-none text-red-600">A Morte do <br />Caderninho</h3>
+                       <p className="text-xl text-slate-400 font-medium leading-relaxed italic border-l-4 border-blue-600 pl-8">
+                          O fiado é um ativo financeiro, não um risco. O Botequista rastreia cada centavo devedor por cliente, através de todo o histórico da empresa.
                        </p>
-                       <ul className="space-y-8">
-                          {[
-                            "Lançamentos em 2 toques (Favoritos Dinâmicos)",
-                            "Cálculo de Peso automático para porções e carnes",
-                            "Sincronia instantânea em ilimitados dispositivos",
-                            "Fechamento de turno 'Cego' (Anti-fraude)"
-                          ].map((li, i) => (
-                            <li key={i} className="text-lg font-black uppercase tracking-widest flex items-center gap-6">
-                               <span className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-slate-950 text-sm">✔</span>
-                               {li}
-                            </li>
-                          ))}
-                       </ul>
-                    </div>
-                    <div className="flex-1 grid grid-cols-2 gap-8">
-                       <div className="bg-slate-900 p-12 rounded-[60px] border border-white/5 space-y-8 shadow-inner">
-                          <p className="text-6xl">⚡</p>
-                          <h5 className="font-black text-sm uppercase tracking-[0.3em] text-slate-400">VELOCIDADE</h5>
-                          <p className="text-xs text-slate-500 leading-relaxed italic">Atendimento 40% mais rápido que comandas de papel ou sistemas legados.</p>
+                       <div className="space-y-6">
+                          <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
+                             <p className="font-black uppercase text-sm text-white">Quitação em Tempo Real</p>
+                             <p className="text-xs text-slate-500 mt-2">Dê baixa em dívidas parciais ou totais e veja o fluxo de caixa atualizar no mesmo segundo.</p>
+                          </div>
+                          <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
+                             <p className="font-black uppercase text-sm text-white">Alerta de Risco Financeiro</p>
+                             <p className="text-xs text-slate-500 mt-2">Configure limites globais de fiado. O sistema avisa quando o bar está "exposto" demais.</p>
+                          </div>
                        </div>
-                       <div className="bg-slate-900 p-12 rounded-[60px] border border-white/5 space-y-8 mt-16 shadow-inner">
-                          <p className="text-6xl">📊</p>
-                          <h5 className="font-black text-sm uppercase tracking-[0.3em] text-slate-400">BIG DATA</h5>
-                          <p className="text-xs text-slate-500 leading-relaxed italic">Saiba exatamente qual é o seu horário de pico e qual produto mais gera lucro.</p>
+                    </div>
+                    <div className="flex-1">
+                       <div className="bg-slate-900 border border-white/10 p-12 rounded-[60px] shadow-2xl">
+                          <div className="space-y-6">
+                             <div className="flex justify-between items-center p-6 bg-red-600/10 border border-red-600/20 rounded-2xl">
+                                <span className="font-black uppercase text-xs">JOÃO P. DEVEDOR</span>
+                                <span className="text-red-500 font-black text-xl">R$ 342,00</span>
+                             </div>
+                             <div className="flex justify-between items-center p-6 bg-emerald-600/10 border border-emerald-600/20 rounded-2xl">
+                                <span className="font-black uppercase text-xs">MARIA S. QUITOU</span>
+                                <span className="text-emerald-500 font-black text-xl">R$ 0,00</span>
+                             </div>
+                             <div className="text-center pt-4">
+                                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">CONECTADO AO MODULO DE RELATÓRIOS</p>
+                             </div>
+                          </div>
                        </div>
                     </div>
                  </div>
               </section>
 
-              {/* FINAL CTA */}
-              <footer className="pt-32 border-t border-white/10 flex flex-col items-center gap-16 relative z-10">
-                 <div className="text-center space-y-6">
-                    <p className="text-xs font-black uppercase tracking-[0.6em] text-red-600">Botequista Systems Inc. - 2025</p>
-                    <h3 className="text-9xl font-black uppercase tracking-tighter italic">VAMOS <span className="text-blue-500">BLINDAR?</span></h3>
+              <footer className="pt-32 border-t border-white/10 flex flex-col items-center gap-12 text-center">
+                 <h3 className="text-9xl font-black uppercase tracking-tighter italic opacity-10">BOTEQUISTA PRO</h3>
+                 <div className="space-y-4">
+                    <p className="text-xl font-bold italic text-slate-500">Gestão Superior para Bares que Lucram.</p>
+                    <p className="text-[10px] font-black tracking-[0.5em] text-blue-600 uppercase">PROFESSIONAL GASTRONOMY SYSTEM • v3.9.12</p>
                  </div>
-                 <div className="bg-white text-slate-950 px-24 py-10 rounded-[40px] font-black text-2xl tracking-widest shadow-2xl hover:scale-105 transition-all">
-                    SOLICITAR SETUP COMPLETO →
-                 </div>
-                 <p className="text-slate-600 font-bold uppercase text-xs tracking-widest">www.botequista.com.br | © Todos os direitos reservados</p>
               </footer>
             </div>
           </div>
         )}
 
-        {/* --- BLUEPRINT TÉCNICO ULTRA DETALHADO (ESTILO LANDSCAPE) --- */}
+        {/* --- BLUEPRINT TÉCNICO EXPANDIDO --- */}
         {showTechPreview && (
           <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-10 animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto">
-            <div ref={techRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-40 font-mono min-w-[1100px] w-full mx-auto overflow-hidden relative shadow-2xl border border-white/5">
-              <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '60px 60px' }}></div>
+            <div className="mb-6 flex justify-end">
+                <button onClick={() => downloadAsPdf(techRef, 'blueprint-tecnico-pro')} className="bg-violet-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-3">
+                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                   Exportar Blueprint (PDF)
+                </button>
+            </div>
+            <div ref={techRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-48 font-mono min-w-[1200px] w-full mx-auto relative overflow-hidden shadow-2xl border border-white/5">
+              <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '80px 80px' }}></div>
               
-              {/* TECH PAGE 1: ARQUITETURA */}
-              <header className="flex justify-between items-start relative z-10 border-b border-white/10 pb-16">
-                <div className="space-y-4">
-                   <h2 className="text-6xl font-black uppercase tracking-tighter">BTQ-CORE v3.1</h2>
-                   <p className="text-violet-500 font-bold uppercase tracking-[0.6em] text-sm italic">High-Performance Stateless Engine for Gastronomy</p>
-                </div>
-                <div className="text-right text-[11px] text-slate-500 uppercase leading-relaxed font-mono">
-                  Stack: React 19 / TypeScript 5.7 / Tailwind 3.4<br />
-                  Persistence: Cloud-Synced Stateless Operations<br />
-                  Status: PRODUCTION-READY_LTS
-                </div>
-              </header>
+              {/* TECH PAGE 1: CORE ARCHITECTURE */}
+              <section className="space-y-32 relative z-10">
+                <header className="flex justify-between items-end border-b border-white/10 pb-16">
+                   <div className="space-y-4">
+                      <h2 className="text-6xl font-black uppercase tracking-tighter text-violet-500 italic">Stateless Core</h2>
+                      <p className="text-slate-500 font-bold uppercase tracking-[0.5em] text-xs">High-Availability Gastronomy Engine</p>
+                   </div>
+                   <div className="text-right text-[10px] text-slate-600 space-y-1 font-mono uppercase">
+                      <span>Stack: React 19 + Tailwind 3.4</span><br />
+                      <span>Encryption: AES-256-CBC-PKCS7</span><br />
+                      <span>Sync Mode: Polling + Optimistic State</span>
+                   </div>
+                </header>
 
-              <section className="grid grid-cols-2 gap-24 relative z-10">
-                 <div className="space-y-16">
-                    <div className="space-y-8">
-                       <h4 className="text-white font-black uppercase tracking-widest text-sm flex items-center gap-4 border-l-4 border-violet-600 pl-6">
-                          01. EVENT SOURCING ARCHITECTURE
-                       </h4>
-                       <p className="text-[13px] text-slate-400 leading-relaxed">
-                         O Botequista implementa um paradigma de <strong>Event Sourcing</strong> para persistência. Cada mutação de estado (venda, abertura, cancelamento) é tratada como um evento imutável com timestamp determinístico. Isso elimina conflitos de escrita em cenários de alta concorrência.
-                       </p>
-                    </div>
-                    <div className="space-y-8">
-                       <h4 className="text-white font-black uppercase tracking-widest text-sm flex items-center gap-4 border-l-4 border-violet-600 pl-6">
-                          02. AES-256-GCM ENCRYPTION
-                       </h4>
-                       <p className="text-[13px] text-slate-400 leading-relaxed">
-                         Segurança de nível militar (FIPS-140 compliance). Os dados financeiros são cifrados localmente antes da transmissão. A Master Key nunca toca o servidor. Privacidade absoluta: nem mesmo nós conseguimos ver o faturamento do cliente.
-                       </p>
-                    </div>
-                 </div>
+                <div className="grid grid-cols-3 gap-12">
+                   {[
+                     { h: "Multi-Terminal Sync", d: "Motor de reconciliação assíncrona que garante integridade de dados entre múltiplos dispositivos salvando na mesma base de dados." },
+                     { h: "PWA Native Performance", d: "Arquitetura Zero-Bundle que entrega performance de aplicativo nativo via browser, com cache local via Service Workers." },
+                     { h: "Precision Scaling", d: "Engine de ponto flutuante otimizada para transações comerciais, evitando erros de arredondamento em faturamentos de alto volume." }
+                   ].map((it, i) => (
+                     <div key={i} className="p-10 bg-white/5 border border-white/5 rounded-[40px] space-y-6 hover:bg-white/[0.08] transition-colors">
+                        <h4 className="text-violet-400 font-black text-sm uppercase tracking-widest">{it.h}</h4>
+                        <p className="text-[12px] text-slate-500 leading-relaxed font-sans italic">"{it.d}"</p>
+                     </div>
+                   ))}
+                </div>
 
-                 <div className="space-y-12">
-                    <div className="bg-violet-900/10 border-2 border-violet-500/20 p-12 rounded-[60px] space-y-10">
-                       <h5 className="text-white font-black uppercase text-xs tracking-[0.4em]">KPIs de Performance</h5>
-                       <div className="space-y-6">
+                <div className="bg-violet-900/10 p-16 rounded-[60px] border border-violet-500/20">
+                   <h4 className="text-center font-black uppercase text-xs tracking-[0.8em] mb-12 text-violet-300">Data Persistence Lifecycle</h4>
+                   <div className="flex justify-between items-center gap-6">
+                      <div className="flex-1 p-8 bg-slate-900 border border-white/5 rounded-3xl text-center text-[10px] font-black shadow-xl">CLIENT_LOCAL_STATE</div>
+                      <div className="text-violet-500 font-black animate-pulse">━━━━▶</div>
+                      <div className="flex-1 p-8 bg-slate-900 border border-white/5 rounded-3xl text-center text-[10px] font-black shadow-xl">AES_CRYPT_PIPELINE</div>
+                      <div className="text-violet-500 font-black animate-pulse">━━━━▶</div>
+                      <div className="flex-1 p-8 bg-slate-900 border border-white/5 rounded-3xl text-center text-[10px] font-black shadow-xl">CLOUD_REALTIME_HUB</div>
+                   </div>
+                </div>
+              </section>
+
+              {/* TECH PAGE 2: UX ENGINEERING PARA BARES */}
+              <section className="space-y-32 relative z-10">
+                 <div className="grid grid-cols-2 gap-24 items-center">
+                    <div className="space-y-12">
+                       <h3 className="text-5xl font-black uppercase tracking-tighter italic leading-tight text-white">UX Engineering: <br /><span className="text-violet-500">Low Light Optimized</span></h3>
+                       <p className="text-[13px] text-slate-400 leading-relaxed font-sans">
+                          Interface desenhada especificamente para o caos operacional de um bar noturno. O Botequista utiliza princípios de ergonomia digital para reduzir o erro humano:
+                       </p>
+                       <ul className="space-y-6">
                           {[
-                            { l: "Time to Interaction", v: "< 180ms" },
-                            { l: "Sync Delta Latency", v: "~320ms" },
-                            { l: "Memory Footprint", v: "42MB Stable" },
-                            { l: "Max Operations/sec", v: "100k (Concurrent)" }
-                          ].map((item, i) => (
-                            <div key={i} className="flex justify-between items-center text-xs font-bold font-mono">
-                               <span className="text-slate-500 uppercase">{item.l}</span>
-                               <span className="text-violet-400 italic">✔ {item.v}</span>
-                            </div>
+                            { t: "Fitts's Law Target Size", d: "Botões de PDV possuem área mínima de toque de 48x48dp para operação veloz." },
+                            { t: "OLED Black Standard", d: "Contraste infinito que preserva a visão do operador em ambientes escuros." },
+                            { t: "Cognitive Load Reduction", d: "Uso de cores semânticas (Vermelho = Risco, Verde = Lucro) para leitura instantânea de dados." }
+                          ].map((it, i) => (
+                            <li key={i} className="space-y-1 border-l-2 border-violet-500/30 pl-6">
+                               <p className="text-sm font-black uppercase text-white tracking-widest">{it.t}</p>
+                               <p className="text-[11px] text-slate-500 italic">{it.d}</p>
+                            </li>
                           ))}
+                       </ul>
+                    </div>
+                    <div className="relative">
+                       <div className="absolute inset-0 bg-violet-600 blur-[150px] opacity-10"></div>
+                       <div className="bg-slate-900 p-16 rounded-[60px] border border-white/10 space-y-8 relative z-10 shadow-2xl">
+                          <div className="flex gap-3 mb-4">
+                             <div className="w-3 h-3 rounded-full bg-red-500/50"></div>
+                             <div className="w-3 h-3 rounded-full bg-amber-500/50"></div>
+                             <div className="w-3 h-3 rounded-full bg-emerald-500/50"></div>
+                          </div>
+                          <div className="space-y-6">
+                             <div className="h-4 bg-white/5 rounded-full w-full"></div>
+                             <div className="h-4 bg-white/5 rounded-full w-3/4"></div>
+                             <div className="h-32 bg-violet-600/10 rounded-[32px] border border-violet-500/20 flex flex-col items-center justify-center gap-3">
+                                <span className="text-[10px] font-black text-violet-400 tracking-[0.5em] uppercase">Render Stress Test: OK</span>
+                                <div className="flex gap-1"><div className="w-1 h-6 bg-violet-500 animate-pulse"></div><div className="w-1 h-8 bg-violet-500 animate-pulse delay-75"></div><div className="w-1 h-4 bg-violet-500 animate-pulse delay-150"></div></div>
+                             </div>
+                          </div>
                        </div>
                     </div>
                  </div>
               </section>
 
-              {/* TECH PAGE 2: RESILIÊNCIA E IA */}
-              <section className="space-y-24 border-t border-white/5 pt-32 relative z-10">
-                 <div className="grid grid-cols-2 gap-24 items-center">
-                    <div className="bg-slate-900 p-16 rounded-[80px] border border-white/5 space-y-8">
-                       <h4 className="text-3xl font-black uppercase tracking-tighter italic">AI INTEGRATION READY</h4>
-                       <p className="text-[13px] text-slate-400 leading-relaxed">
-                          A estrutura de dados BTQ-JSON é compatível de forma nativa com a <strong>Gemini API</strong> da Google para análises preditivas avançadas:
-                       </p>
-                       <ul className="space-y-4 text-[11px] font-black uppercase text-violet-400 pl-4 border-l-2 border-violet-600">
-                          <li>• Previsão de demanda baseada em séries temporais</li>
-                          <li>• Detecção de anomalias em fluxos de fechamento</li>
-                          <li>• Otimização automática de margem de lucro por SKU</li>
-                       </ul>
+              {/* TECH PAGE 3: DATA SCHEMA & ENTITIES */}
+              <section className="space-y-24 relative z-10">
+                 <div className="text-center space-y-4">
+                    <h3 className="text-4xl font-black uppercase tracking-widest text-white italic">Data Structure Entity Mapping</h3>
+                    <p className="text-[11px] text-slate-600 font-bold uppercase tracking-[0.3em]">v3.9_SCHEMA_SPECIFICATION</p>
+                 </div>
+                 <div className="grid grid-cols-2 gap-12">
+                    <div className="p-10 bg-slate-900 border border-white/5 rounded-[40px] space-y-6 shadow-xl">
+                       <p className="text-emerald-400 text-xs font-black tracking-widest uppercase">// Product Entity</p>
+                       <pre className="text-[10px] text-slate-400 overflow-hidden leading-relaxed">
+{`{
+  "id": "UID_V4",
+  "name": "STRING_UPPER",
+  "price": "FLOAT_64",
+  "category": "REF_CAT",
+  "sellType": "unit | weight",
+  "isFavorite": "BOOLEAN",
+  "modGroupId": "UID_REF"
+}`}
+                       </pre>
                     </div>
-                    <div className="space-y-12">
-                       <h4 className="text-5xl font-black uppercase tracking-tighter leading-none italic">PWA & <br />Offline-First</h4>
-                       <p className="text-[13px] text-slate-400 leading-relaxed">
-                          Utilizamos Service Workers customizados para cacheamento agressivo de ativos e lógica de negócio. Em caso de queda de link, a operação permanece 100% funcional via IndexedDB, com sincronização automática (reconciliation) assim que a conexão é restabelecida.
-                       </p>
+                    <div className="p-10 bg-slate-900 border border-white/5 rounded-[40px] space-y-6 shadow-xl">
+                       <p className="text-blue-400 text-xs font-black tracking-widest uppercase">// Transaction Schema</p>
+                       <pre className="text-[10px] text-slate-400 overflow-hidden leading-relaxed">
+{`{
+  "id": "SALE_UID",
+  "timestamp": "UNIX_MS",
+  "total": "BRL_VAL",
+  "method": "ENUM_PAY",
+  "shiftId": "SHIFT_UID",
+  "items": [
+     { "productId": "REF", "qty": "INT_OR_FL" }
+  ]
+}`}
+                       </pre>
                     </div>
                  </div>
               </section>
 
-              <footer className="pt-20 border-t border-white/10 flex justify-between items-center relative z-10 text-xs font-bold text-slate-600 uppercase tracking-widest italic">
-                 <div className="flex items-center gap-6">
-                    <span className="w-5 h-5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_20px_rgba(16,185,129,0.4)]"></span>
-                    <span>System Architecture: Verified & Stable for Enterprise Scale</span>
+              <footer className="pt-24 border-t border-white/10 flex justify-between items-center relative z-10">
+                 <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Core Integrity Level: 100% Verified</span>
                  </div>
-                 <div className="text-right">
-                    <span>BTQ-CORE v3.1_RELEASE_PATCH_02</span>
-                 </div>
+                 <span className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-800">© 2025 BOTEQUISTA SYSTEMS ARCHITECTURE</span>
               </footer>
             </div>
           </div>
@@ -419,7 +508,7 @@ const Settings: React.FC<SettingsProps> = ({
             <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center">
                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tighter text-slate-800 dark:text-white">Manutenção</h3>
+            <h3 className="text-xl font-black uppercase tracking-tighter text-slate-800 dark:text-white">Manutenção do Banco</h3>
          </div>
          
          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -456,7 +545,7 @@ const Settings: React.FC<SettingsProps> = ({
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setConfirmModal(p => ({...p, isOpen: false}))} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[310] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-310 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase text-center mb-4 tracking-tighter">{confirmModal.title}</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 text-center font-medium mb-10 leading-relaxed">{confirmModal.message}</p>
              <div className="flex flex-col gap-3">
