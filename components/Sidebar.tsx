@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90] md:hidden" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800`}>
+      <aside className={`fixed inset-y-0 left-0 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl`}>
         <button onClick={onToggleCollapse} className={`hidden md:flex absolute -right-3 top-20 w-6 h-6 border rounded-full items-center justify-center shadow-md z-[110] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400`}>
            <svg className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
@@ -93,19 +93,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                     .filter(item => section.items.includes(item.id) && hasPerm(item.perm))
                     .map((item) => {
                       const isActive = activeView === item.id;
-                      const activeClass = 'bg-red-600 text-white shadow-lg shadow-red-500/20';
-                      const hoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500';
+                      const isPosShiftClosed = item.id === 'pos' && !isShiftOpen;
                       
+                      let activeClass = 'bg-red-600 text-white shadow-lg shadow-red-500/20';
+                      let hoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500';
+
                       return (
                         <div key={item.id} className="relative group">
                           <button onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? activeClass : hoverClass}`}>
-                            <span className={isActive ? 'text-inherit' : 'text-inherit opacity-60'}>{item.icon}</span>
-                            {!isCollapsed && <span className={`text-[11px] uppercase font-black tracking-tight`}>{item.label}</span>}
-                            {!isCollapsed && item.id === 'pos' && activeTabsCount > 0 && (
-                              <span className={`ml-auto text-[9px] font-black px-2 py-0.5 rounded-lg ${isActive ? 'bg-red-900/20 text-white' : 'bg-red-100 text-red-600'}`}>({activeTabsCount})</span>
+                            <div className="relative">
+                              <span className={isActive ? 'text-inherit' : 'text-inherit opacity-60'}>{item.icon}</span>
+                              {item.id === 'pos' && (
+                                <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${isShiftOpen ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
+                              )}
+                            </div>
+                            {!isCollapsed && (
+                              <div className="flex-1 flex items-center justify-between min-w-0">
+                                <span className={`text-[11px] uppercase font-black tracking-tight truncate`}>{item.label}</span>
+                                {item.id === 'pos' && activeTabsCount > 0 && (
+                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'}`}>{activeTabsCount}</span>
+                                )}
+                              </div>
                             )}
                           </button>
-                          {isCollapsed && <Tooltip text={item.label} />}
+                          {isCollapsed && <Tooltip text={item.label + (isPosShiftClosed ? ' (Turno Fechado)' : '')} />}
                         </div>
                       );
                     })}
