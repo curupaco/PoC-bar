@@ -78,6 +78,7 @@ export interface Product {
 }
 
 export interface SaleItem {
+  id: string; 
   productId: string;
   productName: string;
   category: string; 
@@ -124,13 +125,21 @@ export const generateUniqueId = (prefix: string = '') => {
 };
 
 export const sanitizeCurrencyInput = (val: string): string => {
-  // Apenas remove letras e caracteres especiais, mantendo números, vírgula e ponto para o usuário digitar 1,50
   return val.replace(/[^0-9,.]/g, '');
 };
 
 export const parseCurrencyValue = (val: string): number => {
   if (!val) return 0;
-  // Converte para formato numérico real trocando vírgula por ponto antes do parseFloat
   const normalized = val.replace(',', '.');
   return parseFloat(normalized) || 0;
+};
+
+export const getBusinessDateStart = (timestamp: number) => {
+  const date = new Date(timestamp);
+  const hour = date.getHours();
+  if (hour < 5) {
+    date.setDate(date.getDate() - 1);
+  }
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
 };
