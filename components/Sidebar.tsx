@@ -36,8 +36,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onLogout, 
   isShiftOpen, 
   activeTabsCount, 
-  totalPendura, 
-  penduraThreshold, 
   isCollapsed, 
   onToggleCollapse,
 }) => {

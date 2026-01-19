@@ -154,16 +154,6 @@ const App: React.FC = () => {
     return () => clearTimeout(debounce);
   }, [persistToCloud]);
 
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && dbStatus === 'pending') {
-        persistToCloud();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [dbStatus, persistToCloud]);
-
   const handleLogin = (u: string, p: string) => {
     const found = users.find(x => x.username === u && x.password === p);
     if (found) {
@@ -186,15 +176,11 @@ const App: React.FC = () => {
 
   const getStatusConfig = () => {
     switch (dbStatus) {
-      case 'success':
-        return { label: 'Sincronizado', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-900/40', bg: 'bg-emerald-50 dark:bg-emerald-900/20', animate: '' };
+      case 'success': return { label: 'Sincronizado', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/20 dark:border-emerald-500/30', animate: '' };
       case 'pending':
-      case 'loading':
-        return { label: 'Aguarde...', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-900/40', bg: 'bg-amber-50 dark:bg-amber-900/20', animate: 'animate-pulse' };
-      case 'error':
-        return { label: 'Erro', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-900/40', bg: 'bg-red-50 dark:bg-red-900/20', animate: '' };
-      default:
-        return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', bg: 'bg-slate-50 dark:bg-slate-900/20', animate: '' };
+      case 'loading': return { label: 'Sincronizando', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20 dark:border-amber-500/30', animate: 'animate-pulse' };
+      case 'error': return { label: 'Erro Sinc', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20 dark:border-red-500/30', animate: '' };
+      default: return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', animate: '' };
     }
   };
 
@@ -226,18 +212,18 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">{viewTitles[activeView]}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${status.border} ${status.bg} ${status.animate}`}>
+            {/* CORREÇÃO ESTÉTICA: FUNDO TRANSPARENTE INTEGRADO AO HEADER */}
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${status.border} ${status.animate}`}>
               <div className={`w-2 h-2 rounded-full ${status.color}`}></div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${status.text}`}>{status.label}</span>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${status.text}`}>{status.label}</span>
             </div>
-            <button onClick={toggleTheme} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-500 dark:text-slate-400">
-              {theme === 'dark' ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> : 
-               <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
+            <button onClick={toggleTheme} className="p-2.5 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-500 hover:scale-105 transition-all">
+              {theme === 'dark' ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> : <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
             </button>
           </div>
         </header>
         <div className="p-8 h-full overflow-y-auto">
-          {activeView === 'pos' ? <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} theme={theme} /> : 
+          {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} theme={theme} /> : 
            activeView === 'products' && hasPermission('products') ? <ProductList products={products} setProducts={setProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} currentUser={currentUser} /> :
            activeView === 'dashboard' && hasPermission('dashboard') ? <Dashboard sales={sales} products={products} theme={theme} /> :
            activeView === 'history' && hasPermission('history') ? <SalesHistory sales={sales} onDeleteSale={id => setSales(s => s.filter(x => x.id !== id))} users={users} currentUser={currentUser} /> :
@@ -247,7 +233,7 @@ const App: React.FC = () => {
            activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :
            activeView === 'settings' && hasPermission('settings') ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} onImport={fetchInitialData} /> :
            activeView === 'help' ? <Help /> :
-           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center">Acesso Restrito / Carregando...</div>}
+           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center">Carregando...</div>}
         </div>
       </main>
     </div>
