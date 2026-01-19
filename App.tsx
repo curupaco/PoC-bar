@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod, ModifierGroup, generateUniqueId } from './types';
+import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod, ModifierGroup, generateUniqueId, getBusinessDateStart } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
 import POS from './components/POS';
@@ -21,7 +21,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.6"; 
+const APP_VERSION = "3.9.12"; 
 const MASTER_KEY = "Tc@00216587";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
@@ -42,7 +42,6 @@ const viewTitles: Record<View, string> = {
 };
 
 const App: React.FC = () => {
-  // PERSISTÊNCIA DE SESSÃO
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('btq-session');
     if (saved) {
@@ -64,10 +63,14 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const root = window.document.documentElement;
+    root.classList.remove('dark');
     if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
     localStorage.setItem('btq-theme', theme);
   }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   const [products, setProducts] = useState<Product[]>([]);
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
@@ -125,7 +128,6 @@ const App: React.FC = () => {
 
   useEffect(() => { fetchInitialData(); }, [fetchInitialData]);
 
-  // INTEGRIDADE DE SALVAMENTO: DEBOUNCE + UNLOAD PROTECT
   const persistToCloud = useCallback(async () => {
     if (!isInitialLoadDone.current) return;
     try {
@@ -152,11 +154,14 @@ const App: React.FC = () => {
     return () => clearTimeout(debounce);
   }, [persistToCloud]);
 
-  // FORCE SAVE ON UNLOAD
   useEffect(() => {
-    const handleUnload = () => { if (dbStatus === 'pending') persistToCloud(); };
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && dbStatus === 'pending') {
+        persistToCloud();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [dbStatus, persistToCloud]);
 
   const handleLogin = (u: string, p: string) => {
@@ -177,7 +182,6 @@ const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
 
-  // PROTEÇÃO DE ROTAS (INTERNAL PERMISSIONS CHECK)
   const hasPermission = (p: UserPermission) => currentUser.username === 'admin' || currentUser.permissions.includes(p);
 
   const getStatusConfig = () => {
@@ -197,7 +201,7 @@ const App: React.FC = () => {
   const status = getStatusConfig();
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div className={`flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300`}>
       <Sidebar 
         activeView={activeView} 
         onViewChange={setActiveView} 
@@ -213,6 +217,7 @@ const App: React.FC = () => {
         penduraThreshold={penduraThreshold} 
         isCollapsed={isSidebarCollapsed} 
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        theme={theme}
       />
       <main className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center">
@@ -220,39 +225,29 @@ const App: React.FC = () => {
             <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 md:hidden text-slate-600 dark:text-slate-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg></button>
             <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">{viewTitles[activeView]}</h1>
           </div>
-          
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${status.border} ${status.bg} ${status.animate}`}>
-              <div className={`w-2 h-2 rounded-full ${status.color} ${dbStatus === 'success' ? 'shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''}`}></div>
-              <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${status.text}`}>
-                {status.label}
-              </span>
+              <div className={`w-2 h-2 rounded-full ${status.color}`}></div>
+              <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${status.text}`}>{status.label}</span>
             </div>
-
-            <button 
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 text-slate-500 dark:text-slate-400"
-            >
-              {theme === 'dark' ? (
-                 <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              ) : (
-                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-              )}
+            <button onClick={toggleTheme} className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-500 dark:text-slate-400">
+              {theme === 'dark' ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> : 
+               <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
             </button>
           </div>
         </header>
         <div className="p-8 h-full overflow-y-auto">
-          {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} /> : 
+          {activeView === 'pos' ? <POS products={products} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} theme={theme} /> : 
            activeView === 'products' && hasPermission('products') ? <ProductList products={products} setProducts={setProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} currentUser={currentUser} /> :
-           activeView === 'help' ? <Help /> :
            activeView === 'dashboard' && hasPermission('dashboard') ? <Dashboard sales={sales} products={products} theme={theme} /> :
            activeView === 'history' && hasPermission('history') ? <SalesHistory sales={sales} onDeleteSale={id => setSales(s => s.filter(x => x.id !== id))} users={users} currentUser={currentUser} /> :
            activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} /> :
-           activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
            activeView === 'shifts' && hasPermission('shifts_admin') ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
+           activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
            activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :
-           activeView === 'settings' && hasPermission('settings') ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} onImport={data => { setProducts(data.products); setModifierGroups(data.modifierGroups); setCategoryModifiers(data.categoryModifiers || {}); setSales(data.sales); setOpenTabs(data.openTabs); setUsers(data.users); setShifts(data.shifts); }} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} dbStatus={dbStatus} /> : 
-           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic">Acesso Restrito / Carregando...</div>}
+           activeView === 'settings' && hasPermission('settings') ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} onImport={fetchInitialData} /> :
+           activeView === 'help' ? <Help /> :
+           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center">Acesso Restrito / Carregando...</div>}
         </div>
       </main>
     </div>

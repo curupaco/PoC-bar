@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, User } from '../types';
+import { View, User, Theme } from '../types';
 
 interface SidebarProps {
   activeView: View;
@@ -17,6 +17,7 @@ interface SidebarProps {
   penduraThreshold: number;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  theme?: Theme;
 }
 
 interface NavItem {
@@ -38,7 +39,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   totalPendura, 
   penduraThreshold, 
   isCollapsed, 
-  onToggleCollapse
+  onToggleCollapse,
 }) => {
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
 
@@ -61,49 +62,48 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const Tooltip = ({ text }: { text: string }) => (
-    <div className="absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[9999] shadow-2xl border border-slate-700 invisible group-hover:visible translate-x-2 group-hover:translate-x-0">
+    <div className={`absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[9999] shadow-2xl border invisible group-hover:visible translate-x-2 group-hover:translate-x-0 bg-slate-900 border-slate-700 text-white text-[10px] font-black uppercase tracking-widest`}>
       {text}
-      <div className="absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900"></div>
+      <div className={`absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900`}></div>
     </div>
   );
 
   return (
     <>
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90] md:hidden" onClick={onClose} />}
-      <aside className={`fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20 overflow-visible' : 'w-64'}`}>
-        <button onClick={onToggleCollapse} className="hidden md:flex absolute -right-3 top-20 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full items-center justify-center shadow-md text-slate-400 z-[110]">
+      <aside className={`fixed inset-y-0 left-0 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800`}>
+        <button onClick={onToggleCollapse} className={`hidden md:flex absolute -right-3 top-20 w-6 h-6 border rounded-full items-center justify-center shadow-md z-[110] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400`}>
            <svg className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
         </button>
 
         <div className={`p-6 flex-1 space-y-8 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto no-scrollbar'}`}>
           <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
-             <img src="https://img.icons8.com/fluency/512/beer.png" alt="Logo" className="w-9 h-9 object-contain" />
-             {!isCollapsed && <span className="font-normal text-slate-800 dark:text-white tracking-tighter leading-none font-barrio text-3xl">Botequista</span>}
+             <img src="https://img.icons8.com/fluency/512/beer.png" alt="Logo" className="w-10 h-10 object-contain" />
+             {!isCollapsed && <span className={`font-normal tracking-tighter leading-none text-slate-800 dark:text-white font-barrio text-3xl`}>Botequista</span>}
           </div>
           
           <div className="space-y-8">
             {menuSections.map((section) => (
               <div key={section.title} className="space-y-2">
                 {!isCollapsed && (
-                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-4 mb-2">{section.title}</h3>
+                  <h3 className={`text-[10px] font-black uppercase tracking-widest pl-4 mb-2 text-slate-400`}>{section.title}</h3>
                 )}
                 <div className="space-y-1">
                   {navItems
                     .filter(item => section.items.includes(item.id) && hasPerm(item.perm))
                     .map((item) => {
                       const isActive = activeView === item.id;
+                      const activeClass = 'bg-red-600 text-white shadow-lg shadow-red-500/20';
+                      const hoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500';
+                      
                       return (
                         <div key={item.id} className="relative group">
-                          <button onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-                            <span className={isActive ? 'text-white' : 'text-slate-400'}>{item.icon}</span>
-                            {!isCollapsed && <span className="text-[11px] uppercase font-black tracking-tight">{item.label}</span>}
+                          <button onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? activeClass : hoverClass}`}>
+                            <span className={isActive ? 'text-inherit' : 'text-inherit opacity-60'}>{item.icon}</span>
+                            {!isCollapsed && <span className={`text-[11px] uppercase font-black tracking-tight`}>{item.label}</span>}
                             {!isCollapsed && item.id === 'pos' && activeTabsCount > 0 && (
-                              <span className="ml-auto text-[9px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded-lg">({activeTabsCount})</span>
+                              <span className={`ml-auto text-[9px] font-black px-2 py-0.5 rounded-lg ${isActive ? 'bg-red-900/20 text-white' : 'bg-red-100 text-red-600'}`}>({activeTabsCount})</span>
                             )}
-                            {item.id === 'shifts' && isShiftOpen && (
-                              <span className={`w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] ${isCollapsed ? 'absolute top-2 right-2' : 'ml-auto'}`}></span>
-                            )}
-                            {!isCollapsed && item.id === 'reports' && totalPendura >= penduraThreshold && <span className="ml-auto text-[10px] animate-bounce">⚠️</span>}
                           </button>
                           {isCollapsed && <Tooltip text={item.label} />}
                         </div>
@@ -115,22 +115,22 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 p-4 space-y-2 bg-slate-50/50 dark:bg-slate-900/50 overflow-visible">
+        <div className={`p-4 space-y-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50`}>
            <div className="relative group">
              <button onClick={() => { onViewChange('help'); onClose(); }} className={`w-full flex items-center gap-3 rounded-2xl transition-all ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${activeView === 'help' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-red-500'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                {!isCollapsed && <span className="text-[11px] uppercase font-black">GUIA DE OPERAÇÃO</span>}
+                {!isCollapsed && <span className={`text-[11px] uppercase font-black`}>GUIA DO BAR</span>}
              </button>
-             {isCollapsed && <Tooltip text="GUIA DE OPERAÇÃO" />}
+             {isCollapsed && <Tooltip text="GUIA DO BAR" />}
            </div>
            <div className={`flex items-center gap-3 p-1 ${isCollapsed ? 'justify-center' : ''}`}>
-             <button onClick={onLogout} className="rounded-2xl bg-red-600 flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md">
+             <button onClick={onLogout} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600`}>
                {currentUser?.username.slice(0, 2).toUpperCase()}
              </button>
              {!isCollapsed && (
                <div className="flex-1 min-w-0">
-                 <p className="text-[10px] font-black text-slate-800 dark:text-white truncate uppercase leading-none mb-1">{currentUser?.displayName}</p>
-                 <button onClick={onLogout} className="text-[9px] font-black text-red-500 hover:text-red-600 uppercase tracking-widest leading-none">SAIR</button>
+                 <p className={`text-[10px] font-black truncate uppercase leading-none mb-1 text-slate-800 dark:text-white`}>{currentUser?.displayName}</p>
+                 <button onClick={onLogout} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
                </div>
              )}
            </div>
