@@ -14,13 +14,14 @@ import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, getFirebaseToken } from './services/firebaseService';
+import { encryptData, decryptData } from './services/cryptoService';
 
 const isBrowser = typeof window !== 'undefined';
 if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.4.0"; 
+const APP_VERSION = "3.9.6"; 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
@@ -41,27 +42,40 @@ const viewTitles: Record<View, string> = {
 };
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // PERSISTÊNCIA DE SESSÃO
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('btq-session');
+    if (saved) {
+      try { return decryptData(saved, MASTER_KEY); } catch { return null; }
+    }
+    return null;
+  });
+
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error'>('idle');
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [versionMismatch, setVersionMismatch] = useState(false);
-  const [remoteUpdateAvailable, setRemoteUpdateAvailable] = useState(false);
-
   const isInitialLoadDone = useRef(false);
-  const lastCloudUpdate = useRef<string | null>(null);
+
+  const [theme, setTheme] = useState<Theme>(() => {
+    return (localStorage.getItem('btq-theme') as Theme) || 'dark';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    localStorage.setItem('btq-theme', theme);
+  }, [theme]);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
+  const [categoryModifiers, setCategoryModifiers] = useState<Record<string, string>>({});
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [theme, setTheme] = useState<Theme>('dark');
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [pendingShortcut, setPendingShortcut] = useState<{name: string, amount: number} | null>(null);
 
@@ -84,120 +98,163 @@ const App: React.FC = () => {
     'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
   ];
 
-  useEffect(() => {
-    if (!isBrowser) return;
-    if (theme === 'dark') document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [theme]);
-
-  const fetchInitialData = useCallback(async (isSilent = false) => {
-    if (!isSilent) setDbStatus('loading');
+  const fetchInitialData = useCallback(async () => {
+    setDbStatus('loading');
     try {
       const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
       const cloudData = await loadFromFirebase(SYSTEM_DB_URL, MASTER_KEY, token);
       
       if (cloudData) {
-        if (cloudData.minRequiredVersion && isVersionOlder(APP_VERSION, cloudData.minRequiredVersion)) {
-           setVersionMismatch(true);
-           return;
-        }
-        handleImportAll(cloudData);
-        lastCloudUpdate.current = cloudData.updatedAt;
-        setDbStatus('success');
+        setProducts(cloudData.products || []);
+        setModifierGroups(cloudData.modifierGroups || []);
+        setCategoryModifiers(cloudData.categoryModifiers || {});
+        setSales(cloudData.sales || []);
+        setOpenTabs(cloudData.openTabs || []);
+        setUsers(cloudData.users || []);
+        setShifts(cloudData.shifts || []);
       } else {
         setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
-        setDbStatus('idle');
       }
-    } catch (e) { setDbStatus('error'); } finally { isInitialLoadDone.current = true; }
+      setDbStatus('success');
+    } catch (e) { 
+      setDbStatus('error'); 
+    } finally { 
+      isInitialLoadDone.current = true; 
+    }
   }, []);
 
-  function isVersionOlder(local: string, remote: string) {
-    const l = local.split('.').map(Number);
-    const r = remote.split('.').map(Number);
-    for (let i = 0; i < Math.max(l.length, r.length); i++) {
-      if ((l[i] || 0) < (r[i] || 0)) return true;
-      if ((l[i] || 0) > (r[i] || 0)) return false;
-    }
-    return false;
-  }
+  useEffect(() => { fetchInitialData(); }, [fetchInitialData]);
+
+  // INTEGRIDADE DE SALVAMENTO: DEBOUNCE + UNLOAD PROTECT
+  const persistToCloud = useCallback(async () => {
+    if (!isInitialLoadDone.current) return;
+    try {
+      const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
+      await saveToFirebase(SYSTEM_DB_URL, { 
+        products, 
+        modifierGroups,
+        categoryModifiers,
+        sales, 
+        openTabs, 
+        users, 
+        shifts, 
+        config: { penduraThreshold }, 
+        minRequiredVersion: APP_VERSION 
+      }, MASTER_KEY, token);
+      setDbStatus('success');
+    } catch (e) { setDbStatus('error'); }
+  }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, penduraThreshold]);
 
   useEffect(() => {
-    fetchInitialData();
-    const interval = setInterval(() => { if (currentUser) fetchInitialData(true); }, 60000);
-    return () => clearInterval(interval);
-  }, [fetchInitialData, currentUser]);
-
-  useEffect(() => {
-    if (!isInitialLoadDone.current || versionMismatch) return;
+    if (!isInitialLoadDone.current) return;
     setDbStatus('pending');
-    const debounce = setTimeout(async () => {
-      try {
-        const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
-        await saveToFirebase(SYSTEM_DB_URL, { products, modifierGroups, sales, openTabs, users, shifts, config: { penduraThreshold }, minRequiredVersion: APP_VERSION }, MASTER_KEY, token);
-        setDbStatus('success');
-      } catch (e) { setDbStatus('error'); }
-    }, 2000);
+    const debounce = setTimeout(persistToCloud, 800);
     return () => clearTimeout(debounce);
-  }, [products, modifierGroups, sales, openTabs, users, shifts, penduraThreshold, versionMismatch]);
+  }, [persistToCloud]);
 
-  const handleImportAll = (data: any) => {
-    if (data.products) setProducts(data.products);
-    if (data.modifierGroups) setModifierGroups(data.modifierGroups);
-    if (data.sales) setSales(data.sales);
-    if (data.openTabs) setOpenTabs(data.openTabs);
-    if (data.config?.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
-    if (data.users?.length) {
-      setUsers((data.users as User[]).map(u => (u.username === 'admin') ? { ...u, permissions: ALL_ADMIN_PERMISSIONS } : u));
+  // FORCE SAVE ON UNLOAD
+  useEffect(() => {
+    const handleUnload = () => { if (dbStatus === 'pending') persistToCloud(); };
+    window.addEventListener('beforeunload', handleUnload);
+    return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [dbStatus, persistToCloud]);
+
+  const handleLogin = (u: string, p: string) => {
+    const found = users.find(x => x.username === u && x.password === p);
+    if (found) {
+      setCurrentUser(found);
+      localStorage.setItem('btq-session', encryptData(found, MASTER_KEY));
+      setLoginError(null);
+    } else {
+      setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
     }
-    if (data.shifts) setShifts(data.shifts);
   };
 
-  const handleLogout = () => setShowLogoutConfirm(true);
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('btq-session');
+  };
 
-  if (versionMismatch) return <div className="min-h-screen bg-red-600 flex items-center justify-center p-8 text-white text-center"><div><h1 className="text-4xl font-black mb-4">ATUALIZAÇÃO NECESSÁRIA</h1><button onClick={() => window.location.reload()} className="bg-white text-red-600 px-12 py-5 rounded-2xl font-black uppercase shadow-2xl">Recarregar Agora</button></div></div>;
+  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
 
-  if (!currentUser) return <Login onLogin={(u, p) => {
-    const found = users.find(x => x.username === u && x.password === p);
-    if (found) setCurrentUser(found);
-    else setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
-  }} isLoading={dbStatus === 'loading'} error={loginError} />;
+  // PROTEÇÃO DE ROTAS (INTERNAL PERMISSIONS CHECK)
+  const hasPermission = (p: UserPermission) => currentUser.username === 'admin' || currentUser.permissions.includes(p);
+
+  const getStatusConfig = () => {
+    switch (dbStatus) {
+      case 'success':
+        return { label: 'Sincronizado', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-900/40', bg: 'bg-emerald-50 dark:bg-emerald-900/20', animate: '' };
+      case 'pending':
+      case 'loading':
+        return { label: 'Aguarde...', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-900/40', bg: 'bg-amber-50 dark:bg-amber-900/20', animate: 'animate-pulse' };
+      case 'error':
+        return { label: 'Erro', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-200 dark:border-red-900/40', bg: 'bg-red-50 dark:bg-red-900/20', animate: '' };
+      default:
+        return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', bg: 'bg-slate-50 dark:bg-slate-900/20', animate: '' };
+    }
+  };
+
+  const status = getStatusConfig();
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} dbStatus={dbStatus} isOnline={true} currentUser={currentUser} onLogout={handleLogout} isShiftOpen={!!activeShift} activeTabsCount={activeTabsCount} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+      <Sidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView} 
+        isOpen={isMobileMenuOpen} 
+        onClose={() => setIsMobileMenuOpen(false)} 
+        dbStatus={dbStatus} 
+        isOnline={true} 
+        currentUser={currentUser} 
+        onLogout={handleLogout} 
+        isShiftOpen={!!activeShift} 
+        activeTabsCount={activeTabsCount} 
+        totalPendura={totalPendura} 
+        penduraThreshold={penduraThreshold} 
+        isCollapsed={isSidebarCollapsed} 
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+      />
       <main className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 -ml-2 rounded-lg md:hidden text-slate-600 dark:text-slate-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg></button>
+            <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 md:hidden text-slate-600 dark:text-slate-400"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg></button>
             <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">{viewTitles[activeView]}</h1>
           </div>
-          <button onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.071 16.071l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg></button>
+          
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-full border ${status.border} ${status.bg} ${status.animate}`}>
+              <div className={`w-2 h-2 rounded-full ${status.color} ${dbStatus === 'success' ? 'shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''}`}></div>
+              <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${status.text}`}>
+                {status.label}
+              </span>
+            </div>
+
+            <button 
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-95 text-slate-500 dark:text-slate-400"
+            >
+              {theme === 'dark' ? (
+                 <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              ) : (
+                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+          </div>
         </header>
         <div className="p-8 h-full overflow-y-auto">
-          {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} /> : 
-           activeView === 'products' ? <ProductList products={products} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} onAdd={p => setProducts(v => [...v, p])} onDelete={id => setProducts(v => v.filter(p => p.id !== id))} onUpdate={u => setProducts(v => v.map(p => p.id === u.id ? u : p))} currentUser={currentUser} /> :
+          {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} /> : 
+           activeView === 'products' && hasPermission('products') ? <ProductList products={products} setProducts={setProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} currentUser={currentUser} /> :
            activeView === 'help' ? <Help /> :
-           activeView === 'dashboard' ? <Dashboard sales={sales} products={products} theme={theme} /> :
-           activeView === 'history' ? <SalesHistory sales={sales} onDeleteSale={id => setSales(s => s.filter(x => x.id !== id))} users={users} currentUser={currentUser} /> :
-           activeView === 'reports' ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} /> :
-           activeView === 'users' ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
-           activeView === 'shifts' ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
-           activeView === 'cash' ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :
-           activeView === 'settings' ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} onImport={handleImportAll} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} dbStatus={dbStatus} /> : null}
+           activeView === 'dashboard' && hasPermission('dashboard') ? <Dashboard sales={sales} products={products} theme={theme} /> :
+           activeView === 'history' && hasPermission('history') ? <SalesHistory sales={sales} onDeleteSale={id => setSales(s => s.filter(x => x.id !== id))} users={users} currentUser={currentUser} /> :
+           activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} /> :
+           activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
+           activeView === 'shifts' && hasPermission('shifts_admin') ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
+           activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :
+           activeView === 'settings' && hasPermission('settings') ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} onImport={data => { setProducts(data.products); setModifierGroups(data.modifierGroups); setCategoryModifiers(data.categoryModifiers || {}); setSales(data.sales); setOpenTabs(data.openTabs); setUsers(data.users); setShifts(data.shifts); }} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} dbStatus={dbStatus} /> : 
+           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic">Acesso Restrito / Carregando...</div>}
         </div>
       </main>
-
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 text-center shadow-2xl border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-6">Encerrar Sessão?</h3>
-              <div className="flex flex-col gap-3">
-                 <button onClick={() => setCurrentUser(null)} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs active:scale-95">Sair Agora</button>
-                 <button onClick={() => setShowLogoutConfirm(false)} className="w-full py-5 font-black uppercase text-xs text-slate-400">Cancelar</button>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 };

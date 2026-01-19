@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { View, User, formatCurrency } from '../types';
+import { View, User } from '../types';
 
 interface SidebarProps {
   activeView: View;
@@ -38,7 +38,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   totalPendura, 
   penduraThreshold, 
   isCollapsed, 
-  onToggleCollapse 
+  onToggleCollapse
 }) => {
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
 
