@@ -124,14 +124,13 @@ export const generateUniqueId = (prefix: string = '') => {
 };
 
 export const sanitizeCurrencyInput = (val: string): string => {
-  const cleaned = val.replace(/[^0-9,]/g, '');
-  const parts = cleaned.split(',');
-  if (parts.length > 2) return parts[0] + ',' + parts[1];
-  return cleaned;
+  // Apenas remove letras e caracteres especiais, mantendo números, vírgula e ponto para o usuário digitar 1,50
+  return val.replace(/[^0-9,.]/g, '');
 };
 
 export const parseCurrencyValue = (val: string): number => {
   if (!val) return 0;
+  // Converte para formato numérico real trocando vírgula por ponto antes do parseFloat
   const normalized = val.replace(',', '.');
   return parseFloat(normalized) || 0;
 };

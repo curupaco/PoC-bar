@@ -1,10 +1,14 @@
 
 // @google/genai guidelines: Ensure valid types are exported for synchronization data
-import { Product, Sale, Tab, User, Shift } from "../types";
+import { Product, Sale, Tab, User, Shift, ModifierGroup } from "../types";
 import { encryptData, decryptData } from "./cryptoService";
 
 export interface AppFullData {
   products: Product[];
+  // Added modifierGroups to support synchronization of modifier/service options
+  modifierGroups?: ModifierGroup[];
+  // Added categoryModifiers to support synchronization of category to modifier group mappings
+  categoryModifiers?: Record<string, string>;
   sales: Sale[];
   openTabs: Tab[];
   users?: User[];
