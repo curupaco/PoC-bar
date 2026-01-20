@@ -1,5 +1,4 @@
 
-// INÍCIO DA ALTERAÇÃO
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, ModifierGroup, ModifierOption, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue, Theme } from '../types';
 
@@ -52,7 +51,6 @@ const POS: React.FC<POSProps> = ({
   const [editingItemUid, setEditingItemUid] = useState<string | null>(null);
   const [inputGrams, setInputGrams] = useState('');
   
-  const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string, hasItems: boolean} | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -90,13 +88,7 @@ const POS: React.FC<POSProps> = ({
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
 
-  const changeDue = useMemo(() => {
-    if (paymentMethodInput !== PaymentMethod.CASH || !receivedValueInput) return 0;
-    const amountToPay = parseCurrencyValue(paymentAmountInput) || remainingBalance;
-    return Math.max(0, receivedValueInput - amountToPay);
-  }, [receivedValueInput, paymentAmountInput, remainingBalance, paymentMethodInput]);
-
-  // --- BLOQUEIO DE TURNO REVISADO ---
+  // --- BLOQUEIO DE TURNO ---
   if (!activeShift) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-12 animate-in fade-in duration-700">
@@ -108,21 +100,12 @@ const POS: React.FC<POSProps> = ({
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
              </svg>
           </div>
-          <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 rounded-full border-4 border-slate-50 dark:border-slate-950 flex items-center justify-center shadow-lg">
-             <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-          </div>
         </div>
         <div className="max-w-xs space-y-4">
            <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">Caixa Fechado</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm px-4 leading-relaxed">
-             A operação de vendas está protegida. <br />
-             <span className="text-red-600 dark:text-red-400 font-black">ABRA O TURNO</span> para liberar o PDV.
-           </p>
+           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm px-4">Abra o turno para liberar o PDV.</p>
         </div>
-        <button onClick={() => onViewChange && onViewChange('shifts')} className="group relative bg-red-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl hover:bg-red-700 active:scale-95 transition-all overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-          Abrir Turno Agora
-        </button>
+        <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Abrir Turno Agora</button>
       </div>
     );
   }
@@ -130,15 +113,9 @@ const POS: React.FC<POSProps> = ({
   const handleProductClick = (product: Product, quantity: number = 1) => {
     if (!activeTabId || activeTabId === 'shortcut-payment') { setValidationError("SELECIONE UMA MESA!"); return; }
     if (product.sellType === 'weight') { setWeightModalProduct(product); return; }
-    
     const effectiveModGroupId = product.modifierGroupId || categoryModifiers[product.category.toUpperCase().trim()];
     const modGroup = modifierGroups.find(g => g.id === effectiveModGroupId);
-
-    if (modGroup) {
-      setModifierModalData({ product, group: modGroup });
-      return;
-    }
-
+    if (modGroup) { setModifierModalData({ product, group: modGroup }); return; }
     addToTab(product, quantity);
   };
 
@@ -148,139 +125,96 @@ const POS: React.FC<POSProps> = ({
         const items = [...(tab.items ?? [])];
         const unitPrice = product.price + (modifier?.price || 0);
         const totalPrice = Number((quantity * unitPrice).toFixed(2));
-        
-        if (editingItemUid) {
-          const idx = items.findIndex(it => it.id === editingItemUid);
-          if (idx > -1) {
-            items[idx] = { ...items[idx], quantity, unitPrice, totalPrice, modifier };
-            showFeedback(`${product.name} ATUALIZADO`);
-          }
+        const existingIndex = items.findIndex(i => 
+          i.productId === product.id && 
+          product.sellType === 'unit' &&
+          (!i.modifier && !modifier || i.modifier?.name === modifier?.name)
+        );
+        if (existingIndex > -1) {
+          const newQty = items[existingIndex].quantity + quantity;
+          items[existingIndex] = { ...items[existingIndex], quantity: newQty, totalPrice: Number((newQty * unitPrice).toFixed(2)) };
+          showFeedback(`+1 ${product.name}`);
         } else {
-          const existingIndex = items.findIndex(i => 
-            i.productId === product.id && 
-            product.sellType === 'unit' &&
-            (!i.modifier && !modifier || i.modifier?.name === modifier?.name)
-          );
-
-          if (existingIndex > -1) {
-            const newQty = items[existingIndex].quantity + quantity;
-            items[existingIndex] = { ...items[existingIndex], quantity: newQty, totalPrice: Number((newQty * unitPrice).toFixed(2)) };
-            showFeedback(`+1 ${product.name}`);
-          } else {
-            items.push({ 
-              id: generateUniqueId('it'),
-              productId: product.id, 
-              productName: modifier ? `${product.name} (${modifier.name})` : product.name, 
-              category: product.category?.toUpperCase().trim() || 'GERAL',
-              quantity, 
-              unitPrice, 
-              totalPrice,
-              modifier
-            });
-            showFeedback(`${product.name} ADICIONADO`);
-          }
+          items.push({ 
+            id: generateUniqueId('it'),
+            productId: product.id, 
+            productName: modifier ? `${product.name} (${modifier.name})` : product.name, 
+            category: product.category?.toUpperCase().trim() || 'GERAL',
+            quantity, unitPrice, totalPrice, modifier
+          });
+          showFeedback(`${product.name} ADICIONADO`);
         }
         return { ...tab, items };
       }
       return tab;
     }));
-    setEditingItemUid(null);
-    setWeightModalProduct(null);
-    setModifierModalData(null);
-    setInputGrams('');
+    setWeightModalProduct(null); setModifierModalData(null); setInputGrams('');
+  };
+
+  const updateItemQty = (itemUid: string, delta: number) => {
+    onUpdateTabs(prev => (prev || []).map(tab => {
+      if (normalizeId(tab.id) === normalizeId(activeTabId)) {
+        const items = tab.items.map(item => {
+          if (item.id === itemUid) {
+            const newQty = Math.max(0, item.quantity + delta);
+            return { ...item, quantity: newQty, totalPrice: Number((newQty * item.unitPrice).toFixed(2)) };
+          }
+          return item;
+        }).filter(item => item.quantity > 0);
+        return { ...tab, items };
+      }
+      return tab;
+    }));
   };
 
   const handleFinishSale = () => {
     const isShortcut = activeTabId === 'shortcut-payment';
     let finalPayments = [...currentPayments];
-
     if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && finalPayments.length === 0) {
-       finalPayments.push({ 
-         method: PaymentMethod.CASH, 
-         amount: remainingBalance, 
-         customerName: customerNameInput.toUpperCase() || undefined 
-       });
+       finalPayments.push({ method: PaymentMethod.CASH, amount: remainingBalance, customerName: customerNameInput.toUpperCase() || undefined });
     }
-
     const currentTotalPaid = finalPayments.reduce((acc, p) => acc + p.amount, 0);
-
-    if (!activeTab || (!isShortcut && tabItems.length === 0) || (currentTotalPaid < 0.01)) {
-       setValidationError("ADICIONE UM PAGAMENTO PARA CONCLUIR!");
-       return;
-    }
-
-    if (!isShortcut && (tabTotal - currentTotalPaid) > 0.05) {
-       setValidationError(`FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}!`);
-       return;
-    }
+    if (!activeTab || (!isShortcut && tabItems.length === 0) || (currentTotalPaid < 0.01)) { setValidationError("ADICIONE PAGAMENTO!"); return; }
+    if (!isShortcut && (tabTotal - currentTotalPaid) > 0.05) { setValidationError(`FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}!`); return; }
 
     finalPayments.forEach((p, index) => {
        onCompleteSale({
-          id: generateUniqueId('sale'),
-          timestamp: Date.now(),
-          openedAt: activeTab.openedAt,
-          items: isShortcut 
-            ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] 
-            : (index === 0 ? tabItems : []),
-          paymentMethod: p.method,
-          total: p.amount,
-          tabName: activeTab.name,
-          customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
-          userId: '', 
-          shiftId: activeShift?.id || ''
+          id: generateUniqueId('sale'), timestamp: Date.now(), openedAt: activeTab.openedAt,
+          items: isShortcut ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] : (index === 0 ? tabItems : []),
+          paymentMethod: p.method, total: p.amount, tabName: activeTab.name, customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+          userId: '', shiftId: activeShift?.id || ''
        });
     });
 
-    if (!isShortcut) {
-      onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
-    } else if (onClearShortcut) {
-      onClearShortcut();
-    }
-    
-    setActiveTabId(null);
-    setIsClosingTab(false);
-    setCurrentPayments([]);
-    setReceivedValueInput(null);
-    showFeedback("OPERACÃO FINALIZADA");
+    if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
+    else if (onClearShortcut) onClearShortcut();
+    setActiveTabId(null); setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); showFeedback("FINALIZADO");
   };
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const favorites = products.filter(p => p.isFavorite && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 relative h-full">
-      {toast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">
-           {toast}
-        </div>
-      )}
-      {validationError && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4" onClick={() => setValidationError(null)}>
-           {validationError}
-        </div>
-      )}
+      {toast && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">{toast}</div>}
+      {validationError && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4" onClick={() => setValidationError(null)}>{validationError}</div>}
 
       {!activeTabId ? (
         <div className="flex-1 space-y-6 pb-24 overflow-y-auto no-scrollbar">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Comandas Ativas</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{openTabs.length} mesas monitoradas</p>
-            </div>
+            <div><h2 className="text-xl font-black uppercase italic">Comandas Ativas</h2><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{openTabs.length} mesas monitoradas</p></div>
             {!isAddingTab && <button onClick={() => setIsAddingTab(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Abrir Mesa</button>}
           </div>
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
               <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU MESA..." className="flex-1 px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-lg tracking-widest outline-none" />
-              <div className="flex gap-2">
-                <button onClick={() => { if(newTabName.trim()){ const nid = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: nid, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(nid); setNewTabName(''); setIsAddingTab(false); } }} className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Criar</button>
-                <button onClick={() => setIsAddingTab(false)} className="bg-slate-100 dark:bg-slate-800 text-slate-400 font-black px-6 py-4 rounded-2xl uppercase text-xs">Sair</button>
-              </div>
+              <button onClick={() => { if(newTabName.trim()){ const nid = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: nid, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(nid); setNewTabName(''); setIsAddingTab(false); } }} className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs">Criar</button>
             </div>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
             {openTabs.map(tab => (
-              <div key={tab.id} onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-40 flex flex-col justify-between group">
-                <div><h3 className="text-sm font-black text-slate-800 dark:text-white uppercase truncate">{tab.name}</h3><span className="text-[9px] text-slate-400 font-black uppercase">{tab.items.length} ITENS</span></div>
+              <div key={tab.id} onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-40 flex flex-col justify-between">
+                <div><h3 className="text-sm font-black uppercase truncate">{tab.name}</h3><span className="text-[9px] text-slate-400 uppercase">{tab.items.length} ITENS</span></div>
                 <p className="text-red-600 font-black text-2xl tracking-tighter">{formatCurrency(tab.items.reduce((acc, i) => acc + i.totalPrice, 0))}</p>
               </div>
             ))}
@@ -291,30 +225,59 @@ const POS: React.FC<POSProps> = ({
            <div className="flex-1 space-y-6 pb-24 overflow-y-auto no-scrollbar">
               <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 sticky top-0 z-20">
                 <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
-                <div className="flex-1 relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                  <input type="text" placeholder="LANÇAR ITEM..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] outline-none border-none focus:ring-2 focus:ring-red-500 transition-all" />
+                <input type="text" placeholder="LANÇAR ITEM..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] outline-none" />
+              </div>
+
+              {/* FAVORITOS RESTAURADOS */}
+              {favorites.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest pl-2">⭐ FAVORITOS</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                    {favorites.map(p => (
+                      <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-amber-500/30 hover:border-amber-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
+                        <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
+                        <p className="text-xl font-black text-amber-600">{p.price.toFixed(2).replace('.', ',')}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TODOS OS PRODUTOS */}
+              <div className="space-y-4">
+                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">CARDÁPIO GERAL</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                  {filteredProducts.map(p => (
+                    <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
+                      <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
+                      <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                {filteredProducts.map(p => (
-                  <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
-                    <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
-                    <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
-                  </button>
-                ))}
-              </div>
            </div>
+
            <div className="w-full lg:w-96 bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden">
-              <div className="p-5 bg-red-600 text-white font-black uppercase text-xs flex justify-between">
+              <div className="p-5 bg-red-600 text-white font-black uppercase text-xs flex justify-between items-center">
                 <span>{activeTab?.name}</span>
-                <button onClick={() => { if(window.confirm("Limpar itens da mesa?")) onUpdateTabs(p => p.map(t => t.id === activeTabId ? {...t, items: []} : t)); }} className="text-white/50 hover:text-white transition-all"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2} /></svg></button>
+                <button onClick={() => { if(window.confirm("Zerar mesa?")) onUpdateTabs(p => p.map(t => t.id === activeTabId ? {...t, items: []} : t)); }} className="text-white/50 hover:text-white"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2} /></svg></button>
               </div>
-              <div className="flex-1 p-4 overflow-y-auto space-y-3">
+              <div className="flex-1 p-4 overflow-y-auto space-y-3 no-scrollbar">
                 {tabItems.map((item) => (
-                  <div key={item.id} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-2xl flex justify-between items-center group">
-                    <div><p className="text-[11px] font-black uppercase">{item.productName}</p><p className="text-xs font-black text-red-600">{formatCurrency(item.totalPrice)}</p></div>
-                    <button onClick={() => onUpdateTabs(p => p.map(t => t.id === activeTabId ? {...t, items: t.items.filter(it => it.id !== item.id)} : t))} className="text-red-500 opacity-0 group-hover:opacity-100 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={3} /></svg></button>
+                  <div key={item.id} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                      <p className="text-[11px] font-black uppercase leading-tight flex-1 mr-2">{item.productName}</p>
+                      <p className="text-xs font-black text-red-600">{formatCurrency(item.totalPrice)}</p>
+                    </div>
+                    {/* CONTROLES RESTAURADOS */}
+                    <div className="flex items-center justify-between bg-white dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                       <div className="flex items-center gap-1">
+                          <button onClick={() => updateItemQty(item.id, -1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 font-black">-</button>
+                          <span className="text-[10px] font-black w-8 text-center">{item.quantity}{item.productId === 'peso' ? 'kg' : 'x'}</span>
+                          <button onClick={() => updateItemQty(item.id, 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-emerald-500 font-black">+</button>
+                       </div>
+                       <button onClick={() => updateItemQty(item.id, -item.quantity)} className="text-red-500 p-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={3} /></svg></button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -326,7 +289,6 @@ const POS: React.FC<POSProps> = ({
         </div>
       )}
 
-      {/* MODAL PESO */}
       {weightModalProduct && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl">
@@ -334,34 +296,32 @@ const POS: React.FC<POSProps> = ({
             <input autoFocus type="number" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 outline-none border-4 border-red-500" placeholder="0" />
             <div className="grid grid-cols-2 gap-4 mt-8">
               <button onClick={() => { const g = parseFloat(inputGrams); if(g > 0) addToTab(weightModalProduct, g/1000); }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs">Lançar</button>
-              <button onClick={() => { setWeightModalProduct(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs">Sair</button>
+              <button onClick={() => setWeightModalProduct(null)} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs">Sair</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL MODIFICADORES */}
       {modifierModalData && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+           <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col max-h-[90vh]">
               <h4 className="text-xl font-black uppercase mb-8 text-center italic">{modifierModalData.group.name}</h4>
               <div className="flex-1 overflow-y-auto space-y-3 no-scrollbar">
                  {modifierModalData.group.options.map((opt, i) => (
-                    <button key={i} onClick={() => addToTab(modifierModalData.product, 1, opt)} className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-red-500 transition-all flex justify-between items-center group">
+                    <button key={i} onClick={() => addToTab(modifierModalData.product, 1, opt)} className="w-full p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center group">
                        <span className="font-black uppercase text-sm group-hover:text-red-500">{opt.name}</span>
                        <span className="font-black text-emerald-500">+{formatCurrency(opt.price)}</span>
                     </button>
                  ))}
               </div>
-              <div className="pt-8">
-                 <button onClick={() => addToTab(modifierModalData.product, 1)} className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black uppercase text-[10px] tracking-widest mb-3">Sem Opcional</button>
-                 <button onClick={() => setModifierModalData(null)} className="w-full py-5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 font-black uppercase text-[10px] tracking-widest">Fechar</button>
+              <div className="pt-8 flex flex-col gap-2">
+                 <button onClick={() => addToTab(modifierModalData.product, 1)} className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black uppercase text-[10px]">Sem Opcional</button>
+                 <button onClick={() => setModifierModalData(null)} className="w-full py-5 rounded-2xl bg-slate-100 text-slate-500 font-black uppercase text-[10px]">Fechar</button>
               </div>
            </div>
         </div>
       )}
 
-      {/* MODAL FECHAMENTO */}
       {isClosingTab && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center">
@@ -372,8 +332,8 @@ const POS: React.FC<POSProps> = ({
                    {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
                 {paymentMethodInput === PaymentMethod.PENDURA && <input type="text" value={customerNameInput} onChange={e => setCustomerNameInput(e.target.value)} placeholder="NOME DO CLIENTE..." className="w-full p-5 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black uppercase text-xs outline-none border-2 border-orange-500/20" />}
-                <button onClick={handleFinishSale} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-xl shadow-emerald-500/20 active:scale-95 transition-all">Confirmar Pagamento</button>
-                <button onClick={() => setIsClosingTab(false)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest">Cancelar</button>
+                <button onClick={handleFinishSale} className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs">Confirmar</button>
+                <button onClick={() => setIsClosingTab(false)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px]">Cancelar</button>
              </div>
           </div>
         </div>
@@ -383,4 +343,3 @@ const POS: React.FC<POSProps> = ({
 };
 
 export default POS;
-// FIM DA ALTERAÇÃO
