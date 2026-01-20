@@ -51,6 +51,9 @@ const POS: React.FC<POSProps> = ({
   const [inputGrams, setInputGrams] = useState('');
   
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  // NOVO: Controle de colapso para o cardápio central
+  const [collapsedMenuCats, setCollapsedMenuCats] = useState<Set<string>>(new Set());
+  
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -105,6 +108,13 @@ const POS: React.FC<POSProps> = ({
     setCollapsedCategories(newCollapsed);
   };
 
+  const toggleMenuCategoryCollapse = (cat: string) => {
+    const newCollapsed = new Set(collapsedMenuCats);
+    if (newCollapsed.has(cat)) newCollapsed.delete(cat);
+    else newCollapsed.add(cat);
+    setCollapsedMenuCats(newCollapsed);
+  };
+
   // --- BLOQUEIO DE TURNO ---
   if (!activeShift) {
     return (
@@ -126,8 +136,11 @@ const POS: React.FC<POSProps> = ({
 
   const handleProductClick = (product: Product, quantity: number = 1) => {
     if (!activeTabId || activeTabId === 'shortcut-payment') { setValidationError("SELECIONE UMA MESA!"); return; }
-    // INÍCIO DA ALTERAÇÃO: Resgatando o comportamento de balança
-    if (product.sellType === 'weight') { setWeightModalProduct(product); return; }
+    // VERIFICAÇÃO DE PESO REFORÇADA
+    if (product.sellType === 'weight') { 
+      setWeightModalProduct(product); 
+      return; 
+    }
     const effectiveModGroupId = product.modifierGroupId || categoryModifiers[product.category.toUpperCase().trim()];
     const modGroup = modifierGroups.find(g => g.id === effectiveModGroupId);
     if (modGroup) { setModifierModalData({ product, group: modGroup }); return; }
@@ -259,28 +272,40 @@ const POS: React.FC<POSProps> = ({
                 </div>
               )}
 
-              {/* INÍCIO DA RESTAURAÇÃO: CARDÁPIO ORGANIZADO POR CATEGORIAS */}
+              {/* CARDÁPIO ORGANIZADO POR CATEGORIAS COM COLAPSO */}
               <div className="space-y-10">
-                {menuCategories.map(cat => (
-                  <div key={cat} className="space-y-4">
-                    <div className="flex items-center gap-4">
-                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 whitespace-nowrap">{cat}</h3>
-                       <div className="w-full h-px bg-slate-100 dark:bg-slate-800"></div>
+                {menuCategories.map(cat => {
+                  const isCollapsed = collapsedMenuCats.has(cat);
+                  return (
+                    <div key={cat} className="space-y-4">
+                      <div 
+                        onClick={() => toggleMenuCategoryCollapse(cat)}
+                        className="flex items-center gap-4 cursor-pointer hover:opacity-70 transition-all"
+                      >
+                         <div className="flex items-center gap-2">
+                           <svg className={`w-4 h-4 text-red-600 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
+                           <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] whitespace-nowrap">{cat}</h3>
+                         </div>
+                         <div className="w-full h-px bg-slate-100 dark:bg-slate-800"></div>
+                      </div>
+                      
+                      {!isCollapsed && (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3 animate-in fade-in slide-in-from-top-1">
+                          {filteredProducts.filter(p => p.category.toUpperCase().trim() === cat).map(p => (
+                            <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
+                              <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
+                              <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                      {filteredProducts.filter(p => p.category.toUpperCase().trim() === cat).map(p => (
-                        <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
-                          <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
-                          <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {/* FIM DA RESTAURAÇÃO */}
            </div>
 
+           {/* COMANDA LATERAL */}
            <div className="w-full lg:w-96 bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden h-[calc(100vh-140px)] sticky top-24">
               <div className="p-5 bg-red-600 text-white font-black uppercase text-xs flex justify-between items-center shrink-0">
                 <span>{activeTab?.name}</span>
@@ -289,7 +314,6 @@ const POS: React.FC<POSProps> = ({
               
               <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
                 {Object.keys(groupedTabItems).length > 0 ? (
-                  // INÍCIO DA ALTERAÇÃO: Explicitly cast Object.entries to fix 'unknown' type error in reduce and map calls.
                   (Object.entries(groupedTabItems) as [string, SaleItem[]][]).map(([category, items]) => {
                     const isCollapsed = collapsedCategories.has(category);
                     const categoryTotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
@@ -315,7 +339,7 @@ const POS: React.FC<POSProps> = ({
                                 <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-1 rounded-2xl border border-slate-100 dark:border-slate-800">
                                    <div className="flex items-center gap-1">
                                       <button onClick={() => updateItemQty(item.id, -1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 font-black">-</button>
-                                      <span className="text-[10px] font-black w-10 text-center">{item.quantity}{item.productId === 'peso' || items[0].productId === 'peso' ? 'kg' : 'x'}</span>
+                                      <span className="text-[10px] font-black w-10 text-center">{item.quantity}{item.productId === 'peso' || item.productName.toLowerCase().includes(' kg') ? 'kg' : 'x'}</span>
                                       <button onClick={() => updateItemQty(item.id, 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-emerald-500 font-black">+</button>
                                    </div>
                                    <button onClick={() => updateItemQty(item.id, -item.quantity)} className="text-red-500 p-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={3} /></svg></button>
@@ -327,7 +351,6 @@ const POS: React.FC<POSProps> = ({
                       </div>
                     );
                   })
-                  // FIM DA ALTERAÇÃO
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 opacity-20 italic text-[10px] uppercase font-black text-center">Nenhum item lançado</div>
                 )}
@@ -341,7 +364,7 @@ const POS: React.FC<POSProps> = ({
         </div>
       )}
 
-      {/* MODAL DE PESO (BALANÇA) RESTAURADO */}
+      {/* MODAL DE PESO (BALANÇA) */}
       {weightModalProduct && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center">
