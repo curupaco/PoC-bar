@@ -85,7 +85,7 @@ const Help: React.FC = () => {
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
             <p>• <span className="text-orange-600 font-black">O Pendura:</span> Ao fechar uma mesa como <span className="font-bold">Pendura</span>, o nome do cliente é gravado na carteira de devedores.</p>
-            <p>• <span className="text-orange-600 font-black">A Quitação:</span> Vá em <span className="italic">Relatórios > Penduras</span> para receber pagamentos de dívidas antigas e limpar o saldo do cliente.</p>
+            <p>• <span className="text-orange-600 font-black">A Quitação:</span> Vá em <span className="italic">Relatórios &gt; Penduras</span> para receber pagamentos de dívidas antigas e limpar o saldo do cliente.</p>
           </div>
         </section>
 
@@ -126,7 +126,7 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight italic">Inteligência & Metas</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-cyan-600 font-black">Curva ABC:</span> Descubra quais produtos geram mais faturamento versus quais saem em maior volume (Relatórios > Produtos).</p>
+            <p>• <span className="text-cyan-600 font-black">Curva ABC:</span> Descubra quais produtos geram mais faturamento versus quais saem em maior volume (Relatórios &gt; Produtos).</p>
             <p>• <span className="text-cyan-600 font-black">Pico de Horário:</span> O mapa operacional mostra qual hora do dia o seu bar exige mais equipe para não perder vendas por lentidão.</p>
           </div>
         </section>
@@ -140,7 +140,7 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight italic">Adicionais (Upsell)</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-amber-600 font-black">Menus Dinâmicos:</span> Vincule menus de opções (Gelo, Borda, Complementos) a categorias inteiras na aba <span className="italic">Cardápio > Vínculos</span>.</p>
+            <p>• <span className="text-amber-600 font-black">Menus Dinâmicos:</span> Vincule menus de opções (Gelo, Borda, Complementos) a categorias inteiras na aba <span className="italic">Cardápio &gt; Vínculos</span>.</p>
             <p>• <span className="text-amber-600 font-black">Automação:</span> Ao lançar uma bebida da categoria vinculada, o sistema abre automaticamente a sugestão de adicionais para o operador.</p>
           </div>
         </section>
