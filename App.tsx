@@ -20,7 +20,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.32"; 
+const APP_VERSION = "3.9.33"; 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
@@ -228,7 +228,18 @@ const App: React.FC = () => {
         </header>
         <div className="p-8 h-full overflow-y-auto">
           {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} theme={theme} /> : 
-           activeView === 'products' && hasPermission('products') ? <ProductList products={products} setProducts={setProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} currentUser={currentUser} /> :
+           activeView === 'products' && hasPermission('products') ? (
+             <ProductList 
+                products={products} 
+                setProducts={setProducts} 
+                modifierGroups={modifierGroups} 
+                setModifierGroups={setModifierGroups} 
+                categoryModifiers={categoryModifiers} 
+                setCategoryModifiers={setCategoryModifiers} 
+                setOpenTabs={setOpenTabs}
+                currentUser={currentUser} 
+             />
+           ) :
            activeView === 'dashboard' && hasPermission('dashboard') ? <Dashboard sales={sales} products={products} theme={theme} /> :
            activeView === 'history' && hasPermission('history') ? (
              <SalesHistory 
