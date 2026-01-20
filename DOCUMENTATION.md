@@ -1,7 +1,7 @@
 
 # 🍺 Botequista - Sistema de Gestão para Bares
 
-**Versão Atual:** 3.9.41 (2026)
+**Versão Atual:** 3.9.42 (2026)
 **Stack Tecnológica:** React 19, Tailwind CSS 3.4, Firebase (Realtime Database), Vercel.
 
 ---
@@ -53,7 +53,7 @@ Privilégios de alto nível que permitem a alteração de dados históricos e ex
 - **Auditoria de Fechamento:** Comparativo entre o valor esperado pelo sistema e a contagem física (cega) do operador.
 
 ### 4. Central de Feedback (GitHub Integration)
-- **Report de Erros/Sugestões:** Módulo acessível via header que permite ao usuário final criar Issues diretamente no repositório do GitHub.
+- **Report de Erros/Sugestões:** Módulo acessível via header (canto superior direito) que permite ao usuário final criar Issues diretamente no repositório do GitHub.
 - **Segurança:** A integração é feita via Vercel Serverless Function (`/api/feedback`), protegendo o Token de Acesso Pessoal (PAT).
 - **Fallback Local:** Em ambiente de desenvolvimento (`localhost`), o envio é simulado para não travar a interface.
 

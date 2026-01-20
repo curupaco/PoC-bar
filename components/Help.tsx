@@ -144,6 +144,20 @@ const Help: React.FC = () => {
             <p>• <span className="text-amber-600 font-black">Automação:</span> Ao lançar uma bebida da categoria vinculada, o sistema abre automaticamente a sugestão de adicionais para o operador.</p>
           </div>
         </section>
+        
+        {/* Card 10: Suporte & Feedback - NOVO */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-teal-100 dark:border-teal-900 shadow-sm space-y-6 flex flex-col h-full hover:border-teal-500/50 transition-all">
+          <div className="flex items-center gap-4 text-teal-600">
+            <div className="w-12 h-12 bg-teal-50 dark:bg-teal-900/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Suporte & Feedback</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-teal-600 font-black">Contato Direto:</span> Encontrou um erro ou tem uma ideia? Use o botão no topo da tela (último à direita) para abrir uma Issue direto no GitHub.</p>
+            <p>• <span className="text-teal-600 font-black">Transparência:</span> Acompanhe a evolução do sistema e reporte bugs em tempo real para nossa equipe de desenvolvimento.</p>
+          </div>
+        </section>
       </div>
 
       <div className="bg-slate-900 text-white p-10 rounded-[50px] shadow-2xl space-y-8 relative overflow-hidden border border-white/10">
