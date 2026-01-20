@@ -78,20 +78,16 @@ const POS: React.FC<POSProps> = ({
 
   const normalizeId = (id: any) => id ? String(id).trim() : '';
 
-  // INÍCIO DA ALTERAÇÃO: Explicitly type activeTab to avoid unknown errors
   const activeTab = useMemo<any>(() => {
     if (shortcutCheckout) return { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
     return openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
   }, [activeTabId, openTabs, shortcutCheckout]);
     
-  // INÍCIO DA ALTERAÇÃO: Explicitly type tabItems as SaleItem[]
   const tabItems: SaleItem[] = activeTab?.items ?? [];
   const tabTotal = shortcutCheckout ? shortcutCheckout.amount : tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
-  // FIM DA ALTERAÇÃO
 
-  // Agrupamento para a Comanda Lateral
   const groupedTabItems = useMemo(() => {
     const groups: Record<string, SaleItem[]> = {};
     tabItems.forEach(item => {
@@ -130,6 +126,7 @@ const POS: React.FC<POSProps> = ({
 
   const handleProductClick = (product: Product, quantity: number = 1) => {
     if (!activeTabId || activeTabId === 'shortcut-payment') { setValidationError("SELECIONE UMA MESA!"); return; }
+    // INÍCIO DA ALTERAÇÃO: Resgatando o comportamento de balança
     if (product.sellType === 'weight') { setWeightModalProduct(product); return; }
     const effectiveModGroupId = product.modifierGroupId || categoryModifiers[product.category.toUpperCase().trim()];
     const modGroup = modifierGroups.find(g => g.id === effectiveModGroupId);
@@ -185,8 +182,33 @@ const POS: React.FC<POSProps> = ({
     }));
   };
 
+  const handleFinishSale = () => {
+    const isShortcut = activeTabId === 'shortcut-payment';
+    let finalPayments = [...currentPayments];
+    if (paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && finalPayments.length === 0) {
+       finalPayments.push({ method: PaymentMethod.CASH, amount: remainingBalance, customerName: customerNameInput.toUpperCase() || undefined });
+    }
+    const currentTotalPaid = finalPayments.reduce((acc, p) => acc + p.amount, 0);
+    if (!activeTab || (!isShortcut && tabItems.length === 0) || (currentTotalPaid < 0.01)) { setValidationError("ADICIONE PAGAMENTO!"); return; }
+    if (!isShortcut && (tabTotal - currentTotalPaid) > 0.05) { setValidationError(`FALTAM ${formatCurrency(tabTotal - currentTotalPaid)}!`); return; }
+
+    finalPayments.forEach((p, index) => {
+       onCompleteSale({
+          id: generateUniqueId('sale'), timestamp: Date.now(), openedAt: activeTab.openedAt,
+          items: isShortcut ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] : (index === 0 ? tabItems : []),
+          paymentMethod: p.method, total: p.amount, tabName: activeTab.name, customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+          userId: '', shiftId: activeShift?.id || ''
+       });
+    });
+
+    if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
+    else if (onClearShortcut) onClearShortcut();
+    setActiveTabId(null); setIsClosingTab(false); setCurrentPayments([]); setReceivedValueInput(null); showFeedback("FINALIZADO");
+  };
+
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = products.filter(p => p.isFavorite && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const menuCategories = useMemo(() => Array.from(new Set(filteredProducts.map(p => p.category.toUpperCase().trim()))).sort(), [filteredProducts]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 relative h-full">
@@ -219,9 +241,10 @@ const POS: React.FC<POSProps> = ({
            <div className="flex-1 space-y-6 pb-24 overflow-y-auto no-scrollbar">
               <div className="bg-white dark:bg-slate-900 p-4 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4 sticky top-0 z-20">
                 <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(onClearShortcut) onClearShortcut(); }} className="bg-slate-100 dark:bg-slate-800 p-3 rounded-2xl hover:bg-red-500 hover:text-white transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
-                <input type="text" placeholder="LANÇAR ITEM..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] outline-none" />
+                <input type="text" placeholder="LOCALIZAR ITEM NO CARDÁPIO..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] outline-none" />
               </div>
 
+              {/* FAVORITOS SEMPRE NO TOPO */}
               {favorites.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest pl-2">⭐ FAVORITOS</h3>
@@ -236,20 +259,28 @@ const POS: React.FC<POSProps> = ({
                 </div>
               )}
 
-              <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">CARDÁPIO GERAL</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
-                  {filteredProducts.map(p => (
-                    <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
-                      <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
-                      <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
-                    </button>
-                  ))}
-                </div>
+              {/* INÍCIO DA RESTAURAÇÃO: CARDÁPIO ORGANIZADO POR CATEGORIAS */}
+              <div className="space-y-10">
+                {menuCategories.map(cat => (
+                  <div key={cat} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] pl-2 whitespace-nowrap">{cat}</h3>
+                       <div className="w-full h-px bg-slate-100 dark:bg-slate-800"></div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+                      {filteredProducts.filter(p => p.category.toUpperCase().trim() === cat).map(p => (
+                        <button key={p.id} onClick={() => handleProductClick(p)} className="bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-24 flex flex-col items-center justify-center text-center">
+                          <p className="text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1">{p.name}</p>
+                          <p className="text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
+              {/* FIM DA RESTAURAÇÃO */}
            </div>
 
-           {/* COMANDA LATERAL COM GRUPOS E COLAPSO */}
            <div className="w-full lg:w-96 bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden h-[calc(100vh-140px)] sticky top-24">
               <div className="p-5 bg-red-600 text-white font-black uppercase text-xs flex justify-between items-center shrink-0">
                 <span>{activeTab?.name}</span>
@@ -258,17 +289,14 @@ const POS: React.FC<POSProps> = ({
               
               <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar">
                 {Object.keys(groupedTabItems).length > 0 ? (
-                  Object.entries(groupedTabItems).map(([category, items]) => {
+                  // INÍCIO DA ALTERAÇÃO: Explicitly cast Object.entries to fix 'unknown' type error in reduce and map calls.
+                  (Object.entries(groupedTabItems) as [string, SaleItem[]][]).map(([category, items]) => {
                     const isCollapsed = collapsedCategories.has(category);
                     const categoryTotal = items.reduce((sum, i) => sum + i.totalPrice, 0);
                     
                     return (
                       <div key={category} className="space-y-2">
-                        {/* Cabeçalho da Categoria com Colapso */}
-                        <div 
-                          onClick={() => toggleCategoryCollapse(category)}
-                          className="flex justify-between items-center px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        >
+                        <div onClick={() => toggleCategoryCollapse(category)} className="flex justify-between items-center px-4 py-2 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                           <div className="flex items-center gap-2">
                              <svg className={`w-3 h-3 text-red-600 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{category}</span>
@@ -276,7 +304,6 @@ const POS: React.FC<POSProps> = ({
                           <span className="text-[10px] font-black text-slate-400">{formatCurrency(categoryTotal)}</span>
                         </div>
 
-                        {/* Itens da Categoria */}
                         {!isCollapsed && (
                           <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
                             {items.map((item) => (
@@ -288,7 +315,7 @@ const POS: React.FC<POSProps> = ({
                                 <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-1 rounded-2xl border border-slate-100 dark:border-slate-800">
                                    <div className="flex items-center gap-1">
                                       <button onClick={() => updateItemQty(item.id, -1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-500 font-black">-</button>
-                                      <span className="text-[10px] font-black w-10 text-center">{item.quantity}{item.productId === 'peso' ? 'kg' : 'x'}</span>
+                                      <span className="text-[10px] font-black w-10 text-center">{item.quantity}{item.productId === 'peso' || items[0].productId === 'peso' ? 'kg' : 'x'}</span>
                                       <button onClick={() => updateItemQty(item.id, 1)} className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-emerald-500 font-black">+</button>
                                    </div>
                                    <button onClick={() => updateItemQty(item.id, -item.quantity)} className="text-red-500 p-2"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth={3} /></svg></button>
@@ -300,6 +327,7 @@ const POS: React.FC<POSProps> = ({
                       </div>
                     );
                   })
+                  // FIM DA ALTERAÇÃO
                 ) : (
                   <div className="flex flex-col items-center justify-center py-20 opacity-20 italic text-[10px] uppercase font-black text-center">Nenhum item lançado</div>
                 )}
@@ -313,13 +341,17 @@ const POS: React.FC<POSProps> = ({
         </div>
       )}
 
+      {/* MODAL DE PESO (BALANÇA) RESTAURADO */}
       {weightModalProduct && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl">
-            <h4 className="text-xl font-black uppercase mb-6 text-center italic">Peso (Gramas)</h4>
-            <input autoFocus type="number" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 outline-none border-4 border-red-500" placeholder="0" />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl text-center">
+            <h4 className="text-xl font-black uppercase mb-6 italic tracking-tighter">Lançar Peso (Gramas)</h4>
+            <div className="relative">
+               <input autoFocus type="number" inputMode="numeric" value={inputGrams} onChange={e => setInputGrams(e.target.value)} className="w-full text-5xl font-black p-8 text-center rounded-3xl bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-4 border-red-500 outline-none" placeholder="0" />
+            </div>
+            <p className="text-[10px] font-black text-slate-400 uppercase mt-4 tracking-widest">Ex: 500 = 0,5kg | 1000 = 1,0kg</p>
             <div className="grid grid-cols-2 gap-4 mt-8">
-              <button onClick={() => { const g = parseFloat(inputGrams); if(g > 0) addToTab(weightModalProduct, g/1000); }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs">Lançar</button>
+              <button onClick={() => { const g = parseFloat(inputGrams); if(g > 0) addToTab(weightModalProduct, g/1000); }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs shadow-lg active:scale-95 transition-all">Lançar</button>
               <button onClick={() => setWeightModalProduct(null)} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs">Sair</button>
             </div>
           </div>
