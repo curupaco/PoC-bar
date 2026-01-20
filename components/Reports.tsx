@@ -37,6 +37,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }
   }, [shifts, selectedShiftId]);
 
+  // UX FIX: Scroll para o topo ao mudar de aba
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeCategory]);
+
   const canExport = currentUser.username === 'admin' || currentUser.permissions.includes('export_report');
   const canSettle = currentUser.username === 'admin' || currentUser.permissions.includes('clear_fiado');
 

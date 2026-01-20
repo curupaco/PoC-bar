@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod, ModifierGroup, generateUniqueId, getBusinessDateStart } from './types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Product, Sale, View, Theme, Tab, User, Shift, UserPermission, PaymentMethod, ModifierGroup } from './types';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
 import POS from './components/POS';
@@ -13,15 +13,15 @@ import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
-import { saveToFirebase, loadFromFirebase, getFirebaseToken } from './services/firebaseService';
 import { hashPassword } from './services/cryptoService';
+import { useSync } from './hooks/useSync';
 
 const isBrowser = typeof window !== 'undefined';
 if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.33"; 
+const APP_VERSION = "3.9.35"; 
 const MASTER_KEY = "Tc@00216587";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
@@ -41,14 +41,20 @@ const viewTitles: Record<View, string> = {
   help: 'Guia de Operação'
 };
 
+const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
+  'dashboard', 'pos', 'products', 'history', 'reports', 'settings', 
+  'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 
+  'delete_sale', 'delete_product', 'edit_product', 'export_report', 
+  'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
+];
+
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error'>('idle');
-  const isInitialLoadDone = useRef(false);
+  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline'>('idle');
 
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('btq-theme') as Theme) || 'dark';
@@ -88,91 +94,28 @@ const App: React.FC = () => {
     return Math.max(0, total);
   }, [sales]);
 
-  const ALL_ADMIN_PERMISSIONS: UserPermission[] = [
-    'dashboard', 'pos', 'products', 'history', 'reports', 'settings', 
-    'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift', 
-    'delete_sale', 'delete_product', 'edit_product', 'export_report', 
-    'clear_fiado', 'full_reset', 'manage_backup', 'help_view'
-  ];
-
-  const fetchInitialData = useCallback(async () => {
-    setDbStatus('loading');
-    try {
-      const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
-      // Tenta carregar. Se estiver criptografado, o service descriptografa.
-      const cloudData = await loadFromFirebase(SYSTEM_DB_URL, MASTER_KEY, token);
-      
-      if (cloudData) {
-        setProducts(cloudData.products || []);
-        setModifierGroups(cloudData.modifierGroups || []);
-        setCategoryModifiers(cloudData.categoryModifiers || {});
-        setSales(cloudData.sales || []);
-        setOpenTabs(cloudData.openTabs || []);
-        setUsers(cloudData.users || []);
-        setShifts(cloudData.shifts || []);
-      } else {
-        setUsers([{ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_ADMIN_PERMISSIONS }]);
-      }
-      setDbStatus('success');
-    } catch (e) { 
-      setDbStatus('error'); 
-    } finally { 
-      isInitialLoadDone.current = true; 
+  // Hook Customizado de Sincronização
+  const { fetchInitialData, isInitialLoadDone } = useSync({
+    products, setProducts,
+    modifierGroups, setModifierGroups,
+    categoryModifiers, setCategoryModifiers,
+    sales, setSales,
+    openTabs, setOpenTabs,
+    users, setUsers,
+    shifts, setShifts,
+    penduraThreshold,
+    setDbStatus,
+    config: {
+      url: SYSTEM_DB_URL,
+      key: SYSTEM_API_KEY,
+      email: SYSTEM_AUTH_EMAIL,
+      pass: SYSTEM_AUTH_PASS,
+      masterKey: MASTER_KEY,
+      allPerms: ALL_ADMIN_PERMISSIONS
     }
-  }, []);
+  });
 
   useEffect(() => { fetchInitialData(); }, [fetchInitialData]);
-
-  // Função auxiliar para salvar nós específicos (Correção de Item 1: Concorrência)
-  // Removemos MASTER_KEY para salvar em Plain JSON, permitindo que 'sales' não sobrescreva 'products'
-  const syncNode = useCallback(async (nodeName: string, data: any) => {
-    if (!isInitialLoadDone.current) return;
-    try {
-      setDbStatus('pending');
-      const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
-      await saveToFirebase(SYSTEM_DB_URL, data, undefined, token, nodeName); // Passando 'nodeName' como path e 'undefined' como key (sem cripto granular)
-      setDbStatus('success');
-    } catch (e) {
-      console.error(`Erro ao sincronizar ${nodeName}:`, e);
-      setDbStatus('error');
-    }
-  }, []);
-
-  // Split Effect 1: Catálogo (Produtos, Modificadores, Vínculos)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      syncNode('products', products);
-      syncNode('modifierGroups', modifierGroups);
-      syncNode('categoryModifiers', categoryModifiers);
-    }, 2000); // Debounce maior para catálogo
-    return () => clearTimeout(timer);
-  }, [products, modifierGroups, categoryModifiers, syncNode]);
-
-  // Split Effect 2: Operações Críticas (Vendas)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      syncNode('sales', sales);
-    }, 1000); 
-    return () => clearTimeout(timer);
-  }, [sales, syncNode]);
-
-  // Split Effect 3: Operações Voláteis (Mesas e Turnos)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      syncNode('openTabs', openTabs);
-      syncNode('shifts', shifts);
-    }, 800); // Debounce menor para UX rápida
-    return () => clearTimeout(timer);
-  }, [openTabs, shifts, syncNode]);
-
-  // Split Effect 4: Admin (Usuários, Config)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      syncNode('users', users);
-      syncNode('config', { penduraThreshold });
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [users, penduraThreshold, syncNode]);
 
   // Item 4: Segurança - Hash check na entrada
   const handleLogin = (u: string, p: string) => {
@@ -218,6 +161,7 @@ const App: React.FC = () => {
       case 'success': return { label: 'Sincronizado', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/20 dark:border-emerald-500/30', animate: '' };
       case 'pending':
       case 'loading': return { label: 'Sincronizando', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20 dark:border-amber-500/30', animate: 'animate-pulse' };
+      case 'offline': return { label: 'Offline', color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-500/20 dark:border-slate-500/30', animate: '' };
       case 'error': return { label: 'Erro Sinc', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20 dark:border-red-500/30', animate: '' };
       default: return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', animate: '' };
     }
@@ -231,7 +175,7 @@ const App: React.FC = () => {
         isOpen={isMobileMenuOpen} 
         onClose={() => setIsMobileMenuOpen(false)} 
         dbStatus={dbStatus} 
-        isOnline={true} 
+        isOnline={dbStatus !== 'offline' && dbStatus !== 'error'} 
         currentUser={currentUser} 
         onLogout={handleLogout} 
         isShiftOpen={!!activeShift} 

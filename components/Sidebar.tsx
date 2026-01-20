@@ -7,7 +7,7 @@ interface SidebarProps {
   onViewChange: (view: View) => void;
   isOpen: boolean;
   onClose: () => void;
-  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error';
+  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline';
   isOnline: boolean;
   currentUser: User | null;
   onLogout: () => void;
