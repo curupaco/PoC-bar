@@ -1,6 +1,9 @@
 
 import React, { useState, useMemo } from 'react';
 import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab } from '../types';
+import ProductItemsTab from './products/ProductItemsTab';
+import ModifierGroupsTab from './products/ModifierGroupsTab';
+import CategoryLinksTab from './products/CategoryLinksTab';
 
 interface ProductListProps {
   products: Product[];
@@ -52,29 +55,13 @@ const ProductList: React.FC<ProductListProps> = ({
     return Array.from(new Set(products.map(p => p.category.toUpperCase().trim()))).sort();
   }, [products]);
 
-  const filteredProducts = useMemo(() => {
-    const term = searchTerm.toLowerCase();
-    return products.filter(p => 
-      p.name.toLowerCase().includes(term) || 
-      p.category.toLowerCase().includes(term)
-    );
-  }, [products, searchTerm]);
-
-  const groupedProducts = useMemo(() => {
-    const groups: Record<string, Product[]> = {};
-    filteredProducts.forEach(p => {
-      const cat = p.category.toUpperCase().trim() || 'GERAL';
-      if (!groups[cat]) groups[cat] = [];
-      groups[cat].push(p);
-    });
-    return groups;
-  }, [filteredProducts]);
-
   const toggleCategory = (cat: string) => {
-    const newCollapsed = new Set(collapsedCats);
-    if (newCollapsed.has(cat)) newCollapsed.delete(cat);
-    else newCollapsed.add(cat);
-    setCollapsedCats(newCollapsed);
+    setCollapsedCats(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cat)) newSet.delete(cat);
+      else newSet.add(cat);
+      return newSet;
+    });
   };
 
   const handleSaveProduct = () => {
@@ -123,13 +110,9 @@ const ProductList: React.FC<ProductListProps> = ({
       setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
     } else {
       const deletedId = deleteConfirmId.id;
-
-      // INÍCIO DA ALTERAÇÃO: Identificação de dependências para limpeza em mesas abertas
       const affectedProducts = products.filter(p => p.modifierGroupId === deletedId).map(p => p.id);
       const affectedCategories = Object.keys(categoryModifiers).filter(cat => categoryModifiers[cat] === deletedId);
 
-      // 1. LIMPEZA DE ÓRFÃOS EM MESAS ABERTAS
-      // Percorre todas as abas e remove modificadores de itens vinculados ao grupo deletado
       setOpenTabs(prev => prev.map(tab => ({
         ...tab,
         items: (tab.items || []).map(item => {
@@ -137,7 +120,6 @@ const ProductList: React.FC<ProductListProps> = ({
           const isFromAffectedCat = affectedCategories.includes(item.category.toUpperCase().trim());
           
           if (item.modifier && (isFromAffectedProd || isFromAffectedCat)) {
-            // Remove o modificador e recalcula o preço do item para manter integridade financeira
             return { 
               ...item, 
               modifier: undefined,
@@ -148,13 +130,9 @@ const ProductList: React.FC<ProductListProps> = ({
         })
       })));
 
-      // 2. Remover o grupo da lista mestre
       setModifierGroups(prev => prev.filter(g => g.id !== deletedId));
-      
-      // 3. LIMPEZA DE ÓRFÃOS NO CARDÁPIO: Remover referência de produtos que usavam este grupo
       setProducts(prev => prev.map(p => p.modifierGroupId === deletedId ? { ...p, modifierGroupId: undefined } : p));
       
-      // 4. LIMPEZA DE ÓRFÃOS EM VÍNCULOS: Remover vínculos automáticos por categoria
       setCategoryModifiers(prev => {
         const updatedMap = { ...prev };
         Object.keys(updatedMap).forEach(cat => {
@@ -164,15 +142,12 @@ const ProductList: React.FC<ProductListProps> = ({
         });
         return updatedMap;
       });
-      // FIM DA ALTERAÇÃO
     }
     setDeleteConfirmId(null);
   };
 
   return (
     <div className="space-y-6">
-      {/* ... restante do componente ... */}
-      {/* (O restante do código de UI permanece idêntico para garantir compatibilidade) */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
@@ -199,124 +174,37 @@ const ProductList: React.FC<ProductListProps> = ({
       </div>
 
       {activeTab === 'ITEMS' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex-1 w-full relative">
-               <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-               <input 
-                  type="text" 
-                  placeholder="LOCALIZAR NO CARDÁPIO..." 
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all shadow-inner"
-               />
-            </div>
-            <button onClick={() => setShowModal(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all w-full md:w-auto">Novo Produto</button>
-          </div>
-
-          <div className="space-y-10 pb-24">
-            {(Object.entries(groupedProducts) as [string, Product[]][]).map(([cat, items]) => (
-              <div key={cat} className="space-y-4">
-                <div 
-                  onClick={() => toggleCategory(cat)}
-                  className="flex items-center gap-4 cursor-pointer group select-none"
-                >
-                  <div className="flex items-center gap-2">
-                    <svg className={`w-4 h-4 text-red-600 transition-transform duration-300 ${collapsedCats.has(cat) ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-red-500 transition-colors">{cat}</h3>
-                  </div>
-                  <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-                  <span className="text-[10px] font-black text-slate-300 uppercase">{items.length} ITENS</span>
-                </div>
-
-                {!collapsedCats.has(cat) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in slide-in-from-top-2 duration-300">
-                    {items.map(p => (
-                      <div key={p.id} className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center group hover:border-red-500/30 transition-all">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-black uppercase text-sm text-slate-800 dark:text-white">{p.name}</p>
-                            <button onClick={() => setProducts(prev => prev.map(x => x.id === p.id ? {...x, isFavorite: !x.isFavorite} : x))} className={`text-sm ${p.isFavorite ? 'text-amber-500' : 'text-slate-100 dark:text-slate-800'} hover:scale-125 transition-transform`}>★</button>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-lg font-black text-red-600">{formatCurrency(p.price)}</p>
-                            <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${p.sellType === 'weight' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{p.sellType === 'weight' ? 'PESO (KG)' : 'UNIDADE'}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-1">
-                          <button disabled={!canEdit} onClick={() => { setEditingId(p.id); setName(p.name); setPrice(p.price.toFixed(2).replace('.', ',')); setCategory(p.category); setSellType(p.sellType); setModGroupId(p.modifierGroupId || ''); setShowModal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all disabled:opacity-20"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                          <button disabled={!canDelete} onClick={() => setDeleteConfirmId({id: p.id, name: p.name, type: 'prod'})} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all disabled:opacity-20"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            {filteredProducts.length === 0 && <div className="py-20 text-center text-slate-400 font-black uppercase text-[10px] tracking-[0.4em] italic opacity-30">Nenhum produto encontrado</div>}
-          </div>
-        </div>
+        <ProductItemsTab 
+          products={products}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          collapsedCats={collapsedCats}
+          toggleCategory={toggleCategory}
+          setProducts={setProducts}
+          onEdit={(p) => { setEditingId(p.id); setName(p.name); setPrice(p.price.toFixed(2).replace('.', ',')); setCategory(p.category); setSellType(p.sellType); setModGroupId(p.modifierGroupId || ''); setShowModal(true); }}
+          onDelete={(id, name) => setDeleteConfirmId({id, name, type: 'prod'})}
+          onShowModal={() => setShowModal(true)}
+          canEdit={canEdit}
+          canDelete={canDelete}
+        />
       )}
 
       {activeTab === 'GROUPS' && (
-        <div className="space-y-6 animate-in fade-in duration-300 pb-24">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center">
-            <div>
-              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Menus de Opções</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Crie adicionais e acompanhamentos dinâmicos</p>
-            </div>
-            <button onClick={() => setShowModal(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">Novo Menu</button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {modifierGroups.map(group => (
-              <div key={group.id} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-                <div className="flex justify-between items-start">
-                   <div>
-                      <h4 className="font-black text-lg uppercase text-slate-800 dark:text-white leading-none">{group.name}</h4>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Destaque: {group.category || 'Geral'}</p>
-                   </div>
-                   <div className="flex gap-1">
-                      <button onClick={() => { setEditingId(group.id); setGroupName(group.name); setGroupCategory(group.category); setOptions(group.options); setShowModal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                      <button onClick={() => setDeleteConfirmId({id: group.id, name: group.name, type: 'mod'})} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                   </div>
-                </div>
-                <div className="space-y-2">
-                   {group.options.map((opt, i) => (
-                      <div key={i} className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                         <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wide">{opt.name}</span>
-                         <span className="text-xs font-black text-red-600">{opt.price > 0 ? `+ ${formatCurrency(opt.price)}` : 'GRÁTIS'}</span>
-                      </div>
-                   ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <ModifierGroupsTab 
+          modifierGroups={modifierGroups}
+          onEdit={(g) => { setEditingId(g.id); setGroupName(g.name); setGroupCategory(g.category); setOptions(g.options); setShowModal(true); }}
+          onDelete={(id, name) => setDeleteConfirmId({id, name, type: 'mod'})}
+          onShowModal={() => setShowModal(true)}
+        />
       )}
 
       {activeTab === 'CATEGORIES' && (
-        <div className="space-y-6 animate-in fade-in duration-300 pb-24">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
-             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Vínculos por Categoria</h3>
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Configure o sistema para abrir menus de opções sozinhos em certas categorias</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             {categories.map(cat => (
-                <div key={cat} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-                   <span className="font-black text-slate-800 dark:text-white uppercase text-xs tracking-widest">{cat}</span>
-                   <select 
-                      value={categoryModifiers[cat] || ''} 
-                      onChange={e => setCategoryModifiers(prev => ({ ...prev, [cat]: e.target.value }))}
-                      className="flex-1 w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] tracking-widest border border-slate-100 dark:border-slate-800 outline-none focus:ring-2 focus:ring-red-500 transition-all"
-                   >
-                      <option value="">NENHUM VÍNCULO ATIVO</option>
-                      {modifierGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                   </select>
-                </div>
-             ))}
-          </div>
-        </div>
+        <CategoryLinksTab 
+          categories={categories}
+          categoryModifiers={categoryModifiers}
+          modifierGroups={modifierGroups}
+          setCategoryModifiers={setCategoryModifiers}
+        />
       )}
 
       {showModal && (
