@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'botequista-v17';
+const CACHE_NAME = 'botequista-v18';
 const ASSETS = [
   'index.html',
   './index.html',
@@ -28,29 +28,34 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estratégia principal para PWAs: Network-First com Fallback SPA exaustivo
+// Estratégia principal para PWAs: Network-First com Fallback SPA
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // 1. Ignorar rotas de API (Vercel Functions) - Deixar o navegador lidar direto
+  if (url.pathname.startsWith('/api/')) {
+    return; 
+  }
+
   const isNavigation = event.request.mode === 'navigate';
 
   if (isNavigation) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Se for 404 na rede, o servidor não sabe lidar com a rota do SPA.
           if (!response.ok && response.status === 404) {
              return caches.match('index.html') || caches.match('./index.html') || caches.match('/');
           }
           return response;
         })
         .catch(() => {
-          // Se estiver offline ou a rede falhar, entrega o index.html do cache
           return caches.match('index.html') || caches.match('./index.html') || caches.match('/');
         })
     );
     return;
   }
 
-  // Para outros assets (imagens, scripts)
+  // Para outros assets
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).catch(() => {
