@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, User, Theme } from '../types';
 
 interface SidebarProps {
@@ -39,13 +39,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed, 
   onToggleCollapse,
 }) => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
-
-  const handleLogout = () => {
-    if (window.confirm("VOCÊ DESEJA REALMENTE SAIR DO SISTEMA? \nAs mesas abertas e o turno ativo continuarão salvos na nuvem.")) {
-      onLogout();
-    }
-  };
 
   const navItems: NavItem[] = [
     { id: 'pos', label: 'VENDA (PDV)', perm: 'pos', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg> },
@@ -74,6 +69,26 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
+      {/* MODAL DE CONFIRMAÇÃO DE LOGOUT CUSTOMIZADO */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[610] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+             </div>
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-tight italic">Encerrar Sessão?</h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-10 leading-relaxed px-2">
+               As mesas abertas e o turno ativo continuarão salvos com total segurança na nuvem.
+             </p>
+             <div className="flex flex-col gap-3">
+                <button onClick={() => { onLogout(); setShowLogoutConfirm(false); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sair Agora</button>
+                <button onClick={() => setShowLogoutConfirm(false)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
+
       {isOpen && <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-[90] md:hidden" onClick={onClose} />}
       <aside className={`fixed inset-y-0 left-0 flex flex-col z-[100] transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl`}>
         <button onClick={onToggleCollapse} className={`hidden md:flex absolute -right-3 top-20 w-6 h-6 border rounded-full items-center justify-center shadow-md z-[110] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400`}>
@@ -139,13 +154,13 @@ const Sidebar: React.FC<SidebarProps> = ({
              {isCollapsed && <Tooltip text="GUIA DO BAR" />}
            </div>
            <div className={`flex items-center gap-3 p-1 ${isCollapsed ? 'justify-center' : ''}`}>
-             <button onClick={handleLogout} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600`}>
+             <button onClick={() => setShowLogoutConfirm(true)} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600`}>
                {currentUser?.username.slice(0, 2).toUpperCase()}
              </button>
              {!isCollapsed && (
                <div className="flex-1 min-w-0">
                  <p className={`text-[10px] font-black truncate uppercase leading-none mb-1 text-slate-800 dark:text-white`}>{currentUser?.displayName}</p>
-                 <button onClick={handleLogout} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
+                 <button onClick={() => setShowLogoutConfirm(true)} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
                </div>
              )}
            </div>
