@@ -14,6 +14,7 @@ import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, getFirebaseToken } from './services/firebaseService';
+import { hashPassword } from './services/cryptoService';
 
 const isBrowser = typeof window !== 'undefined';
 if (isBrowser && !(window as any).process) {
@@ -173,8 +174,13 @@ const App: React.FC = () => {
     return () => clearTimeout(timer);
   }, [users, penduraThreshold, syncNode]);
 
+  // Item 4: Segurança - Hash check na entrada
   const handleLogin = (u: string, p: string) => {
-    const found = users.find(x => x.username === u && x.password === p);
+    const hashedPassword = hashPassword(p);
+    const found = users.find(x => 
+      x.username === u && (x.password === p || x.password === hashedPassword)
+    );
+    
     if (found) {
       setCurrentUser(found);
       setLoginError(null);
@@ -275,7 +281,7 @@ const App: React.FC = () => {
                 currentUser={currentUser} 
              />
            ) :
-           activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} /> :
+           activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} theme={theme} /> :
            activeView === 'shifts' && hasPermission('shifts_admin') ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
            activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
            activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :

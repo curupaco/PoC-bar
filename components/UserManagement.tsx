@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, UserPermission } from '../types';
+import { hashPassword } from '../services/cryptoService';
 
 interface UserManagementProps {
   users: User[];
@@ -56,10 +57,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
   const handleSave = () => {
     if (!username || !password || !displayName) return;
     
+    // Hash da senha se ela foi alterada (ou nova)
+    // Se for edição e a senha for igual a existente, mantemos (para não re-hashar um hash)
+    let finalPassword = password;
+    if (editingUser && editingUser.password === password) {
+      finalPassword = password;
+    } else {
+      finalPassword = hashPassword(password);
+    }
+    
     const newUser: User = {
       id: editingUser?.id || `user-${Date.now()}`,
       username,
-      password,
+      password: finalPassword,
       displayName,
       permissions: selectedPerms
     };
@@ -140,7 +150,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                   <div className="flex items-center gap-2 mt-1">
                      <span className="text-[9px] font-black text-slate-500 uppercase">Senha:</span>
                      <span className="text-[10px] font-mono tracking-tighter">
-                        {visiblePasswords[user.id] ? user.password : '••••••••'}
+                        {visiblePasswords[user.id] ? (user.password.length > 20 ? '[CRIPTOGRAFADA]' : user.password) : '••••••••'}
                      </span>
                      <button onClick={() => togglePasswordVisibility(user.id)} className="text-[9px] text-blue-500 hover:text-blue-600 uppercase font-black">
                         {visiblePasswords[user.id] ? '[Ocultar]' : '[Ver]'}

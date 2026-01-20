@@ -23,9 +23,9 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
     const todayStart = getBusinessDateStart(nowTs);
     
     return (sales || []).filter(s => {
-      // INÍCIO DA ALTERAÇÃO: Ignorar vendas excluídas no dashboard
+      // Ignorar vendas excluídas no dashboard
       if (s.deleted) return false;
-      // FIM DA ALTERAÇÃO
+      
       const saleStart = getBusinessDateStart(s.timestamp);
       
       switch (activePeriod) {
@@ -128,8 +128,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
               <BarChart data={barData} layout="vertical" margin={{ left: -10, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={gridColor} />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontBold: '900', fontFamily: 'Inter' }} />
-                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: `1px solid ${gridColor}`, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }} />
+                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontWeight: '900', fontFamily: 'Inter' }} />
+                <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: `1px solid ${gridColor}`, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', color: isDark ? '#fff' : '#000' }} />
                 <Bar dataKey="count" fill={chartColor} radius={[0, 10, 10, 0]} barSize={24} />
               </BarChart>
             </ResponsiveContainer>
@@ -146,7 +146,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontWeight: '700', fontFamily: 'Inter' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontWeight: '700', fontFamily: 'Inter' }} />
-                <Tooltip contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: `1px solid ${gridColor}`, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }} />
+                <Tooltip contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: `1px solid ${gridColor}`, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold', color: isDark ? '#fff' : '#000' }} />
                 <Area type="monotone" dataKey="total" stroke={chartColor} fillOpacity={1} fill="url(#colorTotal)" strokeWidth={4} />
               </AreaChart>
             </ResponsiveContainer>

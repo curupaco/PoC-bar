@@ -19,3 +19,7 @@ export const decryptData = (ciphertext: string, key: string): any => {
     return null;
   }
 };
+
+export const hashPassword = (password: string): string => {
+  return CryptoJS.SHA256(password).toString();
+};
