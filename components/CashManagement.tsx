@@ -66,39 +66,21 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
 
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12 animate-in fade-in duration-1000">
         <div className="relative">
-          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/20 rounded-[32px] flex items-center justify-center text-red-600 shadow-xl border border-red-200 dark:border-red-900/30">
-             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-             </svg>
+          <div className="w-48 h-48 bg-red-600/10 rounded-[60px] flex items-center justify-center border border-red-500/20 shadow-2xl relative">
+            <div className="absolute inset-0 bg-red-600/10 blur-[80px] rounded-full animate-pulse"></div>
+            <svg className="w-20 h-20 text-red-600 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
           </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-2 border-white dark:border-slate-900 animate-ping opacity-20"></div>
+          <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 dark:border-slate-800 animate-bounce">
+            <img src="https://img.icons8.com/fluency/512/beer.png" className="w-10 h-10" alt="Botequista" />
+          </div>
         </div>
-        
-        <div className="max-w-xs space-y-4">
-           <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter leading-none italic">Acesso Restrito</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm px-4">
-             O sistema está bloqueado. Para gerenciar tesouraria, você precisa <span className="text-red-600 dark:text-red-400 font-bold">abrir um novo turno</span>.
-           </p>
+        <div className="max-w-md space-y-4">
+           <h2 className="text-5xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Sistema Travado</h2>
+           <p className="text-slate-500 dark:text-slate-400 font-medium text-lg px-8">O turno atual está <span className="text-red-600 font-black">encerrado</span>. Abra o caixa para liberar as funções de venda e tesouraria.</p>
         </div>
-
-        <div className="flex flex-col gap-3 w-full max-w-[240px]">
-           {onViewChange && (
-             <button 
-               onClick={() => onViewChange('shifts')} 
-               className="bg-red-600 hover:bg-red-700 text-white w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all animate-bounce"
-             >
-               Abrir Turno Agora
-             </button>
-           )}
-           <button 
-             onClick={() => window.location.reload()}
-             className="text-slate-400 dark:text-slate-600 font-black uppercase text-[10px] tracking-widest py-2"
-           >
-             Recarregar Sistema
-           </button>
-        </div>
+        <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 text-white px-16 py-6 rounded-[28px] font-black uppercase text-xs tracking-[0.3em] shadow-2xl shadow-red-600/40 active:scale-95 transition-all hover:bg-red-700">Abrir Turno Agora</button>
       </div>
     );
   }

@@ -21,10 +21,10 @@ const ProductList: React.FC<ProductListProps> = ({
   setCategoryModifiers,
   currentUser 
 }) => {
-  // INÍCIO DA ALTERAÇÃO - ESTADOS DE NAVEGAÇÃO E BUSCA
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS' | 'CATEGORIES'>('ITEMS');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string, type: 'prod' | 'mod'} | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
@@ -45,9 +45,7 @@ const ProductList: React.FC<ProductListProps> = ({
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
-  // FIM DA ALTERAÇÃO
 
-  // INÍCIO DA ALTERAÇÃO - LÓGICA DE FILTRAGEM E CATEGORIAS
   const categories = useMemo(() => {
     return Array.from(new Set(products.map(p => p.category.toUpperCase().trim()))).sort();
   }, [products]);
@@ -76,7 +74,6 @@ const ProductList: React.FC<ProductListProps> = ({
     else newCollapsed.add(cat);
     setCollapsedCats(newCollapsed);
   };
-  // FIM DA ALTERAÇÃO
 
   const handleSaveProduct = () => {
     const numericPrice = parseCurrencyValue(price);
@@ -118,8 +115,38 @@ const ProductList: React.FC<ProductListProps> = ({
     setOptName(''); setOptPrice('');
   };
 
+  const executeDelete = () => {
+    if (!deleteConfirmId) return;
+    if (deleteConfirmId.type === 'prod') {
+      setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
+    } else {
+      setModifierGroups(prev => prev.filter(g => g.id !== deleteConfirmId.id));
+    }
+    setDeleteConfirmId(null);
+  };
+
   return (
     <div className="space-y-6">
+      {/* MODAL DE CONFIRMAÇÃO CUSTOMIZADO */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 mx-auto mb-6">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+             </div>
+             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-2 tracking-tighter italic">Apagar Registro?</h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
+               Você está prestes a remover <span className="font-bold">"{deleteConfirmId.name}"</span> definitivamente do sistema.
+             </p>
+             <div className="flex flex-col gap-3">
+                <button onClick={executeDelete} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Remover</button>
+                <button onClick={() => setDeleteConfirmId(null)} className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest text-slate-400">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* TABS DE GESTÃO */}
       <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm w-fit overflow-x-auto no-scrollbar">
          <button onClick={() => setActiveTab('ITEMS')} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'ITEMS' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-red-500'}`}>Produtos</button>
@@ -175,7 +202,7 @@ const ProductList: React.FC<ProductListProps> = ({
                         </div>
                         <div className="flex gap-1">
                           <button disabled={!canEdit} onClick={() => { setEditingId(p.id); setName(p.name); setPrice(p.price.toFixed(2).replace('.', ',')); setCategory(p.category); setSellType(p.sellType); setModGroupId(p.modifierGroupId || ''); setShowModal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all disabled:opacity-20"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                          <button disabled={!canDelete} onClick={() => { if(window.confirm(`Excluir ${p.name}?`)) setProducts(prev => prev.filter(x => x.id !== p.id)) }} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all disabled:opacity-20"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                          <button disabled={!canDelete} onClick={() => setDeleteConfirmId({id: p.id, name: p.name, type: 'prod'})} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all disabled:opacity-20"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </div>
                       </div>
                     ))}
@@ -209,7 +236,7 @@ const ProductList: React.FC<ProductListProps> = ({
                    </div>
                    <div className="flex gap-1">
                       <button onClick={() => { setEditingId(group.id); setGroupName(group.name); setGroupCategory(group.category); setOptions(group.options); setShowModal(true); }} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
-                      <button onClick={() => { if(window.confirm(`Excluir menu ${group.name}?`)) setModifierGroups(prev => prev.filter(g => g.id !== group.id)) }} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                      <button onClick={() => setDeleteConfirmId({id: group.id, name: group.name, type: 'mod'})} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                    </div>
                 </div>
                 <div className="space-y-2">
