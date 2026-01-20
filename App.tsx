@@ -14,14 +14,13 @@ import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
 import { saveToFirebase, loadFromFirebase, getFirebaseToken } from './services/firebaseService';
-import { encryptData, decryptData } from './services/cryptoService';
 
 const isBrowser = typeof window !== 'undefined';
 if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.12"; 
+const APP_VERSION = "3.9.15"; 
 const MASTER_KEY = "Tc@00216587";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
@@ -42,13 +41,8 @@ const viewTitles: Record<View, string> = {
 };
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('btq-session');
-    if (saved) {
-      try { return decryptData(saved, MASTER_KEY); } catch { return null; }
-    }
-    return null;
-  });
+  // CRÍTICO: Removida a persistência automática para que F5 sempre exija Login
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
@@ -158,7 +152,6 @@ const App: React.FC = () => {
     const found = users.find(x => x.username === u && x.password === p);
     if (found) {
       setCurrentUser(found);
-      localStorage.setItem('btq-session', encryptData(found, MASTER_KEY));
       setLoginError(null);
     } else {
       setLoginError("USUÁRIO OU SENHA INVÁLIDOS");
@@ -167,10 +160,26 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('btq-session');
   };
 
-  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
+  // TELA DE CARREGAMENTO ROBUSTA PARA EVITAR "PISCADAS"
+  if (!isInitialLoadDone.current) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-8 animate-pulse">
+        <div className="w-20 h-20 bg-red-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-red-600/20">
+          <img src="https://img.icons8.com/fluency/512/beer.png" alt="Carregando" className="w-12 h-12" />
+        </div>
+        <div className="text-center space-y-2">
+          <p className="text-white font-black uppercase text-[10px] tracking-[0.4em]">Botequista Pro</p>
+          <p className="text-slate-500 font-bold uppercase text-[8px] tracking-widest">Sincronizando Banco de Dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
+  }
 
   const hasPermission = (p: UserPermission) => currentUser.username === 'admin' || currentUser.permissions.includes(p);
 
@@ -212,7 +221,6 @@ const App: React.FC = () => {
             <h1 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">{viewTitles[activeView]}</h1>
           </div>
           <div className="flex items-center gap-3">
-            {/* CORREÇÃO ESTÉTICA: FUNDO TRANSPARENTE INTEGRADO AO HEADER */}
             <div className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${status.border} ${status.animate}`}>
               <div className={`w-2 h-2 rounded-full ${status.color}`}></div>
               <span className={`text-[10px] font-black uppercase tracking-widest ${status.text}`}>{status.label}</span>
@@ -233,7 +241,7 @@ const App: React.FC = () => {
            activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :
            activeView === 'settings' && hasPermission('settings') ? <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} onImport={fetchInitialData} /> :
            activeView === 'help' ? <Help /> :
-           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center">Carregando...</div>}
+           <div className="flex flex-col items-center justify-center py-20 opacity-30 italic text-center uppercase font-black text-xs">Carregando Visualização...</div>}
         </div>
       </main>
     </div>
