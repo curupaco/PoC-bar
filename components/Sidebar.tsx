@@ -38,6 +38,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeTabsCount, 
   isCollapsed, 
   onToggleCollapse,
+  totalPendura,
+  penduraThreshold
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
@@ -113,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     .map((item) => {
                       const isActive = activeView === item.id;
                       const isPosShiftClosed = item.id === 'pos' && !isShiftOpen;
+                      const isReportsAlert = item.id === 'reports' && totalPendura > penduraThreshold;
                       
                       let activeClass = 'bg-red-600 text-white shadow-lg shadow-red-500/20';
                       let hoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500';
@@ -125,6 +128,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                               {item.id === 'pos' && (
                                 <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${isShiftOpen ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
                               )}
+                              {isReportsAlert && (
+                                <>
+                                  <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-orange-500 animate-ping opacity-75`}></div>
+                                  <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 bg-orange-500`}></div>
+                                </>
+                              )}
                             </div>
                             {!isCollapsed && (
                               <div className="flex-1 flex items-center justify-between min-w-0">
@@ -132,10 +141,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                                 {item.id === 'pos' && activeTabsCount > 0 && (
                                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'}`}>{activeTabsCount}</span>
                                 )}
+                                {isReportsAlert && (
+                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg flex items-center gap-1 ${isActive ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-600'}`}>
+                                     ⚠️
+                                  </span>
+                                )}
                               </div>
                             )}
                           </button>
-                          {isCollapsed && <Tooltip text={item.label + (isPosShiftClosed ? ' (Turno Fechado)' : '')} />}
+                          {isCollapsed && <Tooltip text={item.label + (isPosShiftClosed ? ' (Turno Fechado)' : '') + (isReportsAlert ? ' (Limite Pendura Excedido)' : '')} />}
                         </div>
                       );
                     })}
