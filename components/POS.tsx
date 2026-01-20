@@ -46,7 +46,7 @@ const POS: React.FC<POSProps> = ({
   const [editingWeightIndex, setEditingWeightIndex] = useState<number | null>(null);
   const [inputGrams, setInputGrams] = useState('');
   
-  const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string, hasItems: boolean} | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string} | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -93,16 +93,8 @@ const POS: React.FC<POSProps> = ({
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
 
-  const handleQuickDelete = (tabId: string, name: string, items: any[]) => {
-    if (items.length === 0) {
-      onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== normalizeId(tabId)));
-      if (normalizeId(activeTabId) === normalizeId(tabId)) {
-        setActiveTabId(null);
-      }
-      showFeedback(`MESA ${name} REMOVIDA`);
-    } else {
-      setDeleteConfirmId({ id: tabId, name, hasItems: true });
-    }
+  const handleQuickDelete = (tabId: string, name: string) => {
+    setDeleteConfirmId({ id: tabId, name });
   };
 
   const addToTab = (product: Product, quantity: number = 1) => {
@@ -225,13 +217,11 @@ const POS: React.FC<POSProps> = ({
     showFeedback("OPERACÃO FINALIZADA");
   };
 
-  // INÍCIO DA FIX: Define changeDue using useMemo
   const changeDue = useMemo(() => {
     if (paymentMethodInput !== PaymentMethod.CASH || !receivedValueInput) return 0;
     const amountToPay = parseCurrencyValue(paymentAmountInput) || remainingBalance;
     return Math.max(0, receivedValueInput - amountToPay);
   }, [receivedValueInput, paymentAmountInput, remainingBalance, paymentMethodInput]);
-  // FIM DA FIX
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
@@ -239,16 +229,21 @@ const POS: React.FC<POSProps> = ({
 
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-12 animate-in fade-in duration-700">
-        <div className="w-40 h-40 bg-red-500/10 rounded-[48px] flex items-center justify-center border border-red-500/20 shadow-2xl relative">
-          <div className="absolute inset-0 bg-red-600/20 blur-[60px] rounded-full"></div>
-          <svg className="w-16 h-16 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12 animate-in fade-in duration-1000">
+        <div className="relative">
+          <div className="w-48 h-48 bg-red-600/10 rounded-[60px] flex items-center justify-center border border-red-500/20 shadow-2xl relative">
+            <div className="absolute inset-0 bg-red-600/10 blur-[80px] rounded-full animate-pulse"></div>
+            <svg className="w-20 h-20 text-red-600 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+          </div>
+          <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl shadow-xl flex items-center justify-center border border-slate-100 dark:border-slate-800 animate-bounce">
+            <img src="https://img.icons8.com/fluency/512/beer.png" className="w-10 h-10" alt="Botequista" />
+          </div>
         </div>
-        <div className="max-w-xs space-y-4">
-           <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Caixa Fechado</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">Abra o turno para liberar o PDV.</p>
+        <div className="max-w-md space-y-4">
+           <h2 className="text-5xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Sistema Travado</h2>
+           <p className="text-slate-500 dark:text-slate-400 font-medium text-lg px-8">O turno atual está <span className="text-red-600 font-black">encerrado</span>. Abra o caixa para liberar as funções de venda e tesouraria.</p>
         </div>
-        <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Abrir Turno Agora</button>
+        <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 text-white px-16 py-6 rounded-[28px] font-black uppercase text-xs tracking-[0.3em] shadow-2xl shadow-red-600/40 active:scale-95 transition-all hover:bg-red-700">Abrir Turno Agora</button>
       </div>
     );
   }
@@ -257,6 +252,31 @@ const POS: React.FC<POSProps> = ({
     <div className="flex flex-col lg:flex-row gap-6 relative h-full">
       {toast && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">{toast}</div>}
       {validationError && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[600] bg-red-600 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4" onClick={() => setValidationError(null)}>{validationError}</div>}
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE MESA (UI BOTEQUISTA) */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 mx-auto mb-6">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+             </div>
+             <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-2 tracking-tighter">Excluir Mesa?</h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
+               Tem certeza que deseja remover a mesa <span className="font-bold">"{deleteConfirmId.name}"</span> do monitor?
+             </p>
+             <div className="flex flex-col gap-3">
+                <button onClick={() => {
+                   onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== normalizeId(deleteConfirmId.id)));
+                   if (normalizeId(activeTabId) === normalizeId(deleteConfirmId.id)) { setActiveTabId(null); }
+                   setDeleteConfirmId(null);
+                   showFeedback(`MESA REMOVIDA`);
+                }} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Excluir Agora</button>
+                <button onClick={() => setDeleteConfirmId(null)} className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest text-slate-400">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
 
       {!activeTabId ? (
         <div className="flex-1 space-y-6 pb-24 overflow-y-auto no-scrollbar">
@@ -273,7 +293,7 @@ const POS: React.FC<POSProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
             {openTabs.map(tab => (
               <div key={tab.id} className="relative group bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-44 flex flex-col justify-between" onClick={() => setActiveTabId(tab.id)}>
-                <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name, tab.items); }} className="absolute top-2 right-2 p-3 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-2xl transition-all lg:opacity-0 group-hover:opacity-100 z-10"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name); }} className="absolute top-2 right-2 p-3 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-2xl transition-all lg:opacity-0 group-hover:opacity-100 z-10"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                 <div><h3 className="text-sm font-black uppercase truncate tracking-tight">{tab.name}</h3><span className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em]">{(tab.items || []).length} ITENS</span></div>
                 <p className="text-red-600 dark:text-red-400 font-black text-2xl tracking-tighter italic">{formatCurrency((tab.items || []).reduce((acc: number, i: any) => acc + i.totalPrice, 0))}</p>
               </div>
@@ -318,11 +338,10 @@ const POS: React.FC<POSProps> = ({
               </div>
            </div>
 
-           {/* LATERAL DIREITA: COMANDA E PAGAMENTO (BLINDAGEM DE RODAPÉ) */}
            <div className="w-full lg:w-96 bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden h-[85vh] lg:h-[calc(100vh-140px)] sticky top-24">
               <div className="p-5 bg-red-600 text-white font-black uppercase text-xs flex justify-between items-center shrink-0 shadow-lg">
                 <span className="truncate italic">{activeTab?.name}</span>
-                <button onClick={() => handleQuickDelete(activeTabId!, activeTab?.name || 'Mesa', tabItems)} className="text-white/50 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5} /></svg></button>
+                <button onClick={() => handleQuickDelete(activeTabId!, activeTab?.name || 'Mesa')} className="text-white/50 hover:text-white"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5} /></svg></button>
               </div>
               
               {!isClosingTab ? (
@@ -346,7 +365,6 @@ const POS: React.FC<POSProps> = ({
                     ))}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-20 opacity-20 italic text-[10px] uppercase font-black text-center">Nenhum item lançado</div>}
                   </div>
-                  {/* RODAPÉ BLINDADO */}
                   <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-12">
                     <div className="flex justify-between items-center mb-4"><span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Total Comanda</span><span className="text-2xl font-black italic">{formatCurrency(tabTotal)}</span></div>
                     <button onClick={() => setIsClosingTab(true)} className="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">RECEBER PAGAMENTO</button>
@@ -367,7 +385,7 @@ const POS: React.FC<POSProps> = ({
                         <div className="flex gap-2">
                            <div className="relative flex-1">
                                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none shadow-inner" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
+                               <input type="text" inputMode="decimal" value={paymentAmountInput} onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} className="w-full bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none shadow-inner" placeholder={remainingBalance.toFixed(2).replace('.', ',')} />
                            </div>
                            <button onClick={() => {
                                const val = parseCurrencyValue(paymentAmountInput) || remainingBalance;
@@ -379,7 +397,6 @@ const POS: React.FC<POSProps> = ({
                         </div>
                       </div>
                    </div>
-                   {/* RODAPÉ BLINDADO (PAGAMENTO) */}
                    <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] mt-auto pb-12 space-y-4">
                       {paymentMethodInput === PaymentMethod.CASH && receivedValueInput && receivedValueInput > 0 && (
                         <div className="bg-emerald-600 text-white p-5 rounded-3xl flex flex-col items-center justify-center shadow-2xl animate-in zoom-in-95 border-4 border-emerald-500/50">
@@ -398,7 +415,6 @@ const POS: React.FC<POSProps> = ({
         </div>
       )}
 
-      {/* Modal de Peso */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
