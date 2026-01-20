@@ -20,7 +20,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.28"; 
+const APP_VERSION = "3.9.32"; 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
@@ -80,6 +80,7 @@ const App: React.FC = () => {
   const totalPendura = useMemo(() => {
     let total = 0;
     (sales || []).forEach(s => {
+       if (s.deleted) return; 
        if (s.paymentMethod === PaymentMethod.PENDURA) total += s.total;
        else if (s.items?.some(it => it.productId === 'quitacao')) total -= s.total;
     });
@@ -229,7 +230,14 @@ const App: React.FC = () => {
           {activeView === 'pos' ? <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={setOpenTabs} onCompleteSale={s => setSales(prev => [{...s, userId: currentUser.id, shiftId: activeShift?.id || ''}, ...prev])} activeShift={activeShift} onViewChange={setActiveView} shortcutCheckout={pendingShortcut} onClearShortcut={() => setPendingShortcut(null)} theme={theme} /> : 
            activeView === 'products' && hasPermission('products') ? <ProductList products={products} setProducts={setProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} currentUser={currentUser} /> :
            activeView === 'dashboard' && hasPermission('dashboard') ? <Dashboard sales={sales} products={products} theme={theme} /> :
-           activeView === 'history' && hasPermission('history') ? <SalesHistory sales={sales} onDeleteSale={id => setSales(s => s.filter(x => x.id !== id))} users={users} currentUser={currentUser} /> :
+           activeView === 'history' && hasPermission('history') ? (
+             <SalesHistory 
+                sales={sales} 
+                onDeleteSale={id => setSales(prev => prev.map(s => s.id === id ? { ...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.username } : s))} 
+                users={users} 
+                currentUser={currentUser} 
+             />
+           ) :
            activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} /> :
            activeView === 'shifts' && hasPermission('shifts_admin') ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
            activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :

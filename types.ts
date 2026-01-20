@@ -114,6 +114,10 @@ export interface Sale {
   customerName?: string;
   userId: string;
   shiftId: string;
+  // Campos de Auditoria para Exclusão Lógica
+  deleted?: boolean;
+  deletedAt?: number;
+  deletedBy?: string;
 }
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
