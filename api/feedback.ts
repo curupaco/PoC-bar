@@ -1,7 +1,18 @@
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+export default async function handler(req: any, res: any) {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -13,8 +24,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const repo = process.env.GITHUB_REPO;
 
   if (!token || !owner || !repo) {
-    return res.status(500).json({ error: 'Server misconfiguration: Missing GitHub Env Vars' });
+    console.error('Missing Env Vars:', { hasToken: !!token, hasOwner: !!owner, hasRepo: !!repo });
+    return res.status(500).json({ error: 'Erro de Configuração do Servidor (Variáveis Vercel Ausentes)' });
   }
+
+  console.log(`[Feedback API] Iniciando envio de issue para ${owner}/${repo} (User: ${user})`);
 
   const title = `[APP REPORT] ${type === 'bug' ? '🐞 BUG' : '💡 FEATURE'} - ${new Date().toLocaleDateString('pt-BR')}`;
   const body = `
@@ -43,14 +57,16 @@ ${description}
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Falha ao criar issue no GitHub');
+      const errorData = await response.json().catch(() => ({}));
+      console.error('GitHub API Error:', errorData);
+      throw new Error(errorData.message || 'Recusa do GitHub');
     }
 
     const data = await response.json();
+    console.log(`[Feedback API] Sucesso! Issue criada: ${data.html_url}`);
     return res.status(200).json({ success: true, url: data.html_url });
   } catch (error: any) {
-    console.error(error);
-    return res.status(500).json({ error: error.message });
+    console.error('Function Error:', error);
+    return res.status(500).json({ error: error.message || 'Erro Interno no Processamento' });
   }
 }
