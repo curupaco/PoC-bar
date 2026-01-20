@@ -13,7 +13,8 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
-  const categories = Array.from(new Set(filteredProducts.map(p => p.category))).sort();
+  // FIX: Using spread operator to ensure correct type inference for string[] from Set
+  const categories: string[] = [...new Set(filteredProducts.map(p => p.category))].sort();
 
   const toggleCategory = (cat: string) => {
     setCollapsedCats(prev => {
