@@ -79,15 +79,18 @@ const POS: React.FC<POSProps> = ({
 
   const normalizeId = (id: any) => id ? String(id).trim() : '';
 
-  const activeTab = useMemo(() => {
+  // INÍCIO DA ALTERAÇÃO: Explicitly type activeTab to avoid unknown errors
+  const activeTab = useMemo<any>(() => {
     if (shortcutCheckout) {
       return { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
     }
     return openTabs.find(t => normalizeId(t.id) === normalizeId(activeTabId));
   }, [activeTabId, openTabs, shortcutCheckout]);
     
-  const tabItems = activeTab?.items ?? [];
+  // INÍCIO DA ALTERAÇÃO: Explicitly type tabItems as SaleItem[]
+  const tabItems: SaleItem[] = activeTab?.items ?? [];
   const tabTotal = shortcutCheckout ? shortcutCheckout.amount : tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
+  // FIM DA ALTERAÇÃO
   
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, tabTotal - paidSoFar);
