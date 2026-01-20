@@ -120,7 +120,23 @@ const ProductList: React.FC<ProductListProps> = ({
     if (deleteConfirmId.type === 'prod') {
       setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
     } else {
-      setModifierGroups(prev => prev.filter(g => g.id !== deleteConfirmId.id));
+      const deletedId = deleteConfirmId.id;
+      // 1. Remover o grupo da lista mestre
+      setModifierGroups(prev => prev.filter(g => g.id !== deletedId));
+      
+      // 2. LIMPEZA DE ÓRFÃOS: Remover referência de produtos que usavam este grupo
+      setProducts(prev => prev.map(p => p.modifierGroupId === deletedId ? { ...p, modifierGroupId: undefined } : p));
+      
+      // 3. LIMPEZA DE ÓRFÃOS: Remover vínculos automáticos por categoria
+      setCategoryModifiers(prev => {
+        const updatedMap = { ...prev };
+        Object.keys(updatedMap).forEach(cat => {
+          if (updatedMap[cat] === deletedId) {
+            delete updatedMap[cat];
+          }
+        });
+        return updatedMap;
+      });
     }
     setDeleteConfirmId(null);
   };
@@ -131,13 +147,13 @@ const ProductList: React.FC<ProductListProps> = ({
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-2xl flex items-center justify-center text-red-600 mx-auto mb-6">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
              </div>
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-2 tracking-tighter italic">Apagar Registro?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
-               Você está prestes a remover <span className="font-bold">"{deleteConfirmId.name}"</span> definitivamente do sistema.
+               Você está prestes a remover <span className="font-bold">"{deleteConfirmId.name}"</span> definitivamente do sistema. Isso também limpará vínculos automáticos.
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={executeDelete} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Remover</button>
@@ -154,6 +170,7 @@ const ProductList: React.FC<ProductListProps> = ({
          <button onClick={() => setActiveTab('CATEGORIES')} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CATEGORIES' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-red-500'}`}>Vínculos Automáticos</button>
       </div>
 
+      {/* ABA PRODUTOS */}
       {activeTab === 'ITEMS' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
@@ -214,6 +231,7 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
+      {/* ABA MENUS DE OPÇÕES */}
       {activeTab === 'GROUPS' && (
         <div className="space-y-6 animate-in fade-in duration-300 pb-24">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center">
@@ -251,6 +269,7 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
+      {/* ABA VÍNCULOS AUTOMÁTICOS */}
       {activeTab === 'CATEGORIES' && (
         <div className="space-y-6 animate-in fade-in duration-300 pb-24">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -275,6 +294,7 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
+      {/* MODAL UNIFICADO */}
       {showModal && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl animate-in zoom-in-95 overflow-y-auto max-h-[90vh] no-scrollbar">
