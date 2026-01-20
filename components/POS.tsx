@@ -73,7 +73,11 @@ const POS: React.FC<POSProps> = ({
 
   const showFeedback = (msg: string) => setToast(msg);
 
+  // CORREÇÃO CRÍTICA: Impede que a limpeza de formulário ocorra ao entrar no modo de Quitação (shortcut-payment).
+  // Isso evita que o nome do cliente seja apagado logo após ser definido pelo shortcutCheckout.
   useEffect(() => {
+    if (activeTabId === 'shortcut-payment') return;
+
     setCurrentPayments([]);
     setPaymentAmountInput('');
     setCashReceivedInput('');
