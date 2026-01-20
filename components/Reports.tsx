@@ -69,9 +69,18 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   const filteredSales = useMemo<Sale[]>(() => {
-    // Definimos o timestamp inicial (00:00:00) e final (23:59:59) do dia local selecionado
-    const startTs = new Date(`${startDate}T00:00:00`).getTime();
-    const endTs = new Date(`${endDate}T23:59:59`).getTime();
+    // INÍCIO DA ALTERAÇÃO: Parsing robusto de data para evitar NaN no Safari/iOS
+    const safeParse = (dateStr: string, hour: number, min: number, sec: number) => {
+      const parts = dateStr.split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Mês é 0-indexed em JS
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day, hour, min, sec).getTime();
+    };
+
+    const startTs = safeParse(startDate, 0, 0, 0);
+    const endTs = safeParse(endDate, 23, 59, 59);
+    // FIM DA ALTERAÇÃO
     return (sales || []).filter((s: Sale) => s.timestamp >= startTs && s.timestamp <= endTs);
   }, [sales, startDate, endDate]);
 
