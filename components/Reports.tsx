@@ -1,8 +1,12 @@
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Sale, Product, PaymentMethod, formatCurrency, User, Shift, getBusinessDateStart } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import * as htmlToImage from 'html-to-image';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Sale, Product, PaymentMethod, User, Shift } from '../types';
+import ClosingReport from './reports/ClosingReport';
+import FinancialReport from './reports/FinancialReport';
+import PenduraReport from './reports/PenduraReport';
+import TeamReport from './reports/TeamReport';
+import ProductReport from './reports/ProductReport';
+import OperationalReport from './reports/OperationalReport';
 
 interface ReportsProps {
   sales: Sale[];
@@ -16,7 +20,6 @@ interface ReportsProps {
 type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS';
 
 const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura }) => {
-  const reportRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
   
@@ -69,7 +72,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   const filteredSales = useMemo<Sale[]>(() => {
-    // INÍCIO DA ALTERAÇÃO: Parsing robusto de data para evitar NaN no Safari/iOS
+    // Parsing robusto de data para evitar NaN no Safari/iOS
     const safeParse = (dateStr: string, hour: number, min: number, sec: number) => {
       const parts = dateStr.split('-');
       const year = parseInt(parts[0], 10);
@@ -81,19 +84,17 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const startTs = safeParse(startDate, 0, 0, 0);
     const endTs = safeParse(endDate, 23, 59, 59);
     
-    // INÍCIO DA ALTERAÇÃO: Filtrar vendas excluídas nos relatórios
+    // Filtrar vendas excluídas nos relatórios
     return (sales || []).filter((s: Sale) => {
       if (s.deleted) return false;
       return s.timestamp >= startTs && s.timestamp <= endTs;
     });
-    // FIM DA ALTERAÇÃO
   }, [sales, startDate, endDate]);
 
   const reportData = useMemo(() => {
     const selectedShift = (shifts || []).find(sh => sh.id === selectedShiftId);
-    // INÍCIO DA ALTERAÇÃO: Filtrar vendas excluídas no fechamento de turno selecionado
+    // Filtrar vendas excluídas no fechamento de turno selecionado
     const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId && !s.deleted);
-    // FIM DA ALTERAÇÃO
 
     // FINANCEIRO (Período Selecionado)
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
@@ -148,9 +149,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     // PENDURAS (Saldo Global Histórico)
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
-      // INÍCIO DA ALTERAÇÃO: Ignorar vendas excluídas no cálculo de dívida global
+      // Ignorar vendas excluídas no cálculo de dívida global
       if (s.deleted) return acc;
-      // FIM DA ALTERAÇÃO
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
       if (s.paymentMethod === PaymentMethod.PENDURA) acc[name] = (acc[name] || 0) + s.total;
@@ -169,19 +169,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     };
   }, [filteredSales, sales, shifts, selectedShiftId, users, products]);
 
-  const exportAsImage = () => {
-    if (!canExport || !reportRef.current) return;
-    showToast("PROCESSANDO CUPOM...");
-    htmlToImage.toPng(reportRef.current, { backgroundColor: '#000000', pixelRatio: 2 })
-    .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `fechamento-${selectedShiftId.slice(-6)}.png`;
-        link.href = dataUrl;
-        link.click();
-        showToast("PDF/PNG SALVO!");
-    });
-  };
-
   const renderActiveReport = () => {
     // Se não houver vendas, mostrar placeholder customizado (exceto Penduras que é histórico global)
     if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO') {
@@ -196,197 +183,31 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     switch(activeCategory) {
       case 'FECHAMENTO':
         return (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center gap-4">
-               <div className="flex-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase mb-2 block">Turno p/ Protocolo</label>
-                  <select value={selectedShiftId} onChange={e => setSelectedShiftId(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black uppercase text-xs outline-none">
-                    <option value="">Escolha um turno...</option>
-                    {shifts.map(s => <option key={s.id} value={s.id}>{new Date(s.startTime).toLocaleDateString()} {new Date(s.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - @{s.openedBy}</option>)}
-                  </select>
-               </div>
-               <button onClick={exportAsImage} disabled={!canExport || !selectedShiftId} className="bg-black text-white px-8 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-slate-800 transition-all flex items-center gap-2">
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" strokeWidth={2.5} /></svg>
-                 Salvar Cupom (PNG)
-               </button>
-            </div>
-
-            {reportData.selectedShift ? (
-              <div className="flex justify-center py-10 bg-slate-100 dark:bg-slate-950/50 rounded-[40px]">
-                <div ref={reportRef} className="bg-black text-white w-full max-w-[380px] p-12 shadow-2xl space-y-6 font-mono text-[11px] leading-relaxed">
-                   <div className="text-center border-b border-dashed border-slate-800 pb-6">
-                      <h2 className="text-3xl font-black italic uppercase tracking-tighter">Botequista</h2>
-                      <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Protocolo de Turno</p>
-                   </div>
-                   <div className="space-y-1 text-slate-400">
-                      <p>PROTOCOLO: {reportData.selectedShift.id.slice(-8).toUpperCase()}</p>
-                      <p>OPERADOR: @{reportData.selectedShift.openedBy.toUpperCase()}</p>
-                      <p>ABERTURA: {new Date(reportData.selectedShift.startTime).toLocaleString('pt-BR')}</p>
-                      {reportData.selectedShift.endTime && <p>FECHAMENTO: {new Date(reportData.selectedShift.endTime).toLocaleString('pt-BR')}</p>}
-                   </div>
-                   <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
-                      <div className="text-[10px] font-black uppercase text-center mb-2">CONCILIAÇÃO FINANCEIRA</div>
-                      { (Object.entries(reportData.shiftTotalsByMethod) as [string, number][]).map(([method, total]) => (
-                         <div key={method} className="flex justify-between">
-                            <span className="text-slate-500 uppercase">{method}:</span>
-                            <span className="font-bold">{formatCurrency(total)}</span>
-                         </div>
-                      ))}
-                      <div className="pt-2 border-t border-slate-800 flex justify-between text-sm font-black text-emerald-400">
-                         <span>TOTAL DO TURNO:</span>
-                         <span>{formatCurrency(reportData.shiftTotalRevenue)}</span>
-                      </div>
-                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white dark:bg-slate-900 p-20 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center opacity-30 italic font-black uppercase text-[10px]">Aguardando seleção de turno...</div>
-            )}
-          </div>
+          <ClosingReport 
+            shifts={shifts}
+            selectedShiftId={selectedShiftId}
+            setSelectedShiftId={setSelectedShiftId}
+            reportData={reportData}
+            canExport={canExport}
+            showToast={showToast}
+          />
         );
       case 'FINANCEIRO':
-        return (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-             <div className="bg-white dark:bg-slate-900 p-10 rounded-[32px] border border-slate-200 dark:border-slate-800">
-                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 italic">Fluxo por Pagamento</h3>
-                <div className="space-y-4">
-                   {(Object.entries(reportData.totalsByMethod) as [string, { count: number, total: number }][]).map(([method, data]) => (
-                     data.total > 0 ? (
-                       <div key={method} className="flex justify-between items-center pb-4 border-b border-slate-50 dark:border-slate-800 last:border-0">
-                          <span className="text-sm font-bold uppercase text-slate-500">{method}</span>
-                          <span className="font-black text-slate-900 dark:text-white">{formatCurrency(data.total)}</span>
-                       </div>
-                     ) : null
-                   ))}
-                   <div className="pt-6 flex justify-between items-center text-4xl font-black text-emerald-600 tracking-tighter italic">
-                      <span className="text-[10px] text-slate-400 uppercase">Faturamento Bruto</span>
-                      <span>{formatCurrency(reportData.grandTotal)}</span>
-                   </div>
-                </div>
-             </div>
-             <div className="bg-white dark:bg-slate-900 p-10 rounded-[32px] border border-slate-200 dark:border-slate-800 flex flex-col justify-center text-center space-y-4 shadow-sm">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Ticket Médio (Vendas)</p>
-                <p className="text-8xl font-black text-slate-900 dark:text-white tracking-tighter italic">{formatCurrency(reportData.avgTicket)}</p>
-                <div className="h-px bg-slate-100 dark:bg-slate-800 w-1/3 mx-auto"></div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase italic opacity-50">Base: {reportData.operationalCount} registros de venda</p>
-             </div>
-          </div>
-        );
+        return <FinancialReport reportData={reportData} />;
       case 'PENDURAS':
         return (
-          <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in duration-500">
-             <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-orange-50/30 dark:bg-orange-900/10">
-                <h3 className="text-[10px] font-black text-orange-600 uppercase tracking-widest italic">Carteira Global de Devedores (Ativos)</h3>
-             </div>
-             <table className="w-full text-left text-xs">
-                <thead>
-                   <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-black tracking-widest text-[10px]">
-                      <th className="px-10 py-6 text-left">Nome do Cliente</th>
-                      <th className="px-10 py-6 text-right">Saldo Devedor</th>
-                      <th className="px-10 py-6 text-right">Gestão</th>
-                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                   {reportData.activePenduras.map((p, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                         <td className="px-10 py-6 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
-                         <td className="px-10 py-6 text-right font-black text-red-600">{formatCurrency(p.amount)}</td>
-                         <td className="px-10 py-6 text-right">
-                            <button onClick={() => onQuitarPendura(p.name, p.amount)} disabled={!canSettle} className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-all">Quitar</button>
-                         </td>
-                      </tr>
-                   ))}
-                   {reportData.activePenduras.length === 0 && (
-                     <tr><td colSpan={3} className="px-10 py-24 text-center text-slate-400 font-bold uppercase opacity-30 italic">Nenhum devedor no radar.</td></tr>
-                   )}
-                </tbody>
-             </table>
-          </div>
+          <PenduraReport 
+            reportData={reportData} 
+            onQuitarPendura={onQuitarPendura} 
+            canSettle={canSettle} 
+          />
         );
       case 'EQUIPE':
-        return (
-          <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm animate-in fade-in duration-500">
-             <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-blue-50/30 dark:bg-blue-900/10">
-                <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest italic">Ranking de Performance Individual</h3>
-             </div>
-             <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-black tracking-widest text-[10px]">
-                    <th className="px-10 py-6">Colaborador</th>
-                    <th className="px-10 py-6 text-center">Volume Vendas</th>
-                    <th className="px-10 py-6 text-right">Faturamento Gerado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {reportData.teamStats.map((u, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-10 py-6 font-black text-slate-800 dark:text-white uppercase flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 text-[10px]">@{idx+1}</div>
-                         @{u.name}
-                      </td>
-                      <td className="px-10 py-6 text-center font-bold text-slate-500">{u.count} tickets</td>
-                      <td className="px-10 py-6 text-right font-black text-blue-600">{formatCurrency(u.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-             </table>
-          </div>
-        );
+        return <TeamReport reportData={reportData} />;
       case 'PRODUTOS':
-        return (
-          <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm animate-in fade-in duration-500">
-             <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-emerald-50/30 dark:bg-emerald-900/10">
-                <h3 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest italic">Mix de Saída (Curva ABC Financeira)</h3>
-             </div>
-             <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-black tracking-widest text-[10px]">
-                    <th className="px-10 py-6">Item do Menu</th>
-                    <th className="px-10 py-6 text-center">Qtde Vendida</th>
-                    <th className="px-10 py-6 text-right">Faturamento Bruto</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {reportData.topProducts.map((p, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-10 py-6 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
-                      <td className="px-10 py-6 text-center font-bold text-slate-500">{p.qty.toFixed(0)}x</td>
-                      <td className="px-10 py-6 text-right font-black text-emerald-600">{formatCurrency(p.total)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-             </table>
-          </div>
-        );
+        return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL':
-        const peakHour = reportData.hourlyMap.reduce((prev, current) => (prev.count > current.count) ? prev : current);
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
-            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-10 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm relative">
-               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-10 italic text-center">Fluxo Horário (Volume de Vendas)</h3>
-               <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={reportData.hourlyMap}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: '900'}} />
-                      <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '900'}} />
-                      <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                        {reportData.hourlyMap.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.count === peakHour.count && entry.count > 0 ? '#ef4444' : '#e2e8f0'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-               </div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border border-slate-200 dark:border-slate-800 text-center flex flex-col justify-center space-y-6 shadow-sm">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Pico de Atendimento</p>
-              <p className="text-8xl font-black text-red-600 tracking-tighter italic">{peakHour.hour}</p>
-              <div className="h-px bg-slate-100 dark:bg-slate-800 mx-auto w-1/2"></div>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-60">Recorde no período: {peakHour.count} comandas/hora</p>
-            </div>
-          </div>
-        );
+        return <OperationalReport reportData={reportData} />;
       default: return null;
     }
   };
