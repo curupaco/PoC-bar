@@ -24,8 +24,18 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const shiftSales = useMemo(() => {
     if (!activeShift) return [];
-    return (sales || []).filter(s => s.shiftId === activeShift.id);
+    // Ignorar vendas logicamente excluídas no faturamento do turno (comportamento mantido para integridade financeira)
+    return (sales || []).filter(s => s.shiftId === activeShift.id && !s.deleted);
   }, [activeShift, sales]);
+
+  // INÍCIO DA ALTERAÇÃO: Cálculo de Vendas Anuladas para Auditoria
+  const deletedSalesTotal = useMemo(() => {
+    if (!activeShift) return 0;
+    return (sales || [])
+      .filter(s => s.shiftId === activeShift.id && s.deleted)
+      .reduce((acc, s) => acc + (s.total || 0), 0);
+  }, [activeShift, sales]);
+  // FIM DA ALTERAÇÃO
 
   const totalSoldInShift = shiftSales.reduce((acc, s) => acc + (s.total || 0), 0);
   
@@ -139,6 +149,21 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                              <span className="text-[10px] self-center font-black uppercase">SALDO ESPERADO:</span>
                              <span>{formatCurrency(expectedCashInDrawer)}</span>
                           </div>
+
+                          {/* INÍCIO DA ALTERAÇÃO: Bloco de Auditoria de Anulações */}
+                          <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-2">
+                             <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                   <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vendas Anuladas no Turno:</span>
+                                </div>
+                                <span className="text-sm font-black text-red-500">{formatCurrency(deletedSalesTotal)}</span>
+                             </div>
+                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2 leading-relaxed">
+                                Este valor foi removido do caixa via anulação. Verifique no Histórico por registros marcados como "ANULADA".
+                             </p>
+                          </div>
+                          {/* FIM DA ALTERAÇÃO */}
                        </div>
                     </div>
                     

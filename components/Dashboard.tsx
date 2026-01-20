@@ -22,7 +22,10 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
     const nowTs = Date.now();
     const todayStart = getBusinessDateStart(nowTs);
     
-    return sales.filter(s => {
+    return (sales || []).filter(s => {
+      // INÍCIO DA ALTERAÇÃO: Ignorar vendas excluídas no dashboard
+      if (s.deleted) return false;
+      // FIM DA ALTERAÇÃO
       const saleStart = getBusinessDateStart(s.timestamp);
       
       switch (activePeriod) {
@@ -104,7 +107,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
           { label: 'Lucro Realizado', val: formatCurrency(realizedRevenue), sub: 'Entrada Efetiva', color: 'text-emerald-500' },
           { label: 'Comandas', val: operationalOrders, sub: 'Vendas Fechadas', color: 'text-blue-500' },
           { label: 'Ticket Médio', val: formatCurrency(avgOrder), sub: 'Média / Venda', color: 'text-indigo-500' },
-          { label: 'Status Bar', val: 'Sincronizado', sub: 'v3.9.12', color: 'text-emerald-500' }
+          { label: 'Status Bar', val: 'Sincronizado', sub: 'v3.9.29', color: 'text-emerald-500' }
         ].map((stat, i) => (
           <div key={i} className={`p-6 border shadow-sm transition-all hover:shadow-md bg-white dark:bg-slate-900 rounded-3xl border-slate-200 dark:border-slate-800`}>
             <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-400">{stat.label}</p>
@@ -125,7 +128,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
               <BarChart data={barData} layout="vertical" margin={{ left: -10, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={gridColor} />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontWeight: '900', fontFamily: 'Inter' }} />
+                <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 10, fontBold: '900', fontFamily: 'Inter' }} />
                 <Tooltip cursor={{ fill: 'rgba(0,0,0,0.02)' }} contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: `1px solid ${gridColor}`, borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }} />
                 <Bar dataKey="count" fill={chartColor} radius={[0, 10, 10, 0]} barSize={24} />
               </BarChart>

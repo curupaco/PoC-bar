@@ -80,13 +80,20 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     const startTs = safeParse(startDate, 0, 0, 0);
     const endTs = safeParse(endDate, 23, 59, 59);
+    
+    // INÍCIO DA ALTERAÇÃO: Filtrar vendas excluídas nos relatórios
+    return (sales || []).filter((s: Sale) => {
+      if (s.deleted) return false;
+      return s.timestamp >= startTs && s.timestamp <= endTs;
+    });
     // FIM DA ALTERAÇÃO
-    return (sales || []).filter((s: Sale) => s.timestamp >= startTs && s.timestamp <= endTs);
   }, [sales, startDate, endDate]);
 
   const reportData = useMemo(() => {
     const selectedShift = (shifts || []).find(sh => sh.id === selectedShiftId);
-    const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId);
+    // INÍCIO DA ALTERAÇÃO: Filtrar vendas excluídas no fechamento de turno selecionado
+    const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId && !s.deleted);
+    // FIM DA ALTERAÇÃO
 
     // FINANCEIRO (Período Selecionado)
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
@@ -141,6 +148,9 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     // PENDURAS (Saldo Global Histórico)
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
+      // INÍCIO DA ALTERAÇÃO: Ignorar vendas excluídas no cálculo de dívida global
+      if (s.deleted) return acc;
+      // FIM DA ALTERAÇÃO
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
       if (s.paymentMethod === PaymentMethod.PENDURA) acc[name] = (acc[name] || 0) + s.total;
