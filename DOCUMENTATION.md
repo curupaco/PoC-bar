@@ -1,48 +1,37 @@
 
-# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.16)
+# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.21)
 
 O Botequista não é apenas um software de PDV; é uma **Engenharia de Blindagem Financeira** e **Otimização de Ticket Médio** desenhada especificamente para o ecossistema dinâmico de bares e gastronomia de alto giro.
 
 ---
 
-## 🚀 1. Inteligência de Vendas (O Fator Upsell)
+## 📊 1. Inteligência de Dados (Relatórios v3.9.21)
 
-### 1.1 Menus de Modificadores Automáticos
-- **Engenharia**: Ao vincular um "Menu de Opções" a uma categoria (ex: Porções), o sistema abre obrigatoriamente uma janela de adicionais no momento do lançamento.
-- **Impacto**: Aumento estatístico de até **18% no Ticket Médio**.
+### 1.1 Performance de Equipe (Restaurado)
+- **Ranking**: Visualização por faturamento bruto e volume de atendimentos por colaborador através do vínculo `userId`.
+- **Métrica**: Identificação de gargalos de atendimento e produtividade individual.
 
-### 1.2 Navegação de Alta Densidade (Novo)
-- **Busca em Tempo Real**: O cardápio conta com um motor de busca `useMemo` que filtra instantaneamente por nome do produto ou categoria, reduzindo o tempo de localização em cardápios extensos.
-- **Categorias Colapsáveis**: Implementação de estado `Set<string>` para controle de visibilidade. Clique no título da categoria para expandir/recolher, otimizando a área útil da tela em dispositivos móveis.
+### 1.2 Visão Operacional (Mapa de Calor - Restaurado)
+- **Fluxo Horário**: Gráfico de densidade de vendas por hora para ajuste de escala de funcionários. Utiliza `recharts` para visualização de alta densidade.
+- **Pico de Demanda**: Identificação precisa do horário de maior pressão (stress-test) no balcão.
 
----
-
-## ⚖️ 2. Operação de Precisão (Gramatura Digital)
-
-### 2.1 Engine de Conversão Instantânea
-- **Precisão**: Conversão de gramas para valor monetário em tempo real.
-- **Interface Tátil**: Teclado numérico de alta visibilidade (UX Fitts' Law).
+### 1.3 Mix de Produtos (Curva ABC - Restaurado)
+- **Ranking de Saída**: Identificação dos produtos "campeões" por faturamento acumulado e volume de unidades.
 
 ---
 
-## 🛡️ 3. Blindagem Financeira & UX UI (Aprovado em Operação)
+## 🛡️ 2. Blindagem de Sessão (v3.9.21)
 
-### 3.1 Recebimento Múltiplo & Troco
-- **Flexibilidade**: Fechamento de mesa com múltiplos métodos de pagamento.
-- **Troco Inteligente**: Exibe o troco em destaque ao selecionar valores rápidos.
-
-### 3.2 Blindagem de UI - Rodapé PDV (Novo)
-- **CSS Layout Guard**: O rodapé de pagamento e o botão "CONCLUIR" agora utilizam `shrink-0` e posicionamento `sticky` garantido. Isso impede que o botão de finalização de venda suma abaixo da dobra da tela ou atrás do teclado em dispositivos Android/iOS.
-
-### 3.3 Segurança de Sessão (Zero Persistence)
-- **F5 Protocol**: Atualizar a página (F5) limpa a sessão atual para segurança operacional.
+### 2.1 Confirmação de Logout
+- **Segurança**: Bloqueio de saída acidental via `window.confirm`.
+- **UX**: Garante que o operador não encerre a sessão durante um atendimento ou fechamento de conta.
 
 ---
 
-## 📡 4. Sincronismo & Resiliência
+## 📡 3. Sincronismo & Resiliência
 
 - **Multi-Device**: Sincronização via Firebase Realtime Database.
-- **Criptografia**: Proteção AES-256-CBC-PKCS7 antes da persistência em nuvem.
+- **Timezone local**: Filtros comerciais agora utilizam `toLocaleDateString('en-CA')`, respeitando o horário civil local do bar e não o UTC.
 
 ---
 **Botequista Pro - Professional Gastronomy Ecosystem**

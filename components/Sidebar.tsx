@@ -41,6 +41,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
 
+  const handleLogout = () => {
+    if (window.confirm("VOCÊ DESEJA REALMENTE SAIR DO SISTEMA? \nAs mesas abertas e o turno ativo continuarão salvos na nuvem.")) {
+      onLogout();
+    }
+  };
+
   const navItems: NavItem[] = [
     { id: 'pos', label: 'VENDA (PDV)', perm: 'pos', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg> },
     { id: 'shifts', label: 'TURNOS', perm: 'shifts_admin', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
@@ -133,13 +139,13 @@ const Sidebar: React.FC<SidebarProps> = ({
              {isCollapsed && <Tooltip text="GUIA DO BAR" />}
            </div>
            <div className={`flex items-center gap-3 p-1 ${isCollapsed ? 'justify-center' : ''}`}>
-             <button onClick={onLogout} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600`}>
+             <button onClick={handleLogout} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600`}>
                {currentUser?.username.slice(0, 2).toUpperCase()}
              </button>
              {!isCollapsed && (
                <div className="flex-1 min-w-0">
                  <p className={`text-[10px] font-black truncate uppercase leading-none mb-1 text-slate-800 dark:text-white`}>{currentUser?.displayName}</p>
-                 <button onClick={onLogout} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
+                 <button onClick={handleLogout} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
                </div>
              )}
            </div>
