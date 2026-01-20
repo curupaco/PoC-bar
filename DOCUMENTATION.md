@@ -1,21 +1,21 @@
 
-# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.32)
+# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.33)
 
 O Botequista não é apenas um software de PDV; é uma **Engenharia de Blindagem Financeira** desenhada especificamente para o ecossistema dinâmico de bares e gastronomia de alto giro.
 
 ---
 
-## 🏗️ 1. Arquitetura e Consistência (v3.9.32)
+## 🏗️ 1. Arquitetura e Consistência (v3.9.33)
 
-### 1.1 Padronização Forense (NOVO)
-- **Identidade em Logs**: Unificação dos campos de auditoria (`openedBy`, `closedBy`, `deletedBy`) para gravarem o `username`. Isso permite a inspeção imediata de logs no banco de dados sem a necessidade de cruzamento manual de IDs.
-- **Integridade Relacional**: O campo `userId` das transações permanece intacto (ID único), preservando o funcionamento de rankings e relatórios de performance de equipe.
+### 1.1 Blindagem de Dados em Mesas Abertas (NOVO)
+- **Varredura de Modificadores Órfãos**: Ao excluir um grupo de modificadores, o sistema agora realiza uma varredura automática em todas as mesas abertas (`openTabs`). Itens que possuíam modificadores vinculados ao grupo excluído têm esses opcionais removidos e seus preços recalculados instantaneamente.
+- **Integridade de Registro**: Impede que itens em mesas ativas exibam descrições ou preços de modificadores que não existem mais na base de dados principal.
 
-### 1.2 Transparência em Cancelamentos
-- **Visibilidade de Anulações no Turno**: O modal de conferência exibe o total anulado no expediente para auditoria imediata.
+### 1.2 Padronização Forense
+- **Identidade em Logs**: Unificação dos campos de auditoria (`openedBy`, `closedBy`, `deletedBy`) para uso exclusivo de `username`.
 
-### 1.3 Supervisão de Anulações
-- **Lixeira Gerencial**: Acesso visual a registros deletados logicamente através do toggle de supervisão no histórico.
+### 1.3 Transparência Financeira
+- **Visibilidade de Anulações no Turno**: Exibição clara do total anulado no expediente para conferência rápida.
 
 ---
 
