@@ -1,6 +1,5 @@
-
 import React, { useState } from 'react';
-import { Product, formatCurrency } from '../../types';
+import { Product } from '../../types';
 
 interface POSProductGridProps {
   products: Product[];
@@ -13,8 +12,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
   const favorites = filteredProducts.filter(p => p.isFavorite);
-  // FIX: Using Array.from to ensure correct type inference for string[] from Set and avoid unknown[] error
-  const categories: string[] = Array.from(new Set(filteredProducts.map(p => p.category))).sort();
+  const categories: string[] = (Array.from(new Set(filteredProducts.map(p => p.category))) as string[]).sort();
 
   const toggleCategory = (cat: string) => {
     setCollapsedCats(prev => {
