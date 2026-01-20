@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue, ModifierGroup, ModifierOption } from '../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue, ModifierGroup, ModifierOption, safeFloat } from '../types';
 import WeightModal from './pos/modals/WeightModal';
 import UpsellModal from './pos/modals/UpsellModal';
 
@@ -107,7 +107,8 @@ const POS: React.FC<POSProps> = ({
   const tabTotal = shortcutCheckout ? shortcutCheckout.amount : tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
   
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
-  const remainingBalance = Math.max(0, tabTotal - paidSoFar);
+  // ITEM 2: Uso de safeFloat para evitar 0.000000001
+  const remainingBalance = Math.max(0, safeFloat(tabTotal - paidSoFar));
 
   const handleQuickDelete = (tabId: string, name: string) => {
     setDeleteConfirmId({ id: tabId, name });
@@ -159,15 +160,16 @@ const POS: React.FC<POSProps> = ({
         
         if (editingWeightIndex !== null) {
           const currentItem = items[editingWeightIndex];
+          // ITEM 2: safeFloat
           items[editingWeightIndex] = { 
             ...currentItem, 
             quantity: quantity, 
-            totalPrice: Number((quantity * currentItem.unitPrice).toFixed(2)) 
+            totalPrice: safeFloat(quantity * currentItem.unitPrice)
           };
           showFeedback(`${product.name} ATUALIZADO`);
         } else {
           const modPrice = modifier ? modifier.price : 0;
-          const effectiveUnitPrice = product.price + modPrice;
+          const effectiveUnitPrice = safeFloat(product.price + modPrice);
 
           const existingIndex = items.findIndex(i => 
              i.productId === product.id && 
@@ -179,7 +181,7 @@ const POS: React.FC<POSProps> = ({
             items[existingIndex] = { 
                ...items[existingIndex], 
                quantity: newQty, 
-               totalPrice: Number((newQty * effectiveUnitPrice).toFixed(2)) 
+               totalPrice: safeFloat(newQty * effectiveUnitPrice)
             };
             showFeedback(`+1 ${product.name}`);
           } else {
@@ -190,7 +192,7 @@ const POS: React.FC<POSProps> = ({
               category: product.category || 'GERAL',
               quantity: quantity, 
               unitPrice: effectiveUnitPrice, 
-              totalPrice: Number((quantity * effectiveUnitPrice).toFixed(2)),
+              totalPrice: safeFloat(quantity * effectiveUnitPrice),
               modifier: modifier 
             });
             showFeedback(`${product.name} ADICIONADO`);
@@ -225,7 +227,7 @@ const POS: React.FC<POSProps> = ({
            items.splice(index, 1);
            showFeedback(`${item.productName} REMOVIDO`);
         } else {
-           items[index] = { ...item, quantity: newQty, totalPrice: Number((newQty * item.unitPrice).toFixed(2)) };
+           items[index] = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
            showFeedback(`${item.productName}: ${newQty}x`);
         }
         return { ...tab, items };
@@ -260,7 +262,7 @@ const POS: React.FC<POSProps> = ({
     if (paymentMethodInput === PaymentMethod.CASH) {
        const handed = parseCurrencyValue(cashReceivedInput);
        if (handed > amountToPay) {
-          change = handed - amountToPay;
+          change = safeFloat(handed - amountToPay);
        }
     }
 
@@ -353,7 +355,7 @@ const POS: React.FC<POSProps> = ({
     const toPay = parseCurrencyValue(paymentAmountInput);
     const handed = parseCurrencyValue(cashReceivedInput);
     if (handed <= 0) return 0;
-    return Math.max(0, handed - toPay);
+    return Math.max(0, safeFloat(handed - toPay));
   }, [paymentAmountInput, cashReceivedInput, paymentMethodInput]);
 
   const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -519,7 +521,8 @@ const POS: React.FC<POSProps> = ({
                 </>
               ) : (
                 <div className="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 animate-in slide-in-from-right-4 duration-300">
-                   <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar">
+                   {/* ITEM 5: Adicionado padding bottom extra para o teclado não cobrir */}
+                   <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-32">
                       <button onClick={() => { setIsClosingTab(false); setCurrentPayments([]); setCashReceivedInput(''); }} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500">← Voltar à comanda</button>
                       
                       <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-center">
@@ -554,7 +557,7 @@ const POS: React.FC<POSProps> = ({
                               setPaymentMethodInput(method); 
                               setCashReceivedInput(''); 
                               if (method !== PaymentMethod.PENDURA && activeTabId !== 'shortcut-payment') {
-                                  setCustomerNameInput(''); // Limpa o nome se mudar para outro método, exceto em quitação
+                                  setCustomerNameInput(''); 
                               }
                            }} 
                            className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase outline-none border border-slate-200 dark:border-slate-700 shadow-sm focus:ring-2 focus:ring-red-500"
@@ -562,7 +565,6 @@ const POS: React.FC<POSProps> = ({
                           {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
 
-                        {/* INPUT DE NOME - Para Pendura OU Quitação (Fixo) */}
                         {(paymentMethodInput === PaymentMethod.PENDURA || activeTabId === 'shortcut-payment') && (
                            <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
                               <label className={`text-[9px] font-black uppercase tracking-widest ml-2 ${activeTabId === 'shortcut-payment' ? 'text-slate-400' : 'text-red-500'}`}>
@@ -581,7 +583,6 @@ const POS: React.FC<POSProps> = ({
                            </div>
                         )}
 
-                        {/* INPUTS DE VALOR - Diferenciados por método */}
                         {paymentMethodInput === PaymentMethod.CASH ? (
                            <div className="grid grid-cols-2 gap-3">
                               <div className="space-y-1">
@@ -637,7 +638,7 @@ const POS: React.FC<POSProps> = ({
                       </div>
                    </div>
 
-                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] mt-auto pb-12 space-y-4">
+                   <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] mt-auto pb-12 space-y-4 z-10 sticky bottom-0">
                       {liveChange > 0 && (
                         <div className="bg-emerald-600 text-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg animate-in zoom-in-95 border-2 border-emerald-400">
                             <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco Calculado:</span>

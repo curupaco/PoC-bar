@@ -9,18 +9,23 @@ interface SalesHistoryProps {
   currentUser: User;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, users, currentUser }) => {
   const [errorToast, setErrorToast] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterPendura, setFilterPendura] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
 
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_sale');
 
   const filteredSales = useMemo(() => {
     return (sales || []).filter(s => {
-      // INÍCIO DA ALTERAÇÃO: Filtro inteligente para incluir/excluir anuladas baseado no toggle de supervisão
+      // Filtro inteligente para incluir/excluir anuladas baseado no toggle de supervisão
       if (s.deleted && !showDeleted) return false; 
       
       const matchSearch = (s.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -29,6 +34,14 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
       return matchSearch && matchPendura;
     });
   }, [sales, searchTerm, filterPendura, showDeleted]);
+
+  // Paginação (Client-Side)
+  const paginatedSales = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredSales.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredSales, currentPage]);
+
+  const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
 
   const handleDelete = (id: string) => {
     if (!canDelete) {
@@ -42,6 +55,12 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
   const getUsernameById = (id?: string) => {
     if (!id) return 'SISTEMA';
     return users.find(u => u.id === id)?.username || id;
+  };
+
+  const changePage = (p: number) => {
+    setCurrentPage(p);
+    // Scroll suave para o topo da tabela
+    document.getElementById('history-table-top')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -82,19 +101,19 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
               type="text" 
               placeholder="BUSCAR POR CLIENTE OU MESA..." 
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all shadow-inner"
            />
         </div>
         <div className="flex flex-wrap gap-2 w-full xl:w-auto">
           <button 
-            onClick={() => setFilterPendura(!filterPendura)}
+            onClick={() => { setFilterPendura(!filterPendura); setCurrentPage(1); }}
             className={`flex-1 xl:flex-none px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${filterPendura ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
           >
             {filterPendura ? 'Apenas Fiados' : 'Todos os Tipos'}
           </button>
           <button 
-            onClick={() => setShowDeleted(!showDeleted)}
+            onClick={() => { setShowDeleted(!showDeleted); setCurrentPage(1); }}
             className={`flex-1 xl:flex-none px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${showDeleted ? 'bg-slate-900 text-white shadow-lg' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}
           >
             {showDeleted ? 'Com Anuladas' : 'Apenas Ativas'}
@@ -102,7 +121,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden" id="history-table-top">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
           <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight text-sm italic">Fluxo de Caixa Operacional</h3>
           <div className="flex gap-2">
@@ -129,7 +148,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredSales.map((sale) => (
+              {paginatedSales.map((sale) => (
                 <tr key={sale.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${sale.deleted ? 'opacity-40 grayscale italic bg-slate-50/50 dark:bg-slate-900/50' : ''}`}>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <span className="block font-black text-slate-800 dark:text-slate-200">
@@ -204,6 +223,29 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
           </table>
         </div>
       </div>
+
+      {/* Controles de Paginação */}
+      {totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          <button 
+            onClick={() => changePage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl disabled:opacity-50 font-black text-xs uppercase"
+          >
+            Anterior
+          </button>
+          <span className="flex items-center px-4 font-black text-xs text-slate-500">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button 
+            onClick={() => changePage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl disabled:opacity-50 font-black text-xs uppercase"
+          >
+            Próxima
+          </button>
+        </div>
+      )}
     </div>
   );
 };

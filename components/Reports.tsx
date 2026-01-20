@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sale, Product, PaymentMethod, User, Shift } from '../types';
+import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO } from '../types';
 import ClosingReport from './reports/ClosingReport';
 import FinancialReport from './reports/FinancialReport';
 import PenduraReport from './reports/PenduraReport';
@@ -15,17 +15,18 @@ interface ReportsProps {
   shifts: Shift[];
   currentUser: User;
   onQuitarPendura: (customerName: string, amount: number) => void;
+  theme?: Theme;
 }
 
 type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS';
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura, theme }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
   
-  // FIX: toLocaleDateString('en-CA') garante que "Hoje" use a data local do bar (YYYY-MM-DD), evitando pular registros à noite devido ao UTC.
-  const [startDate, setStartDate] = useState(() => new Date().toLocaleDateString('en-CA'));
-  const [endDate, setEndDate] = useState(() => new Date().toLocaleDateString('en-CA'));
+  // FIX ITEM 7: Uso de formatDateToISO para garantir formato YYYY-MM-DD local sem depender de 'en-CA'
+  const [startDate, setStartDate] = useState(() => formatDateToISO(new Date()));
+  const [endDate, setEndDate] = useState(() => formatDateToISO(new Date()));
   const [periodLabel, setPeriodLabel] = useState('HOJE');
 
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
@@ -65,8 +66,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       start = new Date(now.getFullYear(), now.getMonth(), 1); 
     }
 
-    setStartDate(start.toLocaleDateString('en-CA'));
-    setEndDate(end.toLocaleDateString('en-CA'));
+    setStartDate(formatDateToISO(start));
+    setEndDate(formatDateToISO(end));
     setPeriodLabel(type);
     showToast(`FILTRO: ${type}`);
   };
@@ -207,7 +208,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       case 'PRODUTOS':
         return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL':
-        return <OperationalReport reportData={reportData} />;
+        return <OperationalReport reportData={reportData} theme={theme} />;
       default: return null;
     }
   };

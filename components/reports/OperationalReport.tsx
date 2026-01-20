@@ -1,13 +1,16 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Theme } from '../../types';
 
 interface OperationalReportProps {
   reportData: any;
+  theme?: Theme;
 }
 
-const OperationalReport: React.FC<OperationalReportProps> = ({ reportData }) => {
+const OperationalReport: React.FC<OperationalReportProps> = ({ reportData, theme }) => {
   const peakHour = reportData.hourlyMap.reduce((prev: any, current: any) => (prev.count > current.count) ? prev : current);
+  const isDark = theme === 'dark';
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in duration-500">
@@ -16,12 +19,12 @@ const OperationalReport: React.FC<OperationalReportProps> = ({ reportData }) => 
          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={reportData.hourlyMap}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: '900'}} />
-                <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '900'}} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{fill: isDark ? '#94a3b8' : '#64748b', fontSize: 10, fontWeight: '900'}} />
+                <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} contentStyle={{ backgroundColor: (isDark ? '#020617' : '#fff'), border: 'none', borderRadius: '16px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '900', color: (isDark ? '#fff' : '#000') }} />
                 <Bar dataKey="count" name="VENDAS" radius={[8, 8, 0, 0]}>
                   {reportData.hourlyMap.map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.count === peakHour.count && entry.count > 0 ? '#ef4444' : '#e2e8f0'} />
+                    <Cell key={`cell-${index}`} fill={entry.count === peakHour.count && entry.count > 0 ? '#ef4444' : (isDark ? '#1e293b' : '#e2e8f0')} />
                   ))}
                 </Bar>
               </BarChart>

@@ -14,6 +14,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (username.trim() && password.trim()) {
+      // O App.tsx fará a verificação dupla (Hash ou Plain)
       onLogin(username, password);
     }
   };

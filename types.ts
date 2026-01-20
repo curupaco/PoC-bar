@@ -146,6 +146,19 @@ export const parseCurrencyValue = (val: string): number => {
   return parseFloat(normalized) || 0;
 };
 
+// ITEM 2: Precisão Matemática (Anti-Float Error)
+export const safeFloat = (val: number): number => {
+  return Math.round((val + Number.EPSILON) * 100) / 100;
+};
+
+// ITEM 7: Formatação de Data Segura (ISO Local)
+export const formatDateToISO = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export const getBusinessDateStart = (timestamp: number) => {
   const date = new Date(timestamp);
   const hour = date.getHours();
