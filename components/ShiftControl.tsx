@@ -45,18 +45,33 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     };
   }, [shiftSales]);
 
+  // Lógica de Transferências: Diferença entre o saldo atual e o de abertura
+  const internalTransfers = useMemo(() => {
+    if (!activeShift) return 0;
+    const opening = activeShift.openingCashChange ?? activeShift.cashChange;
+    return activeShift.cashChange - opening;
+  }, [activeShift]);
+
+  // O saldo esperado agora é a soma de todos os fatores
   const expectedCashInDrawer = activeShift ? (activeShift.cashChange + cashMovements.total) : 0;
 
   const handleOpenShift = () => {
     if (!canOpen) return;
+    const pVal = parseCurrencyValue(valPrimary);
+    const cVal = parseCurrencyValue(valChange);
+    const sVal = parseCurrencyValue(valSecondary);
+
     const newShift: Shift = {
       id: generateUniqueId('shift'),
       startTime: Date.now(),
       openedBy: currentUser.username,
       status: 'open',
-      cashPrimary: parseCurrencyValue(valPrimary),
-      cashChange: parseCurrencyValue(valChange),
-      cashSecondary: parseCurrencyValue(valSecondary)
+      cashPrimary: pVal,
+      cashChange: cVal,
+      cashSecondary: sVal,
+      openingCashPrimary: pVal,
+      openingCashChange: cVal,
+      openingCashSecondary: sVal
     };
     onUpdateShifts([newShift, ...shifts]);
     setValPrimary('');
@@ -66,7 +81,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const handleTryClose = () => {
     if (!canClose) return;
-    // Removida validação de mesas abertas para permitir troca de turno durante a operação
     setShowConferral(true);
   };
 
@@ -105,18 +119,24 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
               <div className="flex-1 p-8 lg:p-20 overflow-y-auto space-y-12 no-scrollbar">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="space-y-6">
-                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Resumo do Sistema (Esperado)</h3>
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Resumo do Sistema (Lógica Financeira)</h3>
                        <div className="space-y-4 font-mono text-lg">
                           <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                             <span className="text-slate-500 uppercase text-xs font-bold">Fundo Inicial</span>
-                             <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.cashChange)}</span>
+                             <span className="text-slate-500 uppercase text-[10px] font-black">Fundo de Abertura</span>
+                             <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.openingCashChange ?? activeShift.cashChange)}</span>
                           </div>
                           <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                             <span className="text-slate-500 uppercase text-xs font-bold">Entradas Dinheiro</span>
+                             <span className="text-slate-500 uppercase text-[10px] font-black">Vendas/Recebimentos (Dinheiro)</span>
                              <span className="font-bold text-emerald-500">+{formatCurrency(cashMovements.total)}</span>
                           </div>
+                          <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                             <span className="text-slate-500 uppercase text-[10px] font-black">Movimentações (Tesouraria)</span>
+                             <span className={`font-bold ${internalTransfers >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
+                                {internalTransfers >= 0 ? '+' : ''}{formatCurrency(internalTransfers)}
+                             </span>
+                          </div>
                           <div className="pt-4 flex justify-between text-2xl font-black text-slate-900 dark:text-white">
-                             <span className="text-xs self-center">TOTAL ESPERADO:</span>
+                             <span className="text-[10px] self-center font-black uppercase">SALDO ESPERADO:</span>
                              <span>{formatCurrency(expectedCashInDrawer)}</span>
                           </div>
                        </div>
@@ -132,13 +152,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                              inputMode="decimal" 
                              value={actualCountedInput} 
                              onChange={e => setActualCountedInput(sanitizeCurrencyInput(e.target.value))} 
-                             className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-8 rounded-3xl border-4 border-red-500 font-black text-4xl outline-none text-center" 
+                             className="w-full bg-white dark:bg-slate-950 pl-20 pr-6 py-8 rounded-3xl border-4 border-red-500 font-black text-4xl outline-none text-center shadow-inner" 
                              placeholder="0,00"
                           />
                        </div>
                        {actualCountedInput && (
-                          <div className={`text-center p-4 rounded-2xl font-black uppercase text-xs animate-in zoom-in-95 ${parseCurrencyValue(actualCountedInput) === expectedCashInDrawer ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
-                             {parseCurrencyValue(actualCountedInput) === expectedCashInDrawer ? 'CAIXA CONDIZENTE' : `DIFERENÇA: ${formatCurrency(parseCurrencyValue(actualCountedInput) - expectedCashInDrawer)}`}
+                          <div className={`text-center p-4 rounded-2xl font-black uppercase text-[10px] tracking-widest animate-in zoom-in-95 ${Math.abs(parseCurrencyValue(actualCountedInput) - expectedCashInDrawer) < 0.05 ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'}`}>
+                             {Math.abs(parseCurrencyValue(actualCountedInput) - expectedCashInDrawer) < 0.05 ? 'CONCILIAÇÃO PERFEITA' : `QUEBRA DE CAIXA: ${formatCurrency(parseCurrencyValue(actualCountedInput) - expectedCashInDrawer)}`}
                           </div>
                        )}
                     </div>
@@ -172,7 +192,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                     <p className="text-3xl font-black text-emerald-400">{formatCurrency(cashMovements.sales)}</p>
                  </div>
                  <div className="bg-white/5 p-6 rounded-3xl border border-white/10 flex flex-col justify-center backdrop-blur-sm">
-                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Gaveta (Dinheiro)</p>
+                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Gaveta (Sistema)</p>
                     <p className="text-3xl font-black text-blue-400">{formatCurrency(expectedCashInDrawer)}</p>
                  </div>
               </div>

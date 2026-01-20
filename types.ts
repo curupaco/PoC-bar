@@ -45,9 +45,17 @@ export interface Shift {
   openedBy: string;
   closedBy?: string;
   status: 'open' | 'closed';
+  
+  // Saldos Atuais (Mutáveis por transferências)
   cashPrimary: number;   
   cashChange: number;    
   cashSecondary: number; 
+
+  // Saldos de Abertura (Imutáveis para conciliação)
+  openingCashPrimary?: number;
+  openingCashChange?: number;
+  openingCashSecondary?: number;
+
   finalCashPrimary?: number;
   finalCashChange?: number;
   finalCashSecondary?: number;
