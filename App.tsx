@@ -13,6 +13,7 @@ import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
+import FeedbackModal from './components/FeedbackModal';
 import { hashPassword } from './services/cryptoService';
 import { useSync } from './hooks/useSync';
 
@@ -21,7 +22,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.35"; 
+const APP_VERSION = "3.9.40"; 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
@@ -55,6 +56,7 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline'>('idle');
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('btq-theme') as Theme) || 'dark';
@@ -169,6 +171,8 @@ const App: React.FC = () => {
 
   return (
     <div className={`flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300`}>
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} currentUser={currentUser.username} />
+      
       <Sidebar 
         activeView={activeView} 
         onViewChange={setActiveView} 
@@ -197,6 +201,13 @@ const App: React.FC = () => {
               <div className={`w-2 h-2 rounded-full ${status.color}`}></div>
               <span className={`text-[10px] font-black uppercase tracking-widest ${status.text}`}>{status.label}</span>
             </div>
+            
+            {/* Feedback Button */}
+            <button onClick={() => setIsFeedbackOpen(true)} className="p-2.5 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-500 hover:text-blue-500 hover:scale-105 transition-all" title="Reportar Erro ou Sugestão">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+            </button>
+
+            {/* Theme Button */}
             <button onClick={toggleTheme} className="p-2.5 bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm text-slate-500 hover:scale-105 transition-all">
               {theme === 'dark' ? <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> : <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
             </button>

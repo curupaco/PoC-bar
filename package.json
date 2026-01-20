@@ -15,7 +15,8 @@
     "react-dom": "^19.2.3",
     "crypto-js": "^4.2.0",
     "html-to-image": "^1.11.11",
-    "jspdf": "^2.5.1"
+    "jspdf": "^2.5.1",
+    "@vercel/node": "^5.5.25"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
