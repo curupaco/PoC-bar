@@ -154,7 +154,6 @@ const ProductList: React.FC<ProductListProps> = ({
          <button onClick={() => setActiveTab('CATEGORIES')} className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CATEGORIES' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-red-500'}`}>Vínculos Automáticos</button>
       </div>
 
-      {/* ABA PRODUTOS */}
       {activeTab === 'ITEMS' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
@@ -215,7 +214,6 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
-      {/* ABA MENUS DE OPÇÕES */}
       {activeTab === 'GROUPS' && (
         <div className="space-y-6 animate-in fade-in duration-300 pb-24">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center">
@@ -253,7 +251,6 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
-      {/* ABA VÍNCULOS AUTOMÁTICOS */}
       {activeTab === 'CATEGORIES' && (
         <div className="space-y-6 animate-in fade-in duration-300 pb-24">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -278,7 +275,6 @@ const ProductList: React.FC<ProductListProps> = ({
         </div>
       )}
 
-      {/* MODAL UNIFICADO */}
       {showModal && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-10 border border-slate-200 dark:border-slate-800 shadow-2xl animate-in zoom-in-95 overflow-y-auto max-h-[90vh] no-scrollbar">
