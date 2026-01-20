@@ -103,7 +103,7 @@ const App: React.FC = () => {
     openTabs, setOpenTabs,
     users, setUsers,
     shifts, setShifts,
-    penduraThreshold,
+    penduraThreshold, setPenduraThreshold,
     setDbStatus,
     config: {
       url: SYSTEM_DB_URL,
@@ -225,7 +225,18 @@ const App: React.FC = () => {
                 currentUser={currentUser} 
              />
            ) :
-           activeView === 'reports' && hasPermission('reports') ? <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} theme={theme} /> :
+           activeView === 'reports' && hasPermission('reports') ? (
+             <Reports 
+                sales={sales} 
+                products={products} 
+                users={users} 
+                shifts={shifts} 
+                currentUser={currentUser} 
+                onQuitarPendura={(name, amount) => { setPendingShortcut({name, amount}); setActiveView('pos'); }} 
+                theme={theme}
+                penduraThreshold={penduraThreshold}
+             />
+           ) :
            activeView === 'shifts' && hasPermission('shifts_admin') ? <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={activeTabsCount} /> :
            activeView === 'users' && hasPermission('users_admin') ? <UserManagement users={users} onUpdateUsers={setUsers} /> :
            activeView === 'cash' && hasPermission('cash_admin') ? <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} /> :

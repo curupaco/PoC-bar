@@ -19,6 +19,7 @@ interface SyncProps {
   shifts: Shift[];
   setShifts: (data: Shift[]) => void;
   penduraThreshold: number;
+  setPenduraThreshold: (val: number) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline') => void;
   config: {
     url: string;
@@ -38,7 +39,7 @@ export const useSync = ({
   openTabs, setOpenTabs,
   users, setUsers,
   shifts, setShifts,
-  penduraThreshold,
+  penduraThreshold, setPenduraThreshold,
   setDbStatus,
   config
 }: SyncProps) => {
@@ -107,6 +108,11 @@ export const useSync = ({
         setOpenTabs(cloudData.openTabs || []);
         setShifts(cloudData.shifts || []);
         
+        // Recupera Configurações Globais
+        if (cloudData.config && typeof cloudData.config.penduraThreshold === 'number') {
+          setPenduraThreshold(cloudData.config.penduraThreshold);
+        }
+        
         const loadedUsers = cloudData.users || [];
         // Backup dos usuários para LocalStorage (Segurança Offline)
         localStorage.setItem('btq_users_backup', JSON.stringify(loadedUsers));
@@ -137,27 +143,9 @@ export const useSync = ({
     } finally { 
       isInitialLoadDone.current = true; 
     }
-  }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setDbStatus, getValidToken]);
+  }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
 
   // -- 3. Engine de Sincronização com Fila (No-Pileup) --
-  const processQueue = useCallback(async () => {
-    if (isSyncing.current || pendingSyncs.current.size === 0) return;
-
-    isSyncing.current = true;
-    const nodeToSync = pendingSyncs.current.values().next().value; // Pega um
-    
-    // IMPORTANTE: Obter os dados mais recentes do STATE não é possível diretamente aqui dentro do callback antigo.
-    // O useEffect cuida de chamar syncNode com os dados novos. 
-    // Aqui apenas garantimos que não rode 2 saves ao mesmo tempo.
-    
-    // A estratégia simplificada para React + Firebase é:
-    // O 'syncNode' recebe os dados. Se estiver ocupado, ignoramos? 
-    // NÃO. Se ignorarmos, perdemos o update.
-    // SOLUÇÃO: O 'syncNode' deve ser a própria trigger.
-    
-    // Refatoração da lógica interna para 'syncNode'
-  }, []);
-
   const syncNode = useCallback(async (nodeName: string, data: any) => {
     if (!isInitialLoadDone.current) return;
     
@@ -173,13 +161,7 @@ export const useSync = ({
     }
 
     // 3. Mecanismo de Lock (Simples)
-    // Se já existe uma sincronização em andamento, nós PODERÍAMOS enfileirar.
-    // Mas para RTDB, simplesmente deixamos o React agendar o próximo efeito.
-    // O problema "Pile-up" acontece quando empilhamos Promises.
-    // Aqui verificamos: Se isSyncing, IGNORAMOS este ciclo (Debounce natural).
-    // O próximo render do React trará os dados mais novos.
     if (isSyncing.current) {
-       // Opcional: Marcar que existe pendência se quiséssemos forçar retry imediato
        return; 
     }
 
@@ -214,7 +196,7 @@ export const useSync = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       syncNode('sales', sales);
-    }, 2000); // Aumentei um pouco para garantir batching
+    }, 2000); 
     return () => clearTimeout(timer);
   }, [sales, syncNode]);
 

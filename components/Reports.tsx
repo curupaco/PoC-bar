@@ -16,11 +16,12 @@ interface ReportsProps {
   currentUser: User;
   onQuitarPendura: (customerName: string, amount: number) => void;
   theme?: Theme;
+  penduraThreshold?: number;
 }
 
 type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS';
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura, theme }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500 }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
   
@@ -175,6 +176,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     };
   }, [filteredSales, sales, shifts, selectedShiftId, users, products]);
 
+  const totalPenduraDebt = useMemo(() => {
+    return reportData.activePenduras.reduce((sum: number, p: any) => sum + p.amount, 0);
+  }, [reportData.activePenduras]);
+
   const renderActiveReport = () => {
     // Se não houver vendas, mostrar placeholder customizado (exceto Penduras que é histórico global)
     if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO') {
@@ -242,9 +247,26 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       {/* SELETOR DE CATEGORIA */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
         <div className="flex flex-wrap justify-center bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1">
-          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => (
-            <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : 'text-slate-500 hover:text-red-500'}`}>{cat}</button>
-          ))}
+          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => {
+            const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
+            
+            return (
+              <button 
+                key={cat} 
+                onClick={() => setActiveCategory(cat)} 
+                className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                  activeCategory === cat 
+                    ? 'bg-red-600 text-white shadow-md shadow-red-500/20' 
+                    : isAlert 
+                      ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' 
+                      : 'text-slate-500 hover:text-red-500'
+                }`}
+              >
+                {isAlert && <span>⚠️</span>}
+                {cat}
+              </button>
+            );
+          })}
         </div>
       </div>
       

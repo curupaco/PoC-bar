@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { jsPDF } from 'jspdf';
@@ -89,145 +88,127 @@ const SystemDocs: React.FC<SystemDocsProps> = ({ showToast }) => {
                  Exportar Documento (PDF)
               </button>
           </div>
-          <div ref={pitchRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-48 font-sans min-w-[1200px] w-full mx-auto relative shadow-2xl border border-white/5">
-            <section className="min-h-[700px] flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                 <div className="flex items-center gap-8">
-                    <div className="w-24 h-24 bg-red-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-red-600/40">
-                       <img src="https://img.icons8.com/fluency/512/beer.png" className="w-16 h-16" alt="Logo" />
-                    </div>
-                    <span className="text-8xl font-barrio leading-none uppercase tracking-tighter">Botequista</span>
-                 </div>
-                 <div className="text-right space-y-3">
-                    <div className="bg-white/10 border border-white/10 px-8 py-4 rounded-3xl text-xs font-black uppercase tracking-[0.4em]">COMERCIAL DOSSIER 2025</div>
-                    <p className="text-blue-500 font-black uppercase text-[10px] tracking-[0.3em] italic">A Revolução na Gestão Gastronômica</p>
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-24 items-center">
-                 <div className="space-y-12">
-                    <h1 className="text-[120px] font-black uppercase tracking-tighter leading-[0.8] italic text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">
-                      PULSO DE <br /><span className="text-red-600">FERRO</span> NO SEU <br /><span className="text-emerald-500">NEGÓCIO.</span>
-                    </h1>
-                    <p className="text-2xl text-slate-400 font-medium leading-relaxed italic border-l-8 border-red-600 pl-10">
-                      "O Botequista não apenas registra vendas; ele blinda seu faturamento contra falhas humanas e otimiza cada segundo da sua operação."
-                    </p>
-                 </div>
-                 <div className="bg-white/5 border border-white/10 p-16 rounded-[60px] relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/20 blur-3xl"></div>
-                    <h4 className="text-xl font-black uppercase mb-8 tracking-widest text-slate-300">Pilares Operacionais:</h4>
-                    <div className="space-y-8">
-                       {[
-                         { t: "Velocidade de Lançamento", d: "Interface desenhada para fechar comandas em menos de 3 cliques." },
-                         { t: "Sincronismo Multi-Device", d: "Celular do garçom e computador do caixa operando a mesma mesa em tempo real." },
-                         { t: "Resiliência PWA", d: "Independência total de instalação. Funciona em qualquer navegador, de qualquer lugar." }
-                       ].map((it, i) => (
-                         <div key={i} className="flex gap-6">
-                            <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-red-600 border border-white/10">0{i+1}</div>
-                            <div><p className="font-black uppercase text-sm">{it.t}</p><p className="text-xs text-slate-500 italic mt-1">{it.d}</p></div>
-                         </div>
-                       ))}
-                    </div>
-                 </div>
-              </div>
-            </section>
+          <div ref={pitchRef} className="bg-slate-950 text-white p-0 rounded-[40px] font-sans min-w-[1200px] w-full mx-auto relative shadow-2xl border border-white/5 overflow-hidden">
             
-            {/* ... Demais seções do Pitch foram mantidas mas abreviadas aqui para brevidade do diff, no arquivo final estarão completas ... */}
-            <section className="space-y-32">
-               <div className="text-center space-y-6">
-                  <span className="bg-blue-600 px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase">Motor de Crescimento</span>
-                  <h3 className="text-7xl font-black uppercase tracking-tighter italic">O Fator <span className="text-blue-500">Upsell</span> Automático</h3>
-               </div>
-               {/* Conteúdo Upsell */}
-               <div className="grid grid-cols-2 gap-24 items-center">
-                  <div className="relative group">
-                     <div className="absolute inset-0 bg-blue-600 blur-[100px] opacity-10"></div>
-                     <div className="relative bg-slate-900 border border-white/5 p-12 rounded-[60px] space-y-10 shadow-2xl">
-                        <div className="flex justify-between items-center pb-8 border-b border-white/5">
-                           <p className="text-xs font-black uppercase tracking-widest text-slate-500">Exemplo de Indução do Sistema</p>
-                           <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_#10b981]"></div>
-                        </div>
-                        <div className="space-y-6">
-                           <div className="p-6 bg-white/5 rounded-3xl border border-white/5 flex justify-between items-center">
-                              <span className="font-black uppercase text-xs">Porção Iscas de Tilápia</span>
-                              <span className="text-emerald-500 font-black">R$ 58,00</span>
-                           </div>
-                           <div className="text-center text-[10px] font-black text-blue-500 uppercase tracking-widest py-2 bg-blue-500/5 rounded-xl">Menu de Opções Forçado ⚡</div>
-                           <div className="grid grid-cols-2 gap-3">
-                              <div className="p-4 bg-blue-600 rounded-2xl text-center font-black text-[10px] uppercase shadow-lg">+ Molho Tártaro (+R$ 12)</div>
-                              <div className="p-4 bg-white/10 rounded-2xl text-center font-black text-[10px] uppercase">+ Limão Extra (+R$ 4)</div>
-                           </div>
-                        </div>
+            {/* PÁGINA 1: CAPA */}
+            <div className="min-h-[850px] relative p-24 flex flex-col justify-between bg-gradient-to-br from-slate-950 to-slate-900 border-b-8 border-red-600">
+               <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-600/10 rounded-full blur-[120px]"></div>
+               <div className="flex justify-between items-start relative z-10">
+                  <div className="flex items-center gap-6">
+                     <div className="w-20 h-20 bg-white text-red-600 rounded-3xl flex items-center justify-center shadow-2xl">
+                        {/* ÍCONE CANECA DE CHOPP CORRIGIDO */}
+                        <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 8v11a2 2 0 002 2h8a2 2 0 002-2V8M6 8V6a2 2 0 012-2h8a2 2 0 012 2v2M6 8h12M18 10h2a2 2 0 012 2v3a2 2 0 01-2 2h-2M10 12v6M14 12v6" /></svg>
                      </div>
+                     <span className="text-4xl font-barrio uppercase">Botequista</span>
                   </div>
-                  <div className="space-y-12">
-                     <h4 className="text-4xl font-black uppercase tracking-tighter leading-tight italic">
-                        Nunca mais esqueça de <br /><span className="text-blue-500">oferecer o extra.</span>
-                     </h4>
-                     <p className="text-lg text-slate-400 leading-relaxed italic">
-                        O Botequista abre automaticamente menus de "Acompanhamentos" ou "Serviços" vinculados a categorias.
+                  <div className="bg-white/5 border border-white/10 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.3em]">Proposta Comercial 2026</div>
+               </div>
+               <div className="relative z-10">
+                  <h1 className="text-[140px] leading-[0.85] font-black uppercase italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">
+                     A Evolução <br />Do <span className="text-red-600">Lucro.</span>
+                  </h1>
+                  <p className="mt-12 text-3xl font-light text-slate-400 max-w-4xl border-l-4 border-red-600 pl-8">
+                     O sistema operacional definitivo para bares de alto giro que não podem perder um segundo.
+                  </p>
+               </div>
+               <div className="relative z-10 flex gap-8">
+                  <div className="px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
+                     <span className="block text-2xl font-black text-red-500">30%</span>
+                     <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Aumento de Giro</span>
+                  </div>
+                  <div className="px-8 py-4 bg-white/5 rounded-2xl border border-white/10">
+                     <span className="block text-2xl font-black text-emerald-500">0%</span>
+                     <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Erros de Soma</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* PÁGINA 2: O PROBLEMA */}
+            <div className="min-h-[850px] relative p-24 flex flex-col justify-center bg-white text-slate-900 border-b-8 border-slate-900">
+               <div className="grid grid-cols-2 gap-24">
+                  <div className="space-y-10">
+                     <span className="text-red-600 font-black text-sm uppercase tracking-[0.4em]">Cenário Atual</span>
+                     <h2 className="text-7xl font-black uppercase tracking-tighter leading-none italic">
+                        Onde seu <br />dinheiro <span className="text-red-600 text-8xl">SOME?</span>
+                     </h2>
+                     <p className="text-xl text-slate-500 leading-relaxed font-medium">
+                        A operação manual ou sistemas antigos geram "micro-furos" diários que destroem sua margem de lucro silenciosamente.
                      </p>
                   </div>
+                  <div className="grid gap-6">
+                     {[
+                        { title: "Esquecimento de Adicionais", desc: "Garçom esquece de cobrar o limão, o gelo ou a cobertura extra.", icon: "💸" },
+                        { title: "Contas de Papel", desc: "Somas erradas na calculadora em horários de pico.", icon: "🧮" },
+                        { title: "Fiado Sem Controle", desc: "Anotações em cadernos que se perdem ou são ilegíveis.", icon: "📓" }
+                     ].map((item, i) => (
+                        <div key={i} className="bg-slate-50 p-8 rounded-[40px] border border-slate-200 flex gap-6 items-start hover:shadow-xl transition-shadow">
+                           <span className="text-4xl">{item.icon}</span>
+                           <div>
+                              <h4 className="text-xl font-black uppercase tracking-tight mb-2">{item.title}</h4>
+                              <p className="text-sm text-slate-500">{item.desc}</p>
+                           </div>
+                        </div>
+                     ))}
+                  </div>
                </div>
-            </section>
+            </div>
 
-            <footer className="pt-32 border-t border-white/10 flex flex-col items-center gap-12 text-center">
-               <h3 className="text-9xl font-black uppercase tracking-tighter italic opacity-10">BOTEQUISTA PRO</h3>
-               <div className="space-y-4">
-                  <p className="text-xl font-bold italic text-slate-500">Gestão Superior para Bares que Lucram.</p>
-                  <p className="text-[10px] font-black tracking-[0.5em] text-blue-600 uppercase">PROFESSIONAL GASTRONOMY SYSTEM • v3.9.12</p>
+            {/* PÁGINA 3: A SOLUÇÃO */}
+            <div className="min-h-[850px] relative p-24 bg-slate-950 flex flex-col justify-center border-b-8 border-emerald-500">
+               <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
+               <div className="relative z-10 text-center space-y-16">
+                  <span className="bg-emerald-600 text-white px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.3em]">Tecnologia de Ponta</span>
+                  <h2 className="text-8xl font-black uppercase tracking-tighter text-white italic">
+                     Botequista <span className="text-emerald-500">Pro</span>
+                  </h2>
+                  <div className="grid grid-cols-3 gap-8 text-left">
+                     <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px] space-y-6">
+                        <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+                        <h3 className="text-2xl font-black uppercase text-white">Velocidade Extrema</h3>
+                        <p className="text-slate-400 text-sm">Interface desenhada para registrar vendas em menos de 3 toques. Fila zero no caixa.</p>
+                     </div>
+                     <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px] space-y-6 transform -translate-y-8 border-t-4 border-t-emerald-500">
+                        <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" /></svg></div>
+                        <h3 className="text-2xl font-black uppercase text-white">Nuvem Híbrida</h3>
+                        <p className="text-slate-400 text-sm">Dados sincronizados em tempo real, com modo offline automático para segurança total.</p>
+                     </div>
+                     <div className="bg-slate-900 border border-slate-800 p-10 rounded-[40px] space-y-6">
+                        <div className="w-16 h-16 bg-violet-500/10 rounded-2xl flex items-center justify-center text-violet-500"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                        <h3 className="text-2xl font-black uppercase text-white">Controle Total</h3>
+                        <p className="text-slate-400 text-sm">Relatórios financeiros detalhados e gestão de estoque na palma da sua mão.</p>
+                     </div>
+                  </div>
                </div>
-            </footer>
+            </div>
           </div>
         </div>
       )}
 
       {showTechPreview && (
-        <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-10 animate-in slide-in-from-bottom-6 duration-700 overflow-x-auto">
-          <div className="mb-6 flex justify-end">
-              <button onClick={() => downloadAsPdf(techRef, 'blueprint-tecnico-pro')} className="bg-violet-600 text-white px-10 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all flex items-center gap-3">
-                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                 Exportar Blueprint (PDF)
-              </button>
-          </div>
-          <div ref={techRef} className="bg-slate-950 text-white p-24 rounded-[40px] space-y-48 font-mono min-w-[1200px] w-full mx-auto relative overflow-hidden shadow-2xl border border-white/5">
-            <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#4f46e5 1px, transparent 1px), linear-gradient(90deg, #4f46e5 1px, transparent 1px)', backgroundSize: '80px 80px' }}></div>
-            
-            <section className="space-y-32 relative z-10">
-              <header className="flex justify-between items-end border-b border-white/10 pb-16">
-                 <div className="space-y-4">
-                    <h2 className="text-6xl font-black uppercase tracking-tighter text-violet-500 italic">Stateless Core</h2>
-                    <p className="text-slate-500 font-bold uppercase tracking-[0.5em] text-xs">High-Availability Gastronomy Engine</p>
-                 </div>
-                 <div className="text-right text-[10px] text-slate-600 space-y-1 font-mono uppercase">
-                    <span>Stack: React 19 + Tailwind 3.4</span><br />
-                    <span>Encryption: AES-256-CBC-PKCS7</span><br />
-                    <span>Sync Mode: Polling + Optimistic State</span>
-                 </div>
-              </header>
-
-              <div className="grid grid-cols-3 gap-12">
-                 {[
-                   { h: "Multi-Terminal Sync", d: "Motor de reconciliação assíncrona que garante integridade de dados." },
-                   { h: "PWA Native Performance", d: "Arquitetura Zero-Bundle que entrega performance de aplicativo nativo." },
-                   { h: "Precision Scaling", d: "Engine de ponto flutuante otimizada para transações comerciais." }
-                 ].map((it, i) => (
-                   <div key={i} className="p-10 bg-white/5 border border-white/5 rounded-[40px] space-y-6 hover:bg-white/[0.08] transition-colors">
-                      <h4 className="text-violet-400 font-black text-sm uppercase tracking-widest">{it.h}</h4>
-                      <p className="text-[12px] text-slate-500 leading-relaxed font-sans italic">"{it.d}"</p>
+        <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-10 animate-in slide-in-from-bottom-6 duration-700 flex justify-center">
+            <div ref={techRef} className="bg-white p-20 rounded-[40px] shadow-2xl border border-slate-200 min-w-[1000px] text-center space-y-8">
+               <h2 className="text-4xl font-black text-slate-900 uppercase tracking-tighter">Blueprint Técnico</h2>
+               <p className="text-slate-500">Arquitetura de dados segura com criptografia ponta a ponta.</p>
+               <div className="grid grid-cols-3 gap-8">
+                   <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200">
+                      <h4 className="font-black uppercase mb-2">Frontend</h4>
+                      <p className="text-xs text-slate-500">React + TypeScript + Tailwind</p>
                    </div>
-                 ))}
-              </div>
-            </section>
-
-            <footer className="pt-24 border-t border-white/10 flex justify-between items-center relative z-10">
-               <div className="flex items-center gap-4">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-[0_0_15px_rgba(16,185,129,0.5)]"></div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Core Integrity Level: 100% Verified</span>
+                   <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200">
+                      <h4 className="font-black uppercase mb-2">Backend</h4>
+                      <p className="text-xs text-slate-500">Serverless (Firebase)</p>
+                   </div>
+                   <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200">
+                      <h4 className="font-black uppercase mb-2">Segurança</h4>
+                      <p className="text-xs text-slate-500">AES-256 + SHA-256</p>
+                   </div>
                </div>
-               <span className="text-[9px] font-black uppercase tracking-[0.5em] text-slate-800">© 2025 BOTEQUISTA SYSTEMS ARCHITECTURE</span>
-            </footer>
-          </div>
+            </div>
+             <div className="ml-4 flex flex-col justify-start">
+              <button onClick={() => downloadAsPdf(techRef, 'blueprint-tecnico')} className="bg-violet-600 text-white px-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all">
+                 Baixar PDF
+              </button>
+            </div>
         </div>
       )}
     </div>
