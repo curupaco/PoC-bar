@@ -18,7 +18,7 @@ interface SettingsProps {
   users: User[];
   shifts: Shift[];
   onImport: (data: any) => void;
-  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error';
+  dbStatus: 'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline';
   currentUser: User;
   penduraThreshold: number;
   setPenduraThreshold: (v: number) => void;
