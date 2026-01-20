@@ -5,15 +5,12 @@ import { encryptData, decryptData } from "./cryptoService";
 
 export interface AppFullData {
   products: Product[];
-  // Added modifierGroups to support synchronization of modifier/service options
   modifierGroups?: ModifierGroup[];
-  // Added categoryModifiers to support synchronization of category to modifier group mappings
   categoryModifiers?: Record<string, string>;
   sales: Sale[];
   openTabs: Tab[];
   users?: User[];
   shifts?: Shift[];
-  // Minimum required version of the app to process this data. Added to support remote version checks in App.tsx.
   minRequiredVersion?: string;
   config: {
     fbUrl?: string;
@@ -25,11 +22,20 @@ export interface AppFullData {
   updatedAt: string;
 }
 
-const getFirebaseUrl = (url: string, token?: string) => {
+const getFirebaseUrl = (url: string, token?: string, path?: string) => {
   if (!url) return "";
-  const cleanUrl = url.trim();
-  const baseUrl = cleanUrl.endsWith('.json') ? cleanUrl : `${cleanUrl.replace(/\/$/, '')}/data.json`;
-  return token ? `${baseUrl}?auth=${token}` : baseUrl;
+  let cleanUrl = url.trim().replace(/\/$/, ''); // Remove trailing slash
+  
+  // Se a URL base terminar em .json, removemos para poder anexar o path
+  if (cleanUrl.endsWith('.json')) {
+    cleanUrl = cleanUrl.replace('.json', '');
+  }
+
+  // Se houver path, anexa. Se não, usa raiz.
+  const finalPath = path ? `/${path}.json` : '/data.json';
+  const fullUrl = `${cleanUrl}${finalPath}`;
+
+  return token ? `${fullUrl}?auth=${token}` : fullUrl;
 };
 
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string> => {
@@ -62,16 +68,22 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
   }
 };
 
-export const saveToFirebase = async (url: string, data: any, encryptionKey?: string, token?: string) => {
-  const targetUrl = getFirebaseUrl(url, token);
+export const saveToFirebase = async (url: string, data: any, encryptionKey?: string, token?: string, path?: string) => {
+  const targetUrl = getFirebaseUrl(url, token, path);
   if (!targetUrl) return;
 
-  const fullData = { ...data, updatedAt: new Date().toISOString() };
-  const payload = encryptionKey ? { encrypted: encryptData(fullData, encryptionKey) } : fullData;
+  // Se path for fornecido, não usamos 'updatedAt' na raiz do objeto parcial, 
+  // pois o Firebase mescla chaves. Se for raiz, mantemos.
+  const payloadData = path ? data : { ...data, updatedAt: new Date().toISOString() };
+  
+  // Criptografia só é aplicada se houver chave E se não estivermos salvando um nó específico (para manter granularidade)
+  // Se quisermos granularidade com criptografia, teríamos que criptografar o valor do nó, não o objeto todo.
+  // Para corrigir o Item 1 (Race Condition), optamos por salvar nós granulares em Plain Text (protegidos por Auth).
+  const payload = (encryptionKey && !path) ? { encrypted: encryptData(payloadData, encryptionKey) } : payloadData;
 
   try {
     const response = await fetch(targetUrl, {
-      method: 'PUT',
+      method: 'PUT', // PUT em um nó específico substitui apenas aquele nó, agindo como um UPDATE granular
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -101,10 +113,14 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
     }
 
     const rawData = await response.json();
+    
+    // Suporte Legado: Se estiver criptografado na raiz
     if (rawData && rawData.encrypted) {
       if (!encryptionKey) return null;
       return decryptData(rawData.encrypted, encryptionKey);
     }
+    
+    // Suporte Novo: Dados granulares (Plain JSON)
     return rawData;
   } catch (err: any) {
     console.error("Load Error:", err.message);

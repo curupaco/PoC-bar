@@ -98,6 +98,7 @@ const App: React.FC = () => {
     setDbStatus('loading');
     try {
       const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
+      // Tenta carregar. Se estiver criptografado, o service descriptografa.
       const cloudData = await loadFromFirebase(SYSTEM_DB_URL, MASTER_KEY, token);
       
       if (cloudData) {
@@ -121,31 +122,56 @@ const App: React.FC = () => {
 
   useEffect(() => { fetchInitialData(); }, [fetchInitialData]);
 
-  const persistToCloud = useCallback(async () => {
+  // Função auxiliar para salvar nós específicos (Correção de Item 1: Concorrência)
+  // Removemos MASTER_KEY para salvar em Plain JSON, permitindo que 'sales' não sobrescreva 'products'
+  const syncNode = useCallback(async (nodeName: string, data: any) => {
     if (!isInitialLoadDone.current) return;
     try {
+      setDbStatus('pending');
       const token = await getFirebaseToken(SYSTEM_AUTH_EMAIL, SYSTEM_AUTH_PASS, SYSTEM_API_KEY);
-      await saveToFirebase(SYSTEM_DB_URL, { 
-        products, 
-        modifierGroups,
-        categoryModifiers,
-        sales, 
-        openTabs, 
-        users, 
-        shifts, 
-        config: { penduraThreshold }, 
-        minRequiredVersion: APP_VERSION 
-      }, MASTER_KEY, token);
+      await saveToFirebase(SYSTEM_DB_URL, data, undefined, token, nodeName); // Passando 'nodeName' como path e 'undefined' como key (sem cripto granular)
       setDbStatus('success');
-    } catch (e) { setDbStatus('error'); }
-  }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, penduraThreshold]);
+    } catch (e) {
+      console.error(`Erro ao sincronizar ${nodeName}:`, e);
+      setDbStatus('error');
+    }
+  }, []);
 
+  // Split Effect 1: Catálogo (Produtos, Modificadores, Vínculos)
   useEffect(() => {
-    if (!isInitialLoadDone.current) return;
-    setDbStatus('pending');
-    const debounce = setTimeout(persistToCloud, 800);
-    return () => clearTimeout(debounce);
-  }, [persistToCloud]);
+    const timer = setTimeout(() => {
+      syncNode('products', products);
+      syncNode('modifierGroups', modifierGroups);
+      syncNode('categoryModifiers', categoryModifiers);
+    }, 2000); // Debounce maior para catálogo
+    return () => clearTimeout(timer);
+  }, [products, modifierGroups, categoryModifiers, syncNode]);
+
+  // Split Effect 2: Operações Críticas (Vendas)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncNode('sales', sales);
+    }, 1000); 
+    return () => clearTimeout(timer);
+  }, [sales, syncNode]);
+
+  // Split Effect 3: Operações Voláteis (Mesas e Turnos)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncNode('openTabs', openTabs);
+      syncNode('shifts', shifts);
+    }, 800); // Debounce menor para UX rápida
+    return () => clearTimeout(timer);
+  }, [openTabs, shifts, syncNode]);
+
+  // Split Effect 4: Admin (Usuários, Config)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncNode('users', users);
+      syncNode('config', { penduraThreshold });
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [users, penduraThreshold, syncNode]);
 
   const handleLogin = (u: string, p: string) => {
     const found = users.find(x => x.username === u && x.password === p);
