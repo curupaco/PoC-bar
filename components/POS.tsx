@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, sanitizeCurrencyInput, parseCurrencyValue, ModifierGroup, ModifierOption } from '../types';
 
 interface POSProps {
   products: Product[];
+  modifierGroups: ModifierGroup[];
+  categoryModifiers: Record<string, string>;
   openTabs: Tab[];
   onUpdateTabs: (updater: (prev: Tab[]) => Tab[]) => void;
   onCompleteSale: (sale: Sale) => void;
@@ -22,6 +24,8 @@ interface PaymentEntry {
 
 const POS: React.FC<POSProps> = ({ 
   products = [], 
+  modifierGroups = [],
+  categoryModifiers = {},
   openTabs = [], 
   onUpdateTabs, 
   onCompleteSale,
@@ -46,6 +50,9 @@ const POS: React.FC<POSProps> = ({
   const [editingWeightIndex, setEditingWeightIndex] = useState<number | null>(null);
   const [inputGrams, setInputGrams] = useState('');
   
+  // State para Modificadores (Upsell)
+  const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
+  
   const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string} | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -65,6 +72,7 @@ const POS: React.FC<POSProps> = ({
     setReceivedValueInput(null);
     setIsClosingTab(false);
     setValidationError(null);
+    setModifierModalData(null);
   }, [activeTabId]);
 
   useEffect(() => {
@@ -97,23 +105,79 @@ const POS: React.FC<POSProps> = ({
     setDeleteConfirmId({ id: tabId, name });
   };
 
-  const addToTab = (product: Product, quantity: number = 1) => {
+  const addToTab = (product: Product, quantity: number = 1, weightConfirmed: boolean = false) => {
     if (!activeTabId || activeTabId === 'shortcut-payment') return;
+
+    // 1. Se estiver editando peso (item já existe), pula verificação de modificador
+    if (editingWeightIndex !== null) {
+       executeAddItem(product, quantity);
+       return;
+    }
+
+    // 2. Verifica se é produto por PESO e se o peso ainda não foi confirmado (Regressão Corrigida)
+    if (product.sellType === 'weight' && !weightConfirmed) {
+        setWeightModalProduct(product);
+        return;
+    }
+
+    // 3. Verifica Upsell (Modificadores)
+    let groupId = product.modifierGroupId;
+    
+    // Se não tiver grupo direto, verifica se a categoria tem vínculo
+    if (!groupId && product.category) {
+        const normalizedCat = product.category.toUpperCase().trim();
+        groupId = categoryModifiers[normalizedCat];
+    }
+
+    // Se encontrou grupo válido e ativo
+    if (groupId) {
+        const group = modifierGroups.find(g => g.id === groupId);
+        if (group && group.options.length > 0) {
+            setModifierModalData({ product, group, quantity });
+            return; // Interrompe para aguardar seleção do usuário
+        }
+    }
+
+    // Sem modificador, segue fluxo normal
+    executeAddItem(product, quantity);
+  };
+
+  const executeAddItem = (product: Product, quantity: number, modifier?: ModifierOption) => {
     onUpdateTabs(prev => (prev || []).map(tab => {
       if (normalizeId(tab.id) === normalizeId(activeTabId)) {
         const items = [...(tab.items ?? [])];
+        
+        // CENÁRIO A: Atualização de Peso (Edição de Item Existente)
         if (editingWeightIndex !== null) {
+          const currentItem = items[editingWeightIndex];
+          // Mantém o modificador existente e recalcula preço total baseado na nova quantidade/peso
           items[editingWeightIndex] = { 
-            ...items[editingWeightIndex], 
+            ...currentItem, 
             quantity: quantity, 
-            totalPrice: Number((quantity * items[editingWeightIndex].unitPrice).toFixed(2)) 
+            totalPrice: Number((quantity * currentItem.unitPrice).toFixed(2)) 
           };
           showFeedback(`${product.name} ATUALIZADO`);
-        } else {
-          const existingIndex = items.findIndex(i => i.productId === product.id);
+        } 
+        
+        // CENÁRIO B: Adição Normal
+        else {
+          // Preço Unitário Efetivo = Preço Base + Preço Modificador
+          const modPrice = modifier ? modifier.price : 0;
+          const effectiveUnitPrice = product.price + modPrice;
+
+          // Procura item idêntico (Produto ID + Nome do Modificador)
+          const existingIndex = items.findIndex(i => 
+             i.productId === product.id && 
+             (i.modifier?.name === modifier?.name)
+          );
+
           if (existingIndex > -1 && product.sellType === 'unit') {
             const newQty = items[existingIndex].quantity + quantity;
-            items[existingIndex] = { ...items[existingIndex], quantity: newQty, totalPrice: Number((newQty * product.price).toFixed(2)) };
+            items[existingIndex] = { 
+               ...items[existingIndex], 
+               quantity: newQty, 
+               totalPrice: Number((newQty * effectiveUnitPrice).toFixed(2)) 
+            };
             showFeedback(`+1 ${product.name}`);
           } else {
             items.push({ 
@@ -122,8 +186,9 @@ const POS: React.FC<POSProps> = ({
               productName: product.name, 
               category: product.category || 'GERAL',
               quantity: quantity, 
-              unitPrice: product.price, 
-              totalPrice: Number((quantity * product.price).toFixed(2)) 
+              unitPrice: effectiveUnitPrice, 
+              totalPrice: Number((quantity * effectiveUnitPrice).toFixed(2)),
+              modifier: modifier // Salva o modificador no item
             });
             showFeedback(`${product.name} ADICIONADO`);
           }
@@ -132,9 +197,12 @@ const POS: React.FC<POSProps> = ({
       }
       return tab;
     }));
+
+    // Resetar todos os modais e estados temporários
     setEditingWeightIndex(null);
     setWeightModalProduct(null);
     setInputGrams('');
+    setModifierModalData(null);
   };
 
   const updateItemQty = (index: number, delta: number) => {
@@ -349,7 +417,10 @@ const POS: React.FC<POSProps> = ({
                     {tabItems.map((item, idx) => (
                       <div key={`${item.productId}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-4 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3">
                         <div className="flex justify-between items-start">
-                          <p className="text-[11px] font-black uppercase leading-tight flex-1 mr-2">{item.productName}</p>
+                          <div className="flex flex-col flex-1 mr-2">
+                             <p className="text-[11px] font-black uppercase leading-tight">{item.productName}</p>
+                             {item.modifier && <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mt-1">+ {item.modifier.name}</span>}
+                          </div>
                           <p className="text-xs font-black text-red-600">{formatCurrency(item.totalPrice)}</p>
                         </div>
                         <div className="flex items-center justify-between bg-white dark:bg-slate-950 p-1 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
@@ -414,6 +485,7 @@ const POS: React.FC<POSProps> = ({
         </div>
       )}
 
+      {/* MODAL DE PESO (GRAMATURA) */}
       {(weightModalProduct || editingWeightIndex !== null) && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl text-center border border-slate-200 dark:border-slate-800">
@@ -424,11 +496,59 @@ const POS: React.FC<POSProps> = ({
               <button onClick={() => { 
                 const grams = parseFloat(inputGrams);
                 if (!inputGrams || isNaN(grams) || grams <= 0) { showFeedback("PESO INVÁLIDO!"); return; }
-                addToTab(weightModalProduct!, grams / 1000); 
+                addToTab(weightModalProduct!, grams / 1000, true); 
               }} className="bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95">Lançar</button>
               <button onClick={() => { setWeightModalProduct(null); setEditingWeightIndex(null); setInputGrams(''); }} className="bg-slate-100 dark:bg-slate-800 text-slate-500 py-5 rounded-2xl font-black uppercase text-xs tracking-widest">Cancelar</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL DE MODIFICADORES (UPSELL) */}
+      {modifierModalData && (
+        <div className="fixed inset-0 z-[550] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
+           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-8 shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+              <div className="text-center mb-6">
+                 <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
+                    {modifierModalData.group.name}
+                 </h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    Complemento para {modifierModalData.product.name}
+                 </p>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-3 p-2 no-scrollbar mb-6">
+                 {modifierModalData.group.options.map((opt, idx) => (
+                    <button 
+                       key={idx}
+                       onClick={() => executeAddItem(modifierModalData.product, modifierModalData.quantity, opt)}
+                       className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-500 border border-transparent transition-all group"
+                    >
+                       <span className="font-black uppercase text-sm text-slate-700 dark:text-slate-300 group-hover:text-red-600">
+                          {opt.name}
+                       </span>
+                       <span className="font-bold text-xs text-slate-500 group-hover:text-red-500">
+                          {opt.price > 0 ? `+ ${formatCurrency(opt.price)}` : 'GRÁTIS'}
+                       </span>
+                    </button>
+                 ))}
+              </div>
+
+              <div className="flex flex-col gap-3">
+                 <button 
+                    onClick={() => executeAddItem(modifierModalData.product, modifierModalData.quantity, undefined)}
+                    className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+                 >
+                    Pular / Sem Adicional
+                 </button>
+                 <button 
+                    onClick={() => setModifierModalData(null)}
+                    className="w-full py-3 text-[10px] font-bold uppercase text-slate-400 hover:text-red-500 transition-colors"
+                 >
+                    Cancelar Operação
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </div>
