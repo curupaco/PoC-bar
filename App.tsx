@@ -20,7 +20,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.15"; 
+const APP_VERSION = "3.9.25"; 
 const MASTER_KEY = "Tc@00216587";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
@@ -41,9 +41,7 @@ const viewTitles: Record<View, string> = {
 };
 
 const App: React.FC = () => {
-  // CRÍTICO: Removida a persistência automática para que F5 sempre exija Login
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -162,7 +160,6 @@ const App: React.FC = () => {
     setCurrentUser(null);
   };
 
-  // TELA DE CARREGAMENTO ROBUSTA PARA EVITAR "PISCADAS"
   if (!isInitialLoadDone.current) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-8 animate-pulse">
@@ -183,7 +180,7 @@ const App: React.FC = () => {
 
   const hasPermission = (p: UserPermission) => currentUser.username === 'admin' || currentUser.permissions.includes(p);
 
-  const getStatusConfig = () => {
+  const status = (() => {
     switch (dbStatus) {
       case 'success': return { label: 'Sincronizado', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/20 dark:border-emerald-500/30', animate: '' };
       case 'pending':
@@ -191,9 +188,7 @@ const App: React.FC = () => {
       case 'error': return { label: 'Erro Sinc', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20 dark:border-red-500/30', animate: '' };
       default: return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', animate: '' };
     }
-  };
-
-  const status = getStatusConfig();
+  })();
 
   return (
     <div className={`flex min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300`}>
