@@ -1,5 +1,5 @@
 
-# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.15)
+# 🍺 Botequista - Manifesto de Gestão e Operação de Alta Performance (v3.9.16)
 
 O Botequista não é apenas um software de PDV; é uma **Engenharia de Blindagem Financeira** e **Otimização de Ticket Médio** desenhada especificamente para o ecossistema dinâmico de bares e gastronomia de alto giro.
 
@@ -7,45 +7,42 @@ O Botequista não é apenas um software de PDV; é uma **Engenharia de Blindagem
 
 ## 🚀 1. Inteligência de Vendas (O Fator Upsell)
 
-O sistema foi projetado com base em gatilhos comportamentais para garantir que sua equipe nunca perca uma oportunidade de venda adicional.
-
 ### 1.1 Menus de Modificadores Automáticos
-- **Engenharia**: Ao vincular um "Menu de Opções" a uma categoria (ex: Porções), o sistema abre obrigatoriamente uma janela de adicionais (ex: Cheddar, Bacon, Molho Especial) no momento do lançamento.
-- **Impacto**: Aumento estatístico de até **18% no Ticket Médio** por comanda.
+- **Engenharia**: Ao vincular um "Menu de Opções" a uma categoria (ex: Porções), o sistema abre obrigatoriamente uma janela de adicionais no momento do lançamento.
+- **Impacto**: Aumento estatístico de até **18% no Ticket Médio**.
+
+### 1.2 Navegação de Alta Densidade (Novo)
+- **Busca em Tempo Real**: O cardápio conta com um motor de busca `useMemo` que filtra instantaneamente por nome do produto ou categoria, reduzindo o tempo de localização em cardápios extensos.
+- **Categorias Colapsáveis**: Implementação de estado `Set<string>` para controle de visibilidade. Clique no título da categoria para expandir/recolher, otimizando a área útil da tela em dispositivos móveis.
 
 ---
 
 ## ⚖️ 2. Operação de Precisão (Gramatura Digital)
 
-Diferente de sistemas genéricos, o Botequista possui um motor matemático dedicado para itens vendidos por peso.
-
 ### 2.1 Engine de Conversão Instantânea
 - **Precisão**: Conversão de gramas para valor monetário em tempo real.
-- **Interface Tátil**: Teclado numérico de alta visibilidade projetado para entrada rápida de gramagem sob o estresse do pico de atendimento.
+- **Interface Tátil**: Teclado numérico de alta visibilidade (UX Fitts' Law).
 
 ---
 
-## 🛡️ 3. Blindagem Financeira & Segurança (Aprovado em Operação)
+## 🛡️ 3. Blindagem Financeira & UX UI (Aprovado em Operação)
 
-O sistema agora prioriza a segurança dos dados e o fluxo de recebimento profissional.
+### 3.1 Recebimento Múltiplo & Troco
+- **Flexibilidade**: Fechamento de mesa com múltiplos métodos de pagamento.
+- **Troco Inteligente**: Exibe o troco em destaque ao selecionar valores rápidos.
 
-### 3.1 Recebimento Múltiplo
-- **Flexibilidade**: Permite o fechamento de uma mesa utilizando diversos métodos de pagamento (ex: R$ 50,00 em Dinheiro + R$ 30,00 no Cartão).
-- **Troco Inteligente**: Exibe o troco em destaque ao selecionar valores rápidos em dinheiro, reduzindo erros de caixa.
+### 3.2 Blindagem de UI - Rodapé PDV (Novo)
+- **CSS Layout Guard**: O rodapé de pagamento e o botão "CONCLUIR" agora utilizam `shrink-0` e posicionamento `sticky` garantido. Isso impede que o botão de finalização de venda suma abaixo da dobra da tela ou atrás do teclado em dispositivos Android/iOS.
 
-### 3.2 Segurança de Sessão (Zero Persistence)
-- **F5 Protocol**: Por padrão operacional, atualizar a página (F5) limpa a sessão atual. Isso garante que aparelhos deixados no balcão exijam login novamente para segurança contra faturamento não autorizado.
-
-### 3.3 Gestão de Fiados (Penduras)
-- **Identificação Obrigatória**: O sistema bloqueia lançamentos em "Pendura" sem a identificação do cliente.
-- **Saldo Real**: O histórico de débitos é consolidado, permitindo quitações parciais que entram automaticamente no fluxo de caixa do turno atual.
+### 3.3 Segurança de Sessão (Zero Persistence)
+- **F5 Protocol**: Atualizar a página (F5) limpa a sessão atual para segurança operacional.
 
 ---
 
 ## 📡 4. Sincronismo & Resiliência
 
-- **Multi-Device**: Graças ao motor de sincronização via Firebase, uma mesa aberta no celular do garçom é refletida no caixa instantaneamente.
-- **Criptografia**: Todos os dados são protegidos via **AES-256** antes da nuvem, garantindo privacidade comercial total.
+- **Multi-Device**: Sincronização via Firebase Realtime Database.
+- **Criptografia**: Proteção AES-256-CBC-PKCS7 antes da persistência em nuvem.
 
 ---
 **Botequista Pro - Professional Gastronomy Ecosystem**
