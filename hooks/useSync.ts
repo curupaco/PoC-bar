@@ -48,6 +48,9 @@ export const useSync = ({
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
   
+  // Timestamp da última alteração LOCAL.
+  const lastLocalUpdate = useRef<number>(Date.now());
+  
   // Refs para acesso dentro do setInterval sem stale closure
   const latestData = useRef({
     products,
@@ -64,6 +67,8 @@ export const useSync = ({
     latestData.current = {
       products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts
     };
+    // Sempre que o estado muda localmente, marcamos o timestamp
+    lastLocalUpdate.current = Date.now();
   }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts]);
   
   // Controle de Concorrência e Fila
@@ -225,29 +230,60 @@ export const useSync = ({
     if (!url || authBlocked.current) return;
 
     const heartbeat = setInterval(async () => {
-      // Se estamos enviando dados agora (User Ativo), não baixamos para evitar conflito de edição
+      // 1. Checagem Pré-Requisição (Grace Period)
       const isPushing = Object.values(activeSyncs.current).some(v => v);
       if (isPushing || !isInitialLoadDone.current) return;
+
+      if (Date.now() - lastLocalUpdate.current < 5000) { // Reduzido para 5s para ser mais ágil, mas mantendo a segurança
+        return;
+      }
 
       try {
         const token = await getValidToken();
 
-        // Baixamos apenas os dados voláteis (Mesas, Vendas, Turnos) em paralelo
-        // Não baixamos produtos/users o tempo todo para economizar banda
         const [serverTabs, serverSales, serverShifts] = await Promise.all([
            loadFromFirebase(url, undefined, token, 'openTabs'),
            loadFromFirebase(url, undefined, token, 'sales'),
            loadFromFirebase(url, undefined, token, 'shifts')
         ]);
 
-        // "Server Authority": Se o servidor tem dados diferentes, atualizamos a tela
-        // Usamos isEqual (JSON stringify) para evitar re-renders desnecessários se o dado for idêntico
-        
-        if (serverTabs && !isEqual(serverTabs, latestData.current.openTabs)) {
-           // console.log("Heartbeat: Atualizando Mesas...");
-           setOpenTabs(serverTabs);
-           // Atualiza backup local silenciosamente
-           localStorage.setItem('btq_tabs_backup', JSON.stringify(serverTabs));
+        // 2. CORREÇÃO CRÍTICA: Checagem Pós-Requisição
+        // Se durante a requisição o usuário criou algo (Race Condition), abortamos a atualização visual.
+        // Isso impede que a resposta (antiga) do servidor sobrescreva o estado local (novo).
+        if (Date.now() - lastLocalUpdate.current < 5000) {
+            // console.log("Heartbeat Aborted: Local changes happened during fetch.");
+            return;
+        }
+
+        // 3. SMART MERGE PARA MESAS (OPEN TABS)
+        // Se o servidor manda mesas, não sobrescrevemos cegamente.
+        // Mantemos as mesas locais que são NOVAS (criadas há menos de 2 min) e que ainda não subiram.
+        if (serverTabs) {
+            const currentTabs = latestData.current.openTabs;
+            const smartMergedTabs = [...serverTabs];
+            let hasMergeChanges = false;
+
+            // Recupera mesas locais que sumiriam (Resgate de Comanda)
+            currentTabs.forEach(localTab => {
+                const isOnServer = serverTabs.find((st: Tab) => st.id === localTab.id);
+                if (!isOnServer) {
+                    // Se a mesa foi aberta localmente há menos de 2 minutos, assumimos que é uma criação recente
+                    // que ainda não propagou. MANTEMOS ELA.
+                    if ((Date.now() - (localTab.openedAt || 0)) < 120000) {
+                        smartMergedTabs.push(localTab);
+                        hasMergeChanges = true;
+                    }
+                }
+            });
+
+            // Só atualiza se houver diferença real
+            // A comparação isEqual deve considerar a lista mesclada
+            if (!isEqual(smartMergedTabs, currentTabs) || hasMergeChanges) {
+               // Ordenação opcional para manter consistência visual (opcional)
+               // smartMergedTabs.sort((a, b) => b.openedAt - a.openedAt); 
+               setOpenTabs(smartMergedTabs);
+               localStorage.setItem('btq_tabs_backup', JSON.stringify(smartMergedTabs));
+            }
         }
 
         if (serverSales && !isEqual(serverSales, latestData.current.sales)) {
@@ -261,16 +297,17 @@ export const useSync = ({
         }
 
       } catch (e) {
-        // Silently fail on heartbeat errors (don't disturb UI)
-        // console.warn("Heartbeat skipped:", e);
+        // Silently fail
       }
-    }, 4000); // Executa a cada 4 segundos
+    }, 4000); 
 
     return () => clearInterval(heartbeat);
   }, [url, getValidToken, setOpenTabs, setSales, setShifts]);
 
   const syncNode = useCallback(async (nodeName: string, data: any) => {
     if (!isInitialLoadDone.current) return;
+    
+    lastLocalUpdate.current = Date.now();
     
     // Backup Local Automático
     if (nodeName === 'shifts') localStorage.setItem('btq_shifts_backup', JSON.stringify(data));
@@ -337,10 +374,11 @@ export const useSync = ({
   }, [sales, syncNode]);
 
   useEffect(() => {
+    // Mesas e Turnos são críticos - Reduzi o debounce para 300ms para salvar mais rápido
     const timer = setTimeout(() => {
       syncNode('openTabs', openTabs);
       syncNode('shifts', shifts);
-    }, 500); 
+    }, 300); 
     return () => clearTimeout(timer);
   }, [openTabs, shifts, syncNode]);
 
