@@ -1,25 +1,26 @@
 
 # 🍺 Botequista - Sistema de Gestão para Bares
 
-**Versão Atual:** 3.9.43 (Hotfix Persistence)
+**Versão Atual:** 3.9.44 (Live Sync Update)
 **Stack Tecnológica:** React 19, Tailwind CSS 3.4, Firebase (Realtime Database), Vercel.
 
 ---
 
-## 🚨 Atualização Crítica: Motor de Sincronização 2.0 (v3.9.43)
+## 🚨 Atualização Crítica: Motor de Sincronização 2.1 (v3.9.44)
 
-Para resolver problemas de fechamento involuntário de turnos e perda de comandas em redes instáveis, o núcleo de dados foi reescrito:
+Melhorias para ambientes multi-usuário e alta concorrência:
 
-### 1. Tolerância a Falhas (Fault Tolerance)
+### 1. Heartbeat Sync (Tempo Real)
+- O sistema agora implementa um mecanismo de **polling** (batimento) a cada 4 segundos.
+- Isso permite que até 5 garçons operem simultaneamente. Quando um garçom lança um item em uma mesa, os outros terminais recebem a atualização automaticamente, sem necessidade de recarregar a página.
+- O sistema prioriza a "Autoridade do Servidor" para Mesas (`openTabs`), Vendas (`sales`) e Turnos (`shifts`).
+
+### 2. Tolerância a Falhas (Fault Tolerance)
 - O carregamento inicial utiliza `Promise.allSettled`. Se a tabela de vendas falhar no download, o sistema **não bloqueia** o carregamento dos turnos e produtos.
 - **Local Fallback:** Se a conexão cair durante o carregamento inicial, o sistema busca automaticamente a última versão salva no `localStorage`.
 
-### 2. Fila de Pendências (Queueing)
-- Anteriormente, edições rápidas podiam ser descartadas se uma sincronização já estivesse em andamento (Race Condition).
-- Agora, existe uma fila de espera. Se você adicionar um item enquanto o sistema salva, a alteração entra numa fila e é enviada imediatamente após a conclusão do processo atual.
-
-### 3. Cache Busting Agressivo
-- Todas as requisições de leitura agora incluem timestamp (`?t=...`) e headers HTTP para impedir que o iOS/Safari sirva dados antigos (stale data) que causavam o "sumiço" de mesas recém-criadas.
+### 3. Fila de Pendências (Queueing)
+- Edições rápidas não são mais descartadas se uma sincronização já estiver em andamento. O sistema enfileira a alteração e a envia assim que o canal estiver livre.
 
 ---
 
@@ -34,33 +35,24 @@ O **Botequista** é uma aplicação web progressiva (PWA) focada na gestão ági
 O sistema utiliza Controle de Acesso Baseado em Funções (RBAC) granular, dividido em 4 esferas de competência:
 
 ### 1. Visibilidade de Módulos (Navegação)
-Define quais abas da Sidebar o usuário pode visualizar e acessar. 
 - **Exemplos:** `pos` (Vendas), `history` (Histórico), `reports` (Relatórios).
 
 ### 2. Controle de Fluxo (Gestão de Turno)
-Define quem tem autoridade para iniciar e encerrar a jornada financeira.
 - **Exemplos:** `open_shift`, `close_shift`, `clear_fiado`.
 
 ### 3. Autoridade de Inventário
-Define quem pode alterar a estrutura de vendas do estabelecimento.
 - **Exemplos:** `edit_product`, `delete_product`.
 
 ### 4. Segurança e Auditoria Crítica
-Privilégios de alto nível que permitem a alteração de dados históricos e exportação de informações sensíveis.
 - **Exemplos:** `delete_sale` (Anular Venda), `manage_backup` (GitHub Sync), `full_reset`.
 
 ---
 
-## ⚙️ Integridade de Dados e Cache
+## ⚙️ Integridade de Dados
 
 ### Backup Local Automático
-Cada vez que um dado é enviado para a nuvem, uma cópia idêntica é salva no navegador (`localStorage`).
-- `btq_shifts_backup`: Garante que o turno permaneça aberto mesmo offline.
-- `btq_tabs_backup`: Garante que as mesas não sumam se a rede falhar.
-
-### Service Worker Bypass
-O Service Worker foi configurado para **não interceptar** chamadas ao Firebase ou API Vercel, garantindo que dados transacionais sejam sempre "Network First".
+Cada vez que um dado é enviado para a nuvem, uma cópia idêntica é salva no navegador (`localStorage`), prevenindo perda de dados em caso de queda de internet durante o serviço.
 
 ---
 
-*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.43.*
+*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.44.*

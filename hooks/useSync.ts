@@ -31,6 +31,9 @@ interface SyncProps {
   }
 }
 
+// Utilitário para comparação profunda simplificada (evita loops infinitos de atualização)
+const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+
 export const useSync = ({
   products, setProducts,
   modifierGroups, setModifierGroups,
@@ -44,6 +47,24 @@ export const useSync = ({
   config
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
+  
+  // Refs para acesso dentro do setInterval sem stale closure
+  const latestData = useRef({
+    products,
+    modifierGroups,
+    categoryModifiers,
+    sales,
+    openTabs,
+    users,
+    shifts
+  });
+
+  // Mantém os refs atualizados sempre que o state muda
+  useEffect(() => {
+    latestData.current = {
+      products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts
+    };
+  }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts]);
   
   // Controle de Concorrência e Fila
   const activeSyncs = useRef<Record<string, boolean>>({});
@@ -91,8 +112,6 @@ export const useSync = ({
     try {
       const token = await getValidToken();
       
-      // 1. Carregamento em Paralelo Resiliente (allSettled)
-      // Se 'sales' falhar, 'shifts' ainda carrega.
       const results = await Promise.allSettled([
         loadFromFirebase(url, undefined, token, 'products'),
         loadFromFirebase(url, undefined, token, 'modifierGroups'),
@@ -116,9 +135,8 @@ export const useSync = ({
       const shiftsNode = getData(6);
       const configNode = getData(7);
 
-      // 2. Lógica de Fallback para Legado (Migração)
       let legacyData: any = null;
-      const needsLegacy = !productsNode && !salesNode && !shiftsNode; // Só busca legado se tudo estiver vazio
+      const needsLegacy = !productsNode && !salesNode && !shiftsNode;
 
       if (needsLegacy) {
          try {
@@ -128,19 +146,13 @@ export const useSync = ({
          }
       }
 
-      // 3. Helper de Merge: Cloud > Legacy > LocalStorage (Backup de Segurança)
       const merge = (cloudData: any, legacyKey: string, storageKey: string, fallback: any) => {
-         // Se veio do Cloud e tem dados, usa Cloud
          if (cloudData && (Array.isArray(cloudData) ? cloudData.length > 0 : Object.keys(cloudData).length > 0)) {
             return cloudData;
          }
-         
-         // Se não, tenta Legado
          if (legacyData && legacyData[legacyKey]) {
             return legacyData[legacyKey];
          }
-
-         // Se não, tenta LocalStorage (Última esperança contra "Turno Fechado Acidental")
          const local = localStorage.getItem(storageKey);
          if (local) {
             try {
@@ -151,7 +163,6 @@ export const useSync = ({
                }
             } catch(e) {}
          }
-
          return fallback;
       };
 
@@ -164,7 +175,6 @@ export const useSync = ({
       const finalUsers = merge(usersNode, 'users', 'btq_users_backup', []);
       const finalConfig = merge(configNode, 'config', 'btq_config_bk', {});
 
-      // 4. Aplica no Estado
       setProducts(finalProducts);
       setModifierGroups(finalModGroups);
       setCategoryModifiers(finalCatMods);
@@ -190,7 +200,6 @@ export const useSync = ({
 
     } catch (e) { 
       console.error("Critical Load Error - Entering Offline Mode:", e);
-      // Fallback Absoluto (Carrega tudo do LocalStorage se a conexão inicial falhar totalmente)
       const loadLocal = (key: string, setter: Function) => {
          const d = localStorage.getItem(key);
          if (d) setter(JSON.parse(d));
@@ -198,8 +207,8 @@ export const useSync = ({
 
       loadLocal('btq_products_bk', setProducts);
       loadLocal('btq_sales_bk', setSales);
-      loadLocal('btq_shifts_backup', setShifts); // Crucial para o turno não fechar
-      loadLocal('btq_tabs_backup', setOpenTabs); // Crucial para mesas não sumirem
+      loadLocal('btq_shifts_backup', setShifts);
+      loadLocal('btq_tabs_backup', setOpenTabs);
       loadLocal('btq_users_backup', setUsers);
       
       setDbStatus('offline');
@@ -211,11 +220,59 @@ export const useSync = ({
     }
   }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
 
+  // -- Heartbeat: Polling para Atualização em Tempo Real (Multi-Atendente) --
+  useEffect(() => {
+    if (!url || authBlocked.current) return;
+
+    const heartbeat = setInterval(async () => {
+      // Se estamos enviando dados agora (User Ativo), não baixamos para evitar conflito de edição
+      const isPushing = Object.values(activeSyncs.current).some(v => v);
+      if (isPushing || !isInitialLoadDone.current) return;
+
+      try {
+        const token = await getValidToken();
+
+        // Baixamos apenas os dados voláteis (Mesas, Vendas, Turnos) em paralelo
+        // Não baixamos produtos/users o tempo todo para economizar banda
+        const [serverTabs, serverSales, serverShifts] = await Promise.all([
+           loadFromFirebase(url, undefined, token, 'openTabs'),
+           loadFromFirebase(url, undefined, token, 'sales'),
+           loadFromFirebase(url, undefined, token, 'shifts')
+        ]);
+
+        // "Server Authority": Se o servidor tem dados diferentes, atualizamos a tela
+        // Usamos isEqual (JSON stringify) para evitar re-renders desnecessários se o dado for idêntico
+        
+        if (serverTabs && !isEqual(serverTabs, latestData.current.openTabs)) {
+           // console.log("Heartbeat: Atualizando Mesas...");
+           setOpenTabs(serverTabs);
+           // Atualiza backup local silenciosamente
+           localStorage.setItem('btq_tabs_backup', JSON.stringify(serverTabs));
+        }
+
+        if (serverSales && !isEqual(serverSales, latestData.current.sales)) {
+           setSales(serverSales);
+           localStorage.setItem('btq_sales_bk', JSON.stringify(serverSales));
+        }
+
+        if (serverShifts && !isEqual(serverShifts, latestData.current.shifts)) {
+           setShifts(serverShifts);
+           localStorage.setItem('btq_shifts_backup', JSON.stringify(serverShifts));
+        }
+
+      } catch (e) {
+        // Silently fail on heartbeat errors (don't disturb UI)
+        // console.warn("Heartbeat skipped:", e);
+      }
+    }, 4000); // Executa a cada 4 segundos
+
+    return () => clearInterval(heartbeat);
+  }, [url, getValidToken, setOpenTabs, setSales, setShifts]);
+
   const syncNode = useCallback(async (nodeName: string, data: any) => {
-    // Bloqueia sync antes do load inicial para não sobrescrever nuvem com array vazio
     if (!isInitialLoadDone.current) return;
     
-    // Backup Local Automático (Acontece sempre, independente da rede)
+    // Backup Local Automático
     if (nodeName === 'shifts') localStorage.setItem('btq_shifts_backup', JSON.stringify(data));
     if (nodeName === 'openTabs') localStorage.setItem('btq_tabs_backup', JSON.stringify(data));
     if (nodeName === 'sales') localStorage.setItem('btq_sales_bk', JSON.stringify(data));
@@ -227,16 +284,14 @@ export const useSync = ({
       return;
     }
 
-    // Lógica de Fila (Pending Syncs)
     if (activeSyncs.current[nodeName]) {
-       // Se já está salvando, enfileira o próximo estado
        pendingSyncs.current[nodeName] = data;
        setDbStatus('pending');
        return; 
     }
 
     activeSyncs.current[nodeName] = true;
-    delete pendingSyncs.current[nodeName]; // Remove da fila pois vamos processar agora
+    delete pendingSyncs.current[nodeName]; 
     setDbStatus('pending');
 
     try {
@@ -253,7 +308,6 @@ export const useSync = ({
     } finally {
       activeSyncs.current[nodeName] = false;
 
-      // Se entrou algo na fila enquanto salvávamos, dispara recursivamente
       if (pendingSyncs.current[nodeName] !== undefined) {
           const nextData = pendingSyncs.current[nodeName];
           setTimeout(() => syncNode(nodeName, nextData), 100);
@@ -278,12 +332,11 @@ export const useSync = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       syncNode('sales', sales);
-    }, 2000); // 2s delay para vendas (agrupar cliques rápidos)
+    }, 2000); 
     return () => clearTimeout(timer);
   }, [sales, syncNode]);
 
   useEffect(() => {
-    // Mesas e Turnos são críticos, sync mais rápido
     const timer = setTimeout(() => {
       syncNode('openTabs', openTabs);
       syncNode('shifts', shifts);
