@@ -40,6 +40,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   }, [toast]);
 
   // CORREÇÃO CRÍTICA (Mantida): Impede limpeza agressiva no modo atalho
+  // ATUALIZAÇÃO: Preenche automaticamente o saldo restante para agilizar o fluxo
   useEffect(() => {
     if (activeTabId === 'shortcut-payment') {
       if (shortcutCheckout) {
@@ -50,12 +51,13 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
     } else {
       // Limpa tudo se mudar de aba normal
       setCurrentPayments([]);
-      setPaymentAmountInput('');
+      // Define o valor a pagar como o total da comanda por padrão para acelerar o fechamento
+      setPaymentAmountInput(tabTotal.toFixed(2).replace('.', ','));
       setCashReceivedInput('');
       setCustomerNameInput('');
       setValidationError(null);
     }
-  }, [activeTabId, shortcutCheckout]);
+  }, [activeTabId, shortcutCheckout, tabTotal]);
 
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, safeFloat(tabTotal - paidSoFar));
