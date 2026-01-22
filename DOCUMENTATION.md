@@ -1,8 +1,25 @@
 
 # 🍺 Botequista - Sistema de Gestão para Bares
 
-**Versão Atual:** 3.9.43 (2026)
+**Versão Atual:** 3.9.43 (Hotfix Persistence)
 **Stack Tecnológica:** React 19, Tailwind CSS 3.4, Firebase (Realtime Database), Vercel.
+
+---
+
+## 🚨 Atualização Crítica: Motor de Sincronização 2.0 (v3.9.43)
+
+Para resolver problemas de fechamento involuntário de turnos e perda de comandas em redes instáveis, o núcleo de dados foi reescrito:
+
+### 1. Tolerância a Falhas (Fault Tolerance)
+- O carregamento inicial utiliza `Promise.allSettled`. Se a tabela de vendas falhar no download, o sistema **não bloqueia** o carregamento dos turnos e produtos.
+- **Local Fallback:** Se a conexão cair durante o carregamento inicial, o sistema busca automaticamente a última versão salva no `localStorage`.
+
+### 2. Fila de Pendências (Queueing)
+- Anteriormente, edições rápidas podiam ser descartadas se uma sincronização já estivesse em andamento (Race Condition).
+- Agora, existe uma fila de espera. Se você adicionar um item enquanto o sistema salva, a alteração entra numa fila e é enviada imediatamente após a conclusão do processo atual.
+
+### 3. Cache Busting Agressivo
+- Todas as requisições de leitura agora incluem timestamp (`?t=...`) e headers HTTP para impedir que o iOS/Safari sirva dados antigos (stale data) que causavam o "sumiço" de mesas recém-criadas.
 
 ---
 
@@ -34,54 +51,15 @@ Privilégios de alto nível que permitem a alteração de dados históricos e ex
 
 ---
 
-## 🏗️ Módulos Operacionais
+## ⚙️ Integridade de Dados e Cache
 
-### 1. Ponto de Venda (PDV)
-- **Mesas e Comandas:** Abertura e fechamento de múltiplas mesas simultâneas.
-- **Navegação Não-Bloqueante (v3.9.43):** Botão "Voltar" na comanda ativa permite navegar pelo sistema sem fechar a mesa.
-- **Pagamento Inteligente (v3.9.43):** O campo de valor a cobrar é preenchido automaticamente com o saldo restante.
-- **Lançamento Rápido:** Interface otimizada para toque, com busca instantânea e favoritos.
-- **Produtos Pesáveis:** Suporte para venda por quilo (KG) com modal de entrada de peso em gramas.
-- **Modificadores:** Sistema de adicionais e observações vinculados a produtos ou categorias.
+### Backup Local Automático
+Cada vez que um dado é enviado para a nuvem, uma cópia idêntica é salva no navegador (`localStorage`).
+- `btq_shifts_backup`: Garante que o turno permaneça aberto mesmo offline.
+- `btq_tabs_backup`: Garante que as mesas não sumam se a rede falhar.
 
-### 2. Gestão de Cardápio
-- **Cadastro Simplificado:** Focado apenas em **Nome**, **Preço de Venda** e **Categoria**.
-- **Categorização:** Organização automática por grupos (Cervejas, Destilados, Porções).
-- **Vínculos Inteligentes:** Associação automática de menus de opções (Modificadores) a categorias.
-
-### 3. Controle Financeiro e Turnos
-- **Turnos de Trabalho:** Abertura e fechamento de caixa com controle de operador.
-- **Fundos de Caixa:** Gestão de Fundo Principal, Gaveta (Troco) e Reserva.
-- **Auditoria de Fechamento:** Comparativo entre o valor esperado pelo sistema e a contagem física (cega) do operador.
-
-### 4. Central de Feedback (GitHub Integration)
-- **Report de Erros/Sugestões:** Módulo acessível via header (canto superior direito) que permite ao usuário final criar Issues diretamente no repositório do GitHub.
-- **Segurança:** A integração é feita via Vercel Serverless Function (`/api/feedback`), protegendo o Token de Acesso Pessoal (PAT).
-- **Fallback Local:** Em ambiente de desenvolvimento (`localhost`), o envio é simulado para não travar a interface.
-
----
-
-## ⚙️ Integridade de Dados e Cache (Hotfix v3.9.43)
-
-Para resolver inconsistências de estado (ex: Admin vendo turno fechado enquanto Operador já abriu), foi implementada uma estratégia de **Cache Busting em 3 Camadas**:
-
-1.  **Service Worker Bypass (`sw.js`):**
-    O Service Worker foi reconfigurado para ignorar explicitamente requisições aos domínios `firebaseio.com` e `googleapis.com`. Isso força o PWA a buscar dados sempre na rede ("Network Only" para dados), mantendo a estratégia "Cache First" apenas para assets estáticos (imagens, CSS, JS).
-
-2.  **Timestamp Query:**
-    Todas as leituras de banco de dados (`loadFromFirebase`) agora anexam um parâmetro `?t={timestamp}` à URL. Isso garante que cada requisição seja única, impedindo que browsers (especialmente iOS Safari e Chrome Mobile) reutilizem respostas cacheadas em memória RAM.
-
-3.  **HTTP Headers Explícitos:**
-    Adição de headers `Cache-Control: no-cache, no-store` nas requisições fetch do serviço de dados.
-
----
-
-## ⚖️ Regras de Negócio Importantes
-
-1.  **Imutabilidade de Vendas Fechadas:** Uma venda finalizada não pode ser alterada, apenas anulada (exige permissão `delete_sale`) e relançada.
-2.  **Exclusão Lógica:** Vendas anuladas não somem do banco; são marcadas como `deleted: true` para auditoria posterior do gestor.
-3.  **Segurança Offline:** Em caso de falha de conexão, o sistema utiliza o cache local do navegador para autenticação (baseado no último backup sincronizado).
-4.  **Troco Dinâmico:** O cálculo de troco é sugerido automaticamente apenas para o método "Dinheiro".
+### Service Worker Bypass
+O Service Worker foi configurado para **não interceptar** chamadas ao Firebase ou API Vercel, garantindo que dados transacionais sejam sempre "Network First".
 
 ---
 

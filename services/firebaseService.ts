@@ -22,16 +22,22 @@ export interface AppFullData {
   updatedAt: string;
 }
 
+// Helper para garantir que objetos retornados como {0: {}, 1: {}} virem Arrays corretamente
+const ensureArray = (data: any): any[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object') return Object.values(data);
+  return [];
+};
+
 const getFirebaseUrl = (url: string, token?: string, path?: string) => {
   if (!url) return "";
-  let cleanUrl = url.trim().replace(/\/$/, ''); // Remove trailing slash
+  let cleanUrl = url.trim().replace(/\/$/, ''); 
   
-  // Se a URL base terminar em .json, removemos para poder anexar o path
   if (cleanUrl.endsWith('.json')) {
     cleanUrl = cleanUrl.replace('.json', '');
   }
 
-  // Se houver path, anexa. Se não, usa raiz.
   const finalPath = path ? `/${path}.json` : '/data.json';
   const fullUrl = `${cleanUrl}${finalPath}`;
 
@@ -73,8 +79,6 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
   if (!targetUrl) return;
 
   const payloadData = path ? data : { ...data, updatedAt: new Date().toISOString() };
-  
-  // Criptografia só é aplicada se houver chave E se não estivermos salvando um nó específico
   const payload = (encryptionKey && !path) ? { encrypted: encryptData(payloadData, encryptionKey) } : payloadData;
 
   try {
@@ -97,13 +101,12 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
   }
 };
 
-// ATUALIZAÇÃO: Suporte a path específico na leitura para bypass de cache da raiz
 export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string, path?: string): Promise<any | null> => {
   const targetUrl = getFirebaseUrl(url, token, path);
   if (!targetUrl) return null;
 
   try {
-    // CORREÇÃO DE CACHE: Adiciona timestamp único para forçar download novo
+    // Timestamp para quebrar cache agressivo de iOS/PWA
     const separator = targetUrl.includes('?') ? '&' : '?';
     const noCacheUrl = `${targetUrl}${separator}t=${Date.now()}`;
 
@@ -116,22 +119,27 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
     });
     
     if (!response.ok) {
-      // Se der 404 num nó específico, retornamos null (significa que está vazio)
+      // 404 significa que o nó ainda não existe (banco novo), retornamos null para tratar na lógica de negócio
       if (response.status === 404) return null;
-      return null;
+      throw new Error(`HTTP Error ${response.status}`);
     }
 
     const rawData = await response.json();
     
-    // Se estivermos lendo a raiz e ela estiver criptografada
+    // Descriptografia legado (Blob Root)
     if (!path && rawData && rawData.encrypted) {
       if (!encryptionKey) return null;
       return decryptData(rawData.encrypted, encryptionKey);
     }
     
+    // Normalização de Arrays para nós granulares
+    if (path && ['products', 'sales', 'openTabs', 'users', 'shifts', 'modifierGroups'].includes(path)) {
+        return ensureArray(rawData);
+    }
+
     return rawData;
   } catch (err: any) {
-    console.error("Load Error:", err.message);
-    return null;
+    console.warn(`Load Warning [${path || 'root'}]:`, err.message);
+    return null; // Retorna null em erro de rede para forçar uso do backup local
   }
 };
