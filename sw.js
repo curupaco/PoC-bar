@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'botequista-v18';
+const CACHE_NAME = 'botequista-v19';
 const ASSETS = [
   'index.html',
   './index.html',
@@ -32,8 +32,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // 1. Ignorar rotas de API (Vercel Functions) - Deixar o navegador lidar direto
-  if (url.pathname.startsWith('/api/')) {
+  // 1. Ignorar rotas de API (Vercel) e Banco de Dados (Firebase)
+  // Isso força o navegador a buscar dados frescos sempre, sem usar o cache do SW
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('firebaseio.com') || url.hostname.includes('googleapis.com')) {
     return; 
   }
 

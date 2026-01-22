@@ -22,7 +22,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "3.9.42"; 
+const APP_VERSION = "3.9.43"; 
 const MASTER_KEY = "REMOVED_FIREBASE_PASSWORD";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'REMOVED_FIREBASE_API_KEY'; 
