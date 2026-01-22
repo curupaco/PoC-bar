@@ -1,6 +1,8 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { saveToFirebase, loadFromFirebase, getFirebaseToken } from '../services/firebaseService';
+import { smartMergeTabs, mergeInitialData, isEqual } from '../utils/syncMerger';
+import { SyncQueue } from '../utils/syncQueue';
 import { Product, Sale, Tab, User, Shift, ModifierGroup } from '../types';
 
 interface SyncProps {
@@ -31,9 +33,6 @@ interface SyncProps {
   }
 }
 
-// Utilitário para comparação profunda simplificada (evita loops infinitos de atualização)
-const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
-
 export const useSync = ({
   products, setProducts,
   modifierGroups, setModifierGroups,
@@ -48,40 +47,28 @@ export const useSync = ({
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
   
-  // Timestamp da última alteração LOCAL.
+  // Timestamp da última alteração LOCAL (Grace Period)
   const lastLocalUpdate = useRef<number>(Date.now());
   
-  // Refs para acesso dentro do setInterval sem stale closure
+  // Refs para acesso atualizado dentro dos loops (Heartbeat/Queue)
   const latestData = useRef({
-    products,
-    modifierGroups,
-    categoryModifiers,
-    sales,
-    openTabs,
-    users,
-    shifts
+    products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts
   });
 
-  // Mantém os refs atualizados sempre que o state muda
   useEffect(() => {
-    latestData.current = {
-      products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts
-    };
-    // Sempre que o estado muda localmente, marcamos o timestamp
+    latestData.current = { products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts };
     lastLocalUpdate.current = Date.now();
   }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts]);
   
-  // Controle de Concorrência e Fila
-  const activeSyncs = useRef<Record<string, boolean>>({});
-  const pendingSyncs = useRef<Record<string, any>>({});
-  
-  // Cache de Token
+  // Controle de Autenticação
   const tokenCache = useRef<{ value: string; expiresAt: number } | null>(null);
   const activeTokenRequest = useRef<Promise<string> | null>(null);
   const authBlocked = useRef(false);
+  const isProcessingQueue = useRef(false);
 
   const { url, key, email, pass, masterKey, allPerms } = config;
 
+  // --- 1. Autenticação (Mantida) ---
   const getValidToken = useCallback(async () => {
     if (authBlocked.current) throw new Error("Modo Offline Forçado (Auth Bloqueada).");
 
@@ -112,6 +99,7 @@ export const useSync = ({
     return promise;
   }, [email, pass, key]);
 
+  // --- 2. Carga Inicial (Refatorada com syncMerger) ---
   const fetchInitialData = useCallback(async () => {
     setDbStatus('loading');
     try {
@@ -128,164 +116,79 @@ export const useSync = ({
         loadFromFirebase(url, undefined, token, 'config'),
       ]);
 
-      const getData = (index: number) => 
-        results[index].status === 'fulfilled' ? (results[index] as PromiseFulfilledResult<any>).value : null;
+      const getData = (index: number) => results[index].status === 'fulfilled' ? (results[index] as PromiseFulfilledResult<any>).value : null;
 
-      const productsNode = getData(0);
-      const modGroupsNode = getData(1);
-      const catModsNode = getData(2);
-      const salesNode = getData(3);
-      const tabsNode = getData(4);
-      const usersNode = getData(5);
-      const shiftsNode = getData(6);
-      const configNode = getData(7);
-
+      // Tentar carregar legado apenas se falhar o carregamento granular
       let legacyData: any = null;
-      const needsLegacy = !productsNode && !salesNode && !shiftsNode;
-
-      if (needsLegacy) {
-         try {
-           legacyData = await loadFromFirebase(url, masterKey, token);
-         } catch (legacyErr) {
-           console.error("Falha ao buscar legado:", legacyErr);
-         }
+      if (!getData(0) && !getData(3)) {
+         try { legacyData = await loadFromFirebase(url, masterKey, token); } catch (e) {}
       }
 
-      const merge = (cloudData: any, legacyKey: string, storageKey: string, fallback: any) => {
-         if (cloudData && (Array.isArray(cloudData) ? cloudData.length > 0 : Object.keys(cloudData).length > 0)) {
-            return cloudData;
-         }
-         if (legacyData && legacyData[legacyKey]) {
-            return legacyData[legacyKey];
-         }
-         const local = localStorage.getItem(storageKey);
-         if (local) {
-            try {
-               const parsed = JSON.parse(local);
-               if (parsed && (Array.isArray(parsed) ? parsed.length > 0 : Object.keys(parsed).length > 0)) {
-                  console.warn(`Usando Backup Local para ${storageKey} (Cloud Vazio/Erro)`);
-                  return parsed;
-               }
-            } catch(e) {}
-         }
-         return fallback;
-      };
-
-      const finalProducts = merge(productsNode, 'products', 'btq_products_bk', []);
-      const finalModGroups = merge(modGroupsNode, 'modifierGroups', 'btq_modgroups_bk', []);
-      const finalCatMods = merge(catModsNode, 'categoryModifiers', 'btq_catmods_bk', {});
-      const finalSales = merge(salesNode, 'sales', 'btq_sales_bk', []);
-      const finalTabs = merge(tabsNode, 'openTabs', 'btq_tabs_backup', []);
-      const finalShifts = merge(shiftsNode, 'shifts', 'btq_shifts_backup', []);
-      const finalUsers = merge(usersNode, 'users', 'btq_users_backup', []);
-      const finalConfig = merge(configNode, 'config', 'btq_config_bk', {});
-
-      setProducts(finalProducts);
-      setModifierGroups(finalModGroups);
-      setCategoryModifiers(finalCatMods);
-      setSales(finalSales);
-      setOpenTabs(finalTabs);
-      setShifts(finalShifts);
+      setProducts(mergeInitialData(getData(0), legacyData, 'products', 'btq_products_bk', []));
+      setModifierGroups(mergeInitialData(getData(1), legacyData, 'modifierGroups', 'btq_modgroups_bk', []));
+      setCategoryModifiers(mergeInitialData(getData(2), legacyData, 'categoryModifiers', 'btq_catmods_bk', {}));
+      setSales(mergeInitialData(getData(3), legacyData, 'sales', 'btq_sales_bk', []));
+      setOpenTabs(mergeInitialData(getData(4), legacyData, 'openTabs', 'btq_tabs_backup', []));
+      setShifts(mergeInitialData(getData(6), legacyData, 'shifts', 'btq_shifts_backup', []));
       
-      if (finalConfig && typeof finalConfig.penduraThreshold === 'number') {
-        setPenduraThreshold(finalConfig.penduraThreshold);
-      }
-      
-      const adminUser = { 
-        id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allPerms 
-      };
+      const usersData = mergeInitialData(getData(5), legacyData, 'users', 'btq_users_backup', []);
+      const adminUser = { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allPerms };
+      setUsers(!usersData.some((u: User) => u.username === 'admin') ? [adminUser, ...usersData] : usersData);
 
-      if (!finalUsers.some((u: User) => u.username === 'admin')) {
-         setUsers([adminUser, ...finalUsers]);
-      } else {
-         setUsers(finalUsers);
-      }
+      const configData = mergeInitialData(getData(7), legacyData, 'config', 'btq_config_bk', {});
+      if (configData && typeof configData.penduraThreshold === 'number') setPenduraThreshold(configData.penduraThreshold);
 
       setDbStatus('success');
 
     } catch (e) { 
-      console.error("Critical Load Error - Entering Offline Mode:", e);
+      console.error("Load Error (Offline Mode):", e);
+      // Carregar localmente em caso de falha total
       const loadLocal = (key: string, setter: Function) => {
          const d = localStorage.getItem(key);
          if (d) setter(JSON.parse(d));
       };
-
       loadLocal('btq_products_bk', setProducts);
       loadLocal('btq_sales_bk', setSales);
       loadLocal('btq_shifts_backup', setShifts);
       loadLocal('btq_tabs_backup', setOpenTabs);
       loadLocal('btq_users_backup', setUsers);
-      
       setDbStatus('offline');
-
     } finally { 
-      setTimeout(() => {
-         isInitialLoadDone.current = true; 
-      }, 500);
+      setTimeout(() => { isInitialLoadDone.current = true; }, 500);
     }
-  }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
+  }, [url, masterKey, allPerms, getValidToken, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus]);
 
-  // -- Heartbeat: Polling para Atualização em Tempo Real (Multi-Atendente) --
+
+  // --- 3. Heartbeat (Refatorado com smartMergeTabs) ---
   useEffect(() => {
     if (!url || authBlocked.current) return;
 
     const heartbeat = setInterval(async () => {
-      // 1. Checagem Pré-Requisição (Grace Period)
-      const isPushing = Object.values(activeSyncs.current).some(v => v);
-      if (isPushing || !isInitialLoadDone.current) return;
-
-      if (Date.now() - lastLocalUpdate.current < 5000) { // Reduzido para 5s para ser mais ágil, mas mantendo a segurança
-        return;
-      }
+      // Se estamos enviando dados (Queue Active), evitamos baixar para não gerar conflito de versão
+      if (isProcessingQueue.current || !isInitialLoadDone.current) return;
+      
+      // Grace Period (Edição Ativa): Se o usuário mexeu nos últimos 5s, não baixa
+      if (Date.now() - lastLocalUpdate.current < 5000) return;
 
       try {
         const token = await getValidToken();
-
         const [serverTabs, serverSales, serverShifts] = await Promise.all([
            loadFromFirebase(url, undefined, token, 'openTabs'),
            loadFromFirebase(url, undefined, token, 'sales'),
            loadFromFirebase(url, undefined, token, 'shifts')
         ]);
 
-        // 2. CORREÇÃO CRÍTICA: Checagem Pós-Requisição
-        // Se durante a requisição o usuário criou algo (Race Condition), abortamos a atualização visual.
-        // Isso impede que a resposta (antiga) do servidor sobrescreva o estado local (novo).
-        if (Date.now() - lastLocalUpdate.current < 5000) {
-            // console.log("Heartbeat Aborted: Local changes happened during fetch.");
-            return;
+        // Double Check: Se o usuário mexeu ENQUANTO baixava, aborta
+        if (Date.now() - lastLocalUpdate.current < 5000) return;
+
+        // Smart Merge Mesas
+        const { mergedTabs, hasChanges } = smartMergeTabs(serverTabs, latestData.current.openTabs);
+        if (hasChanges) {
+           setOpenTabs(mergedTabs);
+           localStorage.setItem('btq_tabs_backup', JSON.stringify(mergedTabs));
         }
 
-        // 3. SMART MERGE PARA MESAS (OPEN TABS)
-        // Se o servidor manda mesas, não sobrescrevemos cegamente.
-        // Mantemos as mesas locais que são NOVAS (criadas há menos de 2 min) e que ainda não subiram.
-        if (serverTabs) {
-            const currentTabs = latestData.current.openTabs;
-            const smartMergedTabs = [...serverTabs];
-            let hasMergeChanges = false;
-
-            // Recupera mesas locais que sumiriam (Resgate de Comanda)
-            currentTabs.forEach(localTab => {
-                const isOnServer = serverTabs.find((st: Tab) => st.id === localTab.id);
-                if (!isOnServer) {
-                    // Se a mesa foi aberta localmente há menos de 2 minutos, assumimos que é uma criação recente
-                    // que ainda não propagou. MANTEMOS ELA.
-                    if ((Date.now() - (localTab.openedAt || 0)) < 120000) {
-                        smartMergedTabs.push(localTab);
-                        hasMergeChanges = true;
-                    }
-                }
-            });
-
-            // Só atualiza se houver diferença real
-            // A comparação isEqual deve considerar a lista mesclada
-            if (!isEqual(smartMergedTabs, currentTabs) || hasMergeChanges) {
-               // Ordenação opcional para manter consistência visual (opcional)
-               // smartMergedTabs.sort((a, b) => b.openedAt - a.openedAt); 
-               setOpenTabs(smartMergedTabs);
-               localStorage.setItem('btq_tabs_backup', JSON.stringify(smartMergedTabs));
-            }
-        }
-
+        // Merge Simples para Vendas e Turnos (Server Authority)
         if (serverSales && !isEqual(serverSales, latestData.current.sales)) {
            setSales(serverSales);
            localStorage.setItem('btq_sales_bk', JSON.stringify(serverSales));
@@ -296,20 +199,66 @@ export const useSync = ({
            localStorage.setItem('btq_shifts_backup', JSON.stringify(serverShifts));
         }
 
-      } catch (e) {
-        // Silently fail
-      }
+      } catch (e) { /* Silent fail */ }
     }, 4000); 
 
     return () => clearInterval(heartbeat);
   }, [url, getValidToken, setOpenTabs, setSales, setShifts]);
 
-  const syncNode = useCallback(async (nodeName: string, data: any) => {
+
+  // --- 4. Queue Processor (Novo - Processamento em Background) ---
+  useEffect(() => {
+    if (!url || authBlocked.current) return;
+
+    const queueProcessor = setInterval(async () => {
+      if (!SyncQueue.hasPending() || isProcessingQueue.current || !isInitialLoadDone.current) {
+        if (!SyncQueue.hasPending() && isInitialLoadDone.current) setDbStatus('success');
+        return;
+      }
+
+      isProcessingQueue.current = true;
+      setDbStatus('pending');
+
+      const pendingItems = SyncQueue.getPending();
+      // Processa um por vez para garantir ordem e evitar flood
+      const item = pendingItems[0]; 
+
+      try {
+        const token = await getValidToken();
+        await saveToFirebase(url, item.data, undefined, token, item.node);
+        
+        SyncQueue.dequeue(item.node);
+        
+        // Se a fila acabou, sucesso
+        if (!SyncQueue.hasPending()) {
+          setDbStatus('success');
+        }
+      } catch (e) {
+        console.error(`Queue Retry Fail [${item.node}]:`, e);
+        SyncQueue.incrementRetry(item.node);
+        
+        if (String(e).includes('Auth')) {
+           authBlocked.current = true;
+           setDbStatus('offline');
+        } else {
+           setDbStatus('error');
+        }
+      } finally {
+        isProcessingQueue.current = false;
+      }
+    }, 2000); // Tenta processar a fila a cada 2s
+
+    return () => clearInterval(queueProcessor);
+  }, [url, getValidToken, setDbStatus]);
+
+
+  // --- 5. Trigger de Sincronização (Agora apenas enfileira) ---
+  const syncNode = useCallback((nodeName: string, data: any) => {
     if (!isInitialLoadDone.current) return;
     
     lastLocalUpdate.current = Date.now();
     
-    // Backup Local Automático
+    // Backup Local Imediato (Safety Net)
     if (nodeName === 'shifts') localStorage.setItem('btq_shifts_backup', JSON.stringify(data));
     if (nodeName === 'openTabs') localStorage.setItem('btq_tabs_backup', JSON.stringify(data));
     if (nodeName === 'sales') localStorage.setItem('btq_sales_bk', JSON.stringify(data));
@@ -321,42 +270,13 @@ export const useSync = ({
       return;
     }
 
-    if (activeSyncs.current[nodeName]) {
-       pendingSyncs.current[nodeName] = data;
-       setDbStatus('pending');
-       return; 
-    }
-
-    activeSyncs.current[nodeName] = true;
-    delete pendingSyncs.current[nodeName]; 
+    // Adiciona na fila e deixa o QueueProcessor lidar com o envio
+    SyncQueue.enqueue(nodeName, data);
     setDbStatus('pending');
 
-    try {
-      const token = await getValidToken();
-      await saveToFirebase(url, data, undefined, token, nodeName);
-      
-      const hasActives = Object.values(activeSyncs.current).some(v => v);
-      if (!hasActives) setDbStatus('success');
-      
-    } catch (e) {
-      console.error(`Sync Fail [${nodeName}]:`, e);
-      if (String(e).includes('Auth')) authBlocked.current = true;
-      setDbStatus(authBlocked.current ? 'offline' : 'error');
-    } finally {
-      activeSyncs.current[nodeName] = false;
+  }, [setDbStatus]);
 
-      if (pendingSyncs.current[nodeName] !== undefined) {
-          const nextData = pendingSyncs.current[nodeName];
-          setTimeout(() => syncNode(nodeName, nextData), 100);
-      } else {
-          const hasActives = Object.values(activeSyncs.current).some(v => v);
-          if (!hasActives) setDbStatus(authBlocked.current ? 'offline' : 'success');
-      }
-    }
-  }, [url, setDbStatus, getValidToken]);
-
-  // -- Efeitos (Debounced) --
-  
+  // -- Debouncers de Trigger --
   useEffect(() => {
     const timer = setTimeout(() => {
       syncNode('products', products);
@@ -367,14 +287,12 @@ export const useSync = ({
   }, [products, modifierGroups, categoryModifiers, syncNode]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      syncNode('sales', sales);
-    }, 2000); 
+    const timer = setTimeout(() => { syncNode('sales', sales); }, 2000); 
     return () => clearTimeout(timer);
   }, [sales, syncNode]);
 
   useEffect(() => {
-    // Mesas e Turnos são críticos - Reduzi o debounce para 300ms para salvar mais rápido
+    // Mesas e Turnos continuam com debounce rápido para UI responsiva
     const timer = setTimeout(() => {
       syncNode('openTabs', openTabs);
       syncNode('shifts', shifts);

@@ -1,25 +1,25 @@
 
 # 🍺 Botequista - Sistema de Gestão para Bares
 
-**Versão Atual:** 3.9.45 (Smart Merge Update)
+**Versão Atual:** 3.9.46 (Queue & Merger Architecture)
 **Stack Tecnológica:** React 19, Tailwind CSS 3.4, Firebase (Realtime Database), Vercel.
 
 ---
 
-## 🚨 Atualização Crítica: Motor de Sincronização 2.2 (v3.9.45)
+## 🚨 Atualização Crítica: Motor de Sincronização 3.0 (v3.9.46)
 
-Resolução definitiva para desaparecimento de comandas em alta concorrência:
+Implementação de resiliência total contra falhas de rede (Modo Offline-First real):
 
-### 1. Protocolo Smart Merge (Mesas)
-- Ao receber a lista de mesas do servidor, o sistema não sobrescreve cegamente a lista local.
-- **Lógica de Resgate:** Se uma mesa existe localmente mas não no servidor, o sistema verifica a data de criação. Se foi criada há menos de 2 minutos, ela é **mantida** na tela (assumindo que o upload ainda está pendente), impedindo que o "Heartbeat" apague comandas recém-criadas.
+### 1. Sistema de Fila Persistente (`utils/syncQueue.ts`)
+- **Problema:** Anteriormente, se a internet caísse exatamente no momento de salvar uma venda, a requisição falhava e o dado podia ser perdido se o usuário recarregasse a página.
+- **Solução:** Agora, todas as alterações (vendas, cadastro de produtos, mesas) são salvas instantaneamente no `localStorage` dentro de uma fila.
+- **Background Worker:** Um processo roda a cada 2 segundos verificando se há itens na fila. Se houver e a internet estiver ativa, ele envia um por um. Se falhar, ele tenta novamente depois.
+- **Benefício:** Você pode operar sem internet. Assim que o sinal voltar, o sistema "despeja" todas as operações pendentes automaticamente.
 
-### 2. Double Check de Concorrência
-- O bloqueio de atualizações durante a edição (Grace Period) agora é verificado **duas vezes**: antes de iniciar o download e *após* o download terminar.
-- Isso cobre o cenário onde o usuário cria uma mesa *enquanto* o download estava em andamento, garantindo que a resposta atrasada do servidor (que não contém a mesa nova) seja descartada.
-
-### 3. Heartbeat Sync (Tempo Real)
-- Polling a cada 4 segundos para sincronizar até 5 terminais simultâneos.
+### 2. Utilitário de Fusão Inteligente (`utils/syncMerger.ts`)
+- Lógica centralizada para garantir que dados vindos do servidor não sobrescrevam trabalho em andamento.
+- Mantém a regra dos **120 segundos** de proteção para mesas novas (Smart Merge).
+- Gerencia o fallback automático para dados locais caso o Firebase esteja inacessível no boot.
 
 ---
 
@@ -50,8 +50,8 @@ O sistema utiliza Controle de Acesso Baseado em Funções (RBAC) granular, divid
 ## ⚙️ Integridade de Dados
 
 ### Backup Local Automático
-Cada vez que um dado é enviado para a nuvem, uma cópia idêntica é salva no navegador (`localStorage`), prevenindo perda de dados em caso de queda de internet durante o serviço.
+Cada vez que um dado é enfileirado para envio, uma cópia de segurança do estado atual é salva no navegador (`localStorage`), prevenindo perda de dados em caso de fechamento acidental da aba ou bateria acabando.
 
 ---
 
-*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.45.*
+*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.46.*
