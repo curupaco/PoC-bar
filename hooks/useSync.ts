@@ -47,7 +47,6 @@ export const useSync = ({
   
   // Controle de Concorrência (Sync Queue)
   const isSyncing = useRef(false);
-  const pendingSyncs = useRef<Set<string>>(new Set());
   
   // Cache de Token
   const tokenCache = useRef<{ value: string; expiresAt: number } | null>(null);
@@ -85,13 +84,34 @@ export const useSync = ({
     return promise;
   }, [email, pass, key]);
 
-  // -- 2. Carga Inicial com Fallback Local (Offline Mode) --
+  // -- 2. Carga Inicial Granular (CORREÇÃO DO BUG DE SINCRONIA) --
   const fetchInitialData = useCallback(async () => {
     setDbStatus('loading');
     try {
       const token = await getValidToken();
-      const cloudData = await loadFromFirebase(url, masterKey, token);
       
+      // Em vez de baixar um "blob" gigante que pode estar estagnado/criptografado na raiz,
+      // baixamos cada nó individualmente. Isso garante que leremos o que foi gravado via syncNode.
+      const [
+        productsData,
+        modGroupsData,
+        catModsData,
+        salesData,
+        tabsData,
+        usersData,
+        shiftsData,
+        configData
+      ] = await Promise.all([
+        loadFromFirebase(url, undefined, token, 'products'),
+        loadFromFirebase(url, undefined, token, 'modifierGroups'),
+        loadFromFirebase(url, undefined, token, 'categoryModifiers'),
+        loadFromFirebase(url, undefined, token, 'sales'),
+        loadFromFirebase(url, undefined, token, 'openTabs'),
+        loadFromFirebase(url, undefined, token, 'users'),
+        loadFromFirebase(url, undefined, token, 'shifts'),
+        loadFromFirebase(url, undefined, token, 'config'),
+      ]);
+
       const adminUser = { 
         id: 'admin', 
         username: 'admin', 
@@ -100,33 +120,28 @@ export const useSync = ({
         permissions: allPerms 
       };
 
-      if (cloudData) {
-        setProducts(cloudData.products || []);
-        setModifierGroups(cloudData.modifierGroups || []);
-        setCategoryModifiers(cloudData.categoryModifiers || {});
-        setSales(cloudData.sales || []);
-        setOpenTabs(cloudData.openTabs || []);
-        setShifts(cloudData.shifts || []);
-        
-        // Recupera Configurações Globais
-        if (cloudData.config && typeof cloudData.config.penduraThreshold === 'number') {
-          setPenduraThreshold(cloudData.config.penduraThreshold);
-        }
-        
-        const loadedUsers = cloudData.users || [];
-        // Backup dos usuários para LocalStorage (Segurança Offline)
-        localStorage.setItem('btq_users_backup', JSON.stringify(loadedUsers));
-        
-        if (!loadedUsers.some(u => u.username === 'admin')) {
-           setUsers([adminUser, ...loadedUsers]);
-        } else {
-           setUsers(loadedUsers);
-        }
-        setDbStatus('success');
-      } else {
-        setUsers([adminUser]);
-        setDbStatus('success');
+      setProducts(productsData || []);
+      setModifierGroups(modGroupsData || []);
+      setCategoryModifiers(catModsData || {});
+      setSales(salesData || []);
+      setOpenTabs(tabsData || []);
+      setShifts(shiftsData || []);
+      
+      if (configData && typeof configData.penduraThreshold === 'number') {
+        setPenduraThreshold(configData.penduraThreshold);
       }
+      
+      const loadedUsers = usersData || [];
+      // Backup dos usuários para LocalStorage (Segurança Offline)
+      localStorage.setItem('btq_users_backup', JSON.stringify(loadedUsers));
+      
+      if (!loadedUsers.some((u: User) => u.username === 'admin')) {
+         setUsers([adminUser, ...loadedUsers]);
+      } else {
+         setUsers(loadedUsers);
+      }
+
+      setDbStatus('success');
     } catch (e) { 
       console.error("Initial Sync Error (Entering Offline Mode):", e);
       
@@ -141,26 +156,28 @@ export const useSync = ({
         setDbStatus('error');
       }
     } finally { 
-      isInitialLoadDone.current = true; 
+      // Pequeno delay para garantir que o render cycle do React processe os setStates
+      // antes de liberar o syncNode para evitar overwrites imediatos
+      setTimeout(() => {
+         isInitialLoadDone.current = true; 
+      }, 500);
     }
-  }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
+  }, [url, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
 
   // -- 3. Engine de Sincronização com Fila (No-Pileup) --
   const syncNode = useCallback(async (nodeName: string, data: any) => {
+    // BLOQUEIO CRÍTICO: Não sincronize nada até que a carga inicial esteja 100% completa
     if (!isInitialLoadDone.current) return;
     
-    // 1. Backup Local de Segurança para Users
     if (nodeName === 'users') {
       localStorage.setItem('btq_users_backup', JSON.stringify(data));
     }
 
-    // 2. Se estiver bloqueado (Auth Fail), nem tenta e marca offline
     if (authBlocked.current) {
       setDbStatus('offline');
       return;
     }
 
-    // 3. Mecanismo de Lock (Simples)
     if (isSyncing.current) {
        return; 
     }
@@ -170,11 +187,11 @@ export const useSync = ({
 
     try {
       const token = await getValidToken();
+      // Salva no nó específico (ex: /shifts.json), garantindo que a leitura granular funcione
       await saveToFirebase(url, data, undefined, token, nodeName);
       setDbStatus('success');
     } catch (e) {
       console.error(`Sync Fail [${nodeName}]:`, e);
-      // Se falhar, verifica se foi auth
       if (String(e).includes('Auth')) authBlocked.current = true;
       setDbStatus(authBlocked.current ? 'offline' : 'error');
     } finally {
