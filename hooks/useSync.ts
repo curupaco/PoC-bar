@@ -45,8 +45,9 @@ export const useSync = ({
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
   
-  // Controle de Concorrência (Sync Queue)
-  const isSyncing = useRef(false);
+  // CORREÇÃO: Controle de Concorrência por NÓ (Per-Node Locking) em vez de Global
+  // Isso permite que 'shifts' salve ao mesmo tempo que 'sales' sem que um cancele o outro.
+  const activeSyncs = useRef<Record<string, boolean>>({});
   
   // Cache de Token
   const tokenCache = useRef<{ value: string; expiresAt: number } | null>(null);
@@ -84,14 +85,13 @@ export const useSync = ({
     return promise;
   }, [email, pass, key]);
 
-  // -- 2. Carga Inicial Granular (CORREÇÃO DO BUG DE SINCRONIA) --
+  // -- 2. Carga Inicial Híbrida (Granular + Migração Legada) --
   const fetchInitialData = useCallback(async () => {
     setDbStatus('loading');
     try {
       const token = await getValidToken();
       
-      // Em vez de baixar um "blob" gigante que pode estar estagnado/criptografado na raiz,
-      // baixamos cada nó individualmente. Isso garante que leremos o que foi gravado via syncNode.
+      // Tentativa 1: Carregar nós individuais (Estrutura Nova)
       const [
         productsData,
         modGroupsData,
@@ -112,6 +112,40 @@ export const useSync = ({
         loadFromFirebase(url, undefined, token, 'config'),
       ]);
 
+      // Verificação de Migração: Se tudo estiver vazio, pode ser que os dados estejam no formato antigo (Blob Criptografado na Raiz)
+      let finalProducts = productsData || [];
+      let finalSales = salesData || [];
+      let finalShifts = shiftsData || [];
+      let finalTabs = tabsData || [];
+      let finalUsers = usersData || [];
+      let finalModGroups = modGroupsData || [];
+      let finalCatMods = catModsData || {};
+      let finalConfig = configData || {};
+
+      const isEmptyNewDb = 
+        !productsData && !salesData && !shiftsData && !usersData;
+
+      if (isEmptyNewDb) {
+         console.warn("DB Granular vazio. Tentando recuperar dados legados (Migração)...");
+         try {
+           // Carrega a raiz sem path, passando a masterKey para descriptografar se necessário
+           const legacyData = await loadFromFirebase(url, masterKey, token);
+           if (legacyData) {
+              console.log("Dados legados recuperados com sucesso. Aplicando migração...");
+              finalProducts = legacyData.products || [];
+              finalSales = legacyData.sales || [];
+              finalShifts = legacyData.shifts || [];
+              finalTabs = legacyData.openTabs || [];
+              finalUsers = legacyData.users || [];
+              finalModGroups = legacyData.modifierGroups || [];
+              finalCatMods = legacyData.categoryModifiers || {};
+              finalConfig = legacyData.config || {};
+           }
+         } catch (legacyErr) {
+           console.error("Falha na migração legado:", legacyErr);
+         }
+      }
+
       const adminUser = { 
         id: 'admin', 
         username: 'admin', 
@@ -120,25 +154,24 @@ export const useSync = ({
         permissions: allPerms 
       };
 
-      setProducts(productsData || []);
-      setModifierGroups(modGroupsData || []);
-      setCategoryModifiers(catModsData || {});
-      setSales(salesData || []);
-      setOpenTabs(tabsData || []);
-      setShifts(shiftsData || []);
+      setProducts(finalProducts);
+      setModifierGroups(finalModGroups);
+      setCategoryModifiers(finalCatMods);
+      setSales(finalSales);
+      setOpenTabs(finalTabs);
+      setShifts(finalShifts);
       
-      if (configData && typeof configData.penduraThreshold === 'number') {
-        setPenduraThreshold(configData.penduraThreshold);
+      if (finalConfig && typeof finalConfig.penduraThreshold === 'number') {
+        setPenduraThreshold(finalConfig.penduraThreshold);
       }
       
-      const loadedUsers = usersData || [];
       // Backup dos usuários para LocalStorage (Segurança Offline)
-      localStorage.setItem('btq_users_backup', JSON.stringify(loadedUsers));
+      localStorage.setItem('btq_users_backup', JSON.stringify(finalUsers));
       
-      if (!loadedUsers.some((u: User) => u.username === 'admin')) {
-         setUsers([adminUser, ...loadedUsers]);
+      if (!finalUsers.some((u: User) => u.username === 'admin')) {
+         setUsers([adminUser, ...finalUsers]);
       } else {
-         setUsers(loadedUsers);
+         setUsers(finalUsers);
       }
 
       setDbStatus('success');
@@ -156,15 +189,13 @@ export const useSync = ({
         setDbStatus('error');
       }
     } finally { 
-      // Pequeno delay para garantir que o render cycle do React processe os setStates
-      // antes de liberar o syncNode para evitar overwrites imediatos
       setTimeout(() => {
          isInitialLoadDone.current = true; 
       }, 500);
     }
-  }, [url, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
+  }, [url, masterKey, allPerms, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus, getValidToken]);
 
-  // -- 3. Engine de Sincronização com Fila (No-Pileup) --
+  // -- 3. Engine de Sincronização Paralela (Non-Blocking) --
   const syncNode = useCallback(async (nodeName: string, data: any) => {
     // BLOQUEIO CRÍTICO: Não sincronize nada até que a carga inicial esteja 100% completa
     if (!isInitialLoadDone.current) return;
@@ -178,24 +209,36 @@ export const useSync = ({
       return;
     }
 
-    if (isSyncing.current) {
+    // BLOQUEIO POR NÓ: Evita concorrência apenas no MESMO recurso, mas permite paralelos
+    if (activeSyncs.current[nodeName]) {
+       // Se já está salvando ESTE nó, ignoramos para evitar pileup.
+       // O debounce do useEffect garante que se houver dados novos, uma nova chamada virá em 1s/2s.
        return; 
     }
 
-    isSyncing.current = true;
+    activeSyncs.current[nodeName] = true;
     setDbStatus('pending');
 
     try {
       const token = await getValidToken();
-      // Salva no nó específico (ex: /shifts.json), garantindo que a leitura granular funcione
+      // Salva no nó específico (ex: /shifts.json)
       await saveToFirebase(url, data, undefined, token, nodeName);
-      setDbStatus('success');
+      
+      // Só volta para success se não houver outros syncs ativos
+      const areOthersSyncing = Object.values(activeSyncs.current).some(v => v);
+      if (!areOthersSyncing) setDbStatus('success');
+      
     } catch (e) {
       console.error(`Sync Fail [${nodeName}]:`, e);
       if (String(e).includes('Auth')) authBlocked.current = true;
       setDbStatus(authBlocked.current ? 'offline' : 'error');
     } finally {
-      isSyncing.current = false;
+      activeSyncs.current[nodeName] = false;
+      
+      // Garante status limpo se tudo acabou
+      if (!Object.values(activeSyncs.current).some(v => v)) {
+         setDbStatus(authBlocked.current ? 'offline' : 'success');
+      }
     }
   }, [url, setDbStatus, getValidToken]);
 
@@ -221,7 +264,7 @@ export const useSync = ({
     const timer = setTimeout(() => {
       syncNode('openTabs', openTabs);
       syncNode('shifts', shifts);
-    }, 1000);
+    }, 1000); // 1s para dados operacionais críticos
     return () => clearTimeout(timer);
   }, [openTabs, shifts, syncNode]);
 
