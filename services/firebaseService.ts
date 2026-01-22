@@ -72,18 +72,14 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
   const targetUrl = getFirebaseUrl(url, token, path);
   if (!targetUrl) return;
 
-  // Se path for fornecido, não usamos 'updatedAt' na raiz do objeto parcial, 
-  // pois o Firebase mescla chaves. Se for raiz, mantemos.
   const payloadData = path ? data : { ...data, updatedAt: new Date().toISOString() };
   
-  // Criptografia só é aplicada se houver chave E se não estivermos salvando um nó específico (para manter granularidade)
-  // Se quisermos granularidade com criptografia, teríamos que criptografar o valor do nó, não o objeto todo.
-  // Para corrigir o Item 1 (Race Condition), optamos por salvar nós granulares em Plain Text (protegidos por Auth).
+  // Criptografia só é aplicada se houver chave E se não estivermos salvando um nó específico
   const payload = (encryptionKey && !path) ? { encrypted: encryptData(payloadData, encryptionKey) } : payloadData;
 
   try {
     const response = await fetch(targetUrl, {
-      method: 'PUT', // PUT em um nó específico substitui apenas aquele nó, agindo como um UPDATE granular
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
@@ -106,7 +102,17 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
   if (!targetUrl) return null;
 
   try {
-    const response = await fetch(targetUrl);
+    // CORREÇÃO DE CACHE: Adiciona timestamp único para forçar download novo
+    const separator = targetUrl.includes('?') ? '&' : '?';
+    const noCacheUrl = `${targetUrl}${separator}t=${Date.now()}`;
+
+    const response = await fetch(noCacheUrl, {
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    });
     
     if (!response.ok) {
       return null;
@@ -114,13 +120,11 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
 
     const rawData = await response.json();
     
-    // Suporte Legado: Se estiver criptografado na raiz
     if (rawData && rawData.encrypted) {
       if (!encryptionKey) return null;
       return decryptData(rawData.encrypted, encryptionKey);
     }
     
-    // Suporte Novo: Dados granulares (Plain JSON)
     return rawData;
   } catch (err: any) {
     console.error("Load Error:", err.message);
