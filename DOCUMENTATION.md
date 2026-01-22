@@ -1,26 +1,25 @@
 
 # 🍺 Botequista - Sistema de Gestão para Bares
 
-**Versão Atual:** 3.9.44 (Live Sync Update)
+**Versão Atual:** 3.9.45 (Smart Merge Update)
 **Stack Tecnológica:** React 19, Tailwind CSS 3.4, Firebase (Realtime Database), Vercel.
 
 ---
 
-## 🚨 Atualização Crítica: Motor de Sincronização 2.1 (v3.9.44)
+## 🚨 Atualização Crítica: Motor de Sincronização 2.2 (v3.9.45)
 
-Melhorias para ambientes multi-usuário e alta concorrência:
+Resolução definitiva para desaparecimento de comandas em alta concorrência:
 
-### 1. Heartbeat Sync (Tempo Real)
-- O sistema agora implementa um mecanismo de **polling** (batimento) a cada 4 segundos.
-- Isso permite que até 5 garçons operem simultaneamente. Quando um garçom lança um item em uma mesa, os outros terminais recebem a atualização automaticamente, sem necessidade de recarregar a página.
-- O sistema prioriza a "Autoridade do Servidor" para Mesas (`openTabs`), Vendas (`sales`) e Turnos (`shifts`).
+### 1. Protocolo Smart Merge (Mesas)
+- Ao receber a lista de mesas do servidor, o sistema não sobrescreve cegamente a lista local.
+- **Lógica de Resgate:** Se uma mesa existe localmente mas não no servidor, o sistema verifica a data de criação. Se foi criada há menos de 2 minutos, ela é **mantida** na tela (assumindo que o upload ainda está pendente), impedindo que o "Heartbeat" apague comandas recém-criadas.
 
-### 2. Tolerância a Falhas (Fault Tolerance)
-- O carregamento inicial utiliza `Promise.allSettled`. Se a tabela de vendas falhar no download, o sistema **não bloqueia** o carregamento dos turnos e produtos.
-- **Local Fallback:** Se a conexão cair durante o carregamento inicial, o sistema busca automaticamente a última versão salva no `localStorage`.
+### 2. Double Check de Concorrência
+- O bloqueio de atualizações durante a edição (Grace Period) agora é verificado **duas vezes**: antes de iniciar o download e *após* o download terminar.
+- Isso cobre o cenário onde o usuário cria uma mesa *enquanto* o download estava em andamento, garantindo que a resposta atrasada do servidor (que não contém a mesa nova) seja descartada.
 
-### 3. Fila de Pendências (Queueing)
-- Edições rápidas não são mais descartadas se uma sincronização já estiver em andamento. O sistema enfileira a alteração e a envia assim que o canal estiver livre.
+### 3. Heartbeat Sync (Tempo Real)
+- Polling a cada 4 segundos para sincronizar até 5 terminais simultâneos.
 
 ---
 
@@ -55,4 +54,4 @@ Cada vez que um dado é enviado para a nuvem, uma cópia idêntica é salva no n
 
 ---
 
-*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.44.*
+*Documentação atualizada em conformidade com o padrão Botequista Pro v3.9.45.*
