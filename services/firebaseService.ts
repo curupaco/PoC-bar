@@ -97,8 +97,9 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
   }
 };
 
-export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string): Promise<AppFullData | null> => {
-  const targetUrl = getFirebaseUrl(url, token);
+// ATUALIZAÇÃO: Suporte a path específico na leitura para bypass de cache da raiz
+export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string, path?: string): Promise<any | null> => {
+  const targetUrl = getFirebaseUrl(url, token, path);
   if (!targetUrl) return null;
 
   try {
@@ -115,12 +116,15 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
     });
     
     if (!response.ok) {
+      // Se der 404 num nó específico, retornamos null (significa que está vazio)
+      if (response.status === 404) return null;
       return null;
     }
 
     const rawData = await response.json();
     
-    if (rawData && rawData.encrypted) {
+    // Se estivermos lendo a raiz e ela estiver criptografada
+    if (!path && rawData && rawData.encrypted) {
       if (!encryptionKey) return null;
       return decryptData(rawData.encrypted, encryptionKey);
     }
