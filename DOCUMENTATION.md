@@ -1,57 +1,29 @@
-# 🍺 Botequista Pro - Documentação de Engenharia
+# 🍺 Botequista Pro - Guia de Gestão
 
-**Versão:** 3.9.46 Stable  
-**Autor:** Senior System Architect  
-**Ambiente:** PWA / Realtime Cloud
+Este guia rápido explica como extrair o máximo de eficiência do seu sistema de bar.
 
 ---
 
-## 🛰️ 1. Arquitetura de Sincronismo Local-First
+## 🚀 1. O Ciclo do Dia
+1. **Abrir Turno**: Comece o dia informando o valor de troco na gaveta.
+2. **Vender**: Use o PDV para mesas (comandas) ou vendas rápidas.
+3. **Gerir**: Adicione sangrias ou suprimentos conforme a necessidade.
+4. **Fechar**: No fim do dia, conte o dinheiro físico e informe no sistema. O Botequista calcula a quebra automaticamente.
 
-O sistema não depende de conexão estável para operar. Todas as mutações de estado seguem o fluxo:
-1. **Action Trigger:** O usuário interage (venda, mesa, preço).
-2. **Local Commit:** O estado é persistido no `localStorage` do dispositivo.
-3. **Queue Enqueue:** A ação entra na `SyncQueue` com um UUID único.
-4. **Background Upload:** O worker de sincronismo tenta empurrar a fila para o Firebase com lógica de retry exponencial.
+## 📋 2. Cardápio e Preços
+- Cadastre produtos por **Unidade** ou **Peso (KG)**.
+- Use **Favoritos** (⭐) para os itens que mais saem.
+- Crie **Menus de Adicionais** para cobranças extras (ex: limão, bordas, gelo).
 
-### Gestão de Concorrência (SmartMerge)
-Para evitar que múltiplos garçons editando a mesma mesa causem perda de dados, o sistema implementa um **Grace Period de 120 segundos**. Durante este período, o terminal local tem autoridade soberana sobre o servidor para aquela chave específica de mesa.
+## 💰 3. O Famoso Fiado (Penduras)
+- Ao fechar uma venda, escolha o método **Pendura** e digite o nome do cliente.
+- Acompanhe o saldo total devedor em **Relatórios > Penduras**.
+- Quando o cliente pagar, use a função **Quitar** para dar baixa.
 
----
-
-## 🗄️ 2. Dicionário de Dados (NoSQL Schemas)
-
-### Nó: `/sales` (Histórico Imutável)
-| Campo | Tipo | Descrição |
-| :--- | :--- | :--- |
-| `id` | UUID | Identificador único da transação. |
-| `timestamp` | EPOCH | Data/Hora da venda (milissegundos). |
-| `deleted` | BOOLEAN | Flag de auditoria (Anulação Lógica). |
-| `userId` | STRING | Referência ao colaborador que operou a venda. |
-
-### Nó: `/shifts` (Controle de Jornada)
-O sistema utiliza **Conferência Cega**. O operador não sabe quanto o sistema espera que ele tenha em caixa.
-- `openingCashChange`: Fundo de troco inicial.
-- `actualCashCounted`: Valor real contato pelo humano no fechamento.
-- `cashDifference`: O desvio calculado entre o sistema e o real (Quebra de Caixa).
+## 📊 4. Olho no Lucro
+- Veja quais produtos dão mais lucro na **Curva ABC**.
+- Descubra o horário de pico para planejar sua equipe.
+- Verifique vendas anuladas no **Histórico** para evitar perdas ou fraudes.
 
 ---
-
-## 🔐 3. Segurança RBAC (Role Based Access Control)
-
-A segurança é granulada por chaves de permissão injetadas no token de sessão:
-- `delete_sale`: Permite anular vendas (ativa flag `deleted`).
-- `full_reset`: Comando administrativo para zerar banco de dados.
-- `manage_backup`: Permite sincronização externa via GitHub Gists API.
-
----
-
-## 📈 4. Inteligência de Negócio
-
-O motor de relatórios utiliza **Reducers** em tempo real para calcular:
-- **Curva ABC:** Ranking de lucratividade vs popularidade dos itens.
-- **Hourly Heatmap:** Mapa de calor de volume de pedidos por hora (0-23h).
-- **Pendura Threshold:** Monitoramento de risco de crédito global (Fiados).
-
----
-*Documento autogerado para fins de auditoria técnica.*
+*Botequista Pro - Gerindo seu bar, cuidando do seu lucro.*
