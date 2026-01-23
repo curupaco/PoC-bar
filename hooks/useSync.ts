@@ -52,6 +52,10 @@ export const useSync = ({
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
   
+  // Controle de origem da atualização para evitar Loop Infinito (Eco)
+  // Se True, a mudança de estado veio do servidor, então NÃO devemos salvar de volta.
+  const isRemoteUpdate = useRef(false);
+  
   // Timestamp da última alteração LOCAL (Grace Period)
   const lastLocalUpdate = useRef<number>(Date.now());
   
@@ -62,7 +66,9 @@ export const useSync = ({
 
   useEffect(() => {
     latestData.current = { products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, units };
-    lastLocalUpdate.current = Date.now();
+    if (!isRemoteUpdate.current && isInitialLoadDone.current) {
+        lastLocalUpdate.current = Date.now();
+    }
   }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, units]);
   
   // Controle de Autenticação
@@ -129,6 +135,10 @@ export const useSync = ({
     const loadOnlyGlobal = !activeUnitId;
 
     setDbStatus('loading');
+    
+    // Bloqueia disparos de save durante o load
+    isRemoteUpdate.current = true;
+
     try {
       const token = await getValidToken();
       
@@ -191,7 +201,11 @@ export const useSync = ({
       }
       setDbStatus('offline');
     } finally { 
-      setTimeout(() => { isInitialLoadDone.current = true; }, 500);
+      // Libera atualizações remotas após um breve delay para evitar conflito com useEffects
+      setTimeout(() => { 
+          isInitialLoadDone.current = true;
+          isRemoteUpdate.current = false;
+      }, 800);
     }
   }, [url, allPerms, getValidToken, activeUnitId, getPath, getStorageKey, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setUnits, setPenduraThreshold, setDbStatus]);
 
@@ -202,6 +216,7 @@ export const useSync = ({
 
     const heartbeat = setInterval(async () => {
       if (isProcessingQueue.current || !isInitialLoadDone.current) return;
+      // Se houve alteração local recente (menos de 5s), não sobrescreve
       if (Date.now() - lastLocalUpdate.current < 5000) return;
 
       try {
@@ -215,6 +230,9 @@ export const useSync = ({
         ]);
 
         if (Date.now() - lastLocalUpdate.current < 5000) return;
+
+        // Marca como update remoto para não disparar 'syncNode'
+        isRemoteUpdate.current = true;
 
         // Smart Merge Mesas
         const { mergedTabs, hasChanges } = smartMergeTabs(serverTabs, latestData.current.openTabs);
@@ -249,7 +267,13 @@ export const useSync = ({
             }
         }
 
-      } catch (e) { /* Silent fail */ }
+        // Libera a flag após o ciclo de render
+        setTimeout(() => { isRemoteUpdate.current = false; }, 300);
+
+      } catch (e) { 
+          isRemoteUpdate.current = false;
+          /* Silent fail */ 
+      }
     }, 4000); 
 
     return () => clearInterval(heartbeat);
@@ -306,7 +330,8 @@ export const useSync = ({
 
   // --- 5. Trigger de Sincronização ---
   const syncNode = useCallback((nodeName: string, data: any) => {
-    if (!isInitialLoadDone.current) return;
+    // Se a carga inicial não terminou OU se a atualização veio do servidor, ignorar
+    if (!isInitialLoadDone.current || isRemoteUpdate.current) return;
     
     lastLocalUpdate.current = Date.now();
     

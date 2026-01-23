@@ -55,7 +55,8 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
         <div className="flex justify-center py-10 bg-slate-100 dark:bg-slate-950/50 rounded-[40px]">
           <div ref={reportRef} className="bg-black text-white w-full max-w-[380px] p-12 shadow-2xl space-y-6 font-mono text-[11px] leading-relaxed">
              <div className="text-center border-b border-dashed border-slate-800 pb-6">
-                <h2 className="text-3xl font-black italic uppercase tracking-tighter">Botequista</h2>
+                {/* FONTE ALTERADA PARA BARRIO (LOGO) */}
+                <h2 className="text-4xl font-normal font-barrio tracking-tighter text-white">Botequista</h2>
                 <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Protocolo de Turno</p>
              </div>
              <div className="space-y-1 text-slate-400">

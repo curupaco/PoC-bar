@@ -22,7 +22,7 @@ if (isBrowser && !(window as any).process) {
   (window as any).process = { env: {} };
 }
 
-const APP_VERSION = "4.0.0 (Multi-Bar)"; 
+const APP_VERSION = "4.0.1 (Multi-Bar Stable)"; 
 const MASTER_KEY = "Tc@00216587";
 const SYSTEM_DB_URL = 'https://poc-botequista-default-rtdb.firebaseio.com';
 const SYSTEM_API_KEY = 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs'; 
@@ -166,13 +166,15 @@ const App: React.FC = () => {
   };
 
   const selectUnit = (unitId: string) => {
-    setActiveUnitId(unitId);
-    localStorage.setItem('btq_active_unit', unitId);
-    // Forçar recarregamento limpo dos dados da nova unidade
+    // Limpeza de estado crítica antes de trocar de unidade
+    // Isso evita que dados da unidade anterior vazem para a próxima
     setSales([]);
     setOpenTabs([]);
     setProducts([]);
     setShifts([]);
+    
+    setActiveUnitId(unitId);
+    localStorage.setItem('btq_active_unit', unitId);
     setActiveView('pos');
   };
 
@@ -257,10 +259,10 @@ const App: React.FC = () => {
     switch (dbStatus) {
       case 'success': return { label: 'Online', color: 'bg-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', border: 'border-emerald-500/20 dark:border-emerald-500/30', animate: '' };
       case 'pending':
-      case 'loading': return { label: 'Syncing', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20 dark:border-amber-500/30', animate: 'animate-pulse' };
+      case 'loading': return { label: 'Sincronizando', color: 'bg-amber-500', text: 'text-amber-600 dark:text-amber-400', border: 'border-amber-500/20 dark:border-amber-500/30', animate: 'animate-pulse' };
       case 'offline': return { label: 'Offline', color: 'bg-slate-500', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-500/20 dark:border-slate-500/30', animate: '' };
-      case 'error': return { label: 'Erro', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20 dark:border-red-500/30', animate: '' };
-      default: return { label: 'Offline', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', animate: '' };
+      case 'error': return { label: 'Erro de Rede', color: 'bg-red-500', text: 'text-red-600 dark:text-red-400', border: 'border-red-500/20 dark:border-red-500/30', animate: '' };
+      default: return { label: 'Desconectado', color: 'bg-slate-400', text: 'text-slate-400', border: 'border-slate-200 dark:border-slate-800', animate: '' };
     }
   })();
 
