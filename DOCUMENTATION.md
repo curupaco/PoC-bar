@@ -1,48 +1,57 @@
-# 🍺 Botequista Pro - Documentação Técnica e Operacional
+# 🍺 Botequista Pro - Documentação de Engenharia
 
-**Versão da Engine:** 3.9.46 (Queue-Driven)  
-**Nível de Autoridade:** Produção Resiliente / Multi-Tenant Ready  
-**Data da Documentação:** Janeiro de 2025
-
----
-
-## 🏗️ Arquitetura Core: "Offline-First"
-
-Diferente de sistemas comuns que travam sem internet, o **Botequista Pro** utiliza uma camada de persistência local que espelha as operações em tempo real.
-
-### 1. Motor de Sincronismo (`useSync.ts`)
-*   **SyncQueue**: Toda mutação (venda, comanda, alteração de preço) é serializada e mantida em uma fila no `localStorage` via `utils/syncQueue.ts`.
-*   **QueueProcessor**: Um worker dedicado monitora a fila a cada **2 segundos**. Se houver sucesso no envio para o Firebase, o item é removido. Se falhar, entra em regime de *Exponential Backoff*.
-*   **Heartbeat**: A cada **4 segundos**, o sistema verifica se há novos dados no servidor (novas mesas abertas por outros terminais, por exemplo).
-
-### 2. Consistência de Dados (`utils/syncMerger.ts`)
-*   **SmartMerge Algorithm**: Para evitar conflitos onde dois garçons editam a mesma mesa, implementamos um **Grace Period de 120 segundos**. 
-*   **Lógica**: Se uma mesa foi alterada localmente nos últimos 2 minutos, o sistema ignora atualizações do servidor para essa mesa específica ("O garçom na mesa tem a palavra final").
+**Versão:** 3.9.46 Stable  
+**Autor:** Senior System Architect  
+**Ambiente:** PWA / Realtime Cloud
 
 ---
 
-## 🔐 Segurança e Governança (RBAC)
+## 🛰️ 1. Arquitetura de Sincronismo Local-First
 
-O sistema implementa **Role-Based Access Control** com 19 permissões granulares:
+O sistema não depende de conexão estável para operar. Todas as mutações de estado seguem o fluxo:
+1. **Action Trigger:** O usuário interage (venda, mesa, preço).
+2. **Local Commit:** O estado é persistido no `localStorage` do dispositivo.
+3. **Queue Enqueue:** A ação entra na `SyncQueue` com um UUID único.
+4. **Background Upload:** O worker de sincronismo tenta empurrar a fila para o Firebase com lógica de retry exponencial.
 
-*   **Audit Trail**: Toda venda excluída recebe a flag `deleted: true`. O valor sai do faturamento líquido, mas permanece no banco para auditoria, informando o `userId` de quem anulou e o `timestamp`.
-*   **Criptografia AES-256**: Através do `services/cryptoService.ts`, os dados podem ser encapsulados em um blob criptografado antes de subir para a nuvem, garantindo privacidade total.
-
----
-
-## 📈 Inteligência Financeira e de Negócio
-
-*   **Fechamento Cego**: O sistema não informa ao operador quanto "deveria" ter no caixa. Ele exige a contagem física (`actualCashCounted`) e gera o relatório de `cashDifference`.
-*   **Curva ABC**: O relatório de produtos gera automaticamente um ranking por faturamento bruto, permitindo que o dono identifique os itens de maior margem e saída.
-*   **Heatmap Operacional**: Análise de volume de comandas por hora para otimização de escala de garçons.
+### Gestão de Concorrência (SmartMerge)
+Para evitar que múltiplos garçons editando a mesma mesa causem perda de dados, o sistema implementa um **Grace Period de 120 segundos**. Durante este período, o terminal local tem autoridade soberana sobre o servidor para aquela chave específica de mesa.
 
 ---
 
-## 🗺️ Visão 4.0 (Escalabilidade)
+## 🗄️ 2. Dicionário de Dados (NoSQL Schemas)
 
-O código atual foi escrito seguindo o padrão de **Tenancy**.
-*   **Próximo Passo**: Migrar o prefixo fixo `/data` no Firebase para um roteamento dinâmico baseado no `barId` logado.
-*   **Admin Hub**: Criação de um dashboard unificado para donos de redes de bares consultarem o lucro líquido total em um único clique.
+### Nó: `/sales` (Histórico Imutável)
+| Campo | Tipo | Descrição |
+| :--- | :--- | :--- |
+| `id` | UUID | Identificador único da transação. |
+| `timestamp` | EPOCH | Data/Hora da venda (milissegundos). |
+| `deleted` | BOOLEAN | Flag de auditoria (Anulação Lógica). |
+| `userId` | STRING | Referência ao colaborador que operou a venda. |
+
+### Nó: `/shifts` (Controle de Jornada)
+O sistema utiliza **Conferência Cega**. O operador não sabe quanto o sistema espera que ele tenha em caixa.
+- `openingCashChange`: Fundo de troco inicial.
+- `actualCashCounted`: Valor real contato pelo humano no fechamento.
+- `cashDifference`: O desvio calculado entre o sistema e o real (Quebra de Caixa).
 
 ---
-*Este documento reflete fielmente a implementação técnica contida no repositório.*
+
+## 🔐 3. Segurança RBAC (Role Based Access Control)
+
+A segurança é granulada por chaves de permissão injetadas no token de sessão:
+- `delete_sale`: Permite anular vendas (ativa flag `deleted`).
+- `full_reset`: Comando administrativo para zerar banco de dados.
+- `manage_backup`: Permite sincronização externa via GitHub Gists API.
+
+---
+
+## 📈 4. Inteligência de Negócio
+
+O motor de relatórios utiliza **Reducers** em tempo real para calcular:
+- **Curva ABC:** Ranking de lucratividade vs popularidade dos itens.
+- **Hourly Heatmap:** Mapa de calor de volume de pedidos por hora (0-23h).
+- **Pendura Threshold:** Monitoramento de risco de crédito global (Fiados).
+
+---
+*Documento autogerado para fins de auditoria técnica.*
