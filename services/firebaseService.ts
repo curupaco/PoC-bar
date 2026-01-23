@@ -23,7 +23,6 @@ export interface AppFullData {
 }
 
 // Helper para garantir que objetos retornados como {0: {}, 1: {}} virem Arrays corretamente
-// ADIÇÃO: .filter(Boolean) remove entradas 'null' que o Firebase pode deixar se um índice for deletado
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data.filter(Boolean);
