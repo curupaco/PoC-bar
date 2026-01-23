@@ -28,7 +28,15 @@ export type UserPermission =
   | 'clear_fiado' 
   | 'full_reset' 
   | 'manage_backup' 
-  | 'help_view';
+  | 'help_view'
+  | 'manage_units'; // NOVA PERMISSÃO
+
+export interface Unit {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: number;
+}
 
 export interface User {
   id: string;
@@ -36,6 +44,7 @@ export interface User {
   password: string;
   displayName: string;
   permissions: UserPermission[];
+  allowedUnits?: string[]; // IDs das unidades permitidas
 }
 
 export interface Shift {
@@ -120,7 +129,7 @@ export interface Sale {
   deletedBy?: string;
 }
 
-export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
+export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help' | 'units';
 export type Theme = 'light' | 'dark';
 
 export const formatCurrency = (value: number) => {

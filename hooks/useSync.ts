@@ -3,7 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { saveToFirebase, loadFromFirebase, getFirebaseToken } from '../services/firebaseService';
 import { smartMergeTabs, mergeInitialData, isEqual } from '../utils/syncMerger';
 import { SyncQueue } from '../utils/syncQueue';
-import { Product, Sale, Tab, User, Shift, ModifierGroup } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit } from '../types';
 
 interface SyncProps {
   products: Product[];
@@ -20,9 +20,12 @@ interface SyncProps {
   setUsers: (data: User[]) => void;
   shifts: Shift[];
   setShifts: (data: Shift[]) => void;
+  units: Unit[];
+  setUnits: (data: Unit[]) => void;
   penduraThreshold: number;
   setPenduraThreshold: (val: number) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'pending' | 'success' | 'error' | 'offline') => void;
+  activeUnitId: string | null;
   config: {
     url: string;
     key: string;
@@ -41,8 +44,10 @@ export const useSync = ({
   openTabs, setOpenTabs,
   users, setUsers,
   shifts, setShifts,
+  units, setUnits,
   penduraThreshold, setPenduraThreshold,
   setDbStatus,
+  activeUnitId,
   config
 }: SyncProps) => {
   const isInitialLoadDone = useRef(false);
@@ -52,13 +57,13 @@ export const useSync = ({
   
   // Refs para acesso atualizado dentro dos loops (Heartbeat/Queue)
   const latestData = useRef({
-    products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts
+    products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, units
   });
 
   useEffect(() => {
-    latestData.current = { products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts };
+    latestData.current = { products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, units };
     lastLocalUpdate.current = Date.now();
-  }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts]);
+  }, [products, modifierGroups, categoryModifiers, sales, openTabs, users, shifts, units]);
   
   // Controle de Autenticação
   const tokenCache = useRef<{ value: string; expiresAt: number } | null>(null);
@@ -67,6 +72,25 @@ export const useSync = ({
   const isProcessingQueue = useRef(false);
 
   const { url, key, email, pass, masterKey, allPerms } = config;
+
+  // Helper para construir caminhos baseados na unidade ativa
+  const getPath = useCallback((node: string) => {
+    // Dados Globais
+    if (['users', 'units', 'config'].includes(node)) return node;
+    
+    // Dados da Unidade
+    if (activeUnitId) return `data/units/${activeUnitId}/${node}`;
+    
+    // Fallback (apenas para transição ou erros)
+    return `data/root/${node}`;
+  }, [activeUnitId]);
+
+  // Helper para localStorage Key com namespace
+  const getStorageKey = useCallback((key: string) => {
+     if (['btq_users_backup', 'btq_units_backup', 'btq_config_bk'].includes(key)) return key;
+     if (activeUnitId) return `${key}_${activeUnitId}`;
+     return key;
+  }, [activeUnitId]);
 
   // --- 1. Autenticação (Mantida) ---
   const getValidToken = useCallback(async () => {
@@ -99,44 +123,52 @@ export const useSync = ({
     return promise;
   }, [email, pass, key]);
 
-  // --- 2. Carga Inicial (Refatorada com syncMerger) ---
+  // --- 2. Carga Inicial ---
   const fetchInitialData = useCallback(async () => {
+    // Se não tem unidade selecionada, carregamos apenas o global (Users e Units)
+    const loadOnlyGlobal = !activeUnitId;
+
     setDbStatus('loading');
     try {
       const token = await getValidToken();
       
-      const results = await Promise.allSettled([
-        loadFromFirebase(url, undefined, token, 'products'),
-        loadFromFirebase(url, undefined, token, 'modifierGroups'),
-        loadFromFirebase(url, undefined, token, 'categoryModifiers'),
-        loadFromFirebase(url, undefined, token, 'sales'),
-        loadFromFirebase(url, undefined, token, 'openTabs'),
-        loadFromFirebase(url, undefined, token, 'users'),
-        loadFromFirebase(url, undefined, token, 'shifts'),
-        loadFromFirebase(url, undefined, token, 'config'),
-      ]);
+      // Carregar Globais
+      const pUsers = loadFromFirebase(url, undefined, token, 'users');
+      const pUnits = loadFromFirebase(url, undefined, token, 'units');
+      // Tentar carregar unidades legadas se units retornar vazio
+      const [usersData, unitsData] = await Promise.all([pUsers, pUnits]);
 
-      const getData = (index: number) => results[index].status === 'fulfilled' ? (results[index] as PromiseFulfilledResult<any>).value : null;
-
-      // Tentar carregar legado apenas se falhar o carregamento granular
-      let legacyData: any = null;
-      if (!getData(0) && !getData(3)) {
-         try { legacyData = await loadFromFirebase(url, masterKey, token); } catch (e) {}
-      }
-
-      setProducts(mergeInitialData(getData(0), legacyData, 'products', 'btq_products_bk', []));
-      setModifierGroups(mergeInitialData(getData(1), legacyData, 'modifierGroups', 'btq_modgroups_bk', []));
-      setCategoryModifiers(mergeInitialData(getData(2), legacyData, 'categoryModifiers', 'btq_catmods_bk', {}));
-      setSales(mergeInitialData(getData(3), legacyData, 'sales', 'btq_sales_bk', []));
-      setOpenTabs(mergeInitialData(getData(4), legacyData, 'openTabs', 'btq_tabs_backup', []));
-      setShifts(mergeInitialData(getData(6), legacyData, 'shifts', 'btq_shifts_backup', []));
-      
-      const usersData = mergeInitialData(getData(5), legacyData, 'users', 'btq_users_backup', []);
       const adminUser = { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: allPerms };
-      setUsers(!usersData.some((u: User) => u.username === 'admin') ? [adminUser, ...usersData] : usersData);
+      setUsers(!usersData || !usersData.some((u: User) => u.username === 'admin') ? [adminUser, ...(usersData || [])] : usersData);
+      
+      // Converte objeto de units em array se necessário
+      const unitsArray = unitsData ? (Array.isArray(unitsData) ? unitsData : Object.values(unitsData)) : [];
+      setUnits(unitsArray);
 
-      const configData = mergeInitialData(getData(7), legacyData, 'config', 'btq_config_bk', {});
-      if (configData && typeof configData.penduraThreshold === 'number') setPenduraThreshold(configData.penduraThreshold);
+      if (!loadOnlyGlobal) {
+        // Carregar Dados da Unidade Específica
+        const results = await Promise.allSettled([
+          loadFromFirebase(url, undefined, token, getPath('products')),
+          loadFromFirebase(url, undefined, token, getPath('modifierGroups')),
+          loadFromFirebase(url, undefined, token, getPath('categoryModifiers')),
+          loadFromFirebase(url, undefined, token, getPath('sales')),
+          loadFromFirebase(url, undefined, token, getPath('openTabs')),
+          loadFromFirebase(url, undefined, token, getPath('shifts')),
+          loadFromFirebase(url, undefined, token, getPath('config')),
+        ]);
+
+        const getData = (index: number) => results[index].status === 'fulfilled' ? (results[index] as PromiseFulfilledResult<any>).value : null;
+
+        setProducts(mergeInitialData(getData(0), null, 'products', getStorageKey('btq_products_bk'), []));
+        setModifierGroups(mergeInitialData(getData(1), null, 'modifierGroups', getStorageKey('btq_modgroups_bk'), []));
+        setCategoryModifiers(mergeInitialData(getData(2), null, 'categoryModifiers', getStorageKey('btq_catmods_bk'), {}));
+        setSales(mergeInitialData(getData(3), null, 'sales', getStorageKey('btq_sales_bk'), []));
+        setOpenTabs(mergeInitialData(getData(4), null, 'openTabs', getStorageKey('btq_tabs_backup'), []));
+        setShifts(mergeInitialData(getData(5), null, 'shifts', getStorageKey('btq_shifts_backup'), []));
+        
+        const configData = mergeInitialData(getData(6), null, 'config', 'btq_config_bk', {});
+        if (configData && typeof configData.penduraThreshold === 'number') setPenduraThreshold(configData.penduraThreshold);
+      }
 
       setDbStatus('success');
 
@@ -147,66 +179,84 @@ export const useSync = ({
          const d = localStorage.getItem(key);
          if (d) setter(JSON.parse(d));
       };
-      loadLocal('btq_products_bk', setProducts);
-      loadLocal('btq_sales_bk', setSales);
-      loadLocal('btq_shifts_backup', setShifts);
-      loadLocal('btq_tabs_backup', setOpenTabs);
+      
       loadLocal('btq_users_backup', setUsers);
+      loadLocal('btq_units_backup', setUnits);
+      
+      if (!loadOnlyGlobal) {
+        loadLocal(getStorageKey('btq_products_bk'), setProducts);
+        loadLocal(getStorageKey('btq_sales_bk'), setSales);
+        loadLocal(getStorageKey('btq_shifts_backup'), setShifts);
+        loadLocal(getStorageKey('btq_tabs_backup'), setOpenTabs);
+      }
       setDbStatus('offline');
     } finally { 
       setTimeout(() => { isInitialLoadDone.current = true; }, 500);
     }
-  }, [url, masterKey, allPerms, getValidToken, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setPenduraThreshold, setDbStatus]);
+  }, [url, allPerms, getValidToken, activeUnitId, getPath, getStorageKey, setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, setUsers, setShifts, setUnits, setPenduraThreshold, setDbStatus]);
 
 
-  // --- 3. Heartbeat (Refatorado com smartMergeTabs) ---
+  // --- 3. Heartbeat ---
   useEffect(() => {
-    if (!url || authBlocked.current) return;
+    if (!url || authBlocked.current || !activeUnitId) return;
 
     const heartbeat = setInterval(async () => {
-      // Se estamos enviando dados (Queue Active), evitamos baixar para não gerar conflito de versão
       if (isProcessingQueue.current || !isInitialLoadDone.current) return;
-      
-      // Grace Period (Edição Ativa): Se o usuário mexeu nos últimos 5s, não baixa
       if (Date.now() - lastLocalUpdate.current < 5000) return;
 
       try {
         const token = await getValidToken();
-        const [serverTabs, serverSales, serverShifts] = await Promise.all([
-           loadFromFirebase(url, undefined, token, 'openTabs'),
-           loadFromFirebase(url, undefined, token, 'sales'),
-           loadFromFirebase(url, undefined, token, 'shifts')
+        const [serverTabs, serverSales, serverShifts, serverUsers, serverUnits] = await Promise.all([
+           loadFromFirebase(url, undefined, token, getPath('openTabs')),
+           loadFromFirebase(url, undefined, token, getPath('sales')),
+           loadFromFirebase(url, undefined, token, getPath('shifts')),
+           loadFromFirebase(url, undefined, token, 'users'), // Global
+           loadFromFirebase(url, undefined, token, 'units')  // Global
         ]);
 
-        // Double Check: Se o usuário mexeu ENQUANTO baixava, aborta
         if (Date.now() - lastLocalUpdate.current < 5000) return;
 
         // Smart Merge Mesas
         const { mergedTabs, hasChanges } = smartMergeTabs(serverTabs, latestData.current.openTabs);
         if (hasChanges) {
            setOpenTabs(mergedTabs);
-           localStorage.setItem('btq_tabs_backup', JSON.stringify(mergedTabs));
+           localStorage.setItem(getStorageKey('btq_tabs_backup'), JSON.stringify(mergedTabs));
         }
 
-        // Merge Simples para Vendas e Turnos (Server Authority)
         if (serverSales && !isEqual(serverSales, latestData.current.sales)) {
            setSales(serverSales);
-           localStorage.setItem('btq_sales_bk', JSON.stringify(serverSales));
+           localStorage.setItem(getStorageKey('btq_sales_bk'), JSON.stringify(serverSales));
         }
 
         if (serverShifts && !isEqual(serverShifts, latestData.current.shifts)) {
            setShifts(serverShifts);
-           localStorage.setItem('btq_shifts_backup', JSON.stringify(serverShifts));
+           localStorage.setItem(getStorageKey('btq_shifts_backup'), JSON.stringify(serverShifts));
+        }
+        
+        // Globais
+        if (serverUsers && !isEqual(serverUsers, latestData.current.users)) {
+            // Preservar admin local se não vier do server
+            const finalUsers = serverUsers.some((u:any) => u.username === 'admin') ? serverUsers : [...serverUsers, latestData.current.users.find(u => u.username === 'admin')].filter(Boolean);
+            setUsers(finalUsers);
+            localStorage.setItem('btq_users_backup', JSON.stringify(finalUsers));
+        }
+        
+        if (serverUnits) {
+            const unitsArray = Array.isArray(serverUnits) ? serverUnits : Object.values(serverUnits);
+            if(!isEqual(unitsArray, latestData.current.units)) {
+                setUnits(unitsArray);
+                localStorage.setItem('btq_units_backup', JSON.stringify(unitsArray));
+            }
         }
 
       } catch (e) { /* Silent fail */ }
     }, 4000); 
 
     return () => clearInterval(heartbeat);
-  }, [url, getValidToken, setOpenTabs, setSales, setShifts]);
+  }, [url, getValidToken, getPath, getStorageKey, setOpenTabs, setSales, setShifts, setUsers, setUnits, activeUnitId]);
 
 
-  // --- 4. Queue Processor (Novo - Processamento em Background) ---
+  // --- 4. Queue Processor ---
   useEffect(() => {
     if (!url || authBlocked.current) return;
 
@@ -220,16 +270,18 @@ export const useSync = ({
       setDbStatus('pending');
 
       const pendingItems = SyncQueue.getPending();
-      // Processa um por vez para garantir ordem e evitar flood
       const item = pendingItems[0]; 
 
       try {
         const token = await getValidToken();
-        await saveToFirebase(url, item.data, undefined, token, item.node);
+        // Se a node for global, usa caminho absoluto, senão usa getPath (relativo à unit)
+        // O SyncQueue armazena o nome lógico da node ('sales', 'users'). Precisamos converter.
+        const path = getPath(item.node);
+        
+        await saveToFirebase(url, item.data, undefined, token, path);
         
         SyncQueue.dequeue(item.node);
         
-        // Se a fila acabou, sucesso
         if (!SyncQueue.hasPending()) {
           setDbStatus('success');
         }
@@ -246,67 +298,72 @@ export const useSync = ({
       } finally {
         isProcessingQueue.current = false;
       }
-    }, 2000); // Tenta processar a fila a cada 2s
+    }, 2000);
 
     return () => clearInterval(queueProcessor);
-  }, [url, getValidToken, setDbStatus]);
+  }, [url, getValidToken, setDbStatus, getPath]);
 
 
-  // --- 5. Trigger de Sincronização (Agora apenas enfileira) ---
+  // --- 5. Trigger de Sincronização ---
   const syncNode = useCallback((nodeName: string, data: any) => {
     if (!isInitialLoadDone.current) return;
     
     lastLocalUpdate.current = Date.now();
     
-    // Backup Local Imediato (Safety Net)
-    if (nodeName === 'shifts') localStorage.setItem('btq_shifts_backup', JSON.stringify(data));
-    if (nodeName === 'openTabs') localStorage.setItem('btq_tabs_backup', JSON.stringify(data));
-    if (nodeName === 'sales') localStorage.setItem('btq_sales_bk', JSON.stringify(data));
-    if (nodeName === 'products') localStorage.setItem('btq_products_bk', JSON.stringify(data));
-    if (nodeName === 'users') localStorage.setItem('btq_users_backup', JSON.stringify(data));
+    // Backup Local Imediato com Namespace
+    const storageKey = getStorageKey(nodeName === 'users' || nodeName === 'units' ? `btq_${nodeName}_backup` : (
+        nodeName === 'shifts' ? 'btq_shifts_backup' : 
+        nodeName === 'openTabs' ? 'btq_tabs_backup' : 
+        nodeName === 'sales' ? 'btq_sales_bk' : 
+        nodeName === 'products' ? 'btq_products_bk' : `btq_${nodeName}_bk`
+    ));
+    
+    localStorage.setItem(storageKey, JSON.stringify(data));
 
     if (authBlocked.current) {
       setDbStatus('offline');
       return;
     }
 
-    // Adiciona na fila e deixa o QueueProcessor lidar com o envio
     SyncQueue.enqueue(nodeName, data);
     setDbStatus('pending');
 
-  }, [setDbStatus]);
+  }, [setDbStatus, getStorageKey]);
 
   // -- Debouncers de Trigger --
   useEffect(() => {
+    if (!activeUnitId) return;
     const timer = setTimeout(() => {
       syncNode('products', products);
       syncNode('modifierGroups', modifierGroups);
       syncNode('categoryModifiers', categoryModifiers);
     }, 2000);
     return () => clearTimeout(timer);
-  }, [products, modifierGroups, categoryModifiers, syncNode]);
+  }, [products, modifierGroups, categoryModifiers, syncNode, activeUnitId]);
 
   useEffect(() => {
+    if (!activeUnitId) return;
     const timer = setTimeout(() => { syncNode('sales', sales); }, 2000); 
     return () => clearTimeout(timer);
-  }, [sales, syncNode]);
+  }, [sales, syncNode, activeUnitId]);
 
   useEffect(() => {
-    // Mesas e Turnos continuam com debounce rápido para UI responsiva
+    if (!activeUnitId) return;
     const timer = setTimeout(() => {
       syncNode('openTabs', openTabs);
       syncNode('shifts', shifts);
     }, 300); 
     return () => clearTimeout(timer);
-  }, [openTabs, shifts, syncNode]);
+  }, [openTabs, shifts, syncNode, activeUnitId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       syncNode('users', users);
-      syncNode('config', { penduraThreshold });
+      syncNode('units', units);
+      if (activeUnitId) syncNode('config', { penduraThreshold });
     }, 2000);
     return () => clearTimeout(timer);
-  }, [users, penduraThreshold, syncNode]);
+  }, [users, units, penduraThreshold, syncNode, activeUnitId]);
 
   return { fetchInitialData, isInitialLoadDone };
 };

@@ -1,10 +1,11 @@
 
 import React, { useState } from 'react';
-import { User, UserPermission } from '../types';
+import { User, UserPermission, Unit } from '../types';
 import { hashPassword } from '../services/cryptoService';
 
 interface UserManagementProps {
   users: User[];
+  units?: Unit[]; // Opcional para manter compatibilidade se units não carregar
   onUpdateUsers: (users: User[]) => void;
 }
 
@@ -54,19 +55,21 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
     permissions: [
       { id: 'delete_sale', label: 'Anular Vendas', desc: 'Pode cancelar registros de faturamento.' },
       { id: 'export_report', label: 'Exportar Dados', desc: 'Permite salvar relatórios em PNG/PDF.' },
+      { id: 'manage_units', label: 'Gestão de Franquia', desc: 'Cria e edita unidades/bares da rede.' },
       { id: 'manage_backup', label: 'Gestão de Backup', desc: 'Acesso a backups externos (GitHub).' },
       { id: 'full_reset', label: 'Reset de Fábrica', desc: 'APAGA TODOS OS DADOS DO SISTEMA.' },
     ]
   }
 ];
 
-const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers }) => {
+const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUpdateUsers }) => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [selectedPerms, setSelectedPerms] = useState<UserPermission[]>([]);
+  const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
 
   const resetForm = () => {
@@ -74,6 +77,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
     setPassword('');
     setDisplayName('');
     setSelectedPerms(['pos', 'dashboard', 'help_view']);
+    setSelectedUnits([]);
     setEditingUser(null);
     setIsAdding(false);
   };
@@ -90,7 +94,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
       username: username.toLowerCase().trim(),
       password: finalPassword,
       displayName: displayName.trim(),
-      permissions: selectedPerms
+      permissions: selectedPerms,
+      allowedUnits: selectedUnits
     };
 
     onUpdateUsers(editingUser ? users.map(u => u.id === editingUser.id ? newUser : u) : [...users, newUser]);
@@ -100,6 +105,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
   const togglePerm = (perm: UserPermission) => {
     setSelectedPerms(prev => prev.includes(perm) ? prev.filter(p => p !== perm) : [...prev, perm]);
   };
+
+  const toggleUnit = (unitId: string) => {
+    setSelectedUnits(prev => prev.includes(unitId) ? prev.filter(id => id !== unitId) : [...prev, unitId]);
+  };
+
+  const activeUnits = units.filter(u => u.isActive);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-32">
@@ -139,6 +150,28 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                 <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-red-500 outline-none font-black transition-all" placeholder="ex: Pedro Santos" />
               </div>
             </div>
+
+            {/* SELEÇÃO DE UNIDADES (Multibar) */}
+            {activeUnits.length > 0 && username !== 'admin' && (
+              <div className="space-y-4">
+                 <div className="flex items-center gap-4">
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Acesso às Unidades</span>
+                    <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
+                 </div>
+                 <div className="flex flex-wrap gap-3 justify-center">
+                    {activeUnits.map(unit => (
+                       <button 
+                          key={unit.id}
+                          onClick={() => toggleUnit(unit.id)}
+                          className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 transition-all ${selectedUnits.includes(unit.id) ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-slate-50 dark:bg-slate-950 text-slate-400 border-transparent hover:border-slate-200'}`}
+                       >
+                          {unit.name}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+            )}
 
             <div className="space-y-8">
               <div className="flex items-center gap-4">
@@ -210,6 +243,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                     setPassword(user.password);
                     setDisplayName(user.displayName);
                     setSelectedPerms(user.permissions);
+                    setSelectedUnits(user.allowedUnits || []);
                     setIsAdding(true);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                  }} className="p-3 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
@@ -230,10 +264,18 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, onUpdateUsers })
                  <button onClick={() => setVisiblePasswords(p => ({...p, [user.id]: !p[user.id]}))} className="text-[8px] font-black text-blue-500 uppercase">{visiblePasswords[user.id] ? 'Ocultar' : 'Revelar'}</button>
               </div>
               <div className="flex flex-wrap gap-1">
-                 {user.permissions.slice(0, 4).map(p => (
-                   <span key={p} className="text-[7px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-400">{p}</span>
-                 ))}
-                 {user.permissions.length > 4 && <span className="text-[7px] font-black uppercase bg-red-100 text-red-600 px-2 py-0.5 rounded">+{user.permissions.length - 4}</span>}
+                 {user.username === 'admin' ? (
+                   <span className="text-[7px] font-black uppercase bg-red-100 text-red-600 px-2 py-0.5 rounded">ACESSO TOTAL</span>
+                 ) : (
+                   <>
+                      {user.allowedUnits && user.allowedUnits.length > 0 ? (
+                        <span className="text-[7px] font-black uppercase bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded">{user.allowedUnits.length} UNIDADES</span>
+                      ) : (
+                        <span className="text-[7px] font-black uppercase bg-slate-100 text-slate-400 px-2 py-0.5 rounded">SEM ACESSO</span>
+                      )}
+                      <span className="text-[7px] font-black uppercase bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-400">{user.permissions.length} PERMISSÕES</span>
+                   </>
+                 )}
               </div>
             </div>
           </div>
