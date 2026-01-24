@@ -23,7 +23,9 @@ O sistema agora opera em modo Multi-Tenant lógico. Os dados são segregados por
 2. **Seleção:**
    - Se o usuário tem acesso a **apenas 1 unidade**, o sistema faz o *bypass* e entra direto (Impacto Zero na UX).
    - Se tem acesso a **múltiplas** (ou é Admin), exibe a tela "Onde vamos trabalhar hoje?".
-3. **Contexto:** O `activeUnitId` é persistido no `localStorage` e injetado em todas as chamadas do hook `useSync`.
+3. **Gestão de Unidades:**
+   - A criação e suspensão de unidades é feita via **Ajustes > Gestão de Rede & Franquia**.
+   - Requer permissão `manage_units`.
 
 ---
 
@@ -56,6 +58,9 @@ O sistema de permissões foi migrado de "Papéis Fixos" para "Lista de Controle 
 
 ### Gestão de Unidades
 No cadastro de usuário, é possível definir o array `allowedUnits`. Se vazio, o usuário não loga (exceto Admin).
+
+### Segurança de Backup
+As opções de Download/Upload de backup na tela de Ajustes são protegidas pela permissão `manage_backup`. Usuários sem essa permissão não visualizam os botões de exportação de dados.
 
 ---
 
@@ -95,4 +100,3 @@ O hook `useSync` gerencia a consistência dos dados.
 - **Feedback:** O botão de exclamação no topo abre a modal de feedback.
 - **Logs:** Erros de API são logados no console com prefixo `[Sync]` ou `[Auth]`.
 - **Reset:** Em caso de corrupção local, o Admin pode forçar um `Full Reset` em *Ajustes*, que limpa o banco da unidade ativa.
-

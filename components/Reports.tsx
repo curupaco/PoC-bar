@@ -25,7 +25,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
   
-  // FIX ITEM 7: Uso de formatDateToISO para garantir formato YYYY-MM-DD local sem depender de 'en-CA'
   const [startDate, setStartDate] = useState(() => formatDateToISO(new Date()));
   const [endDate, setEndDate] = useState(() => formatDateToISO(new Date()));
   const [periodLabel, setPeriodLabel] = useState('HOJE');
@@ -38,7 +37,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }
   }, [shifts, selectedShiftId]);
 
-  // UX FIX: Scroll para o topo ao mudar de aba
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeCategory]);
@@ -57,7 +55,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const setPreset = (type: 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS') => {
     const now = new Date();
-    // Ajustar para 00:00:00 da data local para cálculo de presets
     let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
@@ -79,11 +76,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   const filteredSales = useMemo<Sale[]>(() => {
-    // Parsing robusto de data para evitar NaN no Safari/iOS
     const safeParse = (dateStr: string, hour: number, min: number, sec: number) => {
       const parts = dateStr.split('-');
       const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Mês é 0-indexed em JS
+      const month = parseInt(parts[1], 10) - 1;
       const day = parseInt(parts[2], 10);
       return new Date(year, month, day, hour, min, sec).getTime();
     };
@@ -91,7 +87,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const startTs = safeParse(startDate, 0, 0, 0);
     const endTs = safeParse(endDate, 23, 59, 59);
     
-    // Filtrar vendas excluídas nos relatórios
     return (sales || []).filter((s: Sale) => {
       if (s.deleted) return false;
       return s.timestamp >= startTs && s.timestamp <= endTs;
@@ -100,34 +95,58 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const reportData = useMemo(() => {
     const selectedShift = (shifts || []).find(sh => sh.id === selectedShiftId);
-    // Filtrar vendas excluídas no fechamento de turno selecionado
     const shiftSales = (sales || []).filter((s: Sale) => s.shiftId === selectedShiftId && !s.deleted);
 
-    // FINANCEIRO (Período Selecionado)
+    // FINANCEIRO (Período Selecionado) - Suporta Split Payment
     const totalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, { count: number, total: number }>, method) => {
       acc[method] = { count: 0, total: 0 };
       return acc;
     }, {} as Record<string, { count: number, total: number }>);
 
     filteredSales.forEach((sale: Sale) => {
-      if (totalsByMethod[sale.paymentMethod]) {
+      if (sale.payments) {
+        sale.payments.forEach(p => {
+           if (totalsByMethod[p.method]) {
+             totalsByMethod[p.method].total += p.amount;
+             totalsByMethod[p.method].count += 1; // Contagem aproximada
+           }
+        });
+      } else if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
         totalsByMethod[sale.paymentMethod].total += sale.total;
       }
     });
 
-    const grandTotal = filteredSales.filter(s => s.paymentMethod !== PaymentMethod.PENDURA).reduce((acc: number, s: Sale) => acc + s.total, 0);
+    const grandTotal = Object.values(totalsByMethod)
+      .filter((_, idx) => Object.keys(totalsByMethod)[idx] !== PaymentMethod.PENDURA)
+      .reduce((acc, curr) => acc + curr.total, 0);
+
     const operationalCount = filteredSales.filter(s => !s.items?.some(i => i.productId === 'quitacao')).length;
     const avgTicket = operationalCount > 0 ? grandTotal / operationalCount : 0;
 
-    // TURNO (Fechamento)
+    // TURNO (Fechamento) - Suporta Split Payment
     const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, number>, method) => {
-      acc[method] = shiftSales.filter((s: Sale) => s.paymentMethod === method).reduce((sum: number, s: Sale) => sum + s.total, 0);
+      acc[method] = 0;
       return acc;
     }, {} as Record<string, number>);
-    const shiftTotalRevenue = shiftSales.filter(s => s.paymentMethod !== PaymentMethod.PENDURA).reduce((acc: number, s: Sale) => acc + s.total, 0);
 
-    // EQUIPE (Período)
+    shiftSales.forEach((s: Sale) => {
+       if (s.payments) {
+          s.payments.forEach(p => {
+             if (shiftTotalsByMethod[p.method] !== undefined) {
+                shiftTotalsByMethod[p.method] += p.amount;
+             }
+          });
+       } else if (shiftTotalsByMethod[s.paymentMethod] !== undefined) {
+          shiftTotalsByMethod[s.paymentMethod] += s.total;
+       }
+    });
+
+    const shiftTotalRevenue = Object.entries(shiftTotalsByMethod)
+       .filter(([method]) => method !== PaymentMethod.PENDURA)
+       .reduce((acc, [_, total]) => acc + total, 0);
+
+    // EQUIPE
     const teamStats = (users || []).map(u => {
       const uSales = filteredSales.filter((s: Sale) => s.userId === u.id);
       return {
@@ -137,7 +156,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       };
     }).filter(u => u.count > 0 || u.total > 0).sort((a, b) => b.total - a.total);
 
-    // PRODUTOS (Período)
+    // PRODUTOS
     const productStats = filteredSales.flatMap((s: Sale) => s.items || []).reduce((acc: Record<string, { name: string, qty: number, total: number }>, item) => {
       if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
       acc[item.productName].qty += item.quantity;
@@ -147,21 +166,32 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     const topProducts = (Object.values(productStats) as { name: string, qty: number, total: number }[]).sort((a, b) => b.total - a.total);
 
-    // OPERACIONAL (Fluxo Horário no Período)
+    // OPERACIONAL
     const hourlyMap = Array.from({ length: 24 }).map((_, i) => ({ hour: `${i}h`, count: 0 }));
     filteredSales.forEach((s: Sale) => {
       const h = new Date(s.timestamp).getHours();
       hourlyMap[h].count += 1;
     });
 
-    // PENDURAS (Saldo Global Histórico)
+    // PENDURAS (Saldo Global Histórico) - Precisa somar apenas a parte pendura se for split
     const penduraDebts = (sales || []).reduce((acc: Record<string, number>, s: Sale) => {
-      // Ignorar vendas excluídas no cálculo de dívida global
       if (s.deleted) return acc;
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
-      if (s.paymentMethod === PaymentMethod.PENDURA) acc[name] = (acc[name] || 0) + s.total;
+      
+      let debtAmount = 0;
+      if (s.payments) {
+         const penduraPart = s.payments.find(p => p.method === PaymentMethod.PENDURA);
+         if (penduraPart) debtAmount = penduraPart.amount;
+      } else if (s.paymentMethod === PaymentMethod.PENDURA) {
+         debtAmount = s.total;
+      }
+
+      if (debtAmount > 0) acc[name] = (acc[name] || 0) + debtAmount;
+      
+      // Quitações diminuem a dívida
       if (s.items?.some(item => item.productId === 'quitacao')) acc[name] = (acc[name] || 0) - s.total;
+      
       return acc;
     }, {} as Record<string, number>);
 
@@ -181,7 +211,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   }, [reportData.activePenduras]);
 
   const renderActiveReport = () => {
-    // Se não houver vendas, mostrar placeholder customizado (exceto Penduras que é histórico global)
     if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO') {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-black uppercase tracking-[0.3em] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in italic">
@@ -231,7 +260,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         </div>
       )}
 
-      {/* FILTROS DE PERÍODO */}
       <div className="flex flex-col items-center gap-6">
         <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
           {(['HOJE', 'ONTEM', 'SEMANA', 'MÊS'] as const).map(type => (
@@ -244,7 +272,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         </div>
       </div>
 
-      {/* SELETOR DE CATEGORIA */}
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
         <div className="flex flex-wrap justify-center bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1">
           {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => {
@@ -270,7 +297,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         </div>
       </div>
       
-      {/* RENDERIZAÇÃO ATIVA */}
       <div className="min-h-[500px]">{renderActiveReport()}</div>
     </div>
   );

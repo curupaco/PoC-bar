@@ -24,46 +24,79 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const shiftSales = useMemo(() => {
     if (!activeShift) return [];
-    // Ignorar vendas logicamente excluídas no faturamento do turno (comportamento mantido para integridade financeira)
     return (sales || []).filter(s => s.shiftId === activeShift.id && !s.deleted);
   }, [activeShift, sales]);
 
-  // INÍCIO DA ALTERAÇÃO: Cálculo de Vendas Anuladas para Auditoria
   const deletedSalesTotal = useMemo(() => {
     if (!activeShift) return 0;
     return (sales || [])
       .filter(s => s.shiftId === activeShift.id && s.deleted)
       .reduce((acc, s) => acc + (s.total || 0), 0);
   }, [activeShift, sales]);
-  // FIM DA ALTERAÇÃO
 
   const totalSoldInShift = shiftSales.reduce((acc, s) => acc + (s.total || 0), 0);
   
+  // LÓGICA DE MOVIMENTAÇÃO DE VENDAS (Dinheiro e Quitações)
   const cashMovements = useMemo(() => {
-    const cashSalesOnly = shiftSales
-      .filter(s => s.paymentMethod === PaymentMethod.CASH && !s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc, s) => acc + s.total, 0);
+    let salesTotal = 0;
+    let settlementsTotal = 0;
 
-    const cashSettlementsOnly = shiftSales
-      .filter(s => s.paymentMethod === PaymentMethod.CASH && s.items?.some(i => i.productId === 'quitacao'))
-      .reduce((acc, s) => acc + s.total, 0);
+    shiftSales.forEach(s => {
+       // Cenário 1: Venda com Pagamentos Múltiplos (Split Payment)
+       if (s.payments && s.payments.length > 0) {
+          s.payments.forEach(p => {
+             if (p.method === PaymentMethod.CASH) {
+                // Se o item for "quitacao", conta como recebimento de dívida, senão é venda normal
+                if (s.items?.some(i => i.productId === 'quitacao')) {
+                   settlementsTotal += p.amount;
+                } else {
+                   salesTotal += p.amount;
+                }
+             }
+          });
+       } 
+       // Cenário 2: Venda Simples (Legado ou Pagamento Único)
+       else {
+          if (s.paymentMethod === PaymentMethod.CASH) {
+             if (s.items?.some(i => i.productId === 'quitacao')) {
+                settlementsTotal += s.total;
+             } else {
+                salesTotal += s.total;
+             }
+          }
+       }
+    });
 
     return {
-      sales: cashSalesOnly,
-      settlements: cashSettlementsOnly,
-      total: cashSalesOnly + cashSettlementsOnly
+      sales: salesTotal,
+      settlements: settlementsTotal,
+      total: salesTotal + settlementsTotal
     };
   }, [shiftSales]);
 
-  // Lógica de Transferências: Diferença entre o saldo atual e o de abertura
+  // LÓGICA DE TRANSFERÊNCIAS INTERNAS (Sangrias e Suprimentos)
   const internalTransfers = useMemo(() => {
-    if (!activeShift) return 0;
-    const opening = activeShift.openingCashChange ?? activeShift.cashChange;
-    return activeShift.cashChange - opening;
+    if (!activeShift || !activeShift.transactions) return 0;
+    
+    // Entradas na Gaveta (Suprimento vindo do Cofre ou Primário)
+    const incoming = activeShift.transactions
+      .filter(t => t.to === 'Change')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    // Saídas da Gaveta (Sangria para Cofre ou Primário)
+    const outgoing = activeShift.transactions
+      .filter(t => t.from === 'Change')
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    return incoming - outgoing;
   }, [activeShift]);
 
-  // O saldo esperado agora é a soma de todos os fatores
-  const expectedCashInDrawer = activeShift ? (activeShift.cashChange + cashMovements.total) : 0;
+  // CÁLCULO DO SALDO ESPERADO (Auditável)
+  // Fix: Usa estritamente 'openingCashChange'. Se não existir, assume 0 para não corromper o cálculo com o saldo atual.
+  const openingBalance = activeShift?.openingCashChange ?? 0;
+  
+  // Fórmula: O que começou + O que vendeu em dinheiro + (O que entrou de troco - O que saiu de sangria)
+  const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers;
 
   const handleOpenShift = () => {
     if (!canOpen) return;
@@ -80,8 +113,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       cashChange: cVal,
       cashSecondary: sVal,
       openingCashPrimary: pVal,
-      openingCashChange: cVal,
-      openingCashSecondary: sVal
+      openingCashChange: cVal, // Snapshot crítico para auditoria
+      openingCashSecondary: sVal,
+      transactions: []
     };
     onUpdateShifts([newShift, ...shifts]);
     setValPrimary('');
@@ -106,10 +140,10 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       endTime: Date.now(), 
       closedBy: currentUser.username,
       finalCashPrimary: s.cashPrimary,
-      finalCashChange: expectedCashInDrawer,
+      finalCashChange: expectedCashInDrawer, // Registra o teórico no fechamento
       finalCashSecondary: s.cashSecondary,
-      actualCashCounted: actualCounted,
-      cashDifference: difference
+      actualCashCounted: actualCounted,      // Registra o físico contado
+      cashDifference: difference             // Registra a quebra
     } : s);
     
     onUpdateShifts(updatedShifts);
@@ -129,18 +163,18 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
               <div className="flex-1 p-8 lg:p-20 overflow-y-auto space-y-12 no-scrollbar">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="space-y-6">
-                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Resumo do Sistema (Lógica Financeira)</h3>
+                       <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Auditoria de Valores (Sistema)</h3>
                        <div className="space-y-4 font-mono text-lg">
                           <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                              <span className="text-slate-500 uppercase text-[10px] font-black">Fundo de Abertura</span>
-                             <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(activeShift.openingCashChange ?? activeShift.cashChange)}</span>
+                             <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(openingBalance)}</span>
                           </div>
                           <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                              <span className="text-slate-500 uppercase text-[10px] font-black">Vendas/Recebimentos (Dinheiro)</span>
                              <span className="font-bold text-emerald-500">+{formatCurrency(cashMovements.total)}</span>
                           </div>
                           <div className="flex justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                             <span className="text-slate-500 uppercase text-[10px] font-black">Movimentações (Tesouraria)</span>
+                             <span className="text-slate-500 uppercase text-[10px] font-black">Movimentações (Sangrias/Sup)</span>
                              <span className={`font-bold ${internalTransfers >= 0 ? 'text-blue-500' : 'text-red-500'}`}>
                                 {internalTransfers >= 0 ? '+' : ''}{formatCurrency(internalTransfers)}
                              </span>
@@ -150,20 +184,15 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                              <span>{formatCurrency(expectedCashInDrawer)}</span>
                           </div>
 
-                          {/* INÍCIO DA ALTERAÇÃO: Bloco de Auditoria de Anulações */}
                           <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-slate-200 dark:border-slate-800 animate-in slide-in-from-top-2">
                              <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vendas Anuladas no Turno:</span>
+                                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vendas Anuladas:</span>
                                 </div>
                                 <span className="text-sm font-black text-red-500">{formatCurrency(deletedSalesTotal)}</span>
                              </div>
-                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-2 leading-relaxed">
-                                Este valor foi removido do caixa via anulação. Verifique no Histórico por registros marcados como "ANULADA".
-                             </p>
                           </div>
-                          {/* FIM DA ALTERAÇÃO */}
                        </div>
                     </div>
                     
@@ -213,11 +242,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                     <p className="text-3xl font-black text-white">{formatCurrency(totalSoldInShift)}</p>
                  </div>
                  <div className="bg-white/5 p-6 rounded-3xl border border-white/10 flex flex-col justify-center backdrop-blur-sm">
-                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Recebido Dinheiro</p>
+                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Entradas Dinheiro</p>
                     <p className="text-3xl font-black text-emerald-400">{formatCurrency(cashMovements.sales)}</p>
                  </div>
                  <div className="bg-white/5 p-6 rounded-3xl border border-white/10 flex flex-col justify-center backdrop-blur-sm">
-                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Gaveta (Sistema)</p>
+                    <p className="text-[10px] font-black uppercase text-slate-500 mb-2">Gaveta (Previsto)</p>
                     <p className="text-3xl font-black text-blue-400">{formatCurrency(expectedCashInDrawer)}</p>
                  </div>
               </div>

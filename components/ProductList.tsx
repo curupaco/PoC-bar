@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
-import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab } from '../types';
+import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab, Category } from '../types';
 import ProductItemsTab from './products/ProductItemsTab';
 import ModifierGroupsTab from './products/ModifierGroupsTab';
 import CategoryLinksTab from './products/CategoryLinksTab';
+import CategoriesTab from './products/CategoriesTab';
 
 interface ProductListProps {
   products: Product[];
@@ -13,7 +14,11 @@ interface ProductListProps {
   categoryModifiers: Record<string, string>;
   setCategoryModifiers: (updater: (prev: Record<string, string>) => Record<string, string>) => void;
   setOpenTabs: (updater: (prev: Tab[]) => Tab[]) => void;
+  categories?: Category[];
+  setCategories?: (updater: (prev: Category[]) => Category[]) => void;
   currentUser: User;
+  onSaveProduct?: (product: Product) => void;
+  onDeleteProduct?: (id: string) => void;
 }
 
 const ProductList: React.FC<ProductListProps> = ({ 
@@ -24,9 +29,13 @@ const ProductList: React.FC<ProductListProps> = ({
   categoryModifiers = {},
   setCategoryModifiers,
   setOpenTabs,
-  currentUser 
+  categories = [],
+  setCategories,
+  currentUser,
+  onSaveProduct,
+  onDeleteProduct
 }) => {
-  const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS' | 'CATEGORIES'>('ITEMS');
+  const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS' | 'LINKS' | 'CATEGORIES_MANAGE'>('ITEMS');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string, type: 'prod' | 'mod'} | null>(null);
@@ -51,7 +60,7 @@ const ProductList: React.FC<ProductListProps> = ({
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
 
-  const categories = useMemo(() => {
+  const derivedCategories = useMemo(() => {
     return Array.from(new Set(products.map(p => p.category.toUpperCase().trim()))).sort();
   }, [products]);
 
@@ -65,20 +74,42 @@ const ProductList: React.FC<ProductListProps> = ({
   };
 
   const handleSaveProduct = () => {
+    setError(null);
     const numericPrice = parseCurrencyValue(price);
+    const finalName = name.toUpperCase().trim();
+    const finalCategory = category.toUpperCase().trim();
 
-    if (!name.trim() || !category.trim()) { setError("CAMPOS OBRIGATÓRIOS!"); return; }
+    if (!finalName || !finalCategory) { setError("CAMPOS OBRIGATÓRIOS!"); return; }
     
+    // VALIDAÇÃO 2A: Nome Duplicado (Ignorando o próprio se estiver editando)
+    const isDuplicate = products.some(p => p.name === finalName && p.id !== editingId);
+    if (isDuplicate) {
+        setError("ERRO: JÁ EXISTE UM PRODUTO COM ESTE NOME!");
+        return;
+    }
+
+    // VALIDAÇÃO 2C: Preço > 0
+    if (numericPrice <= 0) {
+        setError("ERRO: O PREÇO DEVE SER MAIOR QUE ZERO!");
+        return;
+    }
+
     const productData: Product = {
       id: editingId || generateUniqueId('prod'),
-      name: name.toUpperCase().trim(),
+      name: finalName,
       price: numericPrice,
-      category: category.toUpperCase().trim(),
+      category: finalCategory,
       sellType: sellType,
       modifierGroupId: modGroupId || undefined,
       isFavorite: editingId ? products.find(p => p.id === editingId)?.isFavorite : false
     };
-    setProducts(prev => editingId ? prev.map(p => p.id === editingId ? productData : p) : [...prev, productData]);
+
+    if (onSaveProduct) {
+       onSaveProduct(productData);
+    } else {
+       setProducts(prev => editingId ? prev.map(p => p.id === editingId ? productData : p) : [...prev, productData]);
+    }
+    
     closeModal();
   };
 
@@ -109,7 +140,11 @@ const ProductList: React.FC<ProductListProps> = ({
   const executeDelete = () => {
     if (!deleteConfirmId) return;
     if (deleteConfirmId.type === 'prod') {
-      setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
+      if (onDeleteProduct) {
+        onDeleteProduct(deleteConfirmId.id);
+      } else {
+        setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
+      }
     } else {
       const deletedId = deleteConfirmId.id;
       // Remover vínculo dos produtos
@@ -131,16 +166,10 @@ const ProductList: React.FC<ProductListProps> = ({
       // Remover o grupo
       setModifierGroups(prev => prev.filter(g => g.id !== deletedId));
       
-      // Sanitização de Mesas Abertas (Regra de Negócio 1.1)
+      // Sanitização de Mesas Abertas
       setOpenTabs(prev => prev.map(tab => ({
         ...tab,
         items: tab.items.map(item => {
-           // Se o item tinha um modificador deste grupo (identificado pelo nome da opção e preço), removemos
-           // Nota: Como não salvamos o groupId no item (apenas nome/preço), fazemos uma limpeza "best effort"
-           // Idealmente, SaleItem deveria ter modifierGroupId. Como não tem, mantemos o item mas sem modificador se o grupo sumiu.
-           // Na arquitetura atual, o modificador é embedded, então ele persiste na venda mesmo se o grupo sumir.
-           // A regra 1.1 do docs diz "varredura automática".
-           // Como o dado está "flattened" no SaleItem, a exclusão do grupo não quebra a venda histórica/aberta por padrão.
            return item; 
         })
       })));
@@ -168,20 +197,28 @@ const ProductList: React.FC<ProductListProps> = ({
     setShowModal(true);
   };
 
+  // Garante que a lista de categorias do select combine as salvas e as existentes (se houver migração pendente)
+  const availableCategories = useMemo(() => {
+     const savedNames = categories.map(c => c.name);
+     const currentProdNames = derivedCategories;
+     return Array.from(new Set([...savedNames, ...currentProdNames])).sort();
+  }, [categories, derivedCategories]);
+
   return (
     <div className="max-w-7xl mx-auto pb-12">
       {/* HEADER DE NAVEGAÇÃO DE ABAS */}
-      <div className="flex justify-center mb-8">
-        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm flex">
+      <div className="flex justify-center mb-8 overflow-x-auto no-scrollbar">
+        <div className="bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm flex whitespace-nowrap">
            {[
              { id: 'ITEMS', label: 'Produtos' },
+             { id: 'CATEGORIES_MANAGE', label: 'Cadastro Categorias' },
              { id: 'GROUPS', label: 'Adicionais' },
-             { id: 'CATEGORIES', label: 'Vínculos' }
+             { id: 'LINKS', label: 'Vínculos' }
            ].map(tab => (
              <button 
                 key={tab.id} 
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.id ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
              >
                 {tab.label}
              </button>
@@ -214,13 +251,22 @@ const ProductList: React.FC<ProductListProps> = ({
         />
       )}
 
-      {activeTab === 'CATEGORIES' && (
+      {activeTab === 'LINKS' && (
         <CategoryLinksTab 
-          categories={categories}
+          categories={derivedCategories}
           categoryModifiers={categoryModifiers}
           modifierGroups={modifierGroups}
           setCategoryModifiers={setCategoryModifiers}
         />
+      )}
+
+      {activeTab === 'CATEGORIES_MANAGE' && setCategories && (
+         <CategoriesTab 
+           categories={categories}
+           setCategories={setCategories}
+           products={products} 
+           setProducts={setProducts}
+         />
       )}
 
       {/* MODAL DE CADASTRO UNIFICADO */}
@@ -303,8 +349,12 @@ const ProductList: React.FC<ProductListProps> = ({
                          </div>
                       </div>
                       <div className="space-y-1">
-                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria</label>
-                         <input type="text" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-sm border-2 border-transparent focus:border-red-500 outline-none transition-all" placeholder="EX: CERVEJAS" />
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria (Trava)</label>
+                         <select value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-sm border-2 border-transparent focus:border-red-500 outline-none transition-all">
+                            <option value="">Selecione...</option>
+                            {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                         </select>
+                         {availableCategories.length === 0 && <p className="text-[8px] text-red-500 font-bold ml-2">Crie categorias na aba 'Cadastro Categorias'</p>}
                       </div>
                    </div>
 
@@ -327,7 +377,7 @@ const ProductList: React.FC<ProductListProps> = ({
                  </>
                )}
                
-               {error && <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center font-black uppercase text-xs">{error}</div>}
+               {error && <div className="bg-red-50 text-red-500 p-4 rounded-xl text-center font-black uppercase text-xs animate-in shake">{error}</div>}
                
                <button onClick={activeTab === 'GROUPS' ? handleSaveGroup : handleSaveProduct} className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all active:scale-95">
                   Salvar {activeTab === 'GROUPS' ? 'Menu' : 'Produto'}

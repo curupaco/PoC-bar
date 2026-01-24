@@ -50,6 +50,9 @@ const Settings: React.FC<SettingsProps> = ({
   }, [penduraThreshold]);
 
   const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
+  const canManageBackup = currentUser.username === 'admin' || currentUser.permissions.includes('manage_backup');
+  const canManageUnits = currentUser.username === 'admin' || currentUser.permissions.includes('manage_units');
+  
   const unitId = 'principal';
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -106,34 +109,58 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       )}
 
-      {/* SEGURANÇA MÁXIMA */}
-      <div className="bg-red-600 p-8 rounded-[40px] shadow-2xl border-4 border-red-500 flex flex-col md:flex-row items-center justify-between gap-6 transition-all">
-         <div className="text-white text-center md:text-left">
-            <h3 className="text-2xl font-black uppercase tracking-tighter italic leading-none">Proteja seu Bar</h3>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-90 mt-2">Baixe uma cópia dos dados para o seu computador agora</p>
-         </div>
-         <button 
-            onClick={() => onImport('EXPORT_NOW')}
-            className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
-         >
-            Baixar Backup Completo
-         </button>
-      </div>
+      {/* SEGURANÇA MÁXIMA - CHECK DE PERMISSÃO DE BACKUP */}
+      {canManageBackup ? (
+        <>
+          <div className="bg-red-600 p-8 rounded-[40px] shadow-2xl border-4 border-red-500 flex flex-col md:flex-row items-center justify-between gap-6 transition-all">
+             <div className="text-white text-center md:text-left">
+                <h3 className="text-2xl font-black uppercase tracking-tighter italic leading-none">Proteja seu Bar</h3>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-90 mt-2">Baixe uma cópia dos dados para o seu computador agora</p>
+             </div>
+             <button 
+                onClick={() => onImport('EXPORT_NOW')}
+                className="bg-white text-red-600 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+             >
+                Baixar Backup Completo
+             </button>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-emerald-600 p-8 rounded-[40px] shadow-xl border border-emerald-400 flex flex-col gap-4">
-             <h4 className="text-lg font-black text-white uppercase italic">Restaurar Arquivo</h4>
-             <p className="text-[10px] text-white/80 font-bold uppercase leading-relaxed">Subir arquivo .json salvo anteriormente</p>
-             <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-             <button onClick={() => fileInputRef.current?.click()} className="w-full bg-white text-emerald-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Selecionar .json</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-emerald-600 p-8 rounded-[40px] shadow-xl border border-emerald-400 flex flex-col gap-4">
+                 <h4 className="text-lg font-black text-white uppercase italic">Restaurar Arquivo</h4>
+                 <p className="text-[10px] text-white/80 font-bold uppercase leading-relaxed">Subir arquivo .json salvo anteriormente</p>
+                 <input type="file" accept=".json" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                 <button onClick={() => fileInputRef.current?.click()} className="w-full bg-white text-emerald-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest">Selecionar .json</button>
+              </div>
+              
+              <div className="bg-blue-600 p-8 rounded-[40px] shadow-xl border border-blue-400 flex flex-col gap-4">
+                 <h4 className="text-lg font-black text-white uppercase italic">Resgate Local</h4>
+                 <p className="text-[10px] text-white/80 font-bold uppercase leading-relaxed">Tenta recuperar dados da última sessão deste navegador</p>
+                 <button onClick={handleRescueLocal} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-auto">Resgatar Mirror</button>
+              </div>
           </div>
-          
-          <div className="bg-blue-600 p-8 rounded-[40px] shadow-xl border border-blue-400 flex flex-col gap-4">
-             <h4 className="text-lg font-black text-white uppercase italic">Resgate Local</h4>
-             <p className="text-[10px] text-white/80 font-bold uppercase leading-relaxed">Tenta recuperar dados da última sessão deste navegador</p>
-             <button onClick={handleRescueLocal} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-auto">Resgatar Mirror</button>
-          </div>
-      </div>
+        </>
+      ) : (
+        <div className="bg-slate-100 dark:bg-slate-900/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-center opacity-60">
+           <p className="text-[10px] font-black uppercase text-slate-400">Opções de Backup restritas ao Administrador ou Gerente autorizado.</p>
+        </div>
+      )}
+
+      {/* GESTÃO DE FRANQUIA - BOTÃO DE ACESSO */}
+      {canManageUnits && (
+        <div className="bg-indigo-600 p-8 rounded-[40px] shadow-xl border border-indigo-400 flex flex-col md:flex-row items-center justify-between gap-6 transition-all">
+           <div className="text-white text-center md:text-left">
+              <h3 className="text-2xl font-black uppercase tracking-tighter italic leading-none">Gestão de Rede & Franquia</h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest opacity-90 mt-2">Adicionar, remover ou suspender unidades (Bares)</p>
+           </div>
+           <button 
+              onClick={() => setShowUnitManager(true)}
+              className="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all"
+           >
+              Gerenciar Unidades
+           </button>
+        </div>
+      )}
 
       <SystemDocs showToast={showToast} />
       
@@ -158,7 +185,7 @@ const Settings: React.FC<SettingsProps> = ({
         </div>
       </div>
 
-      {/* MANUTENÇÃO */}
+      {/* MANUTENÇÃO (REQUER FULL_RESET) */}
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
          <div className="flex items-center gap-4 text-slate-400">
             <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800/50 rounded-2xl flex items-center justify-center">
@@ -177,7 +204,7 @@ const Settings: React.FC<SettingsProps> = ({
                 });
               }} 
               disabled={!canReset} 
-              className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 text-amber-600 font-black uppercase text-[10px] tracking-widest border border-amber-200 dark:border-amber-900/30 active:scale-95 transition-all"
+              className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 text-amber-600 font-black uppercase text-[10px] tracking-widest border border-amber-200 dark:border-amber-900/30 active:scale-95 transition-all disabled:opacity-50"
             >
               Limpar Mesas Abertas
             </button>
@@ -190,7 +217,7 @@ const Settings: React.FC<SettingsProps> = ({
                 }, 'danger');
               }} 
               disabled={!canReset} 
-              className="p-6 rounded-3xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all"
+              className="p-6 rounded-3xl bg-red-600 text-white font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all disabled:opacity-50"
             >
               Apagar Tudo (Nuvem)
             </button>
@@ -210,6 +237,16 @@ const Settings: React.FC<SettingsProps> = ({
              </div>
           </div>
         </div>
+      )}
+
+      {/* MODAL GESTÃO DE UNIDADES (Multi-tenant) */}
+      {showUnitManager && units && onUpdateUnits && (
+        <UnitManagement 
+          units={units} 
+          onUpdateUnits={onUpdateUnits} 
+          activeUnitId={unitId}
+          onClose={() => setShowUnitManager(false)} 
+        />
       )}
     </div>
   );

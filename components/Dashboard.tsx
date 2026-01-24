@@ -15,7 +15,7 @@ interface DashboardProps {
 type Period = 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS' | 'ANO';
 
 const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme }) => {
-  const isDark = true; // Sempre dark por preferência do usuário
+  const isDark = true;
   const [activePeriod, setActivePeriod] = useState<Period>('HOJE');
 
   const filteredSales = useMemo(() => {
@@ -41,10 +41,20 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
     });
   }, [sales, activePeriod]);
 
+  // CORREÇÃO: Cálculo de receita realizada considerando Split Payments e excluindo Fiados
   const realizedRevenue = useMemo(() => 
-    filteredSales
-      .filter(s => s.paymentMethod !== PaymentMethod.PENDURA)
-      .reduce((acc, s) => acc + (s.total ?? 0), 0)
+    filteredSales.reduce((acc, s) => {
+       if (s.payments) {
+          // Se houver pagamentos detalhados, soma tudo que NÃO é Pendura
+          const paidAmount = s.payments
+             .filter(p => p.method !== PaymentMethod.PENDURA)
+             .reduce((sum, p) => sum + p.amount, 0);
+          return acc + paidAmount;
+       } else {
+          // Lógica legada
+          return acc + (s.paymentMethod !== PaymentMethod.PENDURA ? (s.total ?? 0) : 0);
+       }
+    }, 0)
   , [filteredSales]);
 
   const operationalOrders = useMemo(() => 
