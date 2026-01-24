@@ -158,13 +158,11 @@ export const App: React.FC = () => {
   };
 
   const cleanLocalCache = () => {
-    // Remove todos os dados locais do Botequista para forçar download limpo do Firebase
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('btq_')) {
         localStorage.removeItem(key);
       }
     });
-    // Zera estados visuais
     setProducts([]);
     setSales([]);
     setOpenTabs([]);
@@ -190,14 +188,9 @@ export const App: React.FC = () => {
     }
 
     if (authenticatedUser) {
-      // SECURITY: Cold Start
-      // Antes de logar, limpamos TUDO para garantir que não haja dados misturados de sessões anteriores
       cleanLocalCache();
-      
       setCurrentUser(authenticatedUser);
       localStorage.setItem('btq_user', JSON.stringify(authenticatedUser));
-      
-      // Força refresh imediato da nuvem após o login limpo
       setDbStatus('loading');
       setTimeout(() => refresh(), 100);
     } else {
@@ -206,7 +199,7 @@ export const App: React.FC = () => {
   }, [users, refresh]);
 
   const handleLogout = useCallback(() => {
-    cleanLocalCache(); // Limpa ao sair também
+    cleanLocalCache();
     setCurrentUser(null);
     window.location.reload();
   }, []);
@@ -264,7 +257,12 @@ export const App: React.FC = () => {
           </div>
         ) : (
           <>
-            {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={(updater) => { const next = updater(openTabs); setOpenTabs(next); persist('openTabs', next); }} onCompleteSale={(s) => { const next = [s, ...sales]; setSales(next); persist('sales', next); }} activeShift={activeShift} onViewChange={setActiveView} />}
+            {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onUpdateTabs={(updater) => { const next = updater(openTabs); setOpenTabs(next); persist('openTabs', next); }} onCompleteSale={(s) => { 
+                const newSales = Array.isArray(s) ? s : [s];
+                const next = [...newSales, ...sales]; 
+                setSales(next); 
+                persist('sales', next); 
+            }} activeShift={activeShift} onViewChange={setActiveView} />}
             {activeView === 'products' && <ProductList products={products} setProducts={(updater) => { const next = updater(products); setProducts(next); persist('products', next); }} modifierGroups={modifierGroups} setModifierGroups={(updater) => { const next = updater(modifierGroups); setModifierGroups(next); persist('modifierGroups', next); }} categoryModifiers={categoryModifiers} setCategoryModifiers={(updater) => { const next = updater(categoryModifiers); setCategoryModifiers(next); }} setOpenTabs={setOpenTabs} currentUser={currentUser} />}
             {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const next = sales.map(s => s.id === id ? {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id} : s); setSales(next); persist('sales', next); }} users={users} currentUser={currentUser} />}
             {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amount) => {}} penduraThreshold={penduraThreshold} />}
