@@ -24,6 +24,7 @@ export interface AppFullData {
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data.filter(Boolean);
+  // Correção Crítica: Se o Firebase retornar um objeto (dicionário de IDs), converte para array
   if (typeof data === 'object') return Object.values(data).filter(Boolean);
   return [];
 };
@@ -64,16 +65,19 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
         data = decryptData(data.encrypted, encryptionKey);
     }
     
-    const arrayNodes = ['products', 'sales', 'openTabs', 'users', 'shifts', 'modifierGroups', 'units'];
+    const arrayNodes = ['products', 'sales', 'openTabs', 'users', 'shifts', 'modifierGroups', 'units', 'categories'];
+    // Se o path requisitado for um nó de lista, ou se o dado retornado contiver nós de lista
     if (path && arrayNodes.some(node => path.endsWith(node))) {
         return ensureArray(data);
     }
+    
     return data;
   } catch (e) {
     return null;
   }
 };
 
+// Salva lista inteira (Legacy/Overwrite)
 export const saveToFirebase = async (url: string, data: any, encryptionKey?: string, token?: string, path?: string) => {
   if (!token) return;
   try {
@@ -85,4 +89,22 @@ export const saveToFirebase = async (url: string, data: any, encryptionKey?: str
       body: JSON.stringify(payload)
     });
   } catch (e) {}
+};
+
+// Salva item individual (Atomic/Concurrent Safe)
+export const saveItemToFirebase = async (url: string, data: any, itemId: string, encryptionKey?: string, token?: string, parentPath?: string) => {
+  if (!token || !parentPath || !itemId) return;
+  try {
+    // Constrói o caminho específico: data/units/{id}/sales/{saleId}
+    const itemPath = `${parentPath}/${itemId}`;
+    const targetUrl = getFirebaseUrl(url, token, itemPath);
+    
+    await fetch(targetUrl, {
+      method: 'PUT', // PUT num nó filho específico age como INSERT/UPDATE atômico para aquele item
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch (e) {
+    console.error("Save Item Error", e);
+  }
 };

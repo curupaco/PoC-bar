@@ -6,9 +6,10 @@ interface UnitManagementProps {
   units: Unit[];
   onUpdateUnits: (units: Unit[]) => void;
   onClose: () => void;
+  activeUnitId?: string;
 }
 
-const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose }) => {
+const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose, activeUnitId }) => {
   const [name, setName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -77,22 +78,30 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
            )}
 
            <div className="grid grid-cols-1 gap-4">
-              {units.map(unit => (
-                 <div key={unit.id} className={`p-6 rounded-3xl border flex justify-between items-center transition-all ${unit.isActive ? 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800' : 'bg-slate-100 dark:bg-slate-900 opacity-60 border-transparent'}`}>
-                    <div>
-                       <h4 className="font-black text-slate-800 dark:text-white uppercase">{unit.name}</h4>
-                       <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {unit.id}</p>
+              {units.map(unit => {
+                 const isCurrent = unit.id === activeUnitId;
+                 return (
+                    <div key={unit.id} className={`p-6 rounded-3xl border flex justify-between items-center transition-all ${unit.isActive ? 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800' : 'bg-slate-100 dark:bg-slate-900 opacity-60 border-transparent'} ${isCurrent ? 'ring-2 ring-red-500 shadow-xl' : ''}`}>
+                       <div>
+                          <div className="flex items-center gap-2">
+                             <h4 className="font-black text-slate-800 dark:text-white uppercase">{unit.name}</h4>
+                             {isCurrent && <span className="bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Você está aqui</span>}
+                          </div>
+                          <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {unit.id}</p>
+                       </div>
+                       <div className="flex items-center gap-4">
+                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${unit.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
+                             {unit.isActive ? 'Ativo' : 'Suspenso'}
+                          </span>
+                          {!isCurrent && (
+                             <button onClick={() => toggleStatus(unit.id)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors" title={unit.isActive ? "Suspender" : "Ativar"}>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                             </button>
+                          )}
+                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                       <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${unit.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
-                          {unit.isActive ? 'Ativo' : 'Suspenso'}
-                       </span>
-                       <button onClick={() => toggleStatus(unit.id)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors" title={unit.isActive ? "Suspender" : "Ativar"}>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                       </button>
-                    </div>
-                 </div>
-              ))}
+                 );
+              })}
               {units.length === 0 && <p className="text-center text-slate-400 font-bold text-xs uppercase opacity-50 py-10">Nenhuma unidade cadastrada.</p>}
            </div>
         </div>

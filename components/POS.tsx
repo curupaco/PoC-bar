@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat } from '../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, SalePayment } from '../types';
 import WeightModal from './pos/modals/WeightModal';
 import UpsellModal from './pos/modals/UpsellModal';
 import POSProductGrid from './pos/POSProductGrid';
@@ -12,7 +12,7 @@ interface POSProps {
   categoryModifiers: Record<string, string>;
   openTabs: Tab[];
   onUpdateTabs: (updater: (prev: Tab[]) => Tab[]) => void;
-  onCompleteSale: (sale: Sale | Sale[]) => void; // UPDATED: Aceita array para batch updates
+  onCompleteSale: (sale: Sale | Sale[]) => void; 
   shortcutCheckout?: { name: string; amount: number } | null;
   onClearShortcut?: () => void;
   activeShift?: Shift;
@@ -194,36 +194,43 @@ const POS: React.FC<POSProps> = ({
     }));
   };
 
-  const processCompletion = (payments: any[]) => {
+  const processCompletion = (payments: { method: PaymentMethod, amount: number, customerName?: string }[]) => {
     const isShortcut = activeTabId === 'shortcut-payment';
     
-    // BATCH UPDATE: Cria todas as vendas de uma vez para garantir integridade do banco
-    const newSales: Sale[] = payments.map((p: any, index: number) => ({
+    // CORREÇÃO CRÍTICA ITEM 3: Consolida pagamentos em uma única venda (Sale Bundling)
+    const totalAmount = payments.reduce((acc, p) => acc + p.amount, 0);
+    
+    // Define método principal: se for único, usa ele. Se forem vários, usa MULTIPLE.
+    const mainMethod = payments.length === 1 ? payments[0].method : PaymentMethod.MULTIPLE;
+    
+    // Busca nome do cliente se houver (prioriza Pendura ou o primeiro nome disponível)
+    const customerName = payments.find(p => p.customerName)?.customerName || 
+                        (isShortcut ? shortcutCheckout?.name : undefined);
+
+    const newSale: Sale = {
        id: generateUniqueId('sale'),
        timestamp: Date.now(),
        openedAt: activeTab.openedAt,
-       // Regra de Negócio: Apenas a primeira parcela do pagamento carrega os itens para baixar estoque.
-       // As demais parcelas (se houver) carregam apenas o valor financeiro para não duplicar saída de produtos.
        items: isShortcut 
-         ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] 
-         : (index === 0 ? tabItems : []),
-       paymentMethod: p.method,
-       total: p.amount,
+         ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: totalAmount, totalPrice: totalAmount }] 
+         : tabItems,
+       paymentMethod: mainMethod,
+       payments: payments, // Array completo de pagamentos
+       total: totalAmount,
        tabName: activeTab.name,
-       customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+       customerName: customerName,
        userId: '', 
        shiftId: activeShift?.id || ''
-    }));
+    };
 
-    // Envia lote único
-    onCompleteSale(newSales);
+    onCompleteSale([newSale]);
 
     if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
     else if (onClearShortcut) onClearShortcut();
     
     setActiveTabId(null);
     setIsClosingTab(false);
-    showFeedback("OPERACÃO FINALIZADA");
+    showFeedback("VENDA FINALIZADA");
   };
 
   if (!activeShift) {

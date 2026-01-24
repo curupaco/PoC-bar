@@ -7,7 +7,7 @@ interface ClosingReportProps {
   shifts: Shift[];
   selectedShiftId: string;
   setSelectedShiftId: (id: string) => void;
-  reportData: any; // Mantendo any por brevidade no refactor, mas idealmente seria tipado com o retorno do useMemo do pai
+  reportData: any; 
   canExport: boolean;
   showToast: (msg: string) => void;
 }
@@ -35,6 +35,8 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
     });
   };
 
+  const transactions = reportData.selectedShift?.transactions || [];
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center gap-4">
@@ -55,7 +57,6 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
         <div className="flex justify-center py-10 bg-slate-100 dark:bg-slate-950/50 rounded-[40px]">
           <div ref={reportRef} className="bg-black text-white w-full max-w-[380px] p-12 shadow-2xl space-y-6 font-mono text-[11px] leading-relaxed">
              <div className="text-center border-b border-dashed border-slate-800 pb-6">
-                {/* FONTE ALTERADA PARA BARRIO (LOGO) */}
                 <h2 className="text-4xl font-normal font-barrio tracking-tighter text-white">Botequista</h2>
                 <p className="text-[9px] font-bold text-slate-500 mt-2 uppercase tracking-widest">Protocolo de Turno</p>
              </div>
@@ -78,6 +79,21 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
                    <span>{formatCurrency(reportData.shiftTotalRevenue)}</span>
                 </div>
              </div>
+
+             {/* AUDITORIA DE TRANSAÇÕES */}
+             {transactions.length > 0 && (
+                <div className="border-t border-dashed border-slate-800 pt-4 space-y-2">
+                   <div className="text-[10px] font-black uppercase text-center mb-2 text-slate-400">AUDITORIA DE CAIXA</div>
+                   {transactions.map((t: any) => (
+                      <div key={t.id} className="flex justify-between text-[9px]">
+                         <span className="text-slate-500">
+                            {t.from === 'Change' ? 'SANGRIA' : (t.to === 'Change' ? 'SUPRIMENTO' : 'TRANSF.')}
+                         </span>
+                         <span className="font-bold">{formatCurrency(t.amount)}</span>
+                      </div>
+                   ))}
+                </div>
+             )}
           </div>
         </div>
       ) : (

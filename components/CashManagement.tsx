@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
+import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, CashTransaction, generateUniqueId } from '../types';
 
 interface CashManagementProps {
   shifts: Shift[];
@@ -26,11 +26,19 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
     }
   }, [toast]);
 
+  // Cálculo de vendas em dinheiro considerando split payment
   const totalCashSales = useMemo(() => {
     if (!activeShift) return 0;
     return sales
-      .filter(s => s.shiftId === activeShift.id && s.paymentMethod === PaymentMethod.CASH)
-      .reduce((acc, s) => acc + s.total, 0);
+      .filter(s => s.shiftId === activeShift.id && !s.deleted)
+      .reduce((acc, s) => {
+        if (s.payments) {
+          // Soma apenas a parte em dinheiro
+          const cashPart = s.payments.find(p => p.method === PaymentMethod.CASH);
+          return acc + (cashPart ? cashPart.amount : 0);
+        }
+        return acc + (s.paymentMethod === PaymentMethod.CASH ? s.total : 0);
+      }, 0);
   }, [activeShift, sales]);
 
   const handleTransfer = () => {
@@ -54,10 +62,22 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       return;
     }
 
+    // CRIAÇÃO DO LOG DE AUDITORIA (Correção Item 2)
+    const transaction: CashTransaction = {
+      id: generateUniqueId('tx'),
+      timestamp: Date.now(),
+      type: 'transfer',
+      from: fromBox,
+      to: toBox,
+      amount: value,
+      user: currentUser.username
+    };
+
     onUpdateShifts(shifts.map(s => s.id === activeShift.id ? {
       ...s,
       [sourceKey]: (s[sourceKey] as number) - value,
-      [destKey]: (s[destKey] as number) + value
+      [destKey]: (s[destKey] as number) + value,
+      transactions: [...(s.transactions || []), transaction] // Persiste o histórico
     } : s));
 
     setTransferValue('');
@@ -118,7 +138,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
          <div className="max-w-xl mx-auto space-y-6">
             <div className="text-center">
                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter">Movimentação Interna</h3>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Transferência entre compartimentos de valores</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Transferência auditada entre compartimentos</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -161,9 +181,27 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
             </div>
 
             <button onClick={handleTransfer} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-blue-500/20 transition-all active:scale-95">
-               Confirmar Movimentação
+               Registrar Transferência
             </button>
          </div>
+
+         {/* LOG DE ÚLTIMAS TRANSAÇÕES */}
+         {activeShift.transactions && activeShift.transactions.length > 0 && (
+            <div className="mt-12 max-w-2xl mx-auto">
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 text-center">Últimas Movimentações neste Turno</p>
+               <div className="space-y-2">
+                  {activeShift.transactions.slice(-3).reverse().map(t => (
+                     <div key={t.id} className="flex justify-between items-center bg-white dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 opacity-70">
+                        <div className="flex flex-col">
+                           <span className="text-[9px] font-black uppercase text-slate-500">@{t.user} • {new Date(t.timestamp).toLocaleTimeString()}</span>
+                           <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">{t.from === 'Change' ? 'Gaveta' : t.from} ➔ {t.to === 'Change' ? 'Gaveta' : t.to}</span>
+                        </div>
+                        <span className="font-black text-slate-800 dark:text-white">{formatCurrency(t.amount)}</span>
+                     </div>
+                  ))}
+               </div>
+            </div>
+         )}
       </div>
     </div>
   );

@@ -4,7 +4,8 @@ export enum PaymentMethod {
   DEBITO = 'Débito',
   CREDITO = 'Crédito',
   PENDURA = 'Pendura',
-  CASH = 'Dinheiro'
+  CASH = 'Dinheiro',
+  MULTIPLE = 'Múltiplo' // Novo método para vendas mistas
 }
 
 export type SellType = 'unit' | 'weight';
@@ -38,6 +39,11 @@ export interface Unit {
   createdAt: number;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -45,6 +51,17 @@ export interface User {
   displayName: string;
   permissions: UserPermission[];
   allowedUnits?: string[];
+}
+
+// Nova Interface para Auditoria de Caixa
+export interface CashTransaction {
+  id: string;
+  timestamp: number;
+  type: 'transfer';
+  from: 'Primary' | 'Change' | 'Secondary';
+  to: 'Primary' | 'Change' | 'Secondary';
+  amount: number;
+  user: string;
 }
 
 export interface Shift {
@@ -64,7 +81,8 @@ export interface Shift {
   finalCashChange?: number;
   finalCashSecondary?: number;
   actualCashCounted?: number; 
-  cashDifference?: number;    
+  cashDifference?: number;
+  transactions?: CashTransaction[]; // Log de movimentações
 }
 
 export interface ModifierOption {
@@ -107,12 +125,19 @@ export interface Tab {
   openedAt: number;
 }
 
+// Interface auxiliar para Split Payment
+export interface SalePayment {
+  method: PaymentMethod;
+  amount: number;
+}
+
 export interface Sale {
   id: string;
   timestamp: number;
   openedAt?: number;
   items: SaleItem[];
-  paymentMethod: PaymentMethod;
+  paymentMethod: PaymentMethod; // Método principal ou 'Múltiplo'
+  payments?: SalePayment[];     // Detalhamento dos pagamentos (Correção Item 3)
   total: number;
   tabName?: string;
   customerName?: string;
@@ -123,7 +148,7 @@ export interface Sale {
   deletedBy?: string;
 }
 
-export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help' | 'units';
+export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
 export type Theme = 'light' | 'dark';
 
 export const formatCurrency = (value: number) => {
@@ -170,7 +195,6 @@ export const getBusinessDateStart = (timestamp: number) => {
   return date.getTime();
 };
 
-// NOVA FUNÇÃO PARA EXPORTAÇÃO
 export const downloadJSON = (data: any, filename: string) => {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
