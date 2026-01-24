@@ -12,7 +12,7 @@ interface POSProps {
   categoryModifiers: Record<string, string>;
   openTabs: Tab[];
   onUpdateTabs: (updater: (prev: Tab[]) => Tab[]) => void;
-  onCompleteSale: (sale: Sale) => void;
+  onCompleteSale: (sale: Sale | Sale[]) => void; // UPDATED: Aceita array para batch updates
   shortcutCheckout?: { name: string; amount: number } | null;
   onClearShortcut?: () => void;
   activeShift?: Shift;
@@ -197,22 +197,26 @@ const POS: React.FC<POSProps> = ({
   const processCompletion = (payments: any[]) => {
     const isShortcut = activeTabId === 'shortcut-payment';
     
-    payments.forEach((p: any, index: number) => {
-       onCompleteSale({
-          id: generateUniqueId('sale'),
-          timestamp: Date.now(),
-          openedAt: activeTab.openedAt,
-          items: isShortcut 
-            ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] 
-            : (index === 0 ? tabItems : []),
-          paymentMethod: p.method,
-          total: p.amount,
-          tabName: activeTab.name,
-          customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
-          userId: '', 
-          shiftId: activeShift?.id || ''
-       });
-    });
+    // BATCH UPDATE: Cria todas as vendas de uma vez para garantir integridade do banco
+    const newSales: Sale[] = payments.map((p: any, index: number) => ({
+       id: generateUniqueId('sale'),
+       timestamp: Date.now(),
+       openedAt: activeTab.openedAt,
+       // Regra de Negócio: Apenas a primeira parcela do pagamento carrega os itens para baixar estoque.
+       // As demais parcelas (se houver) carregam apenas o valor financeiro para não duplicar saída de produtos.
+       items: isShortcut 
+         ? [{ id: generateUniqueId('it'), productId: 'quitacao', productName: 'Quitação Fiado', category: 'FIADO', quantity: 1, unitPrice: p.amount, totalPrice: p.amount }] 
+         : (index === 0 ? tabItems : []),
+       paymentMethod: p.method,
+       total: p.amount,
+       tabName: activeTab.name,
+       customerName: p.customerName || (isShortcut ? shortcutCheckout?.name : undefined),
+       userId: '', 
+       shiftId: activeShift?.id || ''
+    }));
+
+    // Envia lote único
+    onCompleteSale(newSales);
 
     if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
     else if (onClearShortcut) onClearShortcut();
