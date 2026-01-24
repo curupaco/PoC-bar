@@ -1,12 +1,12 @@
 
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.0.1 (Multi-Bar Stable)  
-**Stack:** React 19, TypeScript, Firebase RTDB, TailwindCSS
+**Versão:** 4.0.2 (Stable)  
+**Stack:** React 19, TypeScript, Firebase RTDB, TailwindCSS, Vercel Functions
 
 ---
 
 ## 1. Arquitetura Multi-Unidade (Franquia)
-O sistema agora opera em modo Multi-Tenant lógico. Os dados são segregados por unidade, mas compartilham a mesma base de usuários e configurações globais.
+O sistema opera em modo Multi-Tenant lógico. Os dados são segregados por unidade, mas compartilham a mesma base de usuários e configurações globais.
 
 ### Estrutura de Dados (Firebase)
 - **`users/`**: Base global de colaboradores. Um usuário pode ter acesso a múltiplas unidades (`allowedUnits`).
@@ -18,15 +18,6 @@ O sistema agora opera em modo Multi-Tenant lógico. Os dados são segregados por
   - `shifts`: Turnos de caixa.
   - `modifierGroups`: Adicionais e complementos.
 
-### Lógica de Acesso (Roteamento)
-1. **Login:** O sistema autentica o usuário.
-2. **Seleção:**
-   - Se o usuário tem acesso a **apenas 1 unidade**, o sistema faz o *bypass* e entra direto (Impacto Zero na UX).
-   - Se tem acesso a **múltiplas** (ou é Admin), exibe a tela "Onde vamos trabalhar hoje?".
-3. **Gestão de Unidades:**
-   - A criação e suspensão de unidades é feita via **Ajustes > Gestão de Rede & Franquia**.
-   - Requer permissão `manage_units`.
-
 ---
 
 ## 2. Cardápio Inteligente & Upsell
@@ -34,69 +25,68 @@ O sistema de produtos possui três camadas de complexidade para agilizar o atend
 
 ### A. Tipos de Venda
 - **Unidade:** Venda padrão (Cervejas, Latas).
-- **Peso (KG):** Aciona automaticamente o modal de pesagem (input em gramas -> conversão para KG) no PDV. Ideal para buffets e porções.
+- **Peso (KG):** Aciona automaticamente o modal de pesagem (input em gramas -> conversão para KG) no PDV.
 
 ### B. Modificadores (Adicionais)
 Grupos de opções que podem ser vinculados a produtos.
 - *Exemplo:* Grupo "Borda" (Catupiry +R$2,00, Cheddar +R$3,00).
-- Os modificadores podem ser cobrados ou gratuitos.
 
 ### C. Vínculos de Categoria (Automação)
 É possível vincular uma **Categoria Inteira** a um **Grupo de Modificadores**.
 - *Comportamento:* Ao clicar em qualquer produto da categoria "DOSES", o sistema abre automaticamente o modal perguntando "Gelo e Limão?".
-- *Configuração:* Aba `Cardápio > Vínculos`.
 
 ---
 
 ## 3. Controle de Acesso (RBAC)
 O sistema de permissões foi migrado de "Papéis Fixos" para "Lista de Controle de Acesso" (ACL).
 
-### Níveis Críticos
-1. **Admin (God Mode):** Acesso total irrestrito. Pode criar unidades e resetar o sistema.
-2. **Gerente:** Pode ter permissões de `users_admin`, `shifts_admin` e `delete_sale` (Anulação).
-3. **Caixa/Operador:** Geralmente restrito a `pos`, `open_shift`, `close_shift`.
-
-### Gestão de Unidades
-No cadastro de usuário, é possível definir o array `allowedUnits`. Se vazio, o usuário não loga (exceto Admin).
-
-### Segurança de Backup
-As opções de Download/Upload de backup na tela de Ajustes são protegidas pela permissão `manage_backup`. Usuários sem essa permissão não visualizam os botões de exportação de dados.
+- **Admin:** Acesso total.
+- **Gerente:** Gestão de equipe, turnos e anulações.
+- **Caixa/Operador:** Vendas e fluxo de caixa básico.
 
 ---
 
 ## 4. Fluxo de Caixa (Tesouraria)
 O modelo financeiro segue o padrão de **Fechamento Cego** para evitar fraudes.
-
-1. **Abertura:** Operador declara Fundo Principal + Troco + Reserva.
-2. **Operação:** Vendas em dinheiro somam ao saldo teórico da gaveta.
-3. **Movimentações:**
-   - **Sangria:** Saída de valor para cofre (Reduz saldo da gaveta).
-   - **Suprimento:** Entrada de troco (Aumenta saldo da gaveta).
-   - *Nota:* Transferências entre caixas (Primário <-> Gaveta) são auditadas.
-4. **Fechamento:** O operador conta o dinheiro físico e informa. O sistema calcula a **Quebra de Caixa** (Diferença entre Teórico e Real).
-   - *Segurança:* O operador não vê o saldo esperado antes de informar a contagem.
+1. **Abertura:** Declaração de fundos.
+2. **Operação:** Vendas somam ao teórico.
+3. **Movimentações:** Sangrias e Suprimentos ajustam o saldo da gaveta.
+4. **Fechamento:** Operador conta o físico; sistema calcula a quebra.
 
 ---
 
 ## 5. Auditoria e Anulação
-- **Exclusão Lógica (`soft delete`):** Vendas deletadas **não somem** do banco. Elas recebem a flag `deleted: true`.
-- **Relatórios:**
-  - Vendas anuladas são removidas dos somatórios financeiros (Faturamento Líquido).
-  - Elas aparecem destacadas no **Histórico** e no **Relatório de Fechamento** para auditoria do gerente.
+- **Exclusão Lógica (`soft delete`):** Vendas deletadas recebem a flag `deleted: true` e permanecem no banco para auditoria.
 
 ---
 
 ## 6. Sincronização (Offline-First)
-O hook `useSync` gerencia a consistência dos dados.
-
-- **Status Online (Verde):** Dados fluindo em tempo real via WebSocket.
-- **Status Sincronizando (Amarelo):** Upload de dados pendentes.
-- **Conflito de Edição:** O sistema usa uma flag `isRemoteUpdate` para evitar que dados que acabaram de chegar do servidor sejam marcados como "alteração local" e reenviados, prevenindo loops infinitos.
-- **Fila de Sincronização (`SyncQueue`):** Se a internet cair, as vendas são salvas no `localStorage` e uma fila de retry tenta enviar a cada 2 segundos até o sucesso.
+O hook `useSync` gerencia a consistência dos dados com o Firebase.
+- **Fila de Sincronização (`SyncQueue`):** Garante que dados gerados offline sejam enviados assim que a conexão retornar.
 
 ---
 
-## 7. Protocolo de Suporte
-- **Feedback:** O botão de exclamação no topo abre a modal de feedback.
-- **Logs:** Erros de API são logados no console com prefixo `[Sync]` ou `[Auth]`.
-- **Reset:** Em caso de corrupção local, o Admin pode forçar um `Full Reset` em *Ajustes*, que limpa o banco da unidade ativa.
+## 7. Integrações Externas (Feedback System)
+O sistema possui uma API Serverless (`api/feedback.ts`) hospedada na Vercel que permite aos usuários reportar bugs ou sugerir features diretamente do app.
+
+### Fluxo de Dados
+1. Usuário preenche o formulário no modal de Feedback.
+2. O Frontend envia POST para `/api/feedback`.
+3. A Vercel Function autentica com o GitHub e cria uma **Issue** no repositório do projeto.
+
+### Requisitos de Configuração (Variáveis de Ambiente)
+Para que o sistema de feedback funcione em produção, as seguintes variáveis devem ser configuradas no painel da Vercel:
+
+| Variável | Descrição |
+| :--- | :--- |
+| `GITHUB_TOKEN` | Personal Access Token (Classic) com escopo `repo`. |
+| `GITHUB_OWNER` | Nome do usuário ou organização dona do repositório (ex: `curupaco`). |
+| `GITHUB_REPO` | Nome do repositório onde as issues serão criadas (ex: `PoC-bar`). |
+
+> **Nota:** Em ambiente local (`localhost`), a API route pode não estar disponível a menos que esteja rodando via `vercel dev`. O frontend possui um mock automático para evitar travamentos durante o desenvolvimento local.
+
+---
+
+## 8. Protocolo de Suporte
+- **Feedback:** O botão de balão no topo abre a modal de feedback.
+- **Logs:** Erros de API são logados no console com prefixo `[Sync]` ou `[Feedback API]`.
