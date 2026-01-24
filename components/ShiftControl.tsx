@@ -13,6 +13,7 @@ interface ShiftControlProps {
 const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts, currentUser, sales = [], activeTabsCount }) => {
   const activeShift = shifts.find(s => s.status === 'open');
   const [showConferral, setShowConferral] = useState(false);
+  const [viewingHistoryShift, setViewingHistoryShift] = useState<Shift | null>(null);
   
   const [valPrimary, setValPrimary] = useState('');
   const [valChange, setValChange] = useState('');
@@ -26,6 +27,16 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     if (!activeShift) return [];
     return (sales || []).filter(s => s.shiftId === activeShift.id && !s.deleted);
   }, [activeShift, sales]);
+
+  const closedShifts = useMemo(() => {
+    return shifts.filter(s => s.status === 'closed').sort((a, b) => b.startTime - a.startTime);
+  }, [shifts]);
+
+  const getShiftSalesTotal = (shiftId: string) => {
+    return (sales || [])
+      .filter(s => s.shiftId === shiftId && !s.deleted)
+      .reduce((acc, s) => acc + (s.total || 0), 0);
+  };
 
   const deletedSalesTotal = useMemo(() => {
     if (!activeShift) return 0;
@@ -153,6 +164,64 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-32 relative">
+      
+      {/* MODAL DETALHES DE TURNO ANTERIOR */}
+      {viewingHistoryShift && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setViewingHistoryShift(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[40px] shadow-2xl relative z-[610] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-between items-center shrink-0">
+               <div>
+                  <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Detalhes do Turno</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Fechado em: {new Date(viewingHistoryShift.endTime || 0).toLocaleString()}</p>
+               </div>
+               <button onClick={() => setViewingHistoryShift(null)} className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 flex items-center justify-center font-bold hover:bg-red-500 hover:text-white transition-all">✕</button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4">
+                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-[9px] font-black text-slate-400 uppercase">Abertura</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">@{viewingHistoryShift.openedBy}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{new Date(viewingHistoryShift.startTime).toLocaleTimeString()}</p>
+                 </div>
+                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-[9px] font-black text-slate-400 uppercase">Fechamento</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white mt-1">@{viewingHistoryShift.closedBy || '?'}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{viewingHistoryShift.endTime ? new Date(viewingHistoryShift.endTime).toLocaleTimeString() : '-'}</p>
+                 </div>
+              </div>
+
+              <div className="space-y-4">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">Balanço de Caixa (Gaveta)</h4>
+                 <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Fundo Inicial</span>
+                    <span className="text-sm font-black text-slate-800 dark:text-white">{formatCurrency(viewingHistoryShift.openingCashChange || 0)}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Saldo Final Teórico</span>
+                    <span className="text-sm font-black text-blue-500">{formatCurrency(viewingHistoryShift.finalCashChange || 0)}</span>
+                 </div>
+                 <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-950 p-3 rounded-xl">
+                    <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400">Contagem Física</span>
+                    <span className="text-sm font-black text-slate-800 dark:text-white">{formatCurrency(viewingHistoryShift.actualCashCounted || 0)}</span>
+                 </div>
+                 <div className={`flex justify-between items-center p-4 rounded-xl border-2 ${Math.abs(viewingHistoryShift.cashDifference || 0) < 0.05 ? 'border-emerald-500/20 bg-emerald-50 dark:bg-emerald-900/10' : 'border-red-500/20 bg-red-50 dark:bg-red-900/10'}`}>
+                    <span className={`text-xs font-black uppercase ${Math.abs(viewingHistoryShift.cashDifference || 0) < 0.05 ? 'text-emerald-600' : 'text-red-600'}`}>Diferença (Quebra)</span>
+                    <span className={`text-xl font-black ${Math.abs(viewingHistoryShift.cashDifference || 0) < 0.05 ? 'text-emerald-600' : 'text-red-600'}`}>{formatCurrency(viewingHistoryShift.cashDifference || 0)}</span>
+                 </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/30 flex justify-between items-center">
+                 <span className="text-xs font-bold uppercase text-slate-500">Total Vendido no Turno</span>
+                 <span className="text-lg font-black text-slate-800 dark:text-white">{formatCurrency(getShiftSalesTotal(viewingHistoryShift.id))}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONFERÊNCIA ATUAL */}
       {showConferral && activeShift && (
         <div className="fixed inset-0 z-[500] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 lg:p-12 animate-in fade-in zoom-in-95 duration-300">
            <div className="bg-white dark:bg-slate-900 w-full h-full max-w-4xl lg:rounded-[60px] shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
@@ -284,6 +353,38 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
            <button onClick={handleOpenShift} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Iniciar Atividades do Turno</button>
         </div>
       )}
+
+      {/* HISTÓRICO DE TURNOS (SEMPRE VISÍVEL) */}
+      <div className="pt-12 border-t border-slate-200 dark:border-slate-800">
+         <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mb-6">Histórico de Fechamentos</h3>
+         {closedShifts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+               {closedShifts.map(s => (
+                  <button key={s.id} onClick={() => setViewingHistoryShift(s)} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500/50 transition-all text-left flex flex-col gap-3 group">
+                     <div className="flex justify-between items-center w-full">
+                        <span className="text-[9px] font-black uppercase text-slate-400">{new Date(s.startTime).toLocaleDateString()}</span>
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded uppercase ${Math.abs(s.cashDifference || 0) < 0.05 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                           {Math.abs(s.cashDifference || 0) < 0.05 ? 'OK' : 'Quebra'}
+                        </span>
+                     </div>
+                     <div>
+                        <p className="text-sm font-black uppercase text-slate-800 dark:text-white">Op: @{s.openedBy}</p>
+                        <p className="text-[10px] text-slate-500">Fechado por @{s.closedBy || '?'}</p>
+                     </div>
+                     <div className="pt-3 border-t border-slate-100 dark:border-slate-800 w-full flex justify-between items-end">
+                        <span className="text-[9px] font-bold text-slate-400 uppercase">Vendas</span>
+                        <span className="text-sm font-black text-slate-800 dark:text-white">{formatCurrency(getShiftSalesTotal(s.id))}</span>
+                     </div>
+                  </button>
+               ))}
+            </div>
+         ) : (
+            <div className="p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[32px] opacity-50">
+               <svg className="w-10 h-10 mx-auto text-slate-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+               <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nenhum turno fechado registrado nesta unidade.</p>
+            </div>
+         )}
+      </div>
     </div>
   );
 };
