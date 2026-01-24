@@ -13,6 +13,7 @@ import ShiftControl from './components/ShiftControl';
 import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
+import FeedbackModal from './components/FeedbackModal';
 import { useSync } from './hooks/useSync';
 import { saveToFirebase, saveItemToFirebase, getFirebaseToken, loadFromFirebase } from './services/firebaseService';
 import { hashPassword } from './services/cryptoService';
@@ -24,6 +25,7 @@ export const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
   
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('btq_user');
@@ -357,6 +359,9 @@ export const App: React.FC = () => {
            </div>
            
            <div className="flex items-center gap-3">
+               <button onClick={() => setShowFeedback(true)} className="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all shadow-sm" title="Feedback / Reportar Bug">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+               </button>
                <button onClick={() => { setActiveUnitId(null); localStorage.removeItem('btq_active_unit_id'); }} className="hidden md:block px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-[9px] font-black uppercase tracking-widest text-slate-300 transition-all">
                    Trocar Unidade
                </button>
@@ -428,6 +433,8 @@ export const App: React.FC = () => {
           </>
         )}
       </main>
+      
+      <FeedbackModal isOpen={showFeedback} onClose={() => setShowFeedback(false)} currentUser={currentUser.username} />
     </div>
   );
 };

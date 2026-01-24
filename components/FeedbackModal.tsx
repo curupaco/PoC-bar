@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -14,6 +14,15 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
+  useEffect(() => {
+    if (isOpen) {
+      setFeedbackStatus('idle');
+      setDescription('');
+      setErrorMessage('');
+      setIsSending(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
@@ -23,26 +32,20 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
     setFeedbackStatus('idle');
     setErrorMessage('');
 
-    // Detecção de ambiente local para evitar frustração durante testes sem 'vercel dev'
-    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-
+    // Timeout de 10 segundos para não travar a UI se o servidor demorar
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s Timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      // Se for localhost e não estivermos rodando via Vercel CLI (porta padrão vite 5173), simulamos sucesso
-      // Isso evita que você ache que o sistema travou quando está apenas testando o layout
-      if (isLocalhost && window.location.port !== '3000') {
-         console.warn("⚠️ Ambiente Local Detectado: Simulando envio para GitHub (API Route indisponível no Vite)");
-         await new Promise(r => setTimeout(r, 1500)); // Fake delay
+      // Detecção de ambiente local para evitar erro 404 no Vite puro (sem Vercel Functions rodando)
+      const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const isVitePort = typeof window !== 'undefined' && window.location.port !== '3000'; // Assume 3000 como prod/preview
+
+      if (isLocalhost && isVitePort) {
+         console.warn("⚠️ Ambiente Local (Vite): API Route '/api/feedback' indisponível. Simulando sucesso.");
+         await new Promise(r => setTimeout(r, 1000));
          setFeedbackStatus('success');
-         setTimeout(() => {
-            onClose();
-            setFeedbackStatus('idle');
-            setDescription('');
-         }, 2000);
-         setIsSending(false);
-         clearTimeout(timeoutId);
+         setTimeout(onClose, 2000);
          return;
       }
 
@@ -53,35 +56,35 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
         signal: controller.signal
       });
 
-      clearTimeout(timeoutId);
+      // Proteção contra resposta HTML (Erro 404/500 da Vercel)
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+         throw new Error(`Erro do Servidor (Status ${response.status}). Verifique os logs.`);
+      }
 
-      const data = await response.json().catch(() => null);
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error || `Erro ${response.status}: Falha no servidor`);
+        throw new Error(data?.error || `Erro ${response.status}`);
       }
       
       setFeedbackStatus('success');
       setTimeout(() => {
         onClose();
-        setFeedbackStatus('idle');
-        setDescription('');
       }, 2000);
+
     } catch (error: any) {
       console.error("Feedback Error:", error);
       setFeedbackStatus('error');
       
       if (error.name === 'AbortError') {
-        setErrorMessage("Tempo esgotado. Verifique sua conexão.");
-      } else if (error.message && error.message.includes('Unexpected token')) {
-        // Geralmente acontece quando a Vercel retorna HTML de erro (404/500) em vez de JSON
-        setErrorMessage("Erro de comunicação com a API.");
+        setErrorMessage("O servidor demorou muito para responder.");
       } else {
         setErrorMessage(error.message || "Falha ao conectar.");
       }
     } finally {
-      setIsSending(false);
       clearTimeout(timeoutId);
+      setIsSending(false);
     }
   };
 
@@ -94,7 +97,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
         <div className="flex justify-between items-start mb-6">
            <div>
               <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Central de Feedback</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Ajude a melhorar o Botequista</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Reporte erros ou sugira melhorias</p>
            </div>
            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
         </div>
@@ -105,7 +108,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
               </div>
               <h4 className="text-lg font-black uppercase text-emerald-600">Recebido!</h4>
-              <p className="text-xs text-slate-500 font-bold uppercase mt-2">Sua solicitação já está no GitHub.</p>
+              <p className="text-xs text-slate-500 font-bold uppercase mt-2">Issue criada no GitHub com sucesso.</p>
            </div>
         ) : (
           <div className="space-y-6">
@@ -127,18 +130,18 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
             </div>
 
             <div className="space-y-2">
-               <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Descrição Detalhada</label>
+               <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Descrição</label>
                <textarea 
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs min-h-[120px] outline-none focus:ring-2 focus:ring-blue-500 resize-none text-slate-800 dark:text-slate-200"
-                  placeholder={type === 'bug' ? "O que aconteceu? Onde clicou? Apareceu algum erro?" : "Descreva sua ideia incrível para o sistema..."}
+                  placeholder={type === 'bug' ? "O que aconteceu? Onde clicou? Descreva o erro..." : "Qual funcionalidade tornaria o bar mais eficiente?"}
                ></textarea>
             </div>
 
             {feedbackStatus === 'error' && (
-              <div className="text-center bg-red-100 dark:bg-red-900/20 py-3 rounded-xl border border-red-200 dark:border-red-900/30">
-                 <p className="text-[10px] font-black text-red-600 uppercase">Erro no envio</p>
+              <div className="text-center bg-red-100 dark:bg-red-900/20 py-3 rounded-xl border border-red-200 dark:border-red-900/30 animate-in shake">
+                 <p className="text-[10px] font-black text-red-600 uppercase">Falha no Envio</p>
                  <p className="text-[9px] text-red-500 font-bold uppercase mt-1">{errorMessage}</p>
               </div>
             )}
@@ -154,7 +157,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
                   Enviando...
                 </>
               ) : (
-                'Enviar Report'
+                'Enviar Feedback'
               )}
             </button>
           </div>
