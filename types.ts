@@ -29,7 +29,7 @@ export type UserPermission =
   | 'full_reset' 
   | 'manage_backup' 
   | 'help_view'
-  | 'manage_units'; // NOVA PERMISSÃO
+  | 'manage_units';
 
 export interface Unit {
   id: string;
@@ -44,7 +44,7 @@ export interface User {
   password: string;
   displayName: string;
   permissions: UserPermission[];
-  allowedUnits?: string[]; // IDs das unidades permitidas
+  allowedUnits?: string[];
 }
 
 export interface Shift {
@@ -54,17 +54,12 @@ export interface Shift {
   openedBy: string;
   closedBy?: string;
   status: 'open' | 'closed';
-  
-  // Saldos Atuais (Mutáveis por transferências)
   cashPrimary: number;   
   cashChange: number;    
   cashSecondary: number; 
-
-  // Saldos de Abertura (Imutáveis para conciliação)
   openingCashPrimary?: number;
   openingCashChange?: number;
   openingCashSecondary?: number;
-
   finalCashPrimary?: number;
   finalCashChange?: number;
   finalCashSecondary?: number;
@@ -123,7 +118,6 @@ export interface Sale {
   customerName?: string;
   userId: string;
   shiftId: string;
-  // Campos de Auditoria para Exclusão Lógica
   deleted?: boolean;
   deletedAt?: number;
   deletedBy?: string;
@@ -155,12 +149,10 @@ export const parseCurrencyValue = (val: string): number => {
   return parseFloat(normalized) || 0;
 };
 
-// ITEM 2: Precisão Matemática (Anti-Float Error)
 export const safeFloat = (val: number): number => {
   return Math.round((val + Number.EPSILON) * 100) / 100;
 };
 
-// ITEM 7: Formatação de Data Segura (ISO Local)
 export const formatDateToISO = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -176,4 +168,17 @@ export const getBusinessDateStart = (timestamp: number) => {
   }
   date.setHours(0, 0, 0, 0);
   return date.getTime();
+};
+
+// NOVA FUNÇÃO PARA EXPORTAÇÃO
+export const downloadJSON = (data: any, filename: string) => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };

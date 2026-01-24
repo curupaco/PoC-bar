@@ -1,13 +1,8 @@
 
 import { Tab, Sale, Shift, Product, User, ModifierGroup } from '../types';
 
-// Utilitário para comparação profunda
 export const isEqual = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
 
-/**
- * Realiza o merge inteligente das comandas (Open Tabs).
- * Preserva comandas locais criadas recentemente (Grace Period) que ainda não existem no servidor.
- */
 export const smartMergeTabs = (
   serverTabs: Tab[], 
   localTabs: Tab[]
@@ -16,68 +11,66 @@ export const smartMergeTabs = (
   if (!localTabs) return { mergedTabs: serverTabs, hasChanges: true };
 
   const mergedTabs = [...serverTabs];
-  let hasProtectedTabs = false;
-
-  // Varredura de Resgate
+  
   localTabs.forEach(localTab => {
     const isOnServer = serverTabs.find((st: Tab) => st.id === localTab.id);
-    
     if (!isOnServer) {
-      // Regra de Negócio: Se a mesa foi aberta localmente há menos de 2 minutos (120000ms),
-      // assumimos que é uma criação recente que ainda está na fila de upload.
-      // Mantemos ela na tela para não "sumir" para o garçom.
       const timeSinceCreation = Date.now() - (localTab.openedAt || 0);
       if (timeSinceCreation < 120000) {
         mergedTabs.push(localTab);
-        hasProtectedTabs = true;
       }
     }
   });
 
-  // Verifica se o resultado final é diferente do que já temos localmente
   const isDifferent = !isEqual(mergedTabs, localTabs);
-  
-  return { 
-    mergedTabs: isDifferent ? mergedTabs : localTabs, 
-    hasChanges: isDifferent 
-  };
+  return { mergedTabs: isDifferent ? mergedTabs : localTabs, hasChanges: isDifferent };
 };
 
 /**
- * Lógica de Fallback para o carregamento inicial.
- * Tenta usar dados da nuvem, se falhar, tenta legado, se falhar, tenta cache local.
+ * mergeInitialData - Sistema de Resgate de Emergência Total.
+ * Varre o servidor e o navegador em busca de QUALQUER dado de produtos.
  */
 export const mergeInitialData = (
   cloudData: any, 
-  legacyData: any, 
+  legacyDataFromBlob: any, 
   legacyKey: string, 
   storageKey: string, 
   fallback: any
 ) => {
-  // 1. Prioridade: Dados Granulares da Nuvem
-  if (cloudData && (Array.isArray(cloudData) ? cloudData.length > 0 : Object.keys(cloudData).length > 0)) {
-    return cloudData;
-  }
+  const isValid = (d: any) => d && (Array.isArray(d) ? d.length > 0 : Object.keys(d).length > 0);
+
+  // 1. PRIORIDADE: Dado oficial da unidade
+  if (isValid(cloudData)) return cloudData;
   
-  // 2. Fallback: Nó Legado (root blob)
-  if (legacyData && legacyData[legacyKey]) {
-    return legacyData[legacyKey];
+  // 2. EMERGÊNCIA: Puxar do Backup em Arquivo (data.json)
+  if (isValid(legacyDataFromBlob) && isValid(legacyDataFromBlob[legacyKey])) {
+      console.log(`[FORCE_RESCUE] ${legacyKey} resgatado do Backup Central.`);
+      return legacyDataFromBlob[legacyKey];
   }
 
-  // 3. Fallback: LocalStorage (Offline)
-  const local = localStorage.getItem(storageKey);
-  if (local) {
+  // 3. EMERGÊNCIA: Varredura de LocalStorage (6 gerações de chaves)
+  const rescueKeys = [
+    `btq_${legacyKey}_bk`,
+    `btq_${legacyKey}_backup`,
+    `btq_${legacyKey}`,
+    storageKey,
+    legacyKey,
+    'data'
+  ];
+
+  for (const k of rescueKeys) {
     try {
-      const parsed = JSON.parse(local);
-      if (parsed && (Array.isArray(parsed) ? parsed.length > 0 : Object.keys(parsed).length > 0)) {
-        console.warn(`[Merger] Usando Backup Local para ${storageKey} (Cloud Vazio/Erro)`);
-        return parsed;
+      const raw = localStorage.getItem(k);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const data = (k === 'data' && parsed) ? parsed[legacyKey] : parsed;
+        if (isValid(data)) {
+          console.warn(`[FORCE_RESCUE] ${legacyKey} resgatado localmente via chave: ${k}`);
+          return data;
+        }
       }
-    } catch(e) {
-      console.warn(`[Merger] Erro ao ler backup local de ${storageKey}`);
-    }
+    } catch(e) {}
   }
 
-  // 4. Default
   return fallback;
 };
