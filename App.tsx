@@ -14,6 +14,7 @@ import CashManagement from './components/CashManagement';
 import Help from './components/Help';
 import Login from './components/Login';
 import FeedbackModal from './components/FeedbackModal';
+import LoadingScreen from './components/LoadingScreen';
 import { useSync } from './hooks/useSync';
 import { saveToFirebase, saveItemToFirebase, getFirebaseToken, loadFromFirebase } from './services/firebaseService';
 import { hashPassword } from './services/cryptoService';
@@ -27,6 +28,11 @@ export const App: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   
+  const [theme, setTheme] = useState<Theme>(() => {
+    const saved = localStorage.getItem('btq_theme');
+    return (saved as Theme) || 'dark';
+  });
+
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('btq_user');
     return saved ? JSON.parse(saved) : null;
@@ -57,7 +63,17 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  // FIX: Cold Start Login - Busca usuários ao montar a aplicação, independente de estar logado
+  useEffect(() => {
+    localStorage.setItem('btq_theme', theme);
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    }
+  }, [theme]);
+
   useEffect(() => {
     const prefetchAuthData = async () => {
       if (users.length === 0) {
@@ -92,7 +108,6 @@ export const App: React.FC = () => {
     config: syncConfig
   });
 
-  // FIX: Race Condition - Persist agora aceita ID para salvamento atômico
   const persist = useCallback(async (node: string, data: any, itemId?: string) => {
     try {
       const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
@@ -103,10 +118,8 @@ export const App: React.FC = () => {
         
         if (path) {
           if (itemId) {
-             // Salvamento Atômico (Evita Race Condition)
              await saveItemToFirebase(syncConfig.url, data, itemId, undefined, token, path);
           } else {
-             // Salvamento Completo (Legacy/Configurações)
              await saveToFirebase(syncConfig.url, data, undefined, token, path);
           }
         }
@@ -148,13 +161,6 @@ export const App: React.FC = () => {
     refresh();
   };
 
-  const cleanLocalCache = () => {
-    localStorage.removeItem('btq_user');
-    localStorage.removeItem('btq_active_unit_id');
-    setProducts([]); setSales([]); setOpenTabs([]); setShifts([]); 
-    setModifierGroups([]); setCategoryModifiers({}); setUnits([]); setCategories([]);
-  };
-
   const handleLogin = useCallback((u: string, p: string) => {
     setLoginError(null);
     const userLower = u.toLowerCase().trim();
@@ -181,7 +187,8 @@ export const App: React.FC = () => {
   }, [users, refresh]);
 
   const handleLogout = useCallback(() => {
-    cleanLocalCache();
+    localStorage.removeItem('btq_user');
+    localStorage.removeItem('btq_active_unit_id');
     setCurrentUser(null);
     setActiveUnitId(null);
     window.location.reload();
@@ -191,29 +198,24 @@ export const App: React.FC = () => {
       setActiveUnitId(id);
       localStorage.setItem('btq_active_unit_id', id);
       setDbStatus('loading');
-      // O useSync detectará a mudança de activeUnitId e fará o fetch automaticamente.
-      // Removemos o setTimeout(refresh, 50) para evitar duplicidade de requisições.
   };
 
   const handleBootstrapSystem = async () => {
       setDbStatus('loading');
       const newUnits = [{ id: 'principal', name: 'Bar Principal', isActive: true, createdAt: Date.now() }];
-      
-      // Atualização otimista local (evita que a UI fique vazia enquanto salva)
       setUnits(newUnits);
-      
-      // Persiste no servidor
       await persist('units', newUnits);
-      
-      // Seleciona imediatamente
       handleSelectUnit('principal');
   };
 
   const activeShift = useMemo(() => shifts.find(s => s.status === 'open'), [shifts]);
 
-  // Se não estiver logado
+  if (dbStatus === 'loading' && users.length === 0) {
+    return <LoadingScreen message="Conectando à Rede..." />;
+  }
+
   if (!currentUser) {
-    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
+    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={loginError} />;
   }
 
   // SE LOGADO MAS SEM UNIDADE SELECIONADA -> TELA DE SELEÇÃO
@@ -224,15 +226,15 @@ export const App: React.FC = () => {
           : units.filter(u => currentUser.allowedUnits?.includes(u.id));
 
       return (
-          <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 animate-in fade-in duration-500">
+          <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6 animate-in fade-in duration-500 transition-colors">
               <div className="max-w-4xl w-full">
                   <div className="text-center mb-12">
-                      <h1 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter italic mb-4">Onde vamos trabalhar hoje?</h1>
-                      <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Olá, {currentUser.displayName}. Escolha sua estação.</p>
+                      <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white uppercase tracking-tighter italic mb-4">Onde vamos trabalhar hoje?</h1>
+                      <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest">Olá, {currentUser.displayName}. Escolha sua estação.</p>
                       
-                      <button onClick={() => refresh()} className="mt-4 text-[10px] text-slate-600 hover:text-white uppercase font-black flex items-center gap-2 mx-auto transition-colors">
+                      <button onClick={() => refresh()} className="mt-4 text-[10px] text-slate-400 dark:text-slate-600 hover:text-red-500 uppercase font-black flex items-center gap-2 mx-auto transition-colors">
                         <svg className={`w-4 h-4 ${dbStatus === 'loading' ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        Verificar Conexão
+                        Sincronizar Rede
                       </button>
                   </div>
 
@@ -249,35 +251,34 @@ export const App: React.FC = () => {
                               <button 
                                   key={unit.id}
                                   onClick={() => handleSelectUnit(unit.id)}
-                                  className={`group bg-slate-900 p-8 rounded-[40px] border border-slate-800 transition-all text-left relative overflow-hidden active:scale-95 shadow-2xl ${unit.isActive ? 'hover:bg-red-600 hover:border-red-500' : 'opacity-50 cursor-not-allowed'}`}
+                                  className={`group bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-xl transition-all text-left relative overflow-hidden active:scale-95 ${unit.isActive ? 'hover:bg-red-600 hover:border-red-500' : 'opacity-50 cursor-not-allowed'}`}
                                   disabled={!unit.isActive}
                               >
                                   <div className="relative z-10">
-                                      <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic">{unit.name}</h3>
+                                      <h3 className="text-2xl font-black text-slate-800 dark:text-white group-hover:text-white uppercase tracking-tighter italic transition-colors">{unit.name}</h3>
                                       <p className="text-[10px] font-bold text-slate-500 group-hover:text-red-200 mt-2 uppercase tracking-widest flex justify-between">
                                         <span>ID: {unit.id}</span>
                                         {!unit.isActive && <span>(SUSPENSO)</span>}
                                       </p>
                                       <div className="mt-8 flex items-center gap-2">
-                                          <span className="text-[10px] font-black bg-white/10 px-3 py-1 rounded-full text-white uppercase">
-                                            {unit.isActive ? 'Entrar' : 'Indisponível'}
+                                          <span className="text-[10px] font-black bg-slate-100 dark:bg-white/10 px-3 py-1 rounded-full text-slate-600 dark:text-white group-hover:bg-white group-hover:text-red-600 uppercase transition-all">
+                                            {unit.isActive ? 'Entrar Agora' : 'Indisponível'}
                                           </span>
                                       </div>
                                   </div>
-                                  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-white/5 rounded-full blur-xl group-hover:bg-white/20 transition-all"></div>
+                                  <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-red-600/5 dark:bg-white/5 rounded-full blur-xl group-hover:bg-white/20 transition-all"></div>
                               </button>
                           ))}
                           
-                          {/* ESTADO ZERO: SISTEMA SEM UNIDADES */}
                           {units.length === 0 && (
-                              <div className="col-span-full py-12 px-8 bg-slate-900/50 rounded-[40px] border-2 border-dashed border-slate-800 text-center flex flex-col items-center">
+                              <div className="col-span-full py-12 px-8 bg-white dark:bg-slate-900/50 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center flex flex-col items-center">
                                   {isAdminOrManager ? (
                                     <>
                                         <div className="w-16 h-16 bg-blue-600/20 text-blue-500 rounded-full flex items-center justify-center mb-6">
                                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                                         </div>
-                                        <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">Configuração Inicial</h3>
-                                        <p className="text-slate-500 font-bold mb-8 uppercase text-xs max-w-md mt-2">Nenhuma unidade encontrada. Como administrador, você deve criar a primeira unidade para começar a operar.</p>
+                                        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Nenhuma Unidade Encontrada</h3>
+                                        <p className="text-slate-500 font-bold mb-8 uppercase text-xs max-w-md mt-2">Como administrador, você deve inicializar o banco de dados principal para começar.</p>
                                         <button onClick={handleBootstrapSystem} className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-600/20 active:scale-95 transition-all flex items-center gap-3">
                                             <span>Inicializar Sistema</span>
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
@@ -288,30 +289,19 @@ export const App: React.FC = () => {
                                         <div className="w-16 h-16 bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mb-6 animate-pulse">
                                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                                         </div>
-                                        <h3 className="text-xl font-black text-white uppercase tracking-tighter italic">Sistema em Manutenção</h3>
-                                        <p className="text-slate-500 font-bold mb-4 uppercase text-xs max-w-md mt-2">Nenhuma unidade disponível no momento. Aguarde a configuração pelo administrador.</p>
+                                        <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Bar em Manutenção</h3>
+                                        <p className="text-slate-500 font-bold mb-4 uppercase text-xs max-w-md mt-2">Nenhuma unidade disponível no momento. Contate o administrador do sistema.</p>
                                     </>
                                   )}
                               </div>
-                          )}
-
-                          {/* ESTADO DE RESTRIÇÃO: UNIDADES EXISTEM MAS USUÁRIO NÃO TEM ACESSO */}
-                          {units.length > 0 && allowedUnits.length === 0 && (
-                             <div className="col-span-full text-center py-12 border-2 border-dashed border-red-900/30 rounded-[40px]">
-                                <div className="inline-block p-4 rounded-full bg-red-500/10 text-red-500 mb-4">
-                                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                </div>
-                                <h3 className="text-xl font-black text-white uppercase italic">Acesso Restrito</h3>
-                                <p className="text-slate-500 text-sm font-bold uppercase mt-2">Você não possui unidades vinculadas.</p>
-                                <p className="text-slate-600 text-[10px] mt-1 uppercase font-bold">Solicite ao administrador para liberar seu acesso.</p>
-                             </div>
                           )}
                       </div>
                   )}
                   
                   <div className="flex justify-center gap-4 mt-12">
-                      <button onClick={handleLogout} className="text-slate-500 hover:text-white font-black uppercase text-xs tracking-widest transition-colors">
-                          Sair / Trocar Usuário
+                      <button onClick={handleLogout} className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-white font-black uppercase text-xs tracking-widest transition-colors flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                          Encerrar Sessão / Trocar Usuário
                       </button>
                   </div>
               </div>
@@ -319,9 +309,12 @@ export const App: React.FC = () => {
       );
   }
 
-  // APP PRINCIPAL
+  if (dbStatus === 'loading' && products.length === 0) {
+    return <LoadingScreen message="Enchendo o Copo..." />;
+  }
+
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white overflow-hidden font-sans dark">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden font-sans transition-colors duration-300">
       <Sidebar 
         activeView={activeView} 
         onViewChange={(v) => { setActiveView(v); setIsSidebarOpen(false); }} 
@@ -337,37 +330,49 @@ export const App: React.FC = () => {
         penduraThreshold={penduraThreshold}
         isCollapsed={isSidebarCollapsed} 
         onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        theme={theme}
       />
       
-      <main className={`flex-1 overflow-y-auto h-screen p-4 md:p-6 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} bg-slate-950`}>
-        <header className="flex justify-between items-center mb-8 bg-slate-900/50 p-5 rounded-3xl border border-slate-800">
+      <main className={`flex-1 overflow-y-auto h-screen p-4 md:p-6 transition-all duration-300 ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        <header className="flex justify-between items-center mb-8 bg-white dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-300">
            <div className="flex items-center gap-4">
-              <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 bg-slate-800 rounded-xl text-white active:scale-95 transition-all">
+              <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-800 dark:text-white active:scale-95 transition-all">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
               </button>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-black uppercase italic tracking-tighter leading-none">Botequista Pro</h2>
+                    <h2 className="text-2xl font-normal font-barrio leading-none text-slate-900 dark:text-white">Botequista</h2>
                     <span className="bg-red-600 text-[8px] px-2 py-0.5 rounded text-white font-black uppercase tracking-widest">
                         {units.find(u => u.id === activeUnitId)?.name || activeUnitId}
                     </span>
                 </div>
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">
-                  {dbStatus === 'loading' ? '⏳ Sincronizando...' : '☁️ Nuvem Ativa'}
-                </span>
               </div>
            </div>
            
            <div className="flex items-center gap-3">
-               <button onClick={() => setShowFeedback(true)} className="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-all shadow-sm" title="Feedback / Reportar Bug">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-               </button>
-               <button onClick={() => { setActiveUnitId(null); localStorage.removeItem('btq_active_unit_id'); }} className="hidden md:block px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-[9px] font-black uppercase tracking-widest text-slate-300 transition-all">
+               <button onClick={() => { setActiveUnitId(null); localStorage.removeItem('btq_active_unit_id'); }} className="hidden md:block px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 transition-all">
                    Trocar Unidade
                </button>
-               <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border ${dbStatus === 'success' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
-                  {dbStatus === 'success' ? '● Online' : '● Sincronizando'}
+
+               <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border transition-all ${dbStatus === 'success' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+                  {dbStatus === 'success' ? '● Conectado' : '● Sincronizando'}
                </div>
+
+               <button 
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all shadow-sm"
+                  title={theme === 'dark' ? 'Mudar para Tema Claro' : 'Mudar para Tema Escuro'}
+                >
+                  {theme === 'dark' ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" /></svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  )}
+               </button>
+
+               <button onClick={() => setShowFeedback(true)} className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all shadow-sm" title="Feedback / Reportar Bug">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+               </button>
            </div>
         </header>
         
@@ -375,7 +380,7 @@ export const App: React.FC = () => {
           <div className="flex items-center justify-center h-[60vh]">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="font-black uppercase tracking-widest text-[10px]">Conectando ao Banco...</p>
+              <p className="font-black uppercase tracking-widest text-[10px] text-slate-500">Conectando ao Banco...</p>
             </div>
           </div>
         ) : (
@@ -383,7 +388,6 @@ export const App: React.FC = () => {
             {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} 
               onUpdateTabs={(updater) => { const next = updater(openTabs); setOpenTabs(next); persist('openTabs', next); }} 
               onCompleteSale={(newSales) => { 
-                  // Atomic Update: Saves new sales individually to avoid race conditions
                   const salesArray = Array.isArray(newSales) ? newSales : [newSales];
                   setSales(prev => [...salesArray, ...prev]); 
                   salesArray.forEach(s => persist('sales', s, s.id));
@@ -402,7 +406,6 @@ export const App: React.FC = () => {
               currentUser={currentUser} 
               categories={categories} 
               setCategories={(updater) => { const next = updater(categories); setCategories(next); persist('categories', next); }} 
-              // Atomic Product Updates
               onSaveProduct={(p) => { 
                 setProducts(prev => {
                    const exists = prev.find(x => x.id === p.id);
@@ -412,8 +415,6 @@ export const App: React.FC = () => {
                 persist('products', p, p.id);
               }}
               onDeleteProduct={(id) => {
-                 // Deletion still requires full array update or logic to nullify
-                 // For now, keeping full update for deletion as it's less frequent/concurrent
                  setProducts(prev => {
                     const next = prev.filter(p => p.id !== id);
                     persist('products', next); 
@@ -427,7 +428,7 @@ export const App: React.FC = () => {
             {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={(next) => { setShifts(next); persist('shifts', next); }} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
             {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={(next) => { setUsers(next); persist('users', next); }} />}
             {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={(next) => { setUnits(next); persist('units', next); }} onImport={handleImport} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} />}
-            {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={'dark'} />}
+            {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
             {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={(next) => { setShifts(next); persist('shifts', next); }} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
             {activeView === 'help' && <Help />}
           </>
