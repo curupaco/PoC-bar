@@ -1,6 +1,7 @@
 
-import { encryptData, decryptData } from "./cryptoService";
+// @google/genai guidelines: Ensure valid types are exported for synchronization data
 import { Product, Sale, Tab, User, Shift, ModifierGroup } from "../types";
+import { encryptData, decryptData } from "./cryptoService";
 
 export interface AppFullData {
   products: Product[];
@@ -21,6 +22,11 @@ export interface AppFullData {
   updatedAt: string;
 }
 
+// CACHE DE TOKEN DE AUTENTICAÇÃO
+// Evita erro QUOTA_EXCEEDED : Exceeded quota for verifying passwords
+let _cachedToken: string | null = null;
+let _tokenExpiration: number = 0;
+
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data.filter(Boolean);
@@ -40,15 +46,35 @@ const getFirebaseUrl = (url: string, token?: string, path?: string) => {
 
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string | null> => {
   if (!apiKey) return null;
+
+  // 1. Verifica se temos um token válido em cache (com margem de segurança de 60s)
+  if (_cachedToken && Date.now() < _tokenExpiration - 60000) {
+    return _cachedToken;
+  }
+
   try {
     const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pass, returnSecureToken: true })
     });
+    
     const data = await response.json();
-    return response.ok ? data.idToken : null;
+    
+    if (response.ok && data.idToken) {
+      // 2. Salva no cache
+      _cachedToken = data.idToken;
+      // data.expiresIn vem em segundos (geralmente 3600s = 1h)
+      const expiresInSeconds = parseInt(data.expiresIn || '3600', 10);
+      _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
+      
+      return data.idToken;
+    } else {
+      console.error("Auth Error:", data.error);
+      return null;
+    }
   } catch (e) {
+    console.error("Network Auth Error:", e);
     return null;
   }
 };
@@ -57,6 +83,7 @@ export const loadFromFirebase = async (url: string, encryptionKey?: string, toke
   if (!token && url.includes('identitytoolkit')) return null;
   try {
     const targetUrl = getFirebaseUrl(url, token, path);
+    // Adiciona timestamp para evitar cache do navegador (browser cache vs token cache)
     const response = await fetch(`${targetUrl}${targetUrl.includes('?') ? '&' : '?'}cb=${Date.now()}`);
     if (!response.ok) return null;
     let data = await response.json();
