@@ -3,7 +3,7 @@
   "name": "Botequista - Gestão de Bar",
   "short_name": "Botequista",
   "description": "Sistema completo para gestão de bar, PDV e relatórios financeiros.",
-  "start_url": ".",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
