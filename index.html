@@ -5,7 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#020617">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Botequista">
+    
     <title>Botequista - Gestão de Bar</title>
+    
+    <!-- Vínculo Crítico para Instalação no Android -->
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/512/beer.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,9 +31,12 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Barrio&display=swap" rel="stylesheet">
     <style>
-        html, body { margin: 0; padding: 0; }
-        #root { min-height: 100vh; }
+        html, body { margin: 0; padding: 0; height: 100%; }
+        #root { min-height: 100vh; display: flex; flex-direction: column; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Prevenção de pull-to-refresh acidental no Android */
+        body { overscroll-behavior-y: contain; }
     </style>
 <script type="importmap">
 {
