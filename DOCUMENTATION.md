@@ -1,66 +1,98 @@
 
-# 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.2.0 (Theme & Header Update)  
-**Stack:** React 19, TypeScript, Firebase RTDB, TailwindCSS, Vercel Functions
+# 🍺 Botequista Pro - Documentação Técnica e Operacional
+**Versão:** 4.2.5 (Stable)  
+**Desenvolvedor:** Senior Frontend Engineer  
+**Stack:** React 19, TypeScript, Firebase Realtime DB, TailwindCSS, Vercel Edge Functions.
 
 ---
 
-## 1. Arquitetura Multi-Unidade (Franquia)
-O sistema opera em modo Multi-Tenant lógico. Os dados são segregados por unidade, mas compartilham a mesma base de usuários e configurações globais.
-
-### Estrutura de Dados (Firebase)
-- **`users/`**: Base global de colaboradores. Um usuário pode ter acesso a múltiplas unidades (`allowedUnits`).
-- **`units/`**: Cadastro global de bares (ID, Nome, Status).
-- **`data/units/{unit_id}/`**: Dados isolados de cada bar:
-  - `products`: Cardápio específico da unidade.
-  - `sales`: Histórico de vendas.
-  - `openTabs`: Mesas abertas.
-  - `shifts`: Turnos de caixa.
-  - `modifierGroups`: Adicionais e complementos.
+## 1. Visão Geral
+O **Botequista** é uma plataforma de gestão de PDV (Ponto de Venda) especializada para bares e restaurantes que operam com alta rotatividade e necessidade de controle de fiados ("Penduras"). O sistema é focado em performance, operando como um PWA (Progressive Web App) capaz de funcionar offline e sincronizar dados em tempo real quando há conexão.
 
 ---
 
-## 2. Interface e UX (User Experience)
+## 2. Arquitetura de Dados
 
-### A. Identidade Visual (Header)
-O cabeçalho foi redesenhado para destacar a marca **Botequista** usando a tipografia personalizada (Barrio). 
-- **Status da Rede:** Traduzido integralmente para o Português (Conectado / Sincronizando).
-- **Acessibilidade:** Botão de feedback movido para a extremidade direita para evitar cliques acidentais durante a troca de unidades.
+### A. Estrutura Multi-Tenant (Franquias)
+O sistema utiliza um modelo de isolamento por unidade ("Bar").
+- **Dados Globais:** `users/` e `units/`. Armazenam a base de colaboradores e a lista de unidades físicas.
+- **Dados Locais:** Localizados em `data/units/{unit_id}/`. Contêm produtos, vendas, comandas abertas, turnos e logs de tesouraria específicos daquela unidade.
 
-### B. Gestão de Temas (Light/Dark)
-O sistema suporta alternância entre modo claro e escuro.
-- **Persistência:** A preferência de tema é salva no `localStorage` sob a chave `btq_theme`.
-- **Implementação:** Utiliza a estratégia de classe `dark` no elemento raiz (`html`) via TailwindCSS.
-
-### C. Feedback Visual de Carregamento (Loading Screen)
-- **Animação:** Uma caneca de cerveja estilizada que enche e esvazia, acompanhada de espuma animada.
-- **Contexto:** Aparece durante o login, troca de unidade e carregamento inicial.
+### B. Motor de Sincronização (`useSync.ts`)
+Utiliza uma estratégia de *Polling* otimizado (10s) e *Hash Comparison* para evitar re-renders desnecessários.
+- **Persistência Local:** O sistema mantém um "Mirror" no `localStorage` para permitir o carregamento instantâneo e funcionamento em áreas de sombra de rede.
 
 ---
 
-## 3. Cardápio Inteligente & Upsell
-O sistema de produtos possui três camadas de complexidade para agilizar o atendimento:
+## 3. Módulos do Sistema
 
-### A. Tipos de Venda
-- **Unidade:** Venda padrão (Cervejas, Latas).
-- **Peso (KG):** Aciona automaticamente o modal de pesagem.
+### 🛒 Ponto de Venda (POS)
+- **Mesas Abertas:** Gerenciamento dinâmico de comandas com nomes personalizados.
+- **Venda Rápida:** Lançamento direto sem necessidade de abrir mesa.
+- **Venda por Peso (KG):** Aciona teclado numérico de gramas, calculando o preço proporcional instantaneamente.
+- **Adicionais (Upsell):** Menus de modificadores (ex: gelo, limão, borda) que podem ser obrigatórios ou opcionais por categoria.
+- **Split Payment:** Permite pagar uma única conta com múltiplos métodos (ex: R$ 50 no PIX e R$ 20 no Dinheiro).
 
-### B. Modificadores (Adicionais)
-Grupos de opções que podem ser vinculados a produtos.
+### 📊 Relatórios e Inteligência
+- **Fechamento de Turno:** Gera um "Cupom de Auditoria" em PNG que pode ser compartilhado via WhatsApp.
+- **Curva ABC de Produtos:** Ranking de faturamento por item.
+- **Gestão de Penduras:** Carteira ativa de devedores com histórico de débitos e quitações vinculadas ao nome do cliente.
+- **Mapa de Calor Operacional:** Gráfico de volume de vendas por hora para ajuste de escala de funcionários.
+
+### 👥 Gestão de Equipe (RBAC)
+Sistema de permissões baseado em funções (*Role-Based Access Control*):
+- **admin:** Acesso total irrestrito.
+- **Módulos:** Permissões granulares para ver Dashboard, PDV, Histórico, etc.
+- **Ações Críticas:** Permissões específicas para anular vendas, excluir produtos ou gerenciar backups.
 
 ---
 
-## 4. Requisitos de Configuração (Variáveis de Ambiente)
-As seguintes variáveis devem ser configuradas no painel da Vercel para o funcionamento do sistema de Feedback:
+## 4. Segurança e Auditoria
 
-| Variável | Descrição |
-| :--- | :--- |
-| `GITHUB_TOKEN` | Personal Access Token (Classic) com escopo `repo`. |
-| `GITHUB_OWNER` | Nome do usuário ou organização dona do repositório. |
-| `GITHUB_REPO` | Nome do repositório onde as issues serão criadas. |
+### A. Criptografia (`cryptoService.ts`)
+- **Senhas:** Armazenadas utilizando hash SHA-256.
+- **Dados Sensíveis:** Suporte nativo para criptografia AES-256 em backups locais e remotos.
+
+### B. Auditoria de Caixa
+Cada movimentação entre o cofre e a gaveta de troco é registrada com:
+- ID da transação.
+- Timestamp de Brasília (GMT-3).
+- Usuário responsável.
+- Origem e Destino do valor.
 
 ---
 
-## 5. Protocolo de Suporte
-- **Feedback:** O botão de balão no canto superior direito abre a modal de feedback integrada ao GitHub.
-- **Logs:** Erros de API são logados no console com prefixo `[Sync]` ou `[Feedback API]`.
+## 5. Instalação e PWA
+
+### Configuração Android/iOS
+O sistema está configurado para ser instalado como um aplicativo nativo.
+- **Ícone Transparente:** Utiliza ícones de fluência com canal alfa para integração estética no launcher do celular.
+- **Service Worker:** Cache agressivo de assets estáticos (Tailwind, Fontes, Ícones) para carregamento rápido.
+
+### Resolução de Problemas (404 NOT FOUND)
+Se o app exibir erro 404 ao abrir:
+1. Verifique se o `manifest.json` aponta para a `start_url: "/"`.
+2. Limpe o cache do Chrome no Android e reinstale via menu "Instalar Aplicativo".
+
+---
+
+## 6. API de Feedback (GitHub Integration)
+Localizada em `api/feedback.ts` (Vercel Function).
+- **Timezone Fix:** As issues são criadas no GitHub com o horário de Brasília forçado (`America/Sao_Paulo`), resolvendo o problema de fuso horário do servidor UTC.
+- **Variáveis Necessárias:**
+  - `GITHUB_TOKEN`: PAT Classic com permissão de `repo`.
+  - `GITHUB_OWNER`: Nome do usuário no GitHub.
+  - `GITHUB_REPO`: Nome do repositório de destino.
+
+---
+
+## 7. Guia de Manutenção
+
+### Reset de Fábrica
+Apenas disponível para usuários com permissão `full_reset`. Apaga todos os dados do nó da unidade no Firebase. **Ação irreversível.**
+
+### Backup Externo
+Recomenda-se exportar o arquivo JSON semanalmente através da aba **Ajustes > Baixar Backup Completo**. Este arquivo pode ser restaurado em qualquer nova instalação do Botequista.
+
+---
+*Documentação atualizada em: Março de 2024*
