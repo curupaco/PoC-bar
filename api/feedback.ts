@@ -33,12 +33,17 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const title = `[APP REPORT] ${type === 'bug' ? '🐞 BUG' : '💡 FEATURE'} - ${new Date().toLocaleDateString('pt-BR')}`;
+    // Ajuste de Fuso Horário para Brasil (GMT-3)
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const fullTimeStr = now.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const title = `[APP REPORT] ${type === 'bug' ? '🐞 BUG' : '💡 FEATURE'} - ${dateStr}`;
     const body = `
 ### Relato do Usuário
 **Tipo:** ${type === 'bug' ? 'Erro Encontrado' : 'Sugestão de Melhoria'}
 **Reportado por:** ${user || 'Anônimo'}
-**Data:** ${new Date().toLocaleString('pt-BR')}
+**Data/Hora (Brasília):** ${fullTimeStr}
 
 ---
 ### Descrição
