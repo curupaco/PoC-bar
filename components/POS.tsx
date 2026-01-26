@@ -308,6 +308,17 @@ const POS: React.FC<POSProps> = ({
                    setDeleteConfirmId(null);
                    showFeedback(`MESA REMOVIDA`);
                 }} className="w-full bg-red-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">Sim, Remover</button>
+                
+                {/* BOTÃO DE LIMPEZA FORÇADA PARA MESA ZUMBI */}
+                <button onClick={() => {
+                   onDeleteTab(deleteConfirmId.id);
+                   if (normalizeId(activeTabId) === normalizeId(deleteConfirmId.id)) { setActiveTabId(null); }
+                   setDeleteConfirmId(null);
+                   showFeedback(`LIMPEZA FORÇADA APLICADA`);
+                }} className="w-full bg-slate-800 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">
+                   Mesa Travada? (Forçar Limpeza)
+                </button>
+
                 <button onClick={() => setDeleteConfirmId(null)} className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest text-slate-400">Cancelar</button>
              </div>
           </div>

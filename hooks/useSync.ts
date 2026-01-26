@@ -31,6 +31,17 @@ export const useSync = (props: SyncProps) => {
   // FIX 2: Contador de erros para evitar "pisca-pisca" do status Offline
   const errorCount = useRef(0);
 
+  // FIX 3: Blacklist Persistente (LocalStorage) para Mesas Zumbis
+  // Não usa mais apenas memória RAM, garantindo que sobreviva a refresh/troca de turno
+  const getPersistedBlacklist = () => {
+      try {
+          const raw = localStorage.getItem('btq_zombie_blacklist');
+          return new Set(raw ? JSON.parse(raw) : []);
+      } catch {
+          return new Set();
+      }
+  };
+
   const { 
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
     setUsers, setShifts, setUnits, setCategories, setDbStatus, activeUnitId, config
@@ -38,6 +49,21 @@ export const useSync = (props: SyncProps) => {
 
   const getPath = (node: string) => activeUnitId ? `data/units/${activeUnitId}/${node}` : null;
   const getMetaPath = () => activeUnitId ? `data/units/${activeUnitId}/_meta` : null;
+
+  // Função exposta para o App marcar itens como deletados permanentemente
+  const registerLocalDeletion = useCallback((id: string) => {
+      const currentList = getPersistedBlacklist();
+      currentList.add(id);
+      localStorage.setItem('btq_zombie_blacklist', JSON.stringify(Array.from(currentList)));
+  }, []);
+
+  // Limpa o hash se mudar de unidade, mas MANTÉM a blacklist por segurança (ou limpa se preferir isolamento)
+  useEffect(() => {
+      lastDataHash.current = {};
+      initialLoadDone.current = false;
+      // Opcional: Limpar blacklist ao trocar unidade se os IDs puderem colidir, 
+      // mas IDs unicos (timestamp) raramente colidem. Mantendo por segurança.
+  }, [activeUnitId]);
 
   // PROCESSAMENTO DA FILA OFFLINE
   const processQueue = useCallback(async (token: string) => {
@@ -55,7 +81,6 @@ export const useSync = (props: SyncProps) => {
     try {
         let path = '';
         if (item.node.includes('/')) {
-           // Caminho absoluto ou sub-caminho já formatado
            path = `data/units/${effectiveUnitId}/${item.node}`;
         } else {
            path = `data/units/${effectiveUnitId}/${item.node}`;
@@ -74,7 +99,7 @@ export const useSync = (props: SyncProps) => {
     } catch (e) {
         console.warn("[Queue] Erro ao processar item:", item.id, e);
         const currentRetry = item.retryCount || 0;
-        if (currentRetry >= 10) { // Reduzido para não travar indefinidamente
+        if (currentRetry >= 10) { 
             await SyncQueue.dequeue(item.id);
         } else {
             await SyncQueue.update({ ...item, retryCount: currentRetry + 1 });
@@ -86,16 +111,20 @@ export const useSync = (props: SyncProps) => {
   // SMART MERGE
   const smartMerge = useCallback((serverData: any[], nodeKey: string) => {
       const queue = SyncQueue.getAll();
+      const blacklist = getPersistedBlacklist(); // Lê a lista persistente
       
       const pendingItems = queue.filter(q => 
           q.node.startsWith(nodeKey) && 
           (q.unitId === activeUnitId || (!q.unitId && activeUnitId))
       );
       
-      if (pendingItems.length === 0) return serverData;
+      // Se não tem dados do servidor, assume array vazio para evitar crash
+      const safeServerData = Array.isArray(serverData) ? serverData : [];
+      
+      // 1. Mapa inicial com dados do servidor
+      const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
 
-      const dataMap = new Map(serverData.map((item: any) => [item.id, item]));
-
+      // 2. Aplica alterações pendentes da fila (Optimistic UI da Fila)
       pendingItems.forEach(q => {
           if (!q.node.includes('/') && q.itemId) {
              if (q.data) {
@@ -106,6 +135,7 @@ export const useSync = (props: SyncProps) => {
           }
       });
 
+      // 3. Lógica específica para itens aninhados em openTabs
       if (nodeKey === 'openTabs') {
           const nestedItems = pendingItems.filter(q => q.node.includes('/items'));
           nestedItems.forEach(q => {
@@ -133,6 +163,16 @@ export const useSync = (props: SyncProps) => {
           });
       }
 
+      // 4. APLICA BLACKLIST PERSISTENTE (Mesa Zumbi Killer 2.0)
+      // Remove qualquer item cujo ID esteja no localStorage como deletado
+      if (blacklist.size > 0) {
+          for (const id of blacklist) {
+              if (dataMap.has(id)) {
+                  dataMap.delete(id);
+              }
+          }
+      }
+
       return Array.from(dataMap.values());
   }, [activeUnitId]);
 
@@ -146,7 +186,6 @@ export const useSync = (props: SyncProps) => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);
       if (!token) throw new Error("Auth Failed");
 
-      // Reset erro counter se conectou
       errorCount.current = 0;
 
       processQueue(token);
@@ -157,14 +196,13 @@ export const useSync = (props: SyncProps) => {
             loadFromFirebase(config.url, undefined, token, getMetaPath()!)
          ]);
 
-         if (tRaw) {
-            const merged = smartMerge(tRaw, 'openTabs');
-            // Check hash antes de atualizar
-            const hash = JSON.stringify(merged);
-            if (lastDataHash.current['openTabs'] !== hash) {
-                setOpenTabs(merged);
-                lastDataHash.current['openTabs'] = hash;
-            }
+         // Sempre processa openTabs para garantir que a blacklist funcione
+         const mergedTabs = smartMerge(tRaw || [], 'openTabs');
+         const tabsHash = JSON.stringify(mergedTabs);
+         
+         if (lastDataHash.current['openTabs'] !== tabsHash) {
+            setOpenTabs(mergedTabs);
+            lastDataHash.current['openTabs'] = tabsHash;
          }
          
          const serverMeta = metaRaw || {};
@@ -207,7 +245,6 @@ export const useSync = (props: SyncProps) => {
                      const merged = smartMerge(data, key);
                      const hash = JSON.stringify(merged);
                      
-                     // Só atualiza estado se o hash for diferente (Scroll Jump Fix)
                      if (lastDataHash.current[key] !== hash) {
                         setters[idx](merged);
                         lastDataHash.current[key] = hash;
@@ -225,7 +262,6 @@ export const useSync = (props: SyncProps) => {
       console.warn("[Sync] Network issue:", e);
       errorCount.current += 1;
       
-      // Só marca offline se falhar 3 vezes seguidas (Badge Flickering Fix)
       if (errorCount.current >= 3) {
           setDbStatus('offline');
       }
@@ -268,11 +304,11 @@ export const useSync = (props: SyncProps) => {
 
   const refresh = useCallback(() => {
      localMeta.current = {};
-     lastDataHash.current = {}; // Limpa cache de hash
+     lastDataHash.current = {}; 
      initialLoadDone.current = false;
      fetchGlobal();
      fetchData();
   }, [fetchGlobal, fetchData]);
 
-  return { refresh };
+  return { refresh, registerLocalDeletion };
 };

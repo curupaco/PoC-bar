@@ -84,7 +84,7 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  const { refresh } = useSync({
+  const { refresh, registerLocalDeletion } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
     activeUnitId, config: syncConfig
@@ -173,8 +173,15 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteTab = (tabId: string) => {
+    // 1. Atualização Otimista
     setOpenTabs(prev => prev.filter(t => t.id !== tabId));
+    
+    // 2. Persistência na Fila (Backend)
     persist('openTabs', null, tabId);
+    
+    // 3. FIX MESA ZUMBI: Registra na Blacklist Local
+    // Isso impede que a mesa volte na próxima sincronização do useSync
+    registerLocalDeletion(tabId);
   };
 
   // Handlers for Data Updates (Generic Lists)
