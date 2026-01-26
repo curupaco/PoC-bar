@@ -1,19 +1,61 @@
-
-import React, { useState } from 'react';
-import { Product } from '../../types';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Product, formatCurrency } from '../../types';
 
 interface POSProductGridProps {
   products: Product[];
   onAddProduct: (product: Product) => void;
 }
 
+// Sub-componente memoizado para evitar re-renders e gerenciar animação de clique individual
+const ProductCard = React.memo(({ product, onClick }: { product: Product, onClick: (p: Product) => void }) => {
+  const [isAdded, setIsAdded] = useState(false);
+
+  const handleClick = () => {
+    setIsAdded(true);
+    onClick(product);
+    setTimeout(() => setIsAdded(false), 300); // Feedback visual de 300ms
+  };
+
+  return (
+    <button 
+      onClick={handleClick} 
+      className={`relative bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[24px] border transition-all h-20 md:h-24 flex flex-col items-center justify-center text-center touch-manipulation
+        ${isAdded 
+          ? 'scale-95 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-none' 
+          : 'border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm active:scale-95'}
+      `}
+    >
+      <p className={`text-[9px] md:text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1 transition-colors ${isAdded ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-white'}`}>
+        {product.name}
+      </p>
+      <p className={`text-lg md:text-xl font-black transition-colors ${isAdded ? 'text-emerald-600' : 'text-red-600'}`}>
+        {product.price.toFixed(2).replace('.', ',')}
+      </p>
+      {isAdded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+           <span className="animate-in zoom-in fade-in duration-200 text-emerald-600 font-bold text-2xl drop-shadow-sm">+1</span>
+        </div>
+      )}
+    </button>
+  );
+});
+
 const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  const [expandedLists, setExpandedLists] = useState<Set<string>>(new Set()); // Controle de "Ver Mais"
 
-  const filteredProducts = (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const favorites = filteredProducts.filter(p => p.isFavorite);
-  const categories: string[] = (Array.from(new Set(filteredProducts.map(p => p.category))) as string[]).sort();
+  const filteredProducts = useMemo(() => 
+    (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
+  [products, searchTerm]);
+
+  const favorites = useMemo(() => 
+    filteredProducts.filter(p => p.isFavorite),
+  [filteredProducts]);
+
+  const categories: string[] = useMemo(() => 
+    (Array.from(new Set(filteredProducts.map(p => p.category))) as string[]).sort(),
+  [filteredProducts]);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCats(prev => {
@@ -23,6 +65,20 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
       return newSet;
     });
   };
+
+  const toggleExpandList = (cat: string) => {
+    setExpandedLists(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(cat)) newSet.delete(cat);
+      else newSet.add(cat);
+      return newSet;
+    });
+  };
+
+  // Callback estável para o ProductCard
+  const handleAddClick = useCallback((p: Product) => {
+    onAddProduct(p);
+  }, [onAddProduct]);
 
   return (
     <div className="flex-1 space-y-4 md:space-y-6 pb-24">
@@ -39,39 +95,54 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
             <h3 className="text-[9px] md:text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] pl-2">⭐ FAVORITOS</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
               {favorites.map(p => (
-                <button key={p.id} onClick={() => onAddProduct(p)} className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[24px] border-2 border-amber-500/20 hover:border-amber-500 shadow-sm transition-all h-20 md:h-24 flex flex-col items-center justify-center text-center active:scale-95">
-                  <p className="text-[9px] md:text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1 text-slate-800 dark:text-white">{p.name}</p>
-                  <p className="text-lg md:text-xl font-black text-amber-600">{p.price.toFixed(2).replace('.', ',')}</p>
-                </button>
+                <ProductCard key={p.id} product={p} onClick={handleAddClick} />
               ))}
             </div>
           </div>
         )}
-        {categories.map(cat => (
-          <div key={cat} className="space-y-3 md:space-y-4">
-            <div 
-              onClick={() => toggleCategory(cat)} 
-              className="flex items-center gap-3 md:gap-4 cursor-pointer group select-none hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1 md:p-2 rounded-xl transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <svg className={`w-3 h-3 md:w-4 md:h-4 text-red-600 transition-transform duration-300 ${collapsedCats.has(cat) ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
-                <h3 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] group-hover:text-red-500 transition-colors">{cat}</h3>
+        
+        {categories.map(cat => {
+          const catProducts = filteredProducts.filter(p => p.category === cat);
+          const isExpanded = expandedLists.has(cat);
+          // Performance Fix: Mostra apenas os 12 primeiros se não estiver expandido
+          const visibleProducts = isExpanded || searchTerm ? catProducts : catProducts.slice(0, 12);
+          const hasMore = catProducts.length > 12;
+
+          return (
+            <div key={cat} className="space-y-3 md:space-y-4">
+              <div 
+                onClick={() => toggleCategory(cat)} 
+                className="flex items-center gap-3 md:gap-4 cursor-pointer group select-none hover:bg-slate-50 dark:hover:bg-slate-800/50 p-1 md:p-2 rounded-xl transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <svg className={`w-3 h-3 md:w-4 md:h-4 text-red-600 transition-transform duration-300 ${collapsedCats.has(cat) ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
+                  <h3 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] group-hover:text-red-500 transition-colors">{cat}</h3>
+                </div>
+                <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+                <span className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase whitespace-nowrap">{catProducts.length} ITENS</span>
               </div>
-              <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
-              <span className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase whitespace-nowrap">{filteredProducts.filter(p => p.category === cat).length} ITENS</span>
+              
+              {!collapsedCats.has(cat) && (
+                <div className="animate-in slide-in-from-top-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3">
+                    {visibleProducts.map(p => (
+                      <ProductCard key={p.id} product={p} onClick={handleAddClick} />
+                    ))}
+                  </div>
+                  
+                  {hasMore && !searchTerm && (
+                    <button 
+                      onClick={() => toggleExpandList(cat)}
+                      className="w-full mt-3 py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-[10px] font-black uppercase rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200"
+                    >
+                      {isExpanded ? 'Mostrar Menos' : `Ver +${catProducts.length - 12} produtos em ${cat}`}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-            {!collapsedCats.has(cat) && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-2 md:gap-3 animate-in slide-in-from-top-2">
-                {filteredProducts.filter(p => p.category === cat).map(p => (
-                  <button key={p.id} onClick={() => onAddProduct(p)} className="bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[24px] border border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm transition-all h-20 md:h-24 flex flex-col items-center justify-center text-center active:scale-95 touch-manipulation">
-                    <p className="text-[9px] md:text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1 text-slate-800 dark:text-white">{p.name}</p>
-                    <p className="text-lg md:text-xl font-black text-red-600">{p.price.toFixed(2).replace('.', ',')}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+          );
+        })}
         {filteredProducts.length === 0 && <div className="py-20 text-center text-slate-400 font-black uppercase text-[9px] tracking-[0.4em] italic opacity-30">Vazio</div>}
       </div>
     </div>
