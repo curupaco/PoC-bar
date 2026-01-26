@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../types';
 
@@ -47,7 +46,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const deletedSalesTotal = useMemo(() => {
     if (!activeShift) return 0;
     return (sales || [])
-      .filter(s => s.shiftId === activeShift.id && s.deleted)
+      .filter(s => {
+         // Verifica se pertence ao turno (ID ou Horário) E se está deletado
+         const belongsToShift = s.shiftId === activeShift.id || (!s.shiftId && s.timestamp >= activeShift.startTime);
+         return belongsToShift && s.deleted;
+      })
       .reduce((acc, s) => acc + (s.total || 0), 0);
   }, [activeShift, sales]);
 
@@ -255,14 +258,40 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       {showConferral && activeShift && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <div className="mb-8">
-               <h3 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Conferência Cega</h3>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Conte o dinheiro físico da gaveta</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center max-h-[95vh] overflow-y-auto custom-scrollbar">
+             <div className="mb-6">
+               <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Fechamento de Caixa</h3>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Conferência final de valores</p>
+             </div>
+
+             {/* PAINEL DE AUDITORIA ADICIONADO */}
+             <div className="mb-6 text-left space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                   <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+                      <p className="text-[9px] font-black text-slate-400 uppercase">Fundo Inicial</p>
+                      <p className="text-sm font-black text-slate-700 dark:text-slate-300">{formatCurrency(openingBalance)}</p>
+                   </div>
+                   <div className="bg-emerald-50 dark:bg-emerald-900/10 p-3 rounded-2xl border border-emerald-100 dark:border-emerald-900/20">
+                      <p className="text-[9px] font-black text-emerald-600 uppercase">Vendas Dinheiro</p>
+                      <p className="text-sm font-black text-emerald-700 dark:text-emerald-400">{formatCurrency(cashMovements.sales)}</p>
+                   </div>
+                   <div className="bg-blue-50 dark:bg-blue-900/10 p-3 rounded-2xl border border-blue-100 dark:border-blue-900/20">
+                      <p className="text-[9px] font-black text-blue-600 uppercase">Movimentações</p>
+                      <p className="text-sm font-black text-blue-700 dark:text-blue-400">{formatCurrency(internalTransfers)}</p>
+                   </div>
+                   <div className="bg-red-50 dark:bg-red-900/10 p-3 rounded-2xl border border-red-100 dark:border-red-900/20">
+                      <p className="text-[9px] font-black text-red-600 uppercase">Cancelados</p>
+                      <p className="text-sm font-black text-red-700 dark:text-red-400">{formatCurrency(deletedSalesTotal)}</p>
+                   </div>
+                </div>
+                <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-200 dark:border-slate-700">
+                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Esperado na Gaveta</span>
+                   <span className="text-lg font-black text-slate-900 dark:text-white">{formatCurrency(expectedCashInDrawer)}</span>
+                </div>
              </div>
              
              <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl mb-8 border border-slate-200 dark:border-slate-800">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Encontrado (Dinheiro)</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Contado (Físico)</label>
                <div className="relative">
                   <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">R$</span>
                   <input 
