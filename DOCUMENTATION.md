@@ -1,6 +1,6 @@
 
 # 🍺 Botequista Pro - Documentação Técnica e Operacional
-**Versão:** 4.4.0 (Full Stack Definition)  
+**Versão:** 4.5.0 (Mobile First Overhaul)  
 **Desenvolvedor:** Senior Frontend Engineer  
 **Stack:** React 19, TypeScript, Firebase Realtime DB, TailwindCSS, Vercel Edge Functions.
 
@@ -53,7 +53,18 @@ O **Botequista** é uma plataforma de gestão de PDV (Ponto de Venda) especializ
 
 ---
 
-## 4. API & Serverless Architecture
+## 4. Mobile UX & Responsividade (Novo na v4.5)
+
+### Header Inteligente para Smartphone
+O sistema agora oferece paridade de recursos entre Desktop e Mobile no topo da tela:
+- **Identificação da Unidade:** Nome do bar visível no topo com botão de troca rápida.
+- **Indicador de Sync:** Status de conexão com a nuvem (Verde/Amarelo) persistente em dispositivos móveis.
+- **Controles de Sistema:** Acesso direto à troca de tema (Dark/Light) e botão de feedback sem precisar abrir o menu lateral.
+- **Otimização de Espaço:** Layout adaptativo que prioriza o nome da unidade e os ícones de ação rápida.
+
+---
+
+## 5. API & Serverless Architecture
 
 O sistema utiliza Vercel Functions para processamento pesado e segurança, evitando expor lógica de negócios no cliente.
 
@@ -80,7 +91,7 @@ Para evitar expor a URL e Token do Firebase na query string, o frontend envia cr
 
 ---
 
-## 5. Segurança & Controle de Acesso (RBAC)
+## 6. Segurança & Controle de Acesso (RBAC)
 
 ### Níveis de Permissão
 O sistema possui 20 permissões granulares (`UserPermission`), agrupadas em:
@@ -89,24 +100,5 @@ O sistema possui 20 permissões granulares (`UserPermission`), agrupadas em:
 - **Gestão:** `edit_product`, `users_admin`, `manage_units`.
 - **Crítico:** `delete_sale` (Anulação auditada), `full_reset` (Reset de fábrica).
 
-### Criptografia
-- **Senhas:** Hash SHA-256 antes de salvar no banco.
-- **Backups:** Suporte a criptografia AES-256 para arquivos JSON exportados (feature opcional).
-
 ---
-
-## 6. Procedimentos de Manutenção
-
-### Reset de Fábrica
-Disponível apenas para Admin. Limpa toda a árvore de dados da unidade ativa no Firebase. Útil para inaugurações ou troca de gestão.
-
-### Backup e Restauração
-- **Exportar:** Gera um arquivo JSON contendo Vendas, Produtos, Usuários e Configurações.
-- **Restaurar:** Permite carregar um JSON anterior.
-- **Sync GitHub:** (Feature Experimental) Permite sincronizar o backup com um Gist privado do GitHub.
-
-### Correção de Mesa Travada
-Botão **"Forçar Limpeza"** no modal de exclusão de mesa. Adiciona o ID à blacklist local, removendo-a visualmente independente do estado do servidor.
-
----
-*Documentação atualizada em: Outubro de 2023 (v4.4.0)*
+*Documentação atualizada em: Outubro de 2023 (v4.5.0)*
