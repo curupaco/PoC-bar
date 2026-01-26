@@ -51,13 +51,22 @@ const POS: React.FC<POSProps> = ({
   
   const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string} | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<{ tabId: string, itemId: string, prevQty: number } | null>(null);
 
   useEffect(() => {
     if (toast) {
-      const t = setTimeout(() => setToast(null), 2000);
+      const t = setTimeout(() => setToast(null), 2500);
       return () => clearTimeout(t);
     }
   }, [toast]);
+
+  // Limpa o botão de desfazer após 5 segundos
+  useEffect(() => {
+    if (lastAction) {
+      const t = setTimeout(() => setLastAction(null), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [lastAction]);
 
   const showFeedback = useCallback((msg: string) => setToast(msg), []);
 
@@ -89,6 +98,27 @@ const POS: React.FC<POSProps> = ({
     setDeleteConfirmId({ id: tabId, name });
   }, []);
 
+  const handleUndo = () => {
+    if (!lastAction) return;
+    const { tabId, itemId, prevQty } = lastAction;
+    const tab = openTabs.find(t => t.id === tabId);
+    if (!tab) return;
+
+    const item = tab.items.find(i => i.id === itemId);
+    if (item) {
+      const updatedItem = { 
+        ...item, 
+        quantity: prevQty, 
+        totalPrice: safeFloat(prevQty * item.unitPrice) 
+      };
+      if (onUpdateTabItem) {
+        onUpdateTabItem(tabId, updatedItem);
+      }
+      showFeedback("AÇÃO REVERTIDA");
+    }
+    setLastAction(null);
+  };
+
   const executeAddItem = useCallback((product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTab) return;
 
@@ -98,6 +128,7 @@ const POS: React.FC<POSProps> = ({
 
     if (editingWeightIndex !== null) {
       const currentItem = items[editingWeightIndex];
+      const prevQty = currentItem.quantity;
       const newItem = { 
         ...currentItem, 
         quantity: quantity, 
@@ -106,6 +137,7 @@ const POS: React.FC<POSProps> = ({
       
       if (onUpdateTabItem) {
           onUpdateTabItem(activeTabId!, newItem);
+          setLastAction({ tabId: activeTabId!, itemId: newItem.id, prevQty });
       } else {
           items[editingWeightIndex] = newItem;
           onSaveTab({ ...activeTab, items });
@@ -118,6 +150,7 @@ const POS: React.FC<POSProps> = ({
       );
 
       if (existingItem && product.sellType === 'unit') {
+        const prevQty = existingItem.quantity;
         const newQty = existingItem.quantity + quantity;
         const updatedItem = { 
            ...existingItem, 
@@ -127,6 +160,7 @@ const POS: React.FC<POSProps> = ({
         
         if (onUpdateTabItem) {
             onUpdateTabItem(activeTabId!, updatedItem);
+            setLastAction({ tabId: activeTabId!, itemId: updatedItem.id, prevQty });
         } else {
             const idx = items.indexOf(existingItem);
             items[idx] = updatedItem;
@@ -147,6 +181,7 @@ const POS: React.FC<POSProps> = ({
         
         if (onUpdateTabItem) {
             onUpdateTabItem(activeTabId!, newItem);
+            setLastAction({ tabId: activeTabId!, itemId: newItem.id, prevQty: 0 });
         } else {
             items.push(newItem);
             onSaveTab({ ...activeTab, items });
@@ -202,6 +237,7 @@ const POS: React.FC<POSProps> = ({
        return;
     }
 
+    const prevQty = item.quantity;
     const newQty = item.quantity + delta;
     const updatedItem = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
 
@@ -213,6 +249,7 @@ const POS: React.FC<POSProps> = ({
     
     if (onUpdateTabItem) {
         onUpdateTabItem(activeTabId!, updatedItem);
+        setLastAction({ tabId: activeTabId!, itemId: updatedItem.id, prevQty });
     } else {
         if (newQty <= 0) items.splice(index, 1);
         else items[index] = updatedItem;
@@ -251,6 +288,7 @@ const POS: React.FC<POSProps> = ({
     setActiveTabId(null);
     setIsClosingTab(false);
     showFeedback("VENDA FINALIZADA");
+    setLastAction(null);
   }, [activeTab, activeTabId, activeShift, tabItems, shortcutCheckout, onCompleteSale, onClearShortcut, showFeedback]);
 
   const createTab = () => {
@@ -264,7 +302,6 @@ const POS: React.FC<POSProps> = ({
   };
 
   if (!activeShift) {
-    // FIX 1: O vácuo entre estados - Trata loading e error para evitar falso "Abrir Turno"
     if (dbStatus === 'loading' || dbStatus === 'idle') {
        return (
          <div className="flex flex-col items-center justify-center py-20 text-center animate-pulse">
@@ -304,9 +341,15 @@ const POS: React.FC<POSProps> = ({
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 relative">
-      {toast && (
-        <div className="fixed bottom-24 md:bottom-auto md:top-20 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-5 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-2xl animate-in slide-in-from-bottom-4 md:slide-in-from-top-4 transition-all">
-           {toast}
+      {(toast || lastAction) && (
+        <div className="fixed bottom-24 md:bottom-auto md:top-20 left-1/2 -translate-x-1/2 z-[600] flex flex-col items-center gap-2 animate-in slide-in-from-bottom-4 md:slide-in-from-top-4 transition-all">
+           {toast && <div className="bg-slate-900 text-white px-5 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-2xl">{toast}</div>}
+           {lastAction && (
+             <button onClick={handleUndo} className="bg-blue-600 text-white px-5 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-2xl flex items-center gap-2 hover:bg-blue-700 active:scale-95 transition-all">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+                Desfazer Última Ação
+             </button>
+           )}
         </div>
       )}
 
@@ -359,15 +402,22 @@ const POS: React.FC<POSProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-            {openTabs.map(tab => (
-              <div key={tab.id} className="relative group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-36 md:h-44 flex flex-col justify-between" onClick={() => setActiveTabId(tab.id)}>
-                <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name); }} className="absolute top-2 right-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all z-10"><svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                <div className="pr-6"><h3 className="text-xs md:text-sm font-black uppercase truncate tracking-tight">{tab.name}</h3><span className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase">{(tab.items || []).length} ITENS</span></div>
-                <p className="text-red-600 dark:text-red-400 font-black text-xl md:text-2xl tracking-tighter italic">{formatCurrency((tab.items || []).reduce((acc: number, i: any) => acc + i.totalPrice, 0))}</p>
-              </div>
-            ))}
-          </div>
+          {openTabs.length === 0 ? (
+            <div className="py-20 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] opacity-40">
+               <svg className="w-16 h-16 mb-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+               <p className="font-black uppercase text-xs tracking-widest italic">Nenhuma mesa aberta. Bora vender?</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+              {openTabs.map(tab => (
+                <div key={tab.id} className="relative group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-36 md:h-44 flex flex-col justify-between" onClick={() => setActiveTabId(tab.id)}>
+                  <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name); }} className="absolute top-2 right-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all z-10"><svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                  <div className="pr-6"><h3 className="text-xs md:text-sm font-black uppercase truncate tracking-tight">{tab.name}</h3><span className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase">{(tab.items || []).length} ITENS</span></div>
+                  <p className="text-red-600 dark:text-red-400 font-black text-xl md:text-2xl tracking-tighter italic">{formatCurrency((tab.items || []).reduce((acc: number, i: any) => acc + i.totalPrice, 0))}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-300">

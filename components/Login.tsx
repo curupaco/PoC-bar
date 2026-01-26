@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface LoginProps {
   onLogin: (username: string, password: string) => void;
@@ -10,6 +9,16 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isShaking, setIsShaking] = useState(false);
+
+  useEffect(() => {
+    if (error) {
+      setIsShaking(true);
+      const timer = setTimeout(() => setIsShaking(false), 500);
+      setPassword(''); // Limpa a senha por segurança e UX
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 font-sans">
-      <div className="max-w-md w-full p-1 bg-slate-900 rounded-[40px] shadow-2xl border border-slate-800 relative overflow-hidden animate-in fade-in zoom-in duration-500">
+      <div className={`max-w-md w-full p-1 bg-slate-900 rounded-[40px] shadow-2xl border border-slate-800 relative overflow-hidden transition-transform duration-300 ${isShaking ? 'animate-shake' : 'animate-in fade-in zoom-in duration-500'}`}>
         
         <div className="p-10 relative z-10">
           <div className="text-center mb-10">
@@ -27,7 +36,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
             <div className="h-1 w-12 bg-red-600 mx-auto rounded-full"></div>
             {isLoading && (
                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-4 animate-pulse">
-                 Sincronizando...
+                 Sincronizando banco local...
                </p>
             )}
           </div>
@@ -40,7 +49,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl bg-slate-800 text-white font-black border-2 border-transparent focus:border-red-500 outline-none transition-all"
+                autoComplete="username"
+                className={`w-full px-6 py-4 rounded-2xl bg-slate-800 text-white font-black border-2 outline-none transition-all ${error ? 'border-red-500/50' : 'border-transparent focus:border-red-500'}`}
                 placeholder=""
               />
             </div>
@@ -51,13 +61,14 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-6 py-4 rounded-2xl bg-slate-800 text-white font-black border-2 border-transparent focus:border-red-500 outline-none transition-all"
+                autoComplete="current-password"
+                className={`w-full px-6 py-4 rounded-2xl bg-slate-800 text-white font-black border-2 outline-none transition-all ${error ? 'border-red-500/50' : 'border-transparent focus:border-red-500'}`}
                 placeholder=""
               />
             </div>
 
             {error && (
-              <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-2xl animate-in shake duration-300">
+              <div className="bg-red-900/20 border border-red-500/30 p-4 rounded-2xl animate-in slide-in-from-top-1">
                 <p className="text-center text-[10px] font-black text-red-500 uppercase tracking-widest">
                   {error}
                 </p>
@@ -73,11 +84,19 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
                   : 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/30'
               }`}
             >
-              {isLoading && username.toLowerCase() !== 'admin' ? 'Conectando...' : 'Entrar'}
+              {isLoading && username.toLowerCase() !== 'admin' ? 'Aguarde...' : 'Entrar no Bar'}
             </button>
           </form>
         </div>
       </div>
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-10px); }
+          75% { transform: translateX(10px); }
+        }
+        .animate-shake { animation: shake 0.4s ease-in-out; }
+      `}</style>
     </div>
   );
 };

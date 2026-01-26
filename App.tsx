@@ -31,7 +31,10 @@ export const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'offline'>('idle');
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
 
   // Theme Logic
   const [theme, setTheme] = useState<Theme>(() => {
@@ -67,7 +70,6 @@ export const App: React.FC = () => {
     return localStorage.getItem('btq_active_unit');
   });
 
-  // Salva a unidade escolhida no LocalStorage sempre que mudar
   useEffect(() => {
     if (activeUnitId) {
       localStorage.setItem('btq_active_unit', activeUnitId);
@@ -90,7 +92,13 @@ export const App: React.FC = () => {
     activeUnitId, config: syncConfig
   });
 
-  // Helper to persist data to SyncQueue
+  // Atualiza o tempo da última sincronização bem sucedida
+  useEffect(() => {
+    if (dbStatus === 'success') {
+      setLastSyncTime(Date.now());
+    }
+  }, [dbStatus]);
+
   const persist = useCallback((node: string, data: any, itemId?: string) => {
     if (!activeUnitId) return;
     SyncQueue.enqueue({ 
@@ -102,7 +110,6 @@ export const App: React.FC = () => {
     });
   }, [activeUnitId]);
 
-  // Função para trocar de unidade limpando o estado
   const handleSwitchUnit = () => {
     setActiveUnitId(null);
     setProducts([]);
@@ -112,18 +119,18 @@ export const App: React.FC = () => {
     setModifierGroups([]);
     setCategories([]);
     setCategoryModifiers({});
-    setDbStatus('idle'); // Reseta status para evitar piscada na próxima seleção
+    setDbStatus('idle');
+    setLastSyncTime(null);
   };
 
-  // Logout Seguro (Limpa tudo antes de sair)
   const handleLogout = () => {
-    handleSwitchUnit(); // Limpa dados da unidade e remove do localStorage
-    setUnits([]); // Limpa cache de unidades
-    setUsers([]); // Limpa cache de usuários
-    setCurrentUser(null); // Remove sessão
+    handleSwitchUnit();
+    setUnits([]);
+    setUsers([]);
+    setCurrentUser(null);
+    setLoginError(null);
   };
 
-  // Atualização Atômica de Mesas - MEMOIZADA
   const handleSaveTab = useCallback((tab: Tab) => {
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
@@ -137,23 +144,19 @@ export const App: React.FC = () => {
     persist('openTabs', tab, tab.id);
   }, [persist]);
 
-  // Gravação granular de itens - MEMOIZADA
   const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
     setOpenTabs(prev => {
         return prev.map(t => {
             if (t.id === tabId) {
-                // Atualização otimista local (UI imediata)
                 const items = t.items ? [...t.items] : [];
                 const idx = items.findIndex(i => i.id === item.id);
                 if (idx > -1) {
-                    // Update
                     if (item.quantity <= 0) {
                         items.splice(idx, 1);
                     } else {
                         items[idx] = item;
                     }
                 } else if (item.quantity > 0) {
-                    // Insert
                     items.push(item);
                 }
                 return { ...t, items };
@@ -162,7 +165,6 @@ export const App: React.FC = () => {
         });
     });
 
-    // Gravação Atômica no Backend: openTabs/{tabId}/items/{itemId}
     if (item.quantity <= 0) {
         persist(`openTabs/${tabId}/items`, null, item.id);
     } else {
@@ -177,7 +179,6 @@ export const App: React.FC = () => {
     registerLocalDeletion(tabId);
   }, [persist, registerLocalDeletion]);
 
-  // Handlers for Data Updates (Generic Lists)
   const handleUpdateProducts = useCallback((updater: (prev: Product[]) => Product[]) => {
     setProducts(prev => {
       const next = updater(prev);
@@ -186,9 +187,9 @@ export const App: React.FC = () => {
     });
   }, [persist]);
 
-  const handleUpdateModifierGroups = useCallback((updater: (prev: ModifierGroup[]) => ModifierGroup[]) => {
+  const handleUpdateModifierGroups = useCallback((updater: (prev: Product[]) => Product[]) => {
     setModifierGroups(prev => {
-      const next = updater(prev);
+      const next = (updater as any)(prev);
       persist('modifierGroups', next);
       return next;
     });
@@ -242,8 +243,8 @@ export const App: React.FC = () => {
     }
   }, [persist, handleDeleteTab]);
 
-  // Auth
   const handleLogin = (u: string, p: string) => {
+    setLoginError(null);
     if (u === 'admin' && p === 'admin') {
       setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS, allowedUnits: [] });
       return;
@@ -253,11 +254,10 @@ export const App: React.FC = () => {
     if (found) {
       setCurrentUser(found);
     } else {
-      alert("Credenciais Inválidas"); 
+      setLoginError("Credenciais inválidas. Verifique usuário e senha.");
     }
   };
 
-  // Derived State
   const isShiftOpen = useMemo(() => shifts.some(s => s.status === 'open'), [shifts]);
   const totalPendura = useMemo(() => {
      return sales.reduce((acc, s) => {
@@ -273,7 +273,6 @@ export const App: React.FC = () => {
      }, 0);
   }, [sales]);
 
-  // PWA Install
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   useEffect(() => {
     const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
@@ -284,7 +283,7 @@ export const App: React.FC = () => {
   const handleInstallClick = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult: any) => {
+      deferredPrompt.userChoice.then(() => {
         setDeferredPrompt(null);
       });
     }
@@ -292,16 +291,16 @@ export const App: React.FC = () => {
 
   const getStatusLabel = (status: string) => {
     switch(status) {
-      case 'success': return 'Sincronizado';
+      case 'success': return 'Conectado';
       case 'loading': return 'Sincronizando';
-      case 'error': return 'Erro';
-      case 'offline': return 'Fora do Ar';
+      case 'error': return 'Erro Rede';
+      case 'offline': return 'Modo Offline';
       default: return 'Aguardando';
     }
   };
 
   if (!currentUser) {
-    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading'} error={dbStatus === 'error' ? 'Erro de Conexão' : null} />;
+    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
   }
 
   if (!activeUnitId) {
@@ -388,10 +387,13 @@ export const App: React.FC = () => {
              </div>
              
              <div className="flex items-center gap-3">
-                 <div className={`px-4 py-2 rounded-2xl text-[9px] font-black uppercase border flex items-center gap-2 transition-all ${dbStatus === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50'}`}>
+                 <button 
+                    onClick={() => setStatusModalOpen(true)}
+                    className={`px-4 py-2 rounded-2xl text-[9px] font-black uppercase border flex items-center gap-2 transition-all active:scale-95 ${dbStatus === 'success' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-900/50 hover:bg-emerald-100' : 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50 hover:bg-amber-100'}`}
+                 >
                     <div className={`w-2 h-2 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
                     {getStatusLabel(dbStatus)}
-                 </div>
+                 </button>
 
                  <button 
                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
@@ -411,7 +413,7 @@ export const App: React.FC = () => {
              </div>
           </header>
 
-          {/* HEADER MOBILE EXPANDIDO (VERSÃO 4.5) */}
+          {/* HEADER MOBILE EXPANDIDO */}
           <div className="md:hidden sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm animate-in slide-in-from-top duration-300">
               <div className="p-4 flex justify-between items-center">
                   <div className="flex items-center gap-3 overflow-hidden">
@@ -448,7 +450,9 @@ export const App: React.FC = () => {
                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                       </button>
 
-                      <div className={`w-2.5 h-2.5 rounded-full ml-1 ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`}></div>
+                      <button onClick={() => setStatusModalOpen(true)} className="p-1">
+                        <div className={`w-2.5 h-2.5 rounded-full ml-1 ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`}></div>
+                      </button>
                   </div>
               </div>
           </div>
@@ -478,7 +482,7 @@ export const App: React.FC = () => {
                     products={products}
                     setProducts={handleUpdateProducts}
                     modifierGroups={modifierGroups}
-                    setModifierGroups={handleUpdateModifierGroups}
+                    setModifierGroups={handleUpdateModifierGroups as any}
                     categoryModifiers={categoryModifiers}
                     setCategoryModifiers={(updater) => {
                        setCategoryModifiers(prev => {
@@ -623,6 +627,56 @@ export const App: React.FC = () => {
           </div>
 
           <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser.username} />
+          
+          {/* MODAL DE STATUS DIAGNÓSTICO */}
+          {statusModalOpen && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setStatusModalOpen(false)} />
+              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[10000] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+                 <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-8 italic tracking-tighter">Saúde do Sistema</h3>
+                 
+                 <div className="space-y-6">
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+                       <div className="text-left">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Nuvem</p>
+                          <p className="text-xs font-bold uppercase">Banco de Dados</p>
+                       </div>
+                       <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full ${dbStatus !== 'error' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                          {dbStatus === 'offline' ? 'Offline' : 'Online'}
+                       </span>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+                       <div className="text-left">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Servidor</p>
+                          <p className="text-xs font-bold uppercase">App Hosting</p>
+                       </div>
+                       <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full ${navigator.onLine ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                          {navigator.onLine ? 'Estável' : 'Limitado'}
+                       </span>
+                    </div>
+
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+                       <div className="text-left">
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Estado Local</p>
+                          <p className="text-xs font-bold uppercase">{dbStatus === 'loading' ? 'Sincronizando' : 'Atualizado'}</p>
+                       </div>
+                       <div className={`w-2.5 h-2.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
+                    </div>
+                 </div>
+
+                 {lastSyncTime && (
+                    <p className="mt-8 text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
+                       Última Resposta: {new Date(lastSyncTime).toLocaleTimeString()}
+                    </p>
+                 )}
+
+                 <button onClick={() => setStatusModalOpen(false)} className="mt-8 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">
+                    Fechar Diagnóstico
+                 </button>
+              </div>
+            </div>
+          )}
        </main>
     </div>
   );

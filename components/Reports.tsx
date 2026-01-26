@@ -77,9 +77,6 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   // Restante do componente mantido, apenas usando cloudSales se disponível
   const activeDataSource = cloudSales || sales;
-
-  // ... (Restante do código original: useEffects, reportData, render, etc.)
-  // Mantendo compatibilidade com código existente
   
   useEffect(() => {
     if (!selectedShiftId && shifts && shifts.length > 0) {
@@ -206,9 +203,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       };
     }).filter(u => u.count > 0 || u.total > 0).sort((a, b) => b.total - a.total);
 
-    // CORREÇÃO CRÍTICA (ITEM 3): Filtro de produtos para ignorar quitações de fiado
     const productStats = filteredSales.flatMap((s: Sale) => s.items || [])
-      .filter(item => item.productId !== 'quitacao') // FILTRO ADICIONADO
+      .filter(item => item.productId !== 'quitacao')
       .reduce((acc: Record<string, { name: string, qty: number, total: number }>, item) => {
       if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
       acc[item.productName].qty += item.quantity;
@@ -250,7 +246,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     return { 
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftTotalsByMethod, shiftTotalRevenue,
-      teamStats, topProducts, hourlyMap, operationalCount
+      teamStats, topProducts, hourlyMap, operationalCount, activeDataSource
     };
   }, [filteredSales, activeDataSource, shifts, selectedShiftId, users, products]);
 
@@ -278,7 +274,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }
 
     switch(activeCategory) {
-      case 'FECHAMENTO': return <ClosingReport shifts={shifts} selectedShiftId={selectedShiftId} setSelectedShiftId={setSelectedShiftId} reportData={reportData} canExport={canExport} showToast={showToast} />;
+      case 'FECHAMENTO': return <ClosingReport shifts={shifts} selectedShiftId={selectedShiftId} setSelectedShiftId={setSelectedShiftId} reportData={reportData} canExport={canExport} showToast={showToast} theme={theme} />;
       case 'FINANCEIRO': return <FinancialReport reportData={reportData} />;
       case 'PENDURAS': return <PenduraReport reportData={reportData} onQuitarPendura={onQuitarPendura} canSettle={canSettle} />;
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
