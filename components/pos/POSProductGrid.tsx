@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Product, formatCurrency } from '../../types';
 
 interface POSProductGridProps {
@@ -6,7 +6,7 @@ interface POSProductGridProps {
   onAddProduct: (product: Product) => void;
 }
 
-// Sub-componente memoizado para evitar re-renders e gerenciar animação de clique individual
+// Sub-componente memoizado para evitar re-renders desnecessários
 const ProductCard = React.memo(({ product, onClick }: { product: Product, onClick: (p: Product) => void }) => {
   const [isAdded, setIsAdded] = useState(false);
 
@@ -42,12 +42,21 @@ const ProductCard = React.memo(({ product, onClick }: { product: Product, onClic
 
 const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedTerm, setDebouncedTerm] = useState('');
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
-  const [expandedLists, setExpandedLists] = useState<Set<string>>(new Set()); // Controle de "Ver Mais"
+  const [expandedLists, setExpandedLists] = useState<Set<string>>(new Set());
+
+  // Debounce na busca para evitar filtragens excessivas
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedTerm(searchTerm);
+    }, 250);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
 
   const filteredProducts = useMemo(() => 
-    (products || []).filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase())),
-  [products, searchTerm]);
+    (products || []).filter(p => p.name.toLowerCase().includes(debouncedTerm.toLowerCase())),
+  [products, debouncedTerm]);
 
   const favorites = useMemo(() => 
     filteredProducts.filter(p => p.isFavorite),
@@ -86,7 +95,13 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
         <div className="p-2 md:p-3 bg-slate-100 dark:bg-slate-800 rounded-xl md:rounded-2xl text-slate-400">
            <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </div>
-        <input type="text" placeholder="BUSCAR..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] md:text-[11px] tracking-widest outline-none border-none shadow-inner" />
+        <input 
+          type="text" 
+          placeholder="BUSCAR..." 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)} 
+          className="w-full px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] md:text-[11px] tracking-widest outline-none border-none shadow-inner" 
+        />
       </div>
 
       <div className="space-y-8 md:space-y-10">
@@ -104,8 +119,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
         {categories.map(cat => {
           const catProducts = filteredProducts.filter(p => p.category === cat);
           const isExpanded = expandedLists.has(cat);
-          // Performance Fix: Mostra apenas os 12 primeiros se não estiver expandido
-          const visibleProducts = isExpanded || searchTerm ? catProducts : catProducts.slice(0, 12);
+          const visibleProducts = isExpanded || debouncedTerm ? catProducts : catProducts.slice(0, 12);
           const hasMore = catProducts.length > 12;
 
           return (
@@ -130,7 +144,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
                     ))}
                   </div>
                   
-                  {hasMore && !searchTerm && (
+                  {hasMore && !debouncedTerm && (
                     <button 
                       onClick={() => toggleExpandList(cat)}
                       className="w-full mt-3 py-3 bg-slate-50 dark:bg-slate-800/50 text-slate-400 text-[10px] font-black uppercase rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-200"

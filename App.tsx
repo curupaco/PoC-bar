@@ -112,6 +112,7 @@ export const App: React.FC = () => {
     setModifierGroups([]);
     setCategories([]);
     setCategoryModifiers({});
+    setDbStatus('idle'); // Reseta status para evitar piscada na próxima seleção
   };
 
   // Logout Seguro (Limpa tudo antes de sair)
@@ -122,8 +123,8 @@ export const App: React.FC = () => {
     setCurrentUser(null); // Remove sessão
   };
 
-  // Atualização Atômica de Mesas
-  const handleSaveTab = (tab: Tab) => {
+  // Atualização Atômica de Mesas - MEMOIZADA
+  const handleSaveTab = useCallback((tab: Tab) => {
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
       if (idx >= 0) {
@@ -134,10 +135,10 @@ export const App: React.FC = () => {
       return [...prev, tab];
     });
     persist('openTabs', tab, tab.id);
-  };
+  }, [persist]);
 
-  // Gravação granular de itens
-  const handleUpdateTabItem = (tabId: string, item: SaleItem) => {
+  // Gravação granular de itens - MEMOIZADA
+  const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
     setOpenTabs(prev => {
         return prev.map(t => {
             if (t.id === tabId) {
@@ -167,50 +168,50 @@ export const App: React.FC = () => {
     } else {
         persist(`openTabs/${tabId}/items`, item, item.id);
     }
-  };
+  }, [persist]);
 
-  const handleDeleteTab = (tabId: string) => {
+  const handleDeleteTab = useCallback((tabId: string) => {
     setOpenTabs(prev => prev.filter(t => t.id !== tabId));
     persist('openTabs', null, tabId);
     persist(`_meta/deleted_tabs/${tabId}`, Date.now());
     registerLocalDeletion(tabId);
-  };
+  }, [persist, registerLocalDeletion]);
 
   // Handlers for Data Updates (Generic Lists)
-  const handleUpdateProducts = (updater: (prev: Product[]) => Product[]) => {
+  const handleUpdateProducts = useCallback((updater: (prev: Product[]) => Product[]) => {
     setProducts(prev => {
       const next = updater(prev);
       persist('products', next);
       return next;
     });
-  };
+  }, [persist]);
 
-  const handleUpdateModifierGroups = (updater: (prev: ModifierGroup[]) => ModifierGroup[]) => {
+  const handleUpdateModifierGroups = useCallback((updater: (prev: ModifierGroup[]) => ModifierGroup[]) => {
     setModifierGroups(prev => {
       const next = updater(prev);
       persist('modifierGroups', next);
       return next;
     });
-  };
+  }, [persist]);
   
-  const handleUpdateCategories = (updater: (prev: Category[]) => Category[]) => {
+  const handleUpdateCategories = useCallback((updater: (prev: Category[]) => Category[]) => {
     setCategories(prev => {
       const next = updater(prev);
       persist('categories', next);
       return next;
     });
-  };
+  }, [persist]);
 
-  const handleUpdateUsers = (newUsers: User[], changedItem?: User) => {
+  const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     if (changedItem) {
         persist('users', changedItem, changedItem.id);
     } else {
         persist('users', newUsers);
     }
-  };
+  }, [persist]);
   
-  const handleUpdateShifts = (newShifts: Shift[], changedItem?: Shift) => {
+  const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
     setShifts(newShifts);
     if (changedItem) {
         const { transactions, ...shiftToSave } = changedItem;
@@ -218,18 +219,18 @@ export const App: React.FC = () => {
     } else {
         persist('shifts', newShifts);
     }
-  };
+  }, [persist]);
 
-  const handleRegisterTransaction = (shiftId: string, transaction: CashTransaction) => {
+  const handleRegisterTransaction = useCallback((shiftId: string, transaction: CashTransaction) => {
      persist(`shifts/${shiftId}/transactions`, transaction, transaction.id);
-  };
+  }, [persist]);
 
-  const handleUpdateUnits = (newUnits: Unit[]) => {
+  const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
     setUnits(newUnits);
     persist('units', newUnits); 
-  };
+  }, [persist]);
 
-  const handleCompleteSale = (newSalesList: Sale[], tabIdToClose?: string) => {
+  const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
         const next = [...prev, ...newSalesList];
         newSalesList.forEach(s => persist('sales', s, s.id));
@@ -239,7 +240,7 @@ export const App: React.FC = () => {
     if (tabIdToClose) {
         handleDeleteTab(tabIdToClose);
     }
-  };
+  }, [persist, handleDeleteTab]);
 
   // Auth
   const handleLogin = (u: string, p: string) => {
@@ -468,6 +469,7 @@ export const App: React.FC = () => {
                     activeShift={shifts.find(s => s.status === 'open')}
                     onViewChange={setActiveView}
                     theme={theme}
+                    dbStatus={dbStatus}
                  />
               )}
 

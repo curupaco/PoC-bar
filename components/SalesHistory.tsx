@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Sale, formatCurrency, User, PaymentMethod } from '../types';
 import { getFirebaseToken } from '../services/firebaseService';
 
@@ -13,6 +12,7 @@ interface SalesHistoryProps {
 }
 
 const ITEMS_PER_PAGE = 20;
+const MAX_REMOTE_CACHE = 100; // FIX 5: Limite de cache remoto
 
 const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, users, currentUser, activeUnitId, syncConfig }) => {
   const [errorToast, setErrorToast] = useState<string | null>(null);
@@ -29,7 +29,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
 
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_sale');
 
-  // FIX ISSUE 2: Busca Híbrida
+  // FIX 5: Limpeza e Limite de Memória na Busca Híbrida
   const handleRemoteSearch = async () => {
      if (!searchTerm.trim() || !activeUnitId || !syncConfig) return;
      
@@ -46,7 +46,8 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
         
         if (res.ok) {
            const results: Sale[] = await res.json();
-           setRemoteResults(results);
+           // Aplica limite de cache para segurança de RAM
+           setRemoteResults(results.slice(0, MAX_REMOTE_CACHE));
            if (results.length === 0) setErrorToast("NENHUM RESULTADO NA NUVEM.");
         } else {
            setErrorToast("ERRO NA BUSCA ONLINE.");
@@ -59,9 +60,19 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
      }
   };
 
+  // Limpa resultados remotos quando o termo de busca é alterado ou esvaziado
+  useEffect(() => {
+     if (!searchTerm) {
+        setRemoteResults([]);
+     }
+  }, [searchTerm]);
+
   const filteredSales = useMemo(() => {
-    // Mescla vendas locais com resultados remotos, removendo duplicatas pelo ID
-    const merged = [...sales, ...remoteResults];
+    // FIX 3: PRIORIDADE DE DADOS NA BUSCA HÍBRIDA
+    // Invertemos a ordem do merge: remoteResults entram primeiro, sales (locais) entram depois.
+    // Assim, se o mesmo ID existir em ambos, a versão de 'sales' (que pode ter sofrido anulação local recente)
+    // sobrescreverá a versão da nuvem no Map.
+    const merged = [...remoteResults, ...sales];
     const uniqueSales = Array.from(new Map(merged.map(item => [item.id, item])).values());
 
     // Ordena decrescente por timestamp (mais recente primeiro)
@@ -76,11 +87,6 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
       return matchSearch && matchPendura;
     });
   }, [sales, remoteResults, searchTerm, filterPendura, showDeleted]);
-
-  // Limpa resultados remotos se o termo de busca for limpo
-  useMemo(() => {
-     if (!searchTerm) setRemoteResults([]);
-  }, [searchTerm]);
 
   const paginatedSales = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -149,7 +155,6 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
                   className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-none outline-none font-black uppercase text-[10px] tracking-widest focus:ring-2 focus:ring-red-500 transition-all shadow-inner"
               />
            </div>
-           {/* Botão de Busca Híbrida - Issue 2 */}
            {searchTerm.length > 2 && (
               <button 
                  onClick={handleRemoteSearch} 
@@ -198,7 +203,7 @@ const SalesHistory: React.FC<SalesHistoryProps> = ({ sales = [], onDeleteSale, u
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {paginatedSales.map((sale) => (
-                <tr key={sale.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${sale.deleted ? 'opacity-40 grayscale italic bg-slate-50/50 dark:bg-slate-900/50' : ''}`}>
+                <tr key={sale.id} className={`optimize-render hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${sale.deleted ? 'opacity-40 grayscale italic bg-slate-50/50 dark:bg-slate-900/50' : ''}`}>
                   <td className="px-8 py-5 whitespace-nowrap">
                     <span className="block font-black text-slate-800 dark:text-slate-200">{new Date(sale.timestamp).toLocaleDateString('pt-BR')}</span>
                     <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{new Date(sale.timestamp).toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</span>

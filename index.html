@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -37,6 +36,12 @@
         
         /* Prevenção de pull-to-refresh acidental no Android */
         body { overscroll-behavior-y: contain; }
+
+        /* Otimização de Performance para Listas Longas - Corrigido para evitar Ghost Heights */
+        .optimize-render {
+          content-visibility: auto;
+          contain-intrinsic-size: auto 120px;
+        }
     </style>
 <script type="importmap">
 {

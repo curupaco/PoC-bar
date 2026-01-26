@@ -34,30 +34,32 @@ export const useSync = (props: SyncProps) => {
   // Armazena a lista de IDs deletados globalmente (Server-Side Tombstones)
   const serverTombstones = useRef<Set<string>>(new Set());
 
-  // FIX 3: Blacklist Persistente (LocalStorage) para Mesas Zumbis (Local Fallback)
-  const getPersistedBlacklist = () => {
-      try {
-          const raw = localStorage.getItem('btq_zombie_blacklist');
-          return new Set(raw ? JSON.parse(raw) : []);
-      } catch {
-          return new Set();
-      }
-  };
-
   const { 
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
     setUsers, setShifts, setUnits, setCategories, setDbStatus, activeUnitId, config
   } = props;
+
+  // FIX 5: Blacklist por Unidade para evitar interferência entre bares
+  const getPersistedBlacklist = useCallback(() => {
+      if (!activeUnitId) return new Set<string>();
+      try {
+          const raw = localStorage.getItem(`btq_zombie_blacklist_${activeUnitId}`);
+          return new Set<string>(raw ? JSON.parse(raw) : []);
+      } catch {
+          return new Set<string>();
+      }
+  }, [activeUnitId]);
 
   const getPath = (node: string) => activeUnitId ? `data/units/${activeUnitId}/${node}` : null;
   const getMetaPath = () => activeUnitId ? `data/units/${activeUnitId}/_meta` : null;
 
   // Função exposta para o App marcar itens como deletados permanentemente
   const registerLocalDeletion = useCallback((id: string) => {
+      if (!activeUnitId) return;
       const currentList = getPersistedBlacklist();
       currentList.add(id);
-      localStorage.setItem('btq_zombie_blacklist', JSON.stringify(Array.from(currentList)));
-  }, []);
+      localStorage.setItem(`btq_zombie_blacklist_${activeUnitId}`, JSON.stringify(Array.from(currentList)));
+  }, [activeUnitId, getPersistedBlacklist]);
 
   // Limpa o hash se mudar de unidade
   useEffect(() => {
@@ -184,7 +186,7 @@ export const useSync = (props: SyncProps) => {
       }
 
       return Array.from(dataMap.values());
-  }, [activeUnitId]);
+  }, [activeUnitId, getPersistedBlacklist]);
 
   const fetchData = useCallback(async () => {
     if (isFetching.current) return;
@@ -285,7 +287,7 @@ export const useSync = (props: SyncProps) => {
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge]);
+  }, [activeUnitId, config, processQueue, smartMerge, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setDbStatus]);
 
   const fetchGlobal = useCallback(async () => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);
@@ -309,15 +311,17 @@ export const useSync = (props: SyncProps) => {
              }
         }
       }
-  }, [config]);
+  }, [config, setUsers, setUnits]);
 
   useEffect(() => {
-    setDbStatus('loading');
+    // FIX 2: dbStatus só entra em loading no load inicial para não interromper a UI do POS no polling
+    if (!initialLoadDone.current) setDbStatus('loading');
+    
     fetchGlobal();
     fetchData(); 
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
-  }, [fetchData, fetchGlobal]);
+  }, [fetchData, fetchGlobal, setDbStatus]);
 
   const refresh = useCallback(() => {
      localMeta.current = {};
