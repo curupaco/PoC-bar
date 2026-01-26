@@ -31,8 +31,10 @@ export const useSync = (props: SyncProps) => {
   // FIX 2: Contador de erros para evitar "pisca-pisca" do status Offline
   const errorCount = useRef(0);
 
-  // FIX 3: Blacklist Persistente (LocalStorage) para Mesas Zumbis
-  // Não usa mais apenas memória RAM, garantindo que sobreviva a refresh/troca de turno
+  // Armazena a lista de IDs deletados globalmente (Server-Side Tombstones)
+  const serverTombstones = useRef<Set<string>>(new Set());
+
+  // FIX 3: Blacklist Persistente (LocalStorage) para Mesas Zumbis (Local Fallback)
   const getPersistedBlacklist = () => {
       try {
           const raw = localStorage.getItem('btq_zombie_blacklist');
@@ -57,12 +59,11 @@ export const useSync = (props: SyncProps) => {
       localStorage.setItem('btq_zombie_blacklist', JSON.stringify(Array.from(currentList)));
   }, []);
 
-  // Limpa o hash se mudar de unidade, mas MANTÉM a blacklist por segurança (ou limpa se preferir isolamento)
+  // Limpa o hash se mudar de unidade
   useEffect(() => {
       lastDataHash.current = {};
       initialLoadDone.current = false;
-      // Opcional: Limpar blacklist ao trocar unidade se os IDs puderem colidir, 
-      // mas IDs unicos (timestamp) raramente colidem. Mantendo por segurança.
+      serverTombstones.current.clear();
   }, [activeUnitId]);
 
   // PROCESSAMENTO DA FILA OFFLINE
@@ -108,23 +109,22 @@ export const useSync = (props: SyncProps) => {
     }
   }, [config, activeUnitId]);
 
-  // SMART MERGE
+  // SMART MERGE (Corrigido para usar Maps em Items e Tombstones Globais)
   const smartMerge = useCallback((serverData: any[], nodeKey: string) => {
       const queue = SyncQueue.getAll();
-      const blacklist = getPersistedBlacklist(); // Lê a lista persistente
+      const localBlacklist = getPersistedBlacklist();
       
       const pendingItems = queue.filter(q => 
           q.node.startsWith(nodeKey) && 
           (q.unitId === activeUnitId || (!q.unitId && activeUnitId))
       );
       
-      // Se não tem dados do servidor, assume array vazio para evitar crash
       const safeServerData = Array.isArray(serverData) ? serverData : [];
       
       // 1. Mapa inicial com dados do servidor
       const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
 
-      // 2. Aplica alterações pendentes da fila (Optimistic UI da Fila)
+      // 2. Aplica alterações pendentes da fila (Optimistic UI)
       pendingItems.forEach(q => {
           if (!q.node.includes('/') && q.itemId) {
              if (q.data) {
@@ -135,40 +135,50 @@ export const useSync = (props: SyncProps) => {
           }
       });
 
-      // 3. Lógica específica para itens aninhados em openTabs
+      // 3. Lógica específica para itens aninhados em openTabs (RACE CONDITION FIX)
       if (nodeKey === 'openTabs') {
           const nestedItems = pendingItems.filter(q => q.node.includes('/items'));
+          
           nestedItems.forEach(q => {
               const parts = q.node.split('/');
+              // Esperado: openTabs/{tabId}/items/{itemId}
               if (parts.length >= 3) {
                   const tabId = parts[1];
                   const tab = dataMap.get(tabId);
                   
                   if (tab) {
-                      const newTab = { ...tab, items: tab.items ? [...tab.items] : [] };
-                      const itemId = q.itemId;
+                      // Usa Map para garantir unicidade de items por ID
+                      const currentItems = Array.isArray(tab.items) ? tab.items : [];
+                      const itemsMap = new Map(currentItems.map((i: any) => [i.id, i]));
                       
+                      const itemId = q.itemId;
                       if (itemId) {
-                          const itemIndex = newTab.items.findIndex((i: any) => i.id === itemId);
                           if (q.data) {
-                              if (itemIndex > -1) newTab.items[itemIndex] = q.data;
-                              else newTab.items.push(q.data);
+                              // Adiciona ou Atualiza
+                              itemsMap.set(itemId, q.data);
                           } else {
-                              if (itemIndex > -1) newTab.items.splice(itemIndex, 1);
+                              // Remove
+                              itemsMap.delete(itemId);
                           }
-                          dataMap.set(tabId, newTab);
                       }
+                      
+                      // Reconstrói o array do tab
+                      const newTab = { ...tab, items: Array.from(itemsMap.values()) };
+                      dataMap.set(tabId, newTab);
                   }
               }
           });
       }
 
-      // 4. APLICA BLACKLIST PERSISTENTE (Mesa Zumbi Killer 2.0)
-      // Remove qualquer item cujo ID esteja no localStorage como deletado
-      if (blacklist.size > 0) {
-          for (const id of blacklist) {
-              if (dataMap.has(id)) {
-                  dataMap.delete(id);
+      // 4. APLICA BLACKLIST (Mesa Zumbi Killer 3.0 - Global & Local)
+      // Combina blacklist local com tombstones do servidor
+      if (nodeKey === 'openTabs') {
+          const idsToDelete = new Set([...localBlacklist, ...serverTombstones.current]);
+          if (idsToDelete.size > 0) {
+              for (const id of idsToDelete) {
+                  if (dataMap.has(id)) {
+                      dataMap.delete(id);
+                  }
               }
           }
       }
@@ -191,12 +201,21 @@ export const useSync = (props: SyncProps) => {
       processQueue(token);
 
       if (activeUnitId) {
-         const [tRaw, metaRaw] = await Promise.all([
-            loadFromFirebase(config.url, undefined, token, getPath('openTabs')!),
-            loadFromFirebase(config.url, undefined, token, getMetaPath()!)
-         ]);
+         // Carrega metadados primeiro para checar tombstones
+         const metaRaw = await loadFromFirebase(config.url, undefined, token, getMetaPath()!);
+         const serverMeta = metaRaw || {};
+         
+         // Atualiza Set de Tombstones Globais
+         if (serverMeta.deleted_tabs) {
+             const deletedMap = serverMeta.deleted_tabs;
+             const cutoff = Date.now() - (24 * 60 * 60 * 1000); // 24h atrás
+             Object.entries(deletedMap).forEach(([id, ts]: [string, any]) => {
+                 if (Number(ts) > cutoff) serverTombstones.current.add(id);
+             });
+         }
 
-         // Sempre processa openTabs para garantir que a blacklist funcione
+         const tRaw = await loadFromFirebase(config.url, undefined, token, getPath('openTabs')!);
+
          const mergedTabs = smartMerge(tRaw || [], 'openTabs');
          const tabsHash = JSON.stringify(mergedTabs);
          
@@ -204,8 +223,6 @@ export const useSync = (props: SyncProps) => {
             setOpenTabs(mergedTabs);
             lastDataHash.current['openTabs'] = tabsHash;
          }
-         
-         const serverMeta = metaRaw || {};
          
          const limitConfig: Record<string, string> = {
             'sales': 'orderBy="$key"&limitToLast=200',
@@ -306,6 +323,7 @@ export const useSync = (props: SyncProps) => {
      localMeta.current = {};
      lastDataHash.current = {}; 
      initialLoadDone.current = false;
+     serverTombstones.current.clear();
      fetchGlobal();
      fetchData();
   }, [fetchGlobal, fetchData]);

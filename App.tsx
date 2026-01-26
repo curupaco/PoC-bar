@@ -176,11 +176,14 @@ export const App: React.FC = () => {
     // 1. Atualização Otimista
     setOpenTabs(prev => prev.filter(t => t.id !== tabId));
     
-    // 2. Persistência na Fila (Backend)
+    // 2. Persistência na Fila (Backend) - Deleta a mesa
     persist('openTabs', null, tabId);
     
-    // 3. FIX MESA ZUMBI: Registra na Blacklist Local
-    // Isso impede que a mesa volte na próxima sincronização do useSync
+    // 3. FIX MESA ZUMBI GLOBAL: Grava Tombstone no Servidor
+    // Grava em _meta/deleted_tabs/{tabId} = timestamp
+    persist(`_meta/deleted_tabs/${tabId}`, Date.now());
+
+    // 4. Fallback Local (para feedback imediato se estiver offline)
     registerLocalDeletion(tabId);
   };
 
