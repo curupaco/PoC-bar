@@ -14,6 +14,7 @@ interface POSPaymentPanelProps {
   onBack: () => void;
   onComplete: (payments: PaymentEntry[]) => void;
   shortcutCheckout?: { name: string; amount: number } | null;
+  activeDebtors?: Set<string>;
 }
 
 const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({ 
@@ -21,7 +22,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   tabTotal, 
   onBack, 
   onComplete,
-  shortcutCheckout
+  shortcutCheckout,
+  activeDebtors = new Set()
 }) => {
   const [currentPayments, setCurrentPayments] = useState<PaymentEntry[]>([]);
   const [paymentAmountInput, setPaymentAmountInput] = useState('');
@@ -41,8 +43,6 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
     }
   }, [toast]);
 
-  // CORREÇÃO CRÍTICA (Mantida): Impede limpeza agressiva no modo atalho
-  // ATUALIZAÇÃO: Preenche automaticamente o saldo restante para agilizar o fluxo
   useEffect(() => {
     if (activeTabId === 'shortcut-payment') {
       if (shortcutCheckout) {
@@ -51,19 +51,21 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
         setPaymentMethodInput(PaymentMethod.CASH);
       }
     } else {
-      // Limpa tudo se mudar de aba normal
       setCurrentPayments([]);
-      // Define o valor a pagar como o total da comanda por padrão para acelerar o fechamento
       setPaymentAmountInput(tabTotal.toFixed(2).replace('.', ','));
       setCashReceivedInput('');
       setCustomerNameInput('');
       setValidationError(null);
-      setIsProcessing(false); // Reset lock
+      setIsProcessing(false); 
     }
   }, [activeTabId, shortcutCheckout, tabTotal]);
 
   const paidSoFar = currentPayments.reduce((acc, p) => acc + p.amount, 0);
   const remainingBalance = Math.max(0, safeFloat(tabTotal - paidSoFar));
+
+  const isCurrentCustomerDevedor = useMemo(() => {
+    return activeDebtors.has(customerNameInput.trim().toUpperCase());
+  }, [customerNameInput, activeDebtors]);
 
   const handleAddPayment = () => {
     const amountToPay = parseCurrencyValue(paymentAmountInput);
@@ -92,9 +94,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   };
 
   const handleFinishSale = () => {
-    if (isProcessing) return; // Guard clause for race condition
+    if (isProcessing) return;
 
-    // Fluxo Rápido: Se não adicionou parciais, tenta usar o input atual
     if (currentPayments.length === 0) {
         const val = parseCurrencyValue(paymentAmountInput);
         if (val >= remainingBalance - 0.05 || (!paymentAmountInput && paymentMethodInput === PaymentMethod.CASH)) {
@@ -103,7 +104,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                 return;
              }
              
-             setIsProcessing(true); // Lock UI
+             setIsProcessing(true); 
              const finalAmount = val > 0 ? val : remainingBalance;
              onComplete([{
                 method: paymentMethodInput,
@@ -119,17 +120,14 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
        return;
     }
 
-    setIsProcessing(true); // Lock UI
+    setIsProcessing(true); 
     onComplete(currentPayments);
   };
 
   const liveChange = useMemo(() => {
     if (paymentMethodInput !== PaymentMethod.CASH) return 0;
-    
-    // UX FIX: Se o usuário não digitou quanto quer cobrar, assumimos o saldo restante
     const inputVal = parseCurrencyValue(paymentAmountInput);
     const toPay = inputVal > 0 ? inputVal : remainingBalance;
-    
     const handed = parseCurrencyValue(cashReceivedInput);
     if (handed <= 0) return 0;
     return Math.max(0, safeFloat(handed - toPay));
@@ -185,9 +183,12 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
 
             {(paymentMethodInput === PaymentMethod.PENDURA || activeTabId === 'shortcut-payment') && (
                <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
-                  <label className={`text-[9px] font-black uppercase tracking-widest ml-2 ${activeTabId === 'shortcut-payment' ? 'text-slate-400' : 'text-red-500'}`}>
-                    {activeTabId === 'shortcut-payment' ? 'Cliente (Vinculado)' : 'Nome do Cliente (Obrigatório)'}
-                  </label>
+                  <div className="flex justify-between items-center ml-2">
+                    <label className={`text-[9px] font-black uppercase tracking-widest ${activeTabId === 'shortcut-payment' ? 'text-slate-400' : 'text-red-500'}`}>
+                      {activeTabId === 'shortcut-payment' ? 'Cliente (Vinculado)' : 'Nome do Cliente (Obrigatório)'}
+                    </label>
+                    {isCurrentCustomerDevedor && <span className="text-[8px] font-black text-orange-500 uppercase animate-pulse">[!] PERFIL DEVEDOR</span>}
+                  </div>
                   <input 
                      type="text" 
                      value={customerNameInput} 
@@ -195,7 +196,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         if (activeTabId !== 'shortcut-payment') setCustomerNameInput(e.target.value);
                      }} 
                      readOnly={activeTabId === 'shortcut-payment'}
-                     className={`w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold uppercase text-xs outline-none border-2 shadow-inner ${activeTabId === 'shortcut-payment' ? 'border-slate-200 dark:border-slate-700 text-slate-500 cursor-not-allowed' : 'border-red-200 focus:border-red-500'}`}
+                     className={`w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 font-bold uppercase text-xs outline-none border-2 shadow-inner transition-colors ${activeTabId === 'shortcut-payment' ? 'border-slate-200 dark:border-slate-700 text-slate-500 cursor-not-allowed' : isCurrentCustomerDevedor ? 'border-orange-500 focus:border-orange-600' : 'border-red-200 focus:border-red-500'}`}
                      placeholder="QUEM VAI FICAR DEVENDO?"
                   />
                </div>
