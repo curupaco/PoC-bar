@@ -1,81 +1,92 @@
-interface QueueItem {
+
+import { idb } from './idb';
+
+export interface QueueItem {
+  id: string;
   node: string;
   data: any;
+  itemId?: string;
+  unitId: string;
+  action: 'overwrite' | 'merge';
   timestamp: number;
   retryCount: number;
 }
 
-const QUEUE_STORAGE_KEY = 'btq_sync_queue_v1';
+const QUEUE_STORAGE_KEY = 'btq_sync_outbox_v3';
 
-/**
- * Gerenciador de Fila de Sincronização Persistente
- * Garante que dados não sejam perdidos se a internet cair ou a página fechar.
- */
+// Cache em memória
+let memoryQueue: QueueItem[] = [];
+let isLoaded = false;
+// Promessa singleton para evitar múltiplas inicializações simultâneas
+let initPromise: Promise<void> | null = null;
+
 export const SyncQueue = {
-  // Lê a fila atual do disco
-  load(): Record<string, QueueItem> {
-    try {
-      const raw = localStorage.getItem(QUEUE_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
+  async init() {
+    if (isLoaded) return;
+    if (initPromise) return initPromise;
+
+    initPromise = (async () => {
+      try {
+        const stored = await idb.get<QueueItem[]>(QUEUE_STORAGE_KEY);
+        if (stored) memoryQueue = stored;
+        isLoaded = true;
+      } catch (e) {
+        console.error("Failed to load queue from IDB", e);
+        memoryQueue = [];
+        // Mesmo com erro, marcamos como loaded para não travar o app, começando com fila vazia
+        isLoaded = true; 
+      }
+    })();
+
+    return initPromise;
+  },
+
+  getAll(): QueueItem[] {
+    return memoryQueue;
+  },
+
+  // Torna enqueue async para garantir que o banco carregou antes de adicionar
+  async enqueue(item: Omit<QueueItem, 'timestamp' | 'retryCount' | 'id'>) {
+    if (!isLoaded) await this.init();
+
+    // Remove duplicatas lógicas (debounce local)
+    memoryQueue = memoryQueue.filter(q => !(q.node === item.node && q.itemId === item.itemId));
+    
+    const newItem: QueueItem = {
+      ...item,
+      id: Math.random().toString(36).substr(2, 9),
+      timestamp: Date.now(),
+      retryCount: 0
+    };
+    
+    memoryQueue.push(newItem);
+    this.persist();
+  },
+
+  async dequeue(id: string) {
+    if (!isLoaded) await this.init();
+    memoryQueue = memoryQueue.filter(q => q.id !== id);
+    this.persist();
+  },
+
+  async update(updatedItem: QueueItem) {
+    if (!isLoaded) await this.init();
+    const index = memoryQueue.findIndex(q => q.id === updatedItem.id);
+    if (index > -1) {
+        memoryQueue[index] = updatedItem;
+        this.persist();
     }
   },
 
-  // Salva a fila no disco
-  save(queue: Record<string, QueueItem>) {
-    localStorage.setItem(QUEUE_STORAGE_KEY, JSON.stringify(queue));
+  peek(): QueueItem | undefined {
+    return memoryQueue.sort((a, b) => a.timestamp - b.timestamp)[0];
   },
 
-  // Adiciona ou atualiza um item na fila
-  // Usa estratégia 'Last Write Wins' por nó: se já tem 'products' na fila, substitui pelo novo.
-  enqueue(node: string, data: any) {
-    const queue = this.load();
-    queue[node] = {
-      node,
-      data,
-      timestamp: Date.now(),
-      retryCount: (queue[node]?.retryCount || 0)
-    };
-    this.save(queue);
-  },
-
-  // Remove um item da fila (após sucesso)
-  dequeue(node: string) {
-    const queue = this.load();
-    delete queue[node];
-    this.save(queue);
-  },
-
-  // Retorna os itens pendentes ordenados por prioridade/tempo
-  // Priorizamos: Vendas > Mesas > Turnos > Produtos
-  getPending(): QueueItem[] {
-    const queue = this.load();
-    const items = Object.values(queue) as QueueItem[];
-    
-    return items.sort((a, b) => {
-      // Ordem de prioridade fixa
-      const priority = ['sales', 'openTabs', 'shifts', 'products', 'users', 'config'];
-      const pA = priority.indexOf(a.node);
-      const pB = priority.indexOf(b.node);
-      
-      if (pA !== -1 && pB !== -1) return pA - pB;
-      return a.timestamp - b.timestamp;
-    });
-  },
-
-  // Retorna se há itens na fila
-  hasPending(): boolean {
-    const queue = this.load();
-    return Object.keys(queue).length > 0;
-  },
-
-  // Incrementa contador de tentativas (para backoff futuro)
-  incrementRetry(node: string) {
-    const queue = this.load();
-    if (queue[node]) {
-      queue[node].retryCount += 1;
-      this.save(queue);
+  async persist() {
+    try {
+      await idb.set(QUEUE_STORAGE_KEY, memoryQueue);
+    } catch (e) {
+      console.error("Failed to persist queue", e);
     }
   }
 };

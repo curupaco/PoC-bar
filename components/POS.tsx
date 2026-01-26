@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, SalePayment } from '../types';
 import WeightModal from './pos/modals/WeightModal';
@@ -11,8 +10,10 @@ interface POSProps {
   modifierGroups: ModifierGroup[];
   categoryModifiers: Record<string, string>;
   openTabs: Tab[];
-  onUpdateTabs: (updater: (prev: Tab[]) => Tab[]) => void;
-  onCompleteSale: (sale: Sale | Sale[]) => void; 
+  onSaveTab: (tab: Tab) => void;
+  onUpdateTabItem?: (tabId: string, item: SaleItem) => void; // Prop para atualização granular
+  onDeleteTab: (id: string) => void;
+  onCompleteSale: (sale: Sale | Sale[], tabIdToClose?: string) => void; 
   shortcutCheckout?: { name: string; amount: number } | null;
   onClearShortcut?: () => void;
   activeShift?: Shift;
@@ -25,7 +26,9 @@ const POS: React.FC<POSProps> = ({
   modifierGroups = [],
   categoryModifiers = {},
   openTabs = [], 
-  onUpdateTabs, 
+  onSaveTab,
+  onUpdateTabItem,
+  onDeleteTab,
   onCompleteSale,
   shortcutCheckout,
   onClearShortcut,
@@ -36,9 +39,7 @@ const POS: React.FC<POSProps> = ({
   const [newTabName, setNewTabName] = useState('');
   const [isAddingTab, setIsAddingTab] = useState(false);
   
-  // Controle de Visualização Mobile
   const [showMobileCart, setShowMobileCart] = useState(false);
-  
   const [isClosingTab, setIsClosingTab] = useState(false);
   
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
@@ -117,53 +118,76 @@ const POS: React.FC<POSProps> = ({
   };
 
   const executeAddItem = (product: Product, quantity: number, modifier?: ModifierOption) => {
-    onUpdateTabs(prev => (prev || []).map(tab => {
-      if (normalizeId(tab.id) === normalizeId(activeTabId)) {
-        const items = [...(tab.items ?? [])];
-        
-        if (editingWeightIndex !== null) {
-          const currentItem = items[editingWeightIndex];
-          items[editingWeightIndex] = { 
-            ...currentItem, 
-            quantity: quantity, 
-            totalPrice: safeFloat(quantity * currentItem.unitPrice)
-          };
-          showFeedback(`${product.name} ATUALIZADO`);
-        } else {
-          const modPrice = modifier ? modifier.price : 0;
-          const effectiveUnitPrice = safeFloat(product.price + modPrice);
+    if (!activeTab) return;
 
-          const existingIndex = items.findIndex(i => 
-             i.productId === product.id && 
-             (i.modifier?.name === modifier?.name)
-          );
+    const items = [...(activeTab.items ?? [])];
+    const modPrice = modifier ? modifier.price : 0;
+    const effectiveUnitPrice = safeFloat(product.price + modPrice);
 
-          if (existingIndex > -1 && product.sellType === 'unit') {
-            const newQty = items[existingIndex].quantity + quantity;
-            items[existingIndex] = { 
-               ...items[existingIndex], 
-               quantity: newQty, 
-               totalPrice: safeFloat(newQty * effectiveUnitPrice)
-            };
-            showFeedback(`+1 ${product.name}`);
-          } else {
-            items.push({ 
-              id: generateUniqueId('it'),
-              productId: product.id, 
-              productName: product.name, 
-              category: product.category || 'GERAL',
-              quantity: quantity, 
-              unitPrice: effectiveUnitPrice, 
-              totalPrice: safeFloat(quantity * effectiveUnitPrice),
-              modifier: modifier 
-            });
-            showFeedback(`${product.name} ADICIONADO`);
-          }
-        }
-        return { ...tab, items };
+    // Se estiver editando peso (quantidade)
+    if (editingWeightIndex !== null) {
+      const currentItem = items[editingWeightIndex];
+      const newItem = { 
+        ...currentItem, 
+        quantity: quantity, 
+        totalPrice: safeFloat(quantity * currentItem.unitPrice)
+      };
+      
+      // Salva granularmente se a função existir
+      if (onUpdateTabItem) {
+          onUpdateTabItem(activeTabId!, newItem);
+      } else {
+          // Fallback legado
+          items[editingWeightIndex] = newItem;
+          onSaveTab({ ...activeTab, items });
       }
-      return tab;
-    }));
+      
+      showFeedback(`${product.name} ATUALIZADO`);
+    } else {
+      // Verifica se já existe um item idêntico para somar
+      const existingItem = items.find(i => 
+         i.productId === product.id && 
+         (i.modifier?.name === modifier?.name)
+      );
+
+      if (existingItem && product.sellType === 'unit') {
+        const newQty = existingItem.quantity + quantity;
+        const updatedItem = { 
+           ...existingItem, 
+           quantity: newQty, 
+           totalPrice: safeFloat(newQty * effectiveUnitPrice)
+        };
+        
+        if (onUpdateTabItem) {
+            onUpdateTabItem(activeTabId!, updatedItem);
+        } else {
+            const idx = items.indexOf(existingItem);
+            items[idx] = updatedItem;
+            onSaveTab({ ...activeTab, items });
+        }
+        showFeedback(`+1 ${product.name}`);
+      } else {
+        // Novo Item
+        const newItem: SaleItem = { 
+          id: generateUniqueId('it'),
+          productId: product.id, 
+          productName: product.name, 
+          category: product.category || 'GERAL',
+          quantity: quantity, 
+          unitPrice: effectiveUnitPrice, 
+          totalPrice: safeFloat(quantity * effectiveUnitPrice),
+          modifier: modifier 
+        };
+        
+        if (onUpdateTabItem) {
+            onUpdateTabItem(activeTabId!, newItem);
+        } else {
+            items.push(newItem);
+            onSaveTab({ ...activeTab, items });
+        }
+        showFeedback(`${product.name} ADICIONADO`);
+      }
+    }
 
     setEditingWeightIndex(null);
     setWeightModalProduct(null);
@@ -171,31 +195,35 @@ const POS: React.FC<POSProps> = ({
   };
 
   const updateItemQty = (index: number, delta: number) => {
-    if (!activeTabId) return;
-    onUpdateTabs(prev => (prev || []).map(tab => {
-      if (normalizeId(tab.id) === normalizeId(activeTabId)) {
-        const items = [...tab.items];
-        const item = items[index];
-        const prod = products.find(p => p.id === item.productId);
-        
-        if (prod?.sellType === 'weight' && delta === 0) {
-           setWeightModalProduct(prod);
-           setEditingWeightIndex(index);
-           return tab;
-        }
+    if (!activeTab) return;
+    const items = [...activeTab.items];
+    const item = items[index];
+    const prod = products.find(p => p.id === item.productId);
+    
+    if (prod?.sellType === 'weight' && delta === 0) {
+       setWeightModalProduct(prod);
+       setEditingWeightIndex(index);
+       return;
+    }
 
-        const newQty = item.quantity + delta;
-        if (newQty <= 0) {
-           items.splice(index, 1);
-           showFeedback(`${item.productName} REMOVIDO`);
-        } else {
-           items[index] = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
-           showFeedback(`${item.productName}: ${newQty}x`);
-        }
-        return { ...tab, items };
-      }
-      return tab;
-    }));
+    const newQty = item.quantity + delta;
+    
+    const updatedItem = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
+
+    if (newQty <= 0) {
+       showFeedback(`${item.productName} REMOVIDO`);
+    } else {
+       showFeedback(`${item.productName}: ${newQty}x`);
+    }
+    
+    // Atualização Granular
+    if (onUpdateTabItem) {
+        onUpdateTabItem(activeTabId!, updatedItem); // Se qtd <= 0, o App remove
+    } else {
+        if (newQty <= 0) items.splice(index, 1);
+        else items[index] = updatedItem;
+        onSaveTab({ ...activeTab, items });
+    }
   };
 
   const processCompletion = (payments: { method: PaymentMethod, amount: number, customerName?: string }[]) => {
@@ -221,14 +249,24 @@ const POS: React.FC<POSProps> = ({
        shiftId: activeShift?.id || ''
     };
 
-    onCompleteSale([newSale]);
+    const tabIdToClose = !isShortcut ? activeTabId! : undefined;
+    onCompleteSale([newSale], tabIdToClose);
 
-    if (!isShortcut) onUpdateTabs(prev => (prev || []).filter(t => normalizeId(t.id) !== normalizeId(activeTabId)));
-    else if (onClearShortcut) onClearShortcut();
+    if (isShortcut && onClearShortcut) onClearShortcut();
     
     setActiveTabId(null);
     setIsClosingTab(false);
     showFeedback("VENDA FINALIZADA");
+  };
+
+  const createTab = () => {
+    if (newTabName.trim()) {
+        const nid = generateUniqueId('tab');
+        onSaveTab({id: nid, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()});
+        setActiveTabId(nid);
+        setNewTabName('');
+        setIsAddingTab(false);
+    }
   };
 
   if (!activeShift) {
@@ -248,7 +286,12 @@ const POS: React.FC<POSProps> = ({
 
   return (
     <div className="flex flex-col gap-4 md:gap-6 relative">
-      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-5 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-2xl animate-in slide-in-from-top-4">{toast}</div>}
+      {/* FIX 3: Toasts na parte inferior em mobile (bottom-24) e topo em desktop */}
+      {toast && (
+        <div className="fixed bottom-24 md:bottom-auto md:top-20 left-1/2 -translate-x-1/2 z-[600] bg-slate-900 text-white px-5 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-2xl animate-in slide-in-from-bottom-4 md:slide-in-from-top-4 transition-all">
+           {toast}
+        </div>
+      )}
 
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
@@ -260,7 +303,7 @@ const POS: React.FC<POSProps> = ({
              </p>
              <div className="flex flex-col gap-3">
                 <button onClick={() => {
-                   onUpdateTabs(prev => prev.filter(t => normalizeId(t.id) !== normalizeId(deleteConfirmId.id)));
+                   onDeleteTab(deleteConfirmId.id);
                    if (normalizeId(activeTabId) === normalizeId(deleteConfirmId.id)) { setActiveTabId(null); }
                    setDeleteConfirmId(null);
                    showFeedback(`MESA REMOVIDA`);
@@ -283,8 +326,8 @@ const POS: React.FC<POSProps> = ({
           
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[24px] md:rounded-[32px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
-              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO..." className="flex-1 px-5 md:px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-base md:text-lg tracking-widest outline-none shadow-inner" onKeyDown={e => e.key === 'Enter' && (() => { if(newTabName.trim()){ const nid = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: nid, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(nid); setNewTabName(''); setIsAddingTab(false); } })()} />
-              <button onClick={() => { if(newTabName.trim()){ const nid = generateUniqueId('tab'); onUpdateTabs(p => [...p, {id: nid, name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}]); setActiveTabId(nid); setNewTabName(''); setIsAddingTab(false); } }} className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Criar</button>
+              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO..." className="flex-1 px-5 md:px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-base md:text-lg tracking-widest outline-none shadow-inner" onKeyDown={e => e.key === 'Enter' && createTab()} />
+              <button onClick={createTab} className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Criar</button>
               <button onClick={() => setIsAddingTab(false)} className="md:hidden py-2 text-[10px] font-black uppercase text-slate-400">Cancelar</button>
             </div>
           )}
@@ -302,12 +345,10 @@ const POS: React.FC<POSProps> = ({
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 animate-in fade-in duration-300">
            
-           {/* Lógica Mobile: Se showMobileCart está ativo, esconde a grade */}
            <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1`}>
              <POSProductGrid products={products} onAddProduct={addToTab} />
            </div>
 
-           {/* Comanda Lateral (Desktop) ou Aba de itens (Mobile) */}
            <div className={`${!showMobileCart ? 'hidden lg:flex' : 'flex'} w-full lg:w-96 bg-white dark:bg-slate-900 rounded-[30px] md:rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-2xl flex-col overflow-hidden h-[75vh] md:h-[85vh] lg:h-[calc(100vh-140px)] lg:sticky lg:top-24`}>
               <div className="p-4 md:p-5 bg-red-600 text-white font-black uppercase text-[10px] md:text-xs flex justify-between items-center shrink-0 shadow-lg">
                 <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
@@ -362,7 +403,6 @@ const POS: React.FC<POSProps> = ({
               )}
            </div>
 
-           {/* Mobile Floating Cart Summary Button */}
            {!isClosingTab && !showMobileCart && activeTabId && (
               <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm lg:hidden z-[100] animate-in slide-in-from-bottom-6">
                 <button 

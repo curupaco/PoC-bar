@@ -1,16 +1,16 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, CashTransaction, generateUniqueId } from '../types';
 
 interface CashManagementProps {
   shifts: Shift[];
-  onUpdateShifts: (shifts: Shift[]) => void;
+  onUpdateShifts: (shifts: Shift[], changedItem?: Shift) => void;
+  onRegisterTransaction?: (shiftId: string, transaction: CashTransaction) => void;
   sales: Sale[];
   currentUser: User;
   onViewChange?: (view: any) => void;
 }
 
-const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts, sales, currentUser, onViewChange }) => {
+const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts, onRegisterTransaction, sales, currentUser, onViewChange }) => {
   const activeShift = shifts.find(s => s.status === 'open');
   
   const [fromBox, setFromBox] = useState<'Primary' | 'Change' | 'Secondary'>('Primary');
@@ -73,12 +73,23 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       user: currentUser.username
     };
 
-    onUpdateShifts(shifts.map(s => s.id === activeShift.id ? {
-      ...s,
-      [sourceKey]: (s[sourceKey] as number) - value,
-      [destKey]: (s[destKey] as number) + value,
-      transactions: [...(s.transactions || []), transaction] // Persiste o histórico
-    } : s));
+    // CORREÇÃO ISSUE 3: Separação de Log de Auditoria
+    // 1. Salva a transação individualmente (Append Only)
+    if (onRegisterTransaction) {
+        onRegisterTransaction(activeShift.id, transaction);
+    }
+
+    // 2. Atualiza os saldos totais do turno (Mutable)
+    // Mantemos 'transactions' no objeto local para feedback visual imediato, 
+    // mas o App.tsx removerá este array antes de salvar no banco para não sobrescrever.
+    const updatedShift: Shift = {
+      ...activeShift,
+      [sourceKey]: (activeShift[sourceKey] as number) - value,
+      [destKey]: (activeShift[destKey] as number) + value,
+      transactions: [...(activeShift.transactions || []), transaction] 
+    };
+
+    onUpdateShifts(shifts.map(s => s.id === activeShift.id ? updatedShift : s), updatedShift);
 
     setTransferValue('');
     setToast({ msg: "TRANSFERÊNCIA CONCLUÍDA", type: 'success' });

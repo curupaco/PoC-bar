@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { User, UserPermission, Unit } from '../types';
 import { hashPassword } from '../services/cryptoService';
@@ -6,7 +5,7 @@ import { hashPassword } from '../services/cryptoService';
 interface UserManagementProps {
   users: User[];
   units?: Unit[]; // Opcional para manter compatibilidade se units não carregar
-  onUpdateUsers: (users: User[]) => void;
+  onUpdateUsers: (users: User[], changedItem?: User) => void;
 }
 
 interface PermissionGroup {
@@ -98,7 +97,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
       allowedUnits: selectedUnits
     };
 
-    onUpdateUsers(editingUser ? users.map(u => u.id === editingUser.id ? newUser : u) : [...users, newUser]);
+    // CORREÇÃO ITEM 1: Passa o 'newUser' como segundo argumento para persistência atômica
+    const newList = editingUser ? users.map(u => u.id === editingUser.id ? newUser : u) : [...users, newUser];
+    onUpdateUsers(newList, newUser);
     resetForm();
   };
 
