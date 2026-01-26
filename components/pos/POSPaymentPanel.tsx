@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { PaymentMethod, formatCurrency, sanitizeCurrencyInput, parseCurrencyValue, safeFloat } from '../../types';
 
@@ -31,6 +30,9 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   const [paymentMethodInput, setPaymentMethodInput] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  
+  // CORREÇÃO ITEM 2: Prevenção de Duplo Clique
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (toast) {
@@ -56,6 +58,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
       setCashReceivedInput('');
       setCustomerNameInput('');
       setValidationError(null);
+      setIsProcessing(false); // Reset lock
     }
   }, [activeTabId, shortcutCheckout, tabTotal]);
 
@@ -89,6 +92,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   };
 
   const handleFinishSale = () => {
+    if (isProcessing) return; // Guard clause for race condition
+
     // Fluxo Rápido: Se não adicionou parciais, tenta usar o input atual
     if (currentPayments.length === 0) {
         const val = parseCurrencyValue(paymentAmountInput);
@@ -97,6 +102,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                 setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
                 return;
              }
+             
+             setIsProcessing(true); // Lock UI
              const finalAmount = val > 0 ? val : remainingBalance;
              onComplete([{
                 method: paymentMethodInput,
@@ -112,6 +119,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
        return;
     }
 
+    setIsProcessing(true); // Lock UI
     onComplete(currentPayments);
   };
 
@@ -256,8 +264,13 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
             </div>
           )}
           
-          <button onClick={handleFinishSale} className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center gap-1 ${remainingBalance <= 0.05 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
-            <span>CONCLUIR VENDA</span>
+          <button 
+            onClick={handleFinishSale} 
+            disabled={remainingBalance > 0.05 || isProcessing}
+            className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center gap-1 
+              ${remainingBalance <= 0.05 && !isProcessing ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+          >
+            <span>{isProcessing ? 'PROCESSANDO...' : 'CONCLUIR VENDA'}</span>
             <span className="text-[10px] opacity-70 italic">Total: {formatCurrency(tabTotal)}</span>
           </button>
        </div>

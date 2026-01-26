@@ -1,10 +1,9 @@
-
 import React, { useState, useMemo } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../types';
 
 interface ShiftControlProps {
   shifts: Shift[];
-  onUpdateShifts: (shifts: Shift[]) => void;
+  onUpdateShifts: (shifts: Shift[], changedItem?: Shift) => void;
   currentUser: User;
   sales: Sale[];
   activeTabsCount: number;
@@ -19,6 +18,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const [valChange, setValChange] = useState('');
   const [valSecondary, setValSecondary] = useState('');
   const [actualCountedInput, setActualCountedInput] = useState('');
+  
+  // FIX 4: Feedback Tátil - Loading state
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const canOpen = currentUser.username === 'admin' || currentUser.permissions.includes('open_shift');
   const canClose = currentUser.username === 'admin' || currentUser.permissions.includes('close_shift');
@@ -27,16 +29,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     if (!activeShift) return [];
     return (sales || []).filter(s => s.shiftId === activeShift.id && !s.deleted);
   }, [activeShift, sales]);
-
-  const closedShifts = useMemo(() => {
-    return shifts.filter(s => s.status === 'closed').sort((a, b) => b.startTime - a.startTime);
-  }, [shifts]);
-
-  const getShiftSalesTotal = (shiftId: string) => {
-    return (sales || [])
-      .filter(s => s.shiftId === shiftId && !s.deleted)
-      .reduce((acc, s) => acc + (s.total || 0), 0);
-  };
 
   const deletedSalesTotal = useMemo(() => {
     if (!activeShift) return 0;
@@ -91,8 +83,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const openingBalance = activeShift?.openingCashChange ?? 0;
   const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers;
 
-  const handleOpenShift = () => {
+  const handleOpenShift = async () => {
     if (!canOpen) return;
+    setIsProcessing(true);
+    
+    // Pequeno delay artificial para feedback visual (tactile feel)
+    await new Promise(r => setTimeout(r, 400));
+
     const pVal = parseCurrencyValue(valPrimary);
     const cVal = parseCurrencyValue(valChange);
     const sVal = parseCurrencyValue(valSecondary);
@@ -110,20 +107,39 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       openingCashSecondary: sVal,
       transactions: []
     };
-    onUpdateShifts([newShift, ...shifts]);
+    onUpdateShifts([newShift, ...shifts], newShift);
     setValPrimary(''); setValChange(''); setValSecondary('');
+    setIsProcessing(false);
   };
 
   const handleConfirmClose = () => {
     if (!canClose || !activeShift) return;
     const actualCounted = parseCurrencyValue(actualCountedInput);
+    
+    const calculatedPrimary = (activeShift.openingCashPrimary || 0) + 
+        (activeShift.transactions?.filter(t => t.to === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0) -
+        (activeShift.transactions?.filter(t => t.from === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0);
+
+    const calculatedSecondary = (activeShift.openingCashSecondary || 0) +
+        (activeShift.transactions?.filter(t => t.to === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0) -
+        (activeShift.transactions?.filter(t => t.from === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0);
+
     const difference = actualCounted - expectedCashInDrawer;
-    const updatedShifts = shifts.map(s => s.id === activeShift.id ? { 
-      ...s, status: 'closed' as const, endTime: Date.now(), closedBy: currentUser.username,
-      finalCashPrimary: s.cashPrimary, finalCashChange: expectedCashInDrawer,
-      finalCashSecondary: s.cashSecondary, actualCashCounted: actualCounted, cashDifference: difference
-    } : s);
-    onUpdateShifts(updatedShifts);
+    
+    const closedShift: Shift = { 
+      ...activeShift, 
+      status: 'closed', 
+      endTime: Date.now(), 
+      closedBy: currentUser.username,
+      finalCashPrimary: calculatedPrimary, 
+      finalCashChange: expectedCashInDrawer, 
+      finalCashSecondary: calculatedSecondary, 
+      actualCashCounted: actualCounted, 
+      cashDifference: difference
+    };
+
+    const updatedShifts = shifts.map(s => s.id === activeShift.id ? closedShift : s);
+    onUpdateShifts(updatedShifts, closedShift);
     setShowConferral(false); setActualCountedInput('');
   };
 
@@ -210,7 +226,45 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                 </div>
               ))}
            </div>
-           <button onClick={handleOpenShift} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">Iniciar Atividades do Turno</button>
+           <button onClick={handleOpenShift} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto disabled:opacity-50 disabled:scale-100">
+              {isProcessing && <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+              {isProcessing ? 'Abrindo...' : 'Iniciar Atividades do Turno'}
+           </button>
+        </div>
+      )}
+
+      {showConferral && activeShift && (
+        <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <div className="mb-8">
+               <h3 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Conferência Cega</h3>
+               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Conte o dinheiro físico da gaveta</p>
+             </div>
+             
+             <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl mb-8 border border-slate-200 dark:border-slate-800">
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Encontrado (Dinheiro)</label>
+               <div className="relative">
+                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">R$</span>
+                  <input 
+                    autoFocus
+                    type="text" 
+                    inputMode="decimal"
+                    value={actualCountedInput}
+                    onChange={e => setActualCountedInput(sanitizeCurrencyInput(e.target.value))}
+                    className="w-full pl-16 pr-6 py-5 rounded-2xl bg-white dark:bg-slate-900 font-black text-3xl outline-none focus:ring-4 focus:ring-blue-500/20 transition-all shadow-inner"
+                    placeholder="0,00"
+                  />
+               </div>
+             </div>
+
+             <button onClick={handleConfirmClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-emerald-500/30 active:scale-95 transition-all">
+               Confirmar Fechamento
+             </button>
+             <button onClick={() => setShowConferral(false)} className="mt-4 text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors">
+               Voltar / Contar Novamente
+             </button>
+          </div>
         </div>
       )}
     </div>

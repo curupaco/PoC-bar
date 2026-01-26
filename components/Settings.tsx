@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, Sale, Tab, User, Shift, Unit, sanitizeCurrencyInput, parseCurrencyValue } from '../types';
 import SystemDocs from './settings/SystemDocs';
@@ -36,6 +35,7 @@ const Settings: React.FC<SettingsProps> = ({
   const [thresholdInput, setThresholdInput] = useState(() => penduraThreshold.toFixed(2).replace('.', ','));
   const [showUnitManager, setShowUnitManager] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isRescuing, setIsRescuing] = useState(false);
   
   const [confirmModal, setConfirmModal] = useState<ConfirmationState>({
     isOpen: false,
@@ -83,7 +83,10 @@ const Settings: React.FC<SettingsProps> = ({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleRescueLocal = () => {
+  const handleRescueLocal = async () => {
+    setIsRescuing(true);
+    await new Promise(r => setTimeout(r, 600)); // Fake delay for UX
+
     const mirror = localStorage.getItem(`btq_mirror_${unitId}`);
     if (mirror) {
        const data = JSON.parse(mirror);
@@ -92,6 +95,7 @@ const Settings: React.FC<SettingsProps> = ({
     } else {
        showToast("NENHUM BACKUP LOCAL ENCONTRADO", "error");
     }
+    setIsRescuing(false);
   };
 
   const handleThresholdChange = (val: string) => {
@@ -136,7 +140,10 @@ const Settings: React.FC<SettingsProps> = ({
               <div className="bg-blue-600 p-8 rounded-[40px] shadow-xl border border-blue-400 flex flex-col gap-4">
                  <h4 className="text-lg font-black text-white uppercase italic">Resgate Local</h4>
                  <p className="text-[10px] text-white/80 font-bold uppercase leading-relaxed">Tenta recuperar dados da última sessão deste navegador</p>
-                 <button onClick={handleRescueLocal} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-auto">Resgatar Mirror</button>
+                 <button onClick={handleRescueLocal} disabled={isRescuing} className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest mt-auto disabled:opacity-70 flex justify-center items-center gap-2">
+                    {isRescuing && <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
+                    {isRescuing ? 'Buscando...' : 'Resgatar Mirror'}
+                 </button>
               </div>
           </div>
         </>
