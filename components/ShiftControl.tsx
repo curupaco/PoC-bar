@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../types';
 
@@ -25,9 +26,22 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const canOpen = currentUser.username === 'admin' || currentUser.permissions.includes('open_shift');
   const canClose = currentUser.username === 'admin' || currentUser.permissions.includes('close_shift');
 
+  // FIX: Fallback de horário para vendas sem shiftId (Sincronização Lenta ou Bar 2)
   const shiftSales = useMemo(() => {
     if (!activeShift) return [];
-    return (sales || []).filter(s => s.shiftId === activeShift.id && !s.deleted);
+    return (sales || []).filter(s => {
+       if (s.deleted) return false;
+       // 1. Match Exato de ID
+       if (s.shiftId === activeShift.id) return true;
+       // 2. Fallback de Segurança (Se perdeu o ID na sync, mas o horário bate)
+       if (!s.shiftId && s.timestamp >= activeShift.startTime) {
+          // Se o turno ainda está aberto, pega tudo depois da abertura
+          if (!activeShift.endTime) return true;
+          // Se já fechou, respeita o limite
+          return s.timestamp <= activeShift.endTime;
+       }
+       return false;
+    });
   }, [activeShift, sales]);
 
   const deletedSalesTotal = useMemo(() => {
@@ -39,28 +53,33 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const totalSoldInShift = shiftSales.reduce((acc, s) => acc + (s.total || 0), 0);
   
+  // FIX: Garantia de Tipagem Numérica e Soma Robusta
   const cashMovements = useMemo(() => {
     let salesTotal = 0;
     let settlementsTotal = 0;
 
     shiftSales.forEach(s => {
+       // Tratamento de Split Payment
        if (s.payments && s.payments.length > 0) {
           s.payments.forEach(p => {
              if (p.method === PaymentMethod.CASH) {
+                const amount = Number(p.amount) || 0; // Force Number
                 if (s.items?.some(i => i.productId === 'quitacao')) {
-                   settlementsTotal += p.amount;
+                   settlementsTotal += amount;
                 } else {
-                   salesTotal += p.amount;
+                   salesTotal += amount;
                 }
              }
           });
        } 
+       // Tratamento Legado / Pagamento Único
        else {
           if (s.paymentMethod === PaymentMethod.CASH) {
+             const amount = Number(s.total) || 0; // Force Number
              if (s.items?.some(i => i.productId === 'quitacao')) {
-                settlementsTotal += s.total;
+                settlementsTotal += amount;
              } else {
-                salesTotal += s.total;
+                salesTotal += amount;
              }
           }
        }
@@ -75,12 +94,12 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const internalTransfers = useMemo(() => {
     if (!activeShift || !activeShift.transactions) return 0;
-    const incoming = activeShift.transactions.filter(t => t.to === 'Change').reduce((acc, t) => acc + t.amount, 0);
-    const outgoing = activeShift.transactions.filter(t => t.from === 'Change').reduce((acc, t) => acc + t.amount, 0);
+    const incoming = activeShift.transactions.filter(t => t.to === 'Change').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
+    const outgoing = activeShift.transactions.filter(t => t.from === 'Change').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     return incoming - outgoing;
   }, [activeShift]);
 
-  const openingBalance = activeShift?.openingCashChange ?? 0;
+  const openingBalance = Number(activeShift?.openingCashChange) || 0;
   const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers;
 
   const handleOpenShift = async () => {
