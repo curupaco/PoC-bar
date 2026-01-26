@@ -24,15 +24,19 @@ interface SettingsProps {
   currentUser: User;
   penduraThreshold: number;
   setPenduraThreshold: (v: number) => void;
+  longDurationThreshold: number;
+  setLongDurationThreshold: (v: number) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({ 
   products, sales, openTabs, users, shifts, units, onUpdateUnits,
   onImport, currentUser,
-  penduraThreshold, setPenduraThreshold
+  penduraThreshold, setPenduraThreshold,
+  longDurationThreshold, setLongDurationThreshold
 }) => {
   const [toast, setToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
   const [thresholdInput, setThresholdInput] = useState(() => penduraThreshold.toFixed(2).replace('.', ','));
+  const [durationInput, setDurationInput] = useState(() => longDurationThreshold.toString());
   const [showUnitManager, setShowUnitManager] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isRescuing, setIsRescuing] = useState(false);
@@ -48,6 +52,10 @@ const Settings: React.FC<SettingsProps> = ({
   useEffect(() => {
     setThresholdInput(penduraThreshold.toFixed(2).replace('.', ','));
   }, [penduraThreshold]);
+
+  useEffect(() => {
+    setDurationInput(longDurationThreshold.toString());
+  }, [longDurationThreshold]);
 
   const canReset = currentUser.username === 'admin' || currentUser.permissions.includes('full_reset');
   const canManageBackup = currentUser.username === 'admin' || currentUser.permissions.includes('manage_backup');
@@ -103,6 +111,12 @@ const Settings: React.FC<SettingsProps> = ({
     setThresholdInput(sanitized);
     const numeric = parseCurrencyValue(sanitized);
     setPenduraThreshold(numeric);
+  };
+
+  const handleDurationChange = (val: string) => {
+    const numeric = parseInt(val) || 0;
+    setDurationInput(val.replace(/[^0-9]/g, ''));
+    setLongDurationThreshold(Math.max(1, numeric));
   };
 
   return (
@@ -186,6 +200,15 @@ const Settings: React.FC<SettingsProps> = ({
                 type="text" 
                 value={thresholdInput} 
                 onChange={e => handleThresholdChange(e.target.value)} 
+                className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black text-xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+              />
+           </div>
+           <div className="space-y-2">
+              <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Aviso de mesa de longa duração (Horas)</label>
+              <input 
+                type="text" 
+                value={durationInput} 
+                onChange={e => handleDurationChange(e.target.value)} 
                 className="w-full px-6 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black text-xl border-none outline-none focus:ring-2 focus:ring-orange-500 transition-all"
               />
            </div>

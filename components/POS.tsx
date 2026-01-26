@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, SalePayment } from '../types';
 import WeightModal from './pos/modals/WeightModal';
@@ -20,6 +21,9 @@ interface POSProps {
   onViewChange?: (view: any) => void;
   theme?: string;
   dbStatus?: string;
+  penduraThreshold?: number;
+  longDurationThreshold?: number;
+  activeDebtors?: Set<string>;
 }
 
 const POS: React.FC<POSProps> = ({ 
@@ -35,7 +39,10 @@ const POS: React.FC<POSProps> = ({
   onClearShortcut,
   activeShift,
   onViewChange,
-  dbStatus
+  dbStatus,
+  penduraThreshold = 500,
+  longDurationThreshold = 4,
+  activeDebtors = new Set()
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -53,6 +60,9 @@ const POS: React.FC<POSProps> = ({
   const [toast, setToast] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<{ tabId: string, itemId: string, prevQty: number } | null>(null);
 
+  const [flashingItem, setFlashingItem] = useState<string | null>(null);
+  const [shouldBounceBadge, setShouldBounceBadge] = useState(false);
+
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(null), 2500);
@@ -60,7 +70,6 @@ const POS: React.FC<POSProps> = ({
     }
   }, [toast]);
 
-  // Limpa o botão de desfazer após 5 segundos
   useEffect(() => {
     if (lastAction) {
       const t = setTimeout(() => setLastAction(null), 5000);
@@ -68,7 +77,11 @@ const POS: React.FC<POSProps> = ({
     }
   }, [lastAction]);
 
-  const showFeedback = useCallback((msg: string) => setToast(msg), []);
+  const showFeedback = useCallback((msg: string) => {
+    setToast(msg);
+    setShouldBounceBadge(true);
+    setTimeout(() => setShouldBounceBadge(false), 400);
+  }, []);
 
   useEffect(() => {
     setIsClosingTab(false);
@@ -142,6 +155,8 @@ const POS: React.FC<POSProps> = ({
           items[editingWeightIndex] = newItem;
           onSaveTab({ ...activeTab, items });
       }
+      setFlashingItem(newItem.id);
+      setTimeout(() => setFlashingItem(null), 400);
       showFeedback(`${product.name} ATUALIZADO`);
     } else {
       const existingItem = items.find(i => 
@@ -166,6 +181,8 @@ const POS: React.FC<POSProps> = ({
             items[idx] = updatedItem;
             onSaveTab({ ...activeTab, items });
         }
+        setFlashingItem(updatedItem.id);
+        setTimeout(() => setFlashingItem(null), 400);
         showFeedback(`+1 ${product.name}`);
       } else {
         const newItem: SaleItem = { 
@@ -186,6 +203,8 @@ const POS: React.FC<POSProps> = ({
             items.push(newItem);
             onSaveTab({ ...activeTab, items });
         }
+        setFlashingItem(newItem.id);
+        setTimeout(() => setFlashingItem(null), 400);
         showFeedback(`${product.name} ADICIONADO`);
       }
     }
@@ -244,6 +263,8 @@ const POS: React.FC<POSProps> = ({
     if (newQty <= 0) {
        showFeedback(`${item.productName} REMOVIDO`);
     } else {
+       setFlashingItem(item.id);
+       setTimeout(() => setFlashingItem(null), 400);
        showFeedback(`${item.productName}: ${newQty}x`);
     }
     
@@ -301,6 +322,8 @@ const POS: React.FC<POSProps> = ({
     }
   };
 
+  // PROTEÇÃO CONTRA FLASH DE TURNO FECHADO:
+  // Se o banco ainda está conectando ou carregando, não assuma que não há turno.
   if (!activeShift) {
     if (dbStatus === 'loading' || dbStatus === 'idle') {
        return (
@@ -356,7 +379,7 @@ const POS: React.FC<POSProps> = ({
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[35px] md:rounded-[40px] p-8 md:p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-2 italic">Apagar Mesa?</h3>
              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
                Remover a mesa <span className="font-bold text-slate-800 dark:text-white">"{deleteConfirmId.name}"</span> definitivamente?
@@ -409,13 +432,46 @@ const POS: React.FC<POSProps> = ({
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
-              {openTabs.map(tab => (
-                <div key={tab.id} className="relative group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[24px] md:rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer hover:shadow-xl transition-all h-36 md:h-44 flex flex-col justify-between" onClick={() => setActiveTabId(tab.id)}>
-                  <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name); }} className="absolute top-2 right-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all z-10"><svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                  <div className="pr-6"><h3 className="text-xs md:text-sm font-black uppercase truncate tracking-tight">{tab.name}</h3><span className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase">{(tab.items || []).length} ITENS</span></div>
-                  <p className="text-red-600 dark:text-red-400 font-black text-xl md:text-2xl tracking-tighter italic">{formatCurrency((tab.items || []).reduce((acc: number, i: any) => acc + i.totalPrice, 0))}</p>
-                </div>
-              ))}
+              {openTabs.map(tab => {
+                const total = (tab.items || []).reduce((acc: number, i: any) => acc + i.totalPrice, 0);
+                const isOverThreshold = total > penduraThreshold;
+                const hoursOpen = Math.floor((Date.now() - tab.openedAt) / 3600000);
+                const isLongDuration = hoursOpen >= longDurationThreshold;
+                const isDevedor = activeDebtors.has(tab.name.toUpperCase().trim());
+
+                return (
+                  <div 
+                    key={tab.id} 
+                    onClick={() => setActiveTabId(tab.id)}
+                    className={`relative group bg-white dark:bg-slate-900 p-4 md:p-6 rounded-[24px] md:rounded-[32px] border transition-all h-36 md:h-44 flex flex-col justify-between cursor-pointer hover:shadow-xl
+                      ${isLongDuration ? 'ring-2 ring-amber-500 animate-pulse-border' : 'border-slate-200 dark:border-slate-800 shadow-sm'}
+                    `}
+                  >
+                    <button onClick={(e) => { e.stopPropagation(); handleQuickDelete(tab.id, tab.name); }} className="absolute top-2 right-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-600 hover:text-white rounded-xl transition-all z-10"><svg className="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                    
+                    <div className="pr-6">
+                      <div className="flex items-center gap-1">
+                        <h3 className="text-xs md:text-sm font-black uppercase truncate tracking-tight">{tab.name}</h3>
+                        {isDevedor && <span className="text-[10px]" title="Cliente com débitos históricos">⚠️</span>}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[8px] md:text-[9px] text-slate-400 font-bold uppercase">{(tab.items || []).length} ITENS</span>
+                        {isLongDuration && <span className="text-[8px] bg-amber-100 text-amber-600 px-1 rounded font-black">{hoursOpen}H ATIVA</span>}
+                      </div>
+                    </div>
+                    
+                    <p className={`font-black text-xl md:text-2xl tracking-tighter italic transition-colors ${isOverThreshold ? 'text-orange-600 animate-bounce-subtle' : 'text-red-600 dark:text-red-400'}`}>
+                      {formatCurrency(total)}
+                    </p>
+
+                    {isDevedor && (
+                      <div className="absolute bottom-2 left-4 md:left-6 animate-in fade-in slide-in-from-bottom-1">
+                         <span className="text-[7px] font-black text-orange-500 uppercase tracking-widest">[!] PERFIL DEVEDOR</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -440,7 +496,12 @@ const POS: React.FC<POSProps> = ({
                 <>
                   <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
                     {tabItems.map((item, idx) => (
-                      <div key={`${item.id}-${idx}`} className="bg-slate-50 dark:bg-slate-800/20 p-3 md:p-4 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col gap-3">
+                      <div 
+                        key={`${item.id}-${idx}`} 
+                        className={`p-3 md:p-4 rounded-2xl md:rounded-3xl border flex flex-col gap-3 transition-all duration-300 animate-in slide-in-from-right-4
+                          ${flashingItem === item.id ? 'bg-amber-100 dark:bg-amber-900/30 border-amber-500 scale-[1.02]' : 'bg-slate-50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800'}
+                        `}
+                      >
                         <div className="flex justify-between items-start">
                           <div className="flex flex-col flex-1 mr-2">
                              <p className="text-[10px] md:text-[11px] font-black uppercase leading-tight">{item.productName}</p>
@@ -460,7 +521,7 @@ const POS: React.FC<POSProps> = ({
                     ))}
                     {tabItems.length === 0 && <div className="flex flex-col items-center justify-center py-12 md:py-20 opacity-20 italic text-[9px] md:text-[10px] uppercase font-black text-center">Nenhum item lançado</div>}
                     {showMobileCart && (
-                       <button onClick={() => setShowMobileCart(false)} className="w-full py-4 text-[10px] font-black text-blue-600 uppercase border-2 border-dashed border-blue-500/20 rounded-2xl">+ Adicionar Mais Itens</button>
+                       <button onClick={() => setShowMobileCart(false)} className="w-full mt-2 py-4 text-[10px] font-black text-blue-600 uppercase border-2 border-dashed border-blue-500/20 rounded-2xl">+ Adicionar Mais Itens</button>
                     )}
                   </div>
                   <div className="p-4 md:p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0 mt-auto pb-8 md:pb-12">
@@ -475,18 +536,19 @@ const POS: React.FC<POSProps> = ({
                   onBack={() => setIsClosingTab(false)} 
                   onComplete={processCompletion}
                   shortcutCheckout={shortcutCheckout}
+                  activeDebtors={activeDebtors}
                 />
               )}
            </div>
 
            {!isClosingTab && !showMobileCart && activeTabId && (
-              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm lg:hidden z-[100] animate-in slide-in-from-bottom-6">
+              <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm lg:hidden z-[100] animate-in slide-in-from-bottom-6 transition-transform ${shouldBounceBadge ? 'scale-105' : 'scale-100'}`}>
                 <button 
                   onClick={() => setShowMobileCart(true)}
                   className="w-full bg-red-600 text-white p-5 rounded-[25px] shadow-2xl flex justify-between items-center border-4 border-white dark:border-slate-900 active:scale-95 transition-all"
                 >
                   <div className="flex items-center gap-3">
-                     <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center font-black text-xs">
+                     <div className={`w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center font-black text-xs transition-transform ${shouldBounceBadge ? 'scale-125' : ''}`}>
                         {tabItems.reduce((acc, i) => acc + i.quantity, 0)}
                      </div>
                      <span className="text-[10px] font-black uppercase tracking-widest">Ver Pedido</span>
@@ -511,6 +573,20 @@ const POS: React.FC<POSProps> = ({
         onConfirm={(opt) => modifierModalData && executeAddItem(modifierModalData.product, modifierModalData.quantity, opt)}
         onClose={() => setModifierModalData(null)}
       />
+
+      <style>{`
+        @keyframes pulse-border {
+          0%, 100% { border-color: rgba(245, 158, 11, 0.4); }
+          50% { border-color: rgba(245, 158, 11, 1); }
+        }
+        .animate-pulse-border { animation: pulse-border 2s infinite; }
+        
+        @keyframes bounce-subtle {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-2px); }
+        }
+        .animate-bounce-subtle { animation: bounce-subtle 1.5s infinite ease-in-out; }
+      `}</style>
     </div>
   );
 };
