@@ -1,98 +1,112 @@
 
 # 🍺 Botequista Pro - Documentação Técnica e Operacional
-**Versão:** 4.2.5 (Stable)  
+**Versão:** 4.4.0 (Full Stack Definition)  
 **Desenvolvedor:** Senior Frontend Engineer  
 **Stack:** React 19, TypeScript, Firebase Realtime DB, TailwindCSS, Vercel Edge Functions.
 
 ---
 
 ## 1. Visão Geral
-O **Botequista** é uma plataforma de gestão de PDV (Ponto de Venda) especializada para bares e restaurantes que operam com alta rotatividade e necessidade de controle de fiados ("Penduras"). O sistema é focado em performance, operando como um PWA (Progressive Web App) capaz de funcionar offline e sincronizar dados em tempo real quando há conexão.
+O **Botequista** é uma plataforma de gestão de PDV (Ponto de Venda) especializada para bares e restaurantes. O sistema opera em modelo **PWA (Progressive Web App)** com estratégia *Offline-First*, sincronização resiliente e arquitetura Multi-Tenant (Franquias).
 
 ---
 
-## 2. Arquitetura de Dados
+## 2. Arquitetura de Dados & Resiliência
 
-### A. Estrutura Multi-Tenant (Franquias)
-O sistema utiliza um modelo de isolamento por unidade ("Bar").
-- **Dados Globais:** `users/` e `units/`. Armazenam a base de colaboradores e a lista de unidades físicas.
-- **Dados Locais:** Localizados em `data/units/{unit_id}/`. Contêm produtos, vendas, comandas abertas, turnos e logs de tesouraria específicos daquela unidade.
+### A. Estrutura Multi-Tenant
+- **Dados Globais:** `users/` e `units/`. Controlam autenticação e lista de franquias.
+- **Dados Locais (`/units/{id}`):** Isolamento total de dados. Cada bar possui seu próprio nó de produtos, vendas e configurações.
+- **Unidade Ativa:** Persistida via `localStorage` (`btq_active_unit`), permitindo que o gerente troque de bar sem relogar.
 
 ### B. Motor de Sincronização (`useSync.ts`)
-Utiliza uma estratégia de *Polling* otimizado (10s) e *Hash Comparison* para evitar re-renders desnecessários.
-- **Persistência Local:** O sistema mantém um "Mirror" no `localStorage` para permitir o carregamento instantâneo e funcionamento em áreas de sombra de rede.
+- **Polling Inteligente:** Ciclos de 10s com verificação de Hash (`lastDataHash`) para evitar re-renders de UI se os dados não mudaram.
+- **Fila Offline (`SyncQueue`):** Transações sem internet são armazenadas no IndexedDB e processadas sequencialmente (FIFO) com retentativas automáticas.
+- **Blacklist Persistente (Anti-Zumbi):** IDs deletados são gravados localmente para impedir que a latência do servidor ressuscite itens excluídos.
+
+### C. Protocolo de Resgate (Data Rescue)
+- **Local Mirror:** O sistema mantém uma cópia completa do banco no `localStorage`.
+- **Botão de Resgate:** Na tela de Ajustes, a função `handleRescueLocal` permite forçar a restauração dos dados a partir da memória do navegador caso o Firebase esteja inacessível.
 
 ---
 
 ## 3. Módulos do Sistema
 
 ### 🛒 Ponto de Venda (POS)
-- **Mesas Abertas:** Gerenciamento dinâmico de comandas com nomes personalizados.
-- **Venda Rápida:** Lançamento direto sem necessidade de abrir mesa.
-- **Venda por Peso (KG):** Aciona teclado numérico de gramas, calculando o preço proporcional instantaneamente.
-- **Adicionais (Upsell):** Menus de modificadores (ex: gelo, limão, borda) que podem ser obrigatórios ou opcionais por categoria.
-- **Split Payment:** Permite pagar uma única conta com múltiplos métodos (ex: R$ 50 no PIX e R$ 20 no Dinheiro).
+- **Atualização Granular:** O sistema atualiza apenas o item modificado dentro de uma mesa (patch update), reduzindo conflitos de sobrescrita.
+- **Venda por Peso (KG):** Modal específico com input numérico para gramas, convertendo automaticamente para KG no cálculo de preço.
+- **Split Payment:** Suporte a múltiplos métodos de pagamento em uma única venda (ex: R$ 20 Dinheiro + R$ 30 Pix).
 
-### 📊 Relatórios e Inteligência
-- **Fechamento de Turno:** Gera um "Cupom de Auditoria" em PNG que pode ser compartilhado via WhatsApp.
-- **Curva ABC de Produtos:** Ranking de faturamento por item.
-- **Gestão de Penduras:** Carteira ativa de devedores com histórico de débitos e quitações vinculadas ao nome do cliente.
-- **Mapa de Calor Operacional:** Gráfico de volume de vendas por hora para ajuste de escala de funcionários.
+### 📋 Gestão de Cardápio & Inventário
+- **Categorias Vivas:** O sistema detecta automaticamente categorias usadas em produtos importados que não existem no cadastro oficial e sugere a importação ("Categorias Órfãs").
+- **Vínculos de Adicionais (Upsell):**
+  - É possível criar grupos de modificadores (ex: "Borda Recheada", "Gelo e Limão").
+  - **Auto-Trigger:** Na aba "Vínculos", associa-se um Grupo a uma Categoria. Ao clicar em qualquer produto daquela categoria no PDV, o modal de adicionais abre automaticamente.
+- **Favoritos:** Produtos marcados com `isFavorite` aparecem no topo do grid do PDV.
 
-### 👥 Gestão de Equipe (RBAC)
-Sistema de permissões baseado em funções (*Role-Based Access Control*):
-- **admin:** Acesso total irrestrito.
-- **Módulos:** Permissões granulares para ver Dashboard, PDV, Histórico, etc.
-- **Ações Críticas:** Permissões específicas para anular vendas, excluir produtos ou gerenciar backups.
-
----
-
-## 4. Segurança e Auditoria
-
-### A. Criptografia (`cryptoService.ts`)
-- **Senhas:** Armazenadas utilizando hash SHA-256.
-- **Dados Sensíveis:** Suporte nativo para criptografia AES-256 em backups locais e remotos.
-
-### B. Auditoria de Caixa
-Cada movimentação entre o cofre e a gaveta de troco é registrada com:
-- ID da transação.
-- Timestamp de Brasília (GMT-3).
-- Usuário responsável.
-- Origem e Destino do valor.
+### 💰 Tesouraria e Fluxo de Caixa
+- **Arquitetura de 3 Cofres:**
+  1.  **Gaveta (Change):** Dinheiro rotativo do operador (trocos e recebimentos).
+  2.  **Primário:** Cofre principal do gerente (Fundo fixo).
+  3.  **Secundário:** Reserva ou conta bancária.
+- **Auditoria de Transferências:** Toda movimentação (Sangria/Suprimento) gera um log imutável (`CashTransaction`) rastreando Origem, Destino, Usuário e Hora.
+- **Fechamento Cego:** O operador informa quanto contou; o sistema calcula a diferença (Sobra/Falta) baseada nas vendas + movimentações.
 
 ---
 
-## 5. Instalação e PWA
+## 4. API & Serverless Architecture
 
-### Configuração Android/iOS
-O sistema está configurado para ser instalado como um aplicativo nativo.
-- **Ícone Transparente:** Utiliza ícones de fluência com canal alfa para integração estética no launcher do celular.
-- **Service Worker:** Cache agressivo de assets estáticos (Tailwind, Fontes, Ícones) para carregamento rápido.
+O sistema utiliza Vercel Functions para processamento pesado e segurança, evitando expor lógica de negócios no cliente.
 
-### Resolução de Problemas (404 NOT FOUND)
-Se o app exibir erro 404 ao abrir:
-1. Verifique se o `manifest.json` aponta para a `start_url: "/"`.
-2. Limpe o cache do Chrome no Android e reinstale via menu "Instalar Aplicativo".
+### Segurança via Custom Headers
+Para evitar expor a URL e Token do Firebase na query string, o frontend envia credenciais via headers customizados:
+- `x-fb-url`: URL do Realtime Database.
+- `x-fb-token`: Token de autenticação (ID Token) gerado na sessão.
+
+### Endpoints (Vercel Functions)
+
+1.  **`api/reports.ts`**
+    *   **Função:** Gera relatórios financeiros com filtragem server-side.
+    *   **Timezone Safe:** Força o offset `-03:00` (Brasília) nas queries `startAt` e `endAt` para garantir que vendas noturnas (após 21h) entrem no dia correto.
+    *   **Otimização:** Retorna apenas o array filtrado, economizando banda.
+
+2.  **`api/search.ts`** (Busca Híbrida)
+    *   **Função:** Busca textual profunda no histórico de vendas.
+    *   **Lógica:** Baixa os últimos 2000 registros (limite de segurança) e realiza filtragem em memória no Edge Runtime por Nome do Cliente, Mesa ou ID da Venda.
+
+3.  **`api/feedback.ts`**
+    *   **Integração GitHub:** Converte o feedback do usuário em uma **Issue** no repositório do projeto.
+    *   **Labels Automáticas:** Classifica como `bug` ou `enhancement`.
+    *   **Contexto:** Anexa automaticamente o usuário logado e data/hora local.
 
 ---
 
-## 6. API de Feedback (GitHub Integration)
-Localizada em `api/feedback.ts` (Vercel Function).
-- **Timezone Fix:** As issues são criadas no GitHub com o horário de Brasília forçado (`America/Sao_Paulo`), resolvendo o problema de fuso horário do servidor UTC.
-- **Variáveis Necessárias:**
-  - `GITHUB_TOKEN`: PAT Classic com permissão de `repo`.
-  - `GITHUB_OWNER`: Nome do usuário no GitHub.
-  - `GITHUB_REPO`: Nome do repositório de destino.
+## 5. Segurança & Controle de Acesso (RBAC)
+
+### Níveis de Permissão
+O sistema possui 20 permissões granulares (`UserPermission`), agrupadas em:
+- **Operação:** `pos`, `open_shift`, `close_shift`.
+- **Financeiro:** `cash_admin`, `clear_fiado` (Baixa de Pendura).
+- **Gestão:** `edit_product`, `users_admin`, `manage_units`.
+- **Crítico:** `delete_sale` (Anulação auditada), `full_reset` (Reset de fábrica).
+
+### Criptografia
+- **Senhas:** Hash SHA-256 antes de salvar no banco.
+- **Backups:** Suporte a criptografia AES-256 para arquivos JSON exportados (feature opcional).
 
 ---
 
-## 7. Guia de Manutenção
+## 6. Procedimentos de Manutenção
 
 ### Reset de Fábrica
-Apenas disponível para usuários com permissão `full_reset`. Apaga todos os dados do nó da unidade no Firebase. **Ação irreversível.**
+Disponível apenas para Admin. Limpa toda a árvore de dados da unidade ativa no Firebase. Útil para inaugurações ou troca de gestão.
 
-### Backup Externo
-Recomenda-se exportar o arquivo JSON semanalmente através da aba **Ajustes > Baixar Backup Completo**. Este arquivo pode ser restaurado em qualquer nova instalação do Botequista.
+### Backup e Restauração
+- **Exportar:** Gera um arquivo JSON contendo Vendas, Produtos, Usuários e Configurações.
+- **Restaurar:** Permite carregar um JSON anterior.
+- **Sync GitHub:** (Feature Experimental) Permite sincronizar o backup com um Gist privado do GitHub.
+
+### Correção de Mesa Travada
+Botão **"Forçar Limpeza"** no modal de exclusão de mesa. Adiciona o ID à blacklist local, removendo-a visualmente independente do estado do servidor.
 
 ---
-*Documentação atualizada em: Março de 2024*
+*Documentação atualizada em: Outubro de 2023 (v4.4.0)*
