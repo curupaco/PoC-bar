@@ -51,4 +51,20 @@ As movimentações de caixa não são "editáveis". Cada sangria ou suprimento g
 - **Atomic Load:** Sistema de travas que impede a exibição de interfaces de venda antes de confirmar o estado real do turno na nuvem.
 
 ---
-*Documentação atualizada em: [Data de Hoje] (v5.3.6)*
+
+## 7. Arquitetura Multi-Unidade e Isolamento de Dados
+O sistema implementa uma lógica estrita de **Multi-Tenancy** para gerenciar múltiplos bares (Unidades) com uma única conta de usuário, garantindo que o faturamento de um bar nunca "vaze" para o painel de outro.
+
+### A. Troca de Contexto (Context Switching)
+A alternância segura entre unidades (ex: Bar Principal <-> Bar Segundo) é realizada através de dois pontos de interação na UI:
+1.  **Sidebar (Menu Lateral):** Botão dedicado "Trocar Bar" localizado na base do menu, acima do perfil do usuário.
+2.  **Header Badge (Mobile):** Atalho rápido clicando na etiqueta vermelha com o nome da unidade atual no topo da tela.
+
+### B. Protocolo de "Hard Reset" na Sincronização (`useSync.ts`)
+Para evitar a contaminação de dados (Data Leak) onde caches antigos persistiam após a troca de unidade, foi implementado um ciclo de vida rigoroso:
+1.  **State Purge:** Ao detectar mudança no `activeUnitId`, todos os arrays de dados (`sales`, `products`, `shifts`) são imediatamente zerados na memória.
+2.  **Metadata Wipe:** O hook de sincronização descarta as referências de tempo (`localMeta`) e a lista de exclusões (`serverTombstones`).
+3.  **Cold Start Forçado:** O sistema ignora qualquer cache prévio em memória e força uma nova negociação completa com o banco de dados da nova unidade, garantindo integridade absoluta dos relatórios financeiros.
+
+---
+*Documentação atualizada em: [Data de Hoje] (v5.3.7)*
