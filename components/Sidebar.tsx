@@ -11,6 +11,7 @@ interface SidebarProps {
   isOnline: boolean;
   currentUser: User | null;
   onLogout: () => void;
+  onSwitchUnit: () => void; // Nova Prop para troca de unidade
   isShiftOpen: boolean;
   activeTabsCount: number;
   totalPendura: number;
@@ -27,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose, 
   currentUser, 
   onLogout, 
+  onSwitchUnit,
   activeTabsCount, 
   isCollapsed, 
   onToggleCollapse,
@@ -122,6 +124,24 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-4 border-t border-slate-800 space-y-4">
            {renderItem('help', 'GUIA', 'help_view', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
            
+           {/* BOTÃO DE TROCA DE UNIDADE (MOBILE FRIENDLY) */}
+           <button 
+             onClick={() => { onSwitchUnit(); onClose(); }} 
+             className={`flex items-center gap-4 px-6 py-3.5 rounded-2xl transition-all duration-300 relative group text-slate-400 hover:text-white hover:bg-slate-800/50 ${isCollapsed ? 'justify-center px-0' : ''}`}
+           >
+             <div className="shrink-0 text-red-500">
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+             </div>
+             {!isCollapsed && (
+               <span className="text-[11px] uppercase tracking-widest truncate font-bold text-red-500">Trocar Bar</span>
+             )}
+             {isCollapsed && (
+                <div className="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-50">
+                   Trocar Unidade
+                </div>
+             )}
+           </button>
+
            <div className={`flex items-center gap-4 px-4 py-4 ${isCollapsed ? 'justify-center' : ''}`}>
               <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-lg">
                  {currentUser?.displayName.slice(0, 2).toUpperCase() || 'AD'}
