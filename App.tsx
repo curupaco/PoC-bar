@@ -185,6 +185,15 @@ export const App: React.FC = () => {
     else persist('users', newUsers);
   }, [persist]);
 
+  const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
+    setShifts(newShifts);
+    if (changedItem) {
+        persist('shifts', changedItem, changedItem.id);
+    } else {
+        persist('shifts', newShifts);
+    }
+  }, [persist]);
+
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
         const next = [...prev, ...newSalesList];
@@ -230,11 +239,12 @@ export const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
+  // SELEÇÃO DE UNIDADE (FORÇADA APÓS LOGIN OU TROCA)
   if (!activeUnitId) {
     if (dbStatus === 'loading' && units.length === 0) return <LoadingScreen message="Buscando bares..." />;
     const allowedUnits = currentUser.username === 'admin' ? units : units.filter(u => currentUser.allowedUnits?.includes(u.id) && u.isActive);
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
          <div className="max-w-2xl w-full animate-in fade-in zoom-in-95">
             <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-8 text-center italic">Qual o Bar de hoje?</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -245,6 +255,7 @@ export const App: React.FC = () => {
                   </button>
                ))}
             </div>
+            <button onClick={handleLogout} className="mt-8 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors">Sair da Conta</button>
          </div>
       </div>
     );
@@ -258,60 +269,54 @@ export const App: React.FC = () => {
        
        <main className={`flex-1 overflow-auto transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} h-full relative`}>
           
-          {/* HEADER MOBILE (NOVO) */}
-          <header className="flex md:hidden justify-between items-center bg-white dark:bg-slate-900 p-4 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 shadow-sm">
-             <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 dark:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
-             </button>
-             <h2 className="text-xl font-barrio leading-none">Botequista</h2>
-             <div className="w-10"></div> {/* Espaçador para centralizar título */}
-          </header>
-
-          {/* HEADER DESKTOP */}
-          <header className="hidden md:flex justify-between items-center bg-white dark:bg-slate-900/80 p-5 mx-8 mt-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-md sticky top-6 z-30">
-             <div className="flex flex-col">
-                <h2 className="text-2xl font-barrio text-slate-900 dark:text-white leading-none">Botequista Pro</h2>
-                <div className="flex items-center gap-2 mt-1">
-                   <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest border border-red-200 dark:border-red-900/50">
-                      {activeUnitName}
-                   </span>
-                   <button 
-                     onClick={handleSwitchUnit}
-                     className="bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                   >
-                     Trocar
-                   </button>
+          {/* HEADER RESPONSIVO UNIFICADO (PRO) */}
+          <header className="flex justify-between items-center bg-white dark:bg-slate-900/80 p-4 md:p-5 mx-0 md:mx-8 mt-0 md:mt-6 rounded-none md:rounded-[32px] border-b md:border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-md sticky top-0 md:top-6 z-40">
+             <div className="flex items-center gap-3">
+                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-slate-600 dark:text-white">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                </button>
+                <div className="flex flex-col">
+                   <h2 className="text-lg md:text-2xl font-barrio text-slate-900 dark:text-white leading-none">Botequista</h2>
+                   <div className="flex items-center gap-1 md:gap-2 mt-1">
+                      <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-black uppercase tracking-widest border border-red-200 dark:border-red-900/50 truncate max-w-[80px] md:max-w-none">
+                         {activeUnitName}
+                      </span>
+                      <button 
+                        onClick={handleSwitchUnit}
+                        className="bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all"
+                      >
+                        Trocar
+                      </button>
+                   </div>
                 </div>
              </div>
 
-             <div className="flex items-center gap-3">
+             <div className="flex items-center gap-1 md:gap-3">
                  <button 
                     onClick={() => setStatusModalOpen(true)} 
-                    className={`px-4 py-2 rounded-2xl text-[9px] font-black uppercase border flex items-center gap-2 transition-all bg-transparent ${dbStatus === 'success' && serverHealth === 'ok' ? 'text-emerald-600 border-emerald-100 dark:border-emerald-900/20' : 'text-slate-400 border-slate-100 dark:border-slate-800'}`}
+                    className={`p-2 md:px-4 md:py-2 rounded-2xl text-[9px] font-black uppercase border flex items-center gap-2 transition-all bg-transparent ${dbStatus === 'success' && serverHealth === 'ok' ? 'text-emerald-600 border-emerald-100 dark:border-emerald-900/20' : 'text-slate-400 border-slate-100 dark:border-slate-800'}`}
                  >
-                    <div className={`w-2 h-2 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : dbStatus === 'loading' ? 'bg-amber-400 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
-                    {dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'loading' ? 'Sincronizando...' : 'Offline'}
+                    <div className={`w-2.5 h-2.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : dbStatus === 'loading' ? 'bg-amber-400 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
+                    <span className="hidden md:inline">{dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'loading' ? 'Sincronizando...' : 'Offline'}</span>
                  </button>
 
-                 <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-all shadow-sm active:scale-95">
-                    {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2}/></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2}/></svg>}
+                 <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2.5 md:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-all shadow-sm active:scale-95">
+                    {theme === 'dark' ? <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2.5}/></svg> : <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5}/></svg>}
                  </button>
 
-                 <button onClick={() => setFeedbackOpen(true)} className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                 <button onClick={() => setFeedbackOpen(true)} className="p-2.5 md:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95">
+                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
                  </button>
              </div>
           </header>
 
           <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-full">
-              {/* RENDERIZAÇÃO DE VIEWS - RESTAURADA TOTALMENTE */}
               {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} activeDebtors={activeDebtors} dbStatus={dbStatus} />}
               {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
-              {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
-              {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
+              {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
+              {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
               
-              {/* VIEWS ADICIONAIS */}
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
               {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { setSales(prev => prev.map(s => s.id === id ? {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id} : s)); persist('sales', sales.find(s => s.id === id)!, id); }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => handleCompleteSale([{id: generateUniqueId('sale'), timestamp: Date.now(), items: [{id:'q1', productId:'quitacao', productName:'Quitação', category:'FIADO', quantity:1, unitPrice:amt, totalPrice:amt}], paymentMethod:PaymentMethod.CASH, payments:[{method:PaymentMethod.CASH, amount:amt}], total:amt, customerName:name, userId:currentUser.id, shiftId:shifts.find(s=>s.status==='open')?.id || ''}])} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
