@@ -2,7 +2,8 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category } from '../types';
-import { SyncQueue } from '../utils/syncQueue';
+import { SyncQueue, QueueItem } from '../utils/syncQueue';
+import { idb } from '../utils/idb';
 
 interface SyncProps {
   setProducts: (data: any) => void;
@@ -26,6 +27,7 @@ export const useSync = (props: SyncProps) => {
   const initialLoadDone = useRef(false);
   const errorCount = useRef(0);
   const serverTombstones = useRef<Set<string>>(new Set());
+  const currentUnitRef = useRef<string | null>(null);
 
   const { 
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
@@ -39,19 +41,30 @@ export const useSync = (props: SyncProps) => {
     return [];
   };
 
-  const getPersistedBlacklist = useCallback(() => {
-      if (!activeUnitId) return new Set<string>();
-      try {
-          const raw = localStorage.getItem(`btq_zombie_blacklist_${activeUnitId}`);
-          return new Set<string>(raw ? JSON.parse(raw) : []);
-      } catch { return new Set<string>(); }
+  // Reset total ao trocar de unidade para evitar vazamento de dados (Issue de Faturamento Igual)
+  useEffect(() => {
+    if (activeUnitId !== currentUnitRef.current) {
+      localMeta.current = {};
+      initialLoadDone.current = false;
+      serverTombstones.current.clear();
+      errorCount.current = 0;
+      currentUnitRef.current = activeUnitId;
+    }
   }, [activeUnitId]);
 
-  const registerLocalDeletion = useCallback((id: string) => {
+  const getPersistedBlacklist = useCallback(async () => {
+      if (!activeUnitId) return new Set<string>();
+      const key = `btq_blacklist_idb_${activeUnitId}`;
+      const list = await idb.get<string[]>(key);
+      return new Set<string>(list || []);
+  }, [activeUnitId]);
+
+  const registerLocalDeletion = useCallback(async (id: string) => {
       if (!activeUnitId) return;
-      const currentList = getPersistedBlacklist();
-      currentList.add(id);
-      localStorage.setItem(`btq_zombie_blacklist_${activeUnitId}`, JSON.stringify(Array.from(currentList)));
+      const key = `btq_blacklist_idb_${activeUnitId}`;
+      const current = await getPersistedBlacklist();
+      current.add(id);
+      await idb.set(key, Array.from(current));
   }, [activeUnitId, getPersistedBlacklist]);
 
   const processQueue = useCallback(async (token: string) => {
@@ -77,9 +90,7 @@ export const useSync = (props: SyncProps) => {
     }
   }, [config, activeUnitId]);
 
-  const smartMerge = useCallback((serverData: any[], nodeKey: string) => {
-      const queue = SyncQueue.getAll();
-      const localBlacklist = getPersistedBlacklist();
+  const smartMerge = useCallback((serverData: any[], nodeKey: string, queue: QueueItem[], blacklist: Set<string>) => {
       const pendingItems = queue.filter(q => q.node.startsWith(nodeKey) && (q.unitId === activeUnitId || (!q.unitId && activeUnitId)));
       
       const safeServerData = ensureArray(serverData).map(item => {
@@ -115,77 +126,120 @@ export const useSync = (props: SyncProps) => {
                   }
               }
           });
-          const idsToDelete = new Set([...localBlacklist, ...serverTombstones.current]);
+          const idsToDelete = new Set([...blacklist, ...serverTombstones.current]);
           for (const id of idsToDelete) { if (dataMap.has(id)) dataMap.delete(id); }
       }
       return Array.from(dataMap.values());
-  }, [activeUnitId, getPersistedBlacklist]);
+  }, [activeUnitId]);
 
   const fetchData = useCallback(async () => {
-    if (isFetching.current) return;
+    if (isFetching.current || !activeUnitId) return;
+    const fetchStartedForUnit = activeUnitId;
     isFetching.current = true;
 
     try {
       await SyncQueue.init();
+      const currentQueue = SyncQueue.getAll();
+      const currentBlacklist = await getPersistedBlacklist();
+      
+      const nodesToCheck = [
+        { key: 'products', setter: setProducts },
+        { key: 'modifierGroups', setter: setModifierGroups },
+        { key: 'categories', setter: setCategories },
+        { key: 'categoryModifiers', setter: setCategoryModifiers },
+        { key: 'sales', setter: setSales },
+        { key: 'shifts', setter: setShifts },
+        { key: 'openTabs', setter: setOpenTabs }
+      ];
+
+      if (!initialLoadDone.current) {
+        const cachedData = await idb.get<Record<string, any>>(`btq_cache_${activeUnitId}`);
+        if (cachedData && fetchStartedForUnit === activeUnitId) {
+          nodesToCheck.forEach(node => {
+            if (cachedData[node.key]) {
+              const merged = smartMerge(cachedData[node.key], node.key, currentQueue, currentBlacklist);
+              node.setter(merged);
+            }
+          });
+          setDbStatus('success');
+        }
+      }
+
       const token = await getFirebaseToken(config.email, config.pass, config.key);
       if (!token) throw new Error("Auth Failed");
 
       errorCount.current = 0;
       processQueue(token);
 
-      if (activeUnitId) {
-         const metaRaw = await loadFromFirebase(config.url, undefined, token, `data/units/${activeUnitId}/_meta`);
-         const serverMeta = metaRaw || {};
-         
-         if (serverMeta.deleted_tabs) {
-             const cutoff = Date.now() - (24 * 60 * 60 * 1000);
-             Object.entries(serverMeta.deleted_tabs).forEach(([id, ts]: [string, any]) => {
-                 if (Number(ts) > cutoff) serverTombstones.current.add(id);
-             });
-         }
+      const metaRaw = await loadFromFirebase(config.url, undefined, token, `data/units/${activeUnitId}/_meta`);
+      const serverMeta = metaRaw || {};
+      
+      const now = Date.now();
+      const cutoff24h = now - (24 * 60 * 60 * 1000);
 
-         const nodesToCheck = [
-             { key: 'products', setter: setProducts },
-             { key: 'modifierGroups', setter: setModifierGroups },
-             { key: 'categories', setter: setCategories },
-             { key: 'categoryModifiers', setter: setCategoryModifiers },
-             { key: 'sales', setter: setSales },
-             { key: 'shifts', setter: setShifts },
-             { key: 'openTabs', setter: setOpenTabs }
-         ];
-
-         const limitConfig: Record<string, string> = {
-            'sales': 'orderBy="$key"&limitToLast=200',
-            'shifts': 'orderBy="$key"&limitToLast=50'
-         };
-
-         for (const node of nodesToCheck) {
-             const serverTs = serverMeta[`${node.key}_ts`];
-             const localTs = localMeta.current[node.key] || 0;
-             
-             if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
-                 const query = limitConfig[node.key] || '';
-                 const path = `data/units/${activeUnitId}/${node.key}`;
-                 const data = await loadFromFirebase(config.url, undefined, token, path, query);
-                 
-                 // PROTEÇÃO CRÍTICA: Se data for null (erro de rede/auth), não limpamos o estado local.
-                 if (data !== null) {
-                     const merged = smartMerge(data, node.key);
-                     node.setter(merged);
-                     localMeta.current[node.key] = serverTs || Date.now();
-                 }
-             }
-         }
-         initialLoadDone.current = true;
-         setDbStatus('success');
+      if (serverMeta.deleted_tabs) {
+          const keysToDelete: string[] = [];
+          Object.entries(serverMeta.deleted_tabs).forEach(([id, ts]: [string, any]) => {
+              const timestamp = Number(ts);
+              if (timestamp > cutoff24h) serverTombstones.current.add(id);
+              else keysToDelete.push(id);
+          });
+          if (keysToDelete.length > 0 && config.email.includes('admin')) {
+             keysToDelete.forEach(id => saveItemToFirebase(config.url, null, id, undefined, token, `data/units/${activeUnitId}/_meta/deleted_tabs`));
+          }
       }
+
+      const limitConfig: Record<string, string> = {
+         'sales': 'orderBy="$key"&limitToLast=200',
+         'shifts': 'orderBy="$key"&limitToLast=50'
+      };
+
+      const promises = nodesToCheck.map(async (node) => {
+        const serverTs = serverMeta[`${node.key}_ts`];
+        const localTs = localMeta.current[node.key] || 0;
+
+        if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
+          const query = limitConfig[node.key] || '';
+          const path = `data/units/${activeUnitId}/${node.key}`;
+          const data = await loadFromFirebase(config.url, undefined, token, path, query);
+          if (data !== null) {
+            const merged = smartMerge(data, node.key, currentQueue, currentBlacklist);
+            localMeta.current[node.key] = serverTs || now;
+            return { key: node.key, data: merged };
+          }
+        }
+        return null;
+      });
+
+      const results = await Promise.all(promises);
+      
+      if (fetchStartedForUnit !== activeUnitId) return;
+
+      const cacheToSave = await idb.get<Record<string, any>>(`btq_cache_${activeUnitId}`) || {};
+      let hasNewData = false;
+
+      results.forEach(res => {
+        if (res) {
+          const nodeConfig = nodesToCheck.find(n => n.key === res.key);
+          if (nodeConfig) nodeConfig.setter(res.data);
+          cacheToSave[res.key] = res.data;
+          hasNewData = true;
+        }
+      });
+      
+      if (hasNewData) {
+         await idb.set(`btq_cache_${activeUnitId}`, cacheToSave);
+      }
+
+      initialLoadDone.current = true;
+      setDbStatus('success');
     } catch (e) {
       errorCount.current += 1;
       if (errorCount.current >= 3) setDbStatus('offline');
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setDbStatus]);
+  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setDbStatus]);
 
   const fetchGlobal = useCallback(async () => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);

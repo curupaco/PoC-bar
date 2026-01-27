@@ -102,7 +102,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     const cVal = parseCurrencyValue(valChange);
     const sVal = parseCurrencyValue(valSecondary);
     if (pVal === 0 && cVal === 0 && sVal === 0) {
-      setOpenError("ERRO: INFORME AO MENOS UM VALOR DE FUNDO PARA ABRIR O BAR.");
+      setOpenError("NÃO É PERMITIDO ABRIR UM TURNO COM TODOS OS VALORES ZERADOS.");
       return;
     }
     setIsProcessing(true);
@@ -200,7 +200,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                    <div className="relative">
                       <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
                       <input 
-                        type="text" inputMode="decimal" value={item.val} onChange={e => item.set(sanitizeCurrencyInput(e.target.value))} 
+                        type="text" inputMode="decimal" value={item.val} onChange={e => { setOpenError(null); item.set(sanitizeCurrencyInput(e.target.value)); }} 
                         className="w-full bg-slate-50 dark:bg-slate-950 pl-12 pr-6 py-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" 
                         placeholder="0,00"
                       />
@@ -208,6 +208,16 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                 </div>
               ))}
            </div>
+           
+           {openError && (
+              <div className="max-w-4xl mx-auto mb-8 animate-in slide-in-from-top-2 duration-300">
+                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-4 rounded-2xl flex items-center justify-center gap-3">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">{openError}</p>
+                 </div>
+              </div>
+           )}
+
            <button onClick={handleOpenShift} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto disabled:opacity-50">
               {isProcessing ? 'Abrindo...' : 'Iniciar Atividades do Turno'}
            </button>
