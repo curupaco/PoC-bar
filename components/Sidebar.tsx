@@ -18,14 +18,6 @@ interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   theme?: Theme;
-  onInstallApp?: () => void; // Nova Prop para PWA
-}
-
-interface NavItem {
-  id: View;
-  label: string;
-  perm: string;
-  icon: React.ReactNode;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -35,162 +27,123 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose, 
   currentUser, 
   onLogout, 
-  isShiftOpen, 
   activeTabsCount, 
   isCollapsed, 
   onToggleCollapse,
   totalPendura,
-  penduraThreshold,
-  onInstallApp
+  penduraThreshold
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
 
-  const navItems: NavItem[] = [
-    { id: 'pos', label: 'VENDA', perm: 'pos', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg> },
-    { id: 'shifts', label: 'TURNOS', perm: 'shifts_admin', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { id: 'cash', label: 'CAIXAS', perm: 'cash_admin', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { id: 'dashboard', label: 'PAINEL', perm: 'dashboard', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z M14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2z M14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
-    { id: 'history', label: 'HISTÓRICO', perm: 'history', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-    { id: 'reports', label: 'RELATÓRIOS', perm: 'reports', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
-    { id: 'products', label: 'CARDÁPIO', perm: 'products', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M4 3h5.881L21.119 14.238a2 2 0 010 2.828l-4.053 4.053a2 2 0 01-2.828 0L3 9.882V4a1 1 0 011-1z" /></svg> },
-    { id: 'users', label: 'EQUIPE', perm: 'users_admin', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-    { id: 'settings', label: 'AJUSTES', perm: 'settings', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
-  ];
+  const navItemClasses = (id: View) => `
+    flex items-center gap-4 px-6 py-3.5 rounded-2xl transition-all duration-300 relative group
+    ${activeView === id 
+      ? 'bg-red-600 text-white shadow-lg shadow-red-500/30 font-black' 
+      : 'text-slate-400 hover:text-white font-bold'}
+    ${isCollapsed ? 'justify-center px-0' : ''}
+  `;
 
-  const menuSections = [
-    { title: 'OPERAÇÃO', items: ['pos', 'shifts', 'cash'] },
-    { title: 'ANÁLISE', items: ['dashboard', 'history', 'reports'] },
-    { title: 'GESTÃO', items: ['products', 'users', 'settings'] }
-  ];
+  const SectionLabel = ({ label }: { label: string }) => {
+    if (isCollapsed) return <div className="h-px bg-slate-800 mx-4 my-6" />;
+    return <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-6 mb-4 mt-8">{label}</p>;
+  };
 
-  const Tooltip = ({ text }: { text: string }) => (
-    <div className={`absolute left-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-3 py-2 rounded-xl whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all z-[9999] shadow-2xl border invisible group-hover:visible translate-x-2 group-hover:translate-x-0 bg-slate-900 border-slate-700 text-white text-[10px] font-black uppercase tracking-widest`}>
-      {text}
-      <div className={`absolute right-full top-1/2 -translate-y-1/2 border-[6px] border-transparent border-r-slate-900`}></div>
-    </div>
-  );
+  const renderItem = (id: View, label: string, perm: string, icon: React.ReactNode) => {
+    if (!hasPerm(perm)) return null;
+    return (
+      <button key={id} onClick={() => { onViewChange(id); onClose(); }} className={navItemClasses(id)}>
+        <div className="shrink-0">{icon}</div>
+        {!isCollapsed && <span className="text-[11px] uppercase tracking-widest">{label}</span>}
+        
+        {id === 'pos' && activeTabsCount > 0 && !isCollapsed && (
+          <span className="absolute right-4 bg-white/20 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+            {activeTabsCount}
+          </span>
+        )}
+
+        {isCollapsed && (
+          <div className="absolute left-full ml-4 px-3 py-2 bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap shadow-xl z-50">
+            {label}
+          </div>
+        )}
+      </button>
+    );
+  };
 
   return (
     <>
-      {/* OVERLAY MOBILE PARA FECHAR SIDEBAR */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-[100] md:hidden animate-in fade-in" 
-          onClick={onClose} 
-        />
-      )}
+      <div className={`fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-[500] transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={onClose} />
 
-      {/* MODAL DE CONFIRMAÇÃO DE LOGOUT */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowLogoutConfirm(false)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative z-[610] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center text-red-600 mx-auto mb-6">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-             </div>
-             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 tracking-tighter leading-tight italic">Sair do Bar?</h3>
-             <div className="flex flex-col gap-3">
-                <button onClick={() => { onLogout(); setShowLogoutConfirm(false); }} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Encerrar</button>
-                <button onClick={() => setShowLogoutConfirm(false)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400">Voltar</button>
-             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ASIDE CONTAINER COM Z-INDEX SUPERIOR */}
-      <aside className={`fixed inset-y-0 left-0 flex flex-col z-[150] transition-all duration-300 transform ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'} ${isCollapsed ? 'w-20' : 'w-64'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl`}>
-        
-        {/* BOTÃO PARA COLLAPSE (Desktop) */}
-        <button onClick={onToggleCollapse} className="hidden md:flex absolute -right-3 top-20 w-6 h-6 border rounded-full items-center justify-center shadow-md z-[160] bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 active:scale-90 transition-all">
-           <svg className={`w-3 h-3 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+      <aside className={`
+        fixed left-0 top-0 h-full bg-[#0f172a] dark:bg-[#020617] border-r border-slate-800 z-[600] transition-all duration-300 ease-in-out flex flex-col
+        ${isOpen ? 'translate-x-0 w-72' : '-translate-x-full md:translate-x-0'}
+        ${isCollapsed ? 'md:w-20' : 'md:w-64'}
+      `}>
+        {/* Toggle Button na Borda */}
+        <button 
+          onClick={onToggleCollapse} 
+          className="absolute -right-4 top-32 w-8 h-8 bg-slate-800 text-slate-400 rounded-full flex items-center justify-center border border-slate-700 shadow-xl z-50 hover:text-white hidden md:flex"
+        >
+          <svg className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
 
-        <div className={`p-6 flex-1 space-y-8 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto no-scrollbar'}`}>
-          <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
-             <img src="https://img.icons8.com/fluency/512/beer.png" alt="Logo" className="w-10 h-10 object-contain" />
-             {!isCollapsed && <span className={`font-normal tracking-tighter leading-none text-slate-800 dark:text-white font-barrio text-3xl`}>Botequista</span>}
-          </div>
-          
-          <div className="space-y-8">
-            {menuSections.map((section) => (
-              <div key={section.title} className="space-y-2">
-                {!isCollapsed && (
-                  <h3 className={`text-[10px] font-black uppercase tracking-widest pl-4 mb-2 text-slate-400`}>{section.title}</h3>
-                )}
-                <div className="space-y-1">
-                  {navItems
-                    .filter(item => section.items.includes(item.id) && hasPerm(item.perm))
-                    .map((item) => {
-                      const isActive = activeView === item.id;
-                      const isReportsAlert = item.id === 'reports' && totalPendura > penduraThreshold;
-                      
-                      let activeClass = 'bg-red-600 text-white shadow-lg shadow-red-500/20';
-                      let hoverClass = 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-500';
-
-                      return (
-                        <div key={item.id} className="relative group">
-                          <button onClick={() => { onViewChange(item.id); onClose(); }} className={`w-full flex items-center gap-3 transition-all rounded-2xl ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${isActive ? activeClass : hoverClass}`}>
-                            <div className="relative">
-                              <span className={isActive ? 'text-inherit' : 'text-inherit opacity-60'}>{item.icon}</span>
-                              {item.id === 'pos' && (
-                                <div className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-slate-900 ${isShiftOpen ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
-                              )}
-                            </div>
-                            {!isCollapsed && (
-                              <div className="flex-1 flex items-center justify-between min-w-0">
-                                <span className={`text-[11px] uppercase font-black tracking-tight truncate`}>{item.label}</span>
-                                {item.id === 'pos' && activeTabsCount > 0 && (
-                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg ${isActive ? 'bg-white/20 text-white' : 'bg-red-100 text-red-600'}`}>{activeTabsCount}</span>
-                                )}
-                              </div>
-                            )}
-                          </button>
-                          {isCollapsed && <Tooltip text={item.label} />}
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className={`p-8 flex items-center gap-3 shrink-0 ${isCollapsed ? 'justify-center' : ''}`}>
+           <span className="text-3xl">🍺</span>
+           {!isCollapsed && (
+              <span className="text-2xl font-barrio text-white tracking-tighter uppercase">Botequista</span>
+           )}
         </div>
 
-        <div className={`p-4 space-y-2 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50`}>
-           {/* BOTÃO DE INSTALAÇÃO PWA */}
-           {onInstallApp && (
-              <div className="relative group mb-2">
-                <button 
-                  onClick={onInstallApp}
-                  className={`w-full flex items-center gap-3 rounded-2xl transition-all bg-emerald-600 text-white shadow-md active:scale-95 ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'}`}
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  {!isCollapsed && <span className="text-[11px] uppercase font-black">Instalar App</span>}
-                </button>
-                {isCollapsed && <Tooltip text="INSTALAR APP" />}
-              </div>
-           )}
+        <nav className="flex-1 overflow-y-auto no-scrollbar py-4 px-4">
+           <SectionLabel label="OPERAÇÃO" />
+           {renderItem('pos', 'VENDA', 'pos', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>)}
+           {renderItem('shifts', 'TURNOS', 'shifts_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
+           {renderItem('cash', 'CAIXAS', 'cash_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
+           
+           <SectionLabel label="ANÁLISE" />
+           {renderItem('dashboard', 'PAINEL', 'dashboard', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>)}
+           {renderItem('history', 'HISTÓRICO', 'history', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>)}
+           {renderItem('reports', 'RELATÓRIOS', 'reports', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>)}
+           
+           <SectionLabel label="GESTÃO" />
+           {renderItem('products', 'CARDÁPIO', 'products', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>)}
+           {renderItem('users', 'EQUIPE', 'users_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>)}
+           {renderItem('settings', 'AJUSTES', 'settings', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>)}
+        </nav>
 
-           <div className="relative group">
-             <button onClick={() => { onViewChange('help'); onClose(); }} className={`w-full flex items-center gap-3 rounded-2xl transition-all ${isCollapsed ? 'justify-center p-4' : 'px-4 py-3'} ${activeView === 'help' ? 'bg-slate-900 text-white' : 'text-slate-400 hover:text-red-500'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                {!isCollapsed && <span className={`text-[11px] uppercase font-black`}>GUIA</span>}
-             </button>
-             {isCollapsed && <Tooltip text="GUIA" />}
-           </div>
-           <div className={`flex items-center gap-3 p-1 ${isCollapsed ? 'justify-center' : ''}`}>
-             <button onClick={() => setShowLogoutConfirm(true)} className={`flex items-center justify-center text-white font-black uppercase text-xs w-10 h-10 shrink-0 shadow-md rounded-2xl bg-red-600 active:scale-90 transition-all`}>
-               {currentUser?.username.slice(0, 2).toUpperCase()}
-             </button>
-             {!isCollapsed && (
-               <div className="flex-1 min-w-0">
-                 <p className={`text-[10px] font-black truncate uppercase leading-none mb-1 text-slate-800 dark:text-white`}>{currentUser?.displayName}</p>
-                 <button onClick={() => setShowLogoutConfirm(true)} className={`text-[9px] font-black hover:opacity-100 opacity-60 uppercase tracking-widest leading-none text-red-500`}>SAIR</button>
-               </div>
-             )}
+        <div className="p-4 border-t border-slate-800 space-y-4">
+           {renderItem('help', 'GUIA', 'help_view', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
+           
+           <div className={`flex items-center gap-4 px-4 py-4 ${isCollapsed ? 'justify-center' : ''}`}>
+              <div className="w-10 h-10 rounded-full bg-red-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-lg">
+                 {currentUser?.displayName.slice(0, 2).toUpperCase() || 'AD'}
+              </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                   <p className="text-[10px] font-black text-white uppercase truncate">{currentUser?.displayName || 'Administrador'}</p>
+                   <button onClick={() => setShowLogoutConfirm(true)} className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:text-red-400 mt-0.5">Sair</button>
+                </div>
+              )}
            </div>
         </div>
       </aside>
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setShowLogoutConfirm(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[1010] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Sair do Bar?</h3>
+             <p className="text-sm text-slate-500 dark:text-slate-400 mb-10 font-medium">Você será desconectado com segurança.</p>
+             <div className="flex flex-col gap-3">
+                <button onClick={onLogout} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Confirmar Logout</button>
+                <button onClick={() => setShowLogoutConfirm(false)} className="w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest text-slate-400">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
