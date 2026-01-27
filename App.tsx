@@ -257,6 +257,17 @@ export const App: React.FC = () => {
        <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={handleLogout} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
        
        <main className={`flex-1 overflow-auto transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} h-full relative`}>
+          
+          {/* HEADER MOBILE (NOVO) */}
+          <header className="flex md:hidden justify-between items-center bg-white dark:bg-slate-900 p-4 sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 shadow-sm">
+             <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-slate-600 dark:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+             </button>
+             <h2 className="text-xl font-barrio leading-none">Botequista</h2>
+             <div className="w-10"></div> {/* Espaçador para centralizar título */}
+          </header>
+
+          {/* HEADER DESKTOP */}
           <header className="hidden md:flex justify-between items-center bg-white dark:bg-slate-900/80 p-5 mx-8 mt-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-md sticky top-6 z-30">
              <div className="flex flex-col">
                 <h2 className="text-2xl font-barrio text-slate-900 dark:text-white leading-none">Botequista Pro</h2>
@@ -293,11 +304,14 @@ export const App: React.FC = () => {
           </header>
 
           <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-full">
+              {/* RENDERIZAÇÃO DE VIEWS - RESTAURADA TOTALMENTE */}
               {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} activeDebtors={activeDebtors} dbStatus={dbStatus} />}
               {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
               {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={setShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={setShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
+              
+              {/* VIEWS ADICIONAIS */}
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
               {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { setSales(prev => prev.map(s => s.id === id ? {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id} : s)); persist('sales', sales.find(s => s.id === id)!, id); }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => handleCompleteSale([{id: generateUniqueId('sale'), timestamp: Date.now(), items: [{id:'q1', productId:'quitacao', productName:'Quitação', category:'FIADO', quantity:1, unitPrice:amt, totalPrice:amt}], paymentMethod:PaymentMethod.CASH, payments:[{method:PaymentMethod.CASH, amount:amt}], total:amt, customerName:name, userId:currentUser.id, shiftId:shifts.find(s=>s.status==='open')?.id || ''}])} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
