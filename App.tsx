@@ -39,8 +39,6 @@ export const App: React.FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   
-  const [cloudDebtors, setCloudDebtors] = useState<Set<string>>(new Set());
-
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('btq_theme');
     return (saved as Theme) || 'dark';
@@ -50,12 +48,24 @@ export const App: React.FC = () => {
     localStorage.setItem('btq_theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
     } else {
       document.documentElement.classList.remove('dark');
-      document.documentElement.classList.add('light');
     }
   }, [theme]);
+
+  useEffect(() => {
+    const checkServer = async () => {
+       try {
+          const res = await fetch('/api/health');
+          setServerHealth(res.ok ? 'ok' : 'error');
+       } catch {
+          setServerHealth('error');
+       }
+    };
+    checkServer();
+    const interval = setInterval(checkServer, 20000);
+    return () => clearInterval(interval);
+  }, []);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
@@ -71,11 +81,6 @@ export const App: React.FC = () => {
   
   const [activeUnitId, setActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
 
-  useEffect(() => {
-    if (activeUnitId) localStorage.setItem('btq_active_unit', activeUnitId);
-    else localStorage.removeItem('btq_active_unit');
-  }, [activeUnitId]);
-
   const syncConfig = useMemo(() => ({ 
     url: 'https://poc-botequista-default-rtdb.firebaseio.com', 
     key: 'REMOVED_FIREBASE_API_KEY', 
@@ -84,41 +89,17 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  useEffect(() => {
-    const checkServer = async () => {
-       try {
-          const res = await fetch('/api/health');
-          setServerHealth(res.ok ? 'ok' : 'error');
-       } catch {
-          setServerHealth('error');
-       }
-    };
-    checkServer();
-    const interval = setInterval(checkServer, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-     if (!activeUnitId) return;
-     const fetchDebtors = async () => {
-        try {
-           const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
-           const res = await fetch(`/api/debtors?unitId=${activeUnitId}`, {
-              headers: { 'x-fb-url': syncConfig.url, 'x-fb-token': token || '' }
-           });
-           if (res.ok) {
-              const data = await res.json();
-              setCloudDebtors(new Set(data.debtors));
-           }
-        } catch (e) {
-           console.warn("Falha ao carregar lista global de devedores.");
-        }
-     };
-     fetchDebtors();
-  }, [activeUnitId, syncConfig]);
+  const sanitizeTabs = (tabs: any[]): Tab[] => {
+    if (!tabs) return [];
+    return (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map(t => ({
+      ...t,
+      items: Array.isArray(t.items) ? t.items : (t.items ? (Object.values(t.items) as SaleItem[]) : [])
+    }));
+  };
 
   const { refresh, registerLocalDeletion } = useSync({
-    setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
+    setProducts, setModifierGroups, setCategoryModifiers, setSales, 
+    setOpenTabs: (data: any) => setOpenTabs(sanitizeTabs(data)), 
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
     activeUnitId, config: syncConfig
   });
@@ -134,20 +115,23 @@ export const App: React.FC = () => {
 
   const handleSwitchUnit = () => {
     setActiveUnitId(null);
+    localStorage.removeItem('btq_active_unit');
     setProducts([]); setSales([]); setOpenTabs([]); setShifts([]);
     setModifierGroups([]); setCategories([]); setCategoryModifiers({});
-    setDbStatus('idle'); setLastSyncTime(null); setCloudDebtors(new Set());
+    setDbStatus('idle'); setLastSyncTime(null);
+    refresh(); // Força recarga no próximo bar
   };
 
   const handleLogout = () => {
-    handleSwitchUnit(); setUnits([]); setUsers([]); setCurrentUser(null);
+    handleSwitchUnit(); setCurrentUser(null);
   };
 
   const handleSaveTab = useCallback((tab: Tab) => {
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
-      if (idx >= 0) { const next = [...prev]; next[idx] = tab; return next; }
-      return [...prev, tab];
+      const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
+      if (idx >= 0) { const next = [...prev]; next[idx] = sanitizedTab; return next; }
+      return [...prev, sanitizedTab];
     });
     persist('openTabs', tab, tab.id);
   }, [persist]);
@@ -155,13 +139,13 @@ export const App: React.FC = () => {
   const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
     setOpenTabs(prev => prev.map(t => {
         if (t.id === tabId) {
-            const items = t.items ? [...t.items] : [];
-            const idx = items.findIndex(i => i.id === item.id);
+            const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
+            const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
             if (idx > -1) {
-                if (item.quantity <= 0) items.splice(idx, 1);
-                else items[idx] = item;
-            } else if (item.quantity > 0) items.push(item);
-            return { ...t, items };
+                if (item.quantity <= 0) currentItems.splice(idx, 1);
+                else currentItems[idx] = item;
+            } else if (item.quantity > 0) currentItems.push(item);
+            return { ...t, items: currentItems };
         }
         return t;
     }));
@@ -179,19 +163,16 @@ export const App: React.FC = () => {
     setProducts(prev => { const next = updater(prev); persist('products', next); return next; });
   }, [persist]);
 
+  const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
+    setShifts(newShifts);
+    if (changedItem) persist('shifts', changedItem, changedItem.id);
+    else persist('shifts', newShifts);
+  }, [persist]);
+
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     if (changedItem) persist('users', changedItem, changedItem.id);
     else persist('users', newUsers);
-  }, [persist]);
-
-  const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
-    setShifts(newShifts);
-    if (changedItem) {
-        persist('shifts', changedItem, changedItem.id);
-    } else {
-        persist('shifts', newShifts);
-    }
   }, [persist]);
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
@@ -206,7 +187,7 @@ export const App: React.FC = () => {
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
     if (u === 'admin' && p === 'admin') {
-      setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS, allowedUnits: [] });
+      setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS });
       return;
     }
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
@@ -214,7 +195,8 @@ export const App: React.FC = () => {
     else setLoginError("Credenciais inválidas.");
   };
 
-  const isShiftOpen = useMemo(() => shifts.some(s => s.status === 'open'), [shifts]);
+  const isShiftOpen = useMemo(() => Array.isArray(shifts) && shifts.some(s => s.status === 'open'), [shifts]);
+
   const totalPendura = useMemo(() => {
      return sales.reduce((acc, s) => {
         if (s.deleted) return acc;
@@ -226,99 +208,85 @@ export const App: React.FC = () => {
      }, 0);
   }, [sales]);
 
-  const activeDebtors = useMemo(() => {
-    const combined = new Set(cloudDebtors);
-    sales.forEach(s => {
-       if (s.deleted || !s.customerName) return;
-       const name = s.customerName.trim().toUpperCase();
-       if (s.paymentMethod === 'Pendura') combined.add(name);
-       if (s.items?.some(i => i.productId === 'quitacao')) combined.delete(name);
-    });
-    return combined;
-  }, [sales, cloudDebtors]);
-
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  // SELEÇÃO DE UNIDADE (FORÇADA APÓS LOGIN OU TROCA)
   if (!activeUnitId) {
-    if (dbStatus === 'loading' && units.length === 0) return <LoadingScreen message="Buscando bares..." />;
     const allowedUnits = currentUser.username === 'admin' ? units : units.filter(u => currentUser.allowedUnits?.includes(u.id) && u.isActive);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
          <div className="max-w-2xl w-full animate-in fade-in zoom-in-95">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-8 text-center italic">Qual o Bar de hoje?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-10 text-center italic">Qual o Bar de hoje?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                {allowedUnits.map(unit => (
-                  <button key={unit.id} onClick={() => setActiveUnitId(unit.id)} className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-xl transition-all group text-left">
-                     <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
-                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">ID: {unit.id}</p>
+                  <button key={unit.id} onClick={() => { setActiveUnitId(unit.id); localStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
+                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
                   </button>
                ))}
             </div>
-            <button onClick={handleLogout} className="mt-8 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors">Sair da Conta</button>
+            <button onClick={handleLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
          </div>
       </div>
     );
   }
 
-  const activeUnitName = units.find(u => u.id === activeUnitId)?.name || 'Carregando...';
+  if (dbStatus === 'loading' && products.length === 0) return <LoadingScreen message="Conectando ao Bar..." />;
+
+  const activeUnitName = units.find(u => u.id === activeUnitId)?.name || 'Bar';
 
   return (
-    <div className="flex h-[100dvh] bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
        <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={handleLogout} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
        
-       <main className={`flex-1 overflow-auto transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} h-full relative`}>
-          
-          {/* HEADER RESPONSIVO UNIFICADO (PRO) */}
-          <header className="flex justify-between items-center bg-white dark:bg-slate-900/80 p-4 md:p-5 mx-0 md:mx-8 mt-0 md:mt-6 rounded-none md:rounded-[32px] border-b md:border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-md sticky top-0 md:top-6 z-40">
-             <div className="flex items-center gap-3">
-                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 text-slate-600 dark:text-white">
+       <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+          <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 p-4 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[40px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
+             <div className="flex items-center gap-4">
+                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-3 bg-slate-100 dark:bg-slate-800 rounded-2xl text-slate-600 dark:text-white">
                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                 </button>
                 <div className="flex flex-col">
-                   <h2 className="text-lg md:text-2xl font-barrio text-slate-900 dark:text-white leading-none">Botequista</h2>
-                   <div className="flex items-center gap-1 md:gap-2 mt-1">
-                      <span className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 md:px-2 py-0.5 rounded text-[8px] md:text-[9px] font-black uppercase tracking-widest border border-red-200 dark:border-red-900/50 truncate max-w-[80px] md:max-w-none">
+                   <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none">Botequista</h2>
+                   <div className="flex items-center gap-2 mt-1.5">
+                      <span className="bg-red-600 text-white px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-sm">
                          {activeUnitName}
                       </span>
-                      <button 
-                        onClick={handleSwitchUnit}
-                        className="bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-slate-500 hover:text-red-600 px-2 md:px-3 py-0.5 md:py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-widest transition-all"
-                      >
-                        Trocar
-                      </button>
+                      <button onClick={handleSwitchUnit} className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
                    </div>
                 </div>
              </div>
 
-             <div className="flex items-center gap-1 md:gap-3">
-                 <button 
-                    onClick={() => setStatusModalOpen(true)} 
-                    className={`p-2 md:px-4 md:py-2 rounded-2xl text-[9px] font-black uppercase border flex items-center gap-2 transition-all bg-transparent ${dbStatus === 'success' && serverHealth === 'ok' ? 'text-emerald-600 border-emerald-100 dark:border-emerald-900/20' : 'text-slate-400 border-slate-100 dark:border-slate-800'}`}
-                 >
-                    <div className={`w-2.5 h-2.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : dbStatus === 'loading' ? 'bg-amber-400 animate-pulse' : 'bg-red-500 animate-pulse'}`}></div>
-                    <span className="hidden md:inline">{dbStatus === 'success' ? 'Sincronizado' : dbStatus === 'loading' ? 'Sincronizando...' : 'Offline'}</span>
+             <div className="flex items-center gap-3 md:gap-5">
+                 <button onClick={() => setStatusModalOpen(true)} className="flex items-center gap-3 px-5 py-3 rounded-[22px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02]">
+                    <div className="flex flex-col items-end">
+                       <span className={`text-[10px] font-black uppercase ${dbStatus === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          {dbStatus === 'success' ? 'SINCRONIZADO' : dbStatus === 'loading' ? 'PENDENTE' : 'OFFLINE'}
+                       </span>
+                    </div>
+                    <div className="relative">
+                       <div className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500'} ${dbStatus === 'loading' ? 'animate-ping' : ''}`}></div>
+                       {dbStatus === 'success' && <div className="absolute inset-0 w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>}
+                    </div>
                  </button>
 
-                 <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2.5 md:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-all shadow-sm active:scale-95">
-                    {theme === 'dark' ? <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2.5}/></svg> : <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5}/></svg>}
-                 </button>
-
-                 <button onClick={() => setFeedbackOpen(true)} className="p-2.5 md:p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-95">
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                 </button>
+                 <div className="flex gap-2 border-l border-slate-100 dark:border-slate-800 pl-5">
+                    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-11 h-11 rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition-all shadow-sm">
+                       {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2.5}/></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5}/></svg>}
+                    </button>
+                    <button onClick={() => setFeedbackOpen(true)} className="w-11 h-11 rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-all shadow-sm">
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                    </button>
+                 </div>
              </div>
           </header>
 
-          <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-full">
-              {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} activeDebtors={activeDebtors} dbStatus={dbStatus} />}
+          <div className="flex-1 overflow-y-auto p-6 md:p-10 w-full max-w-[1750px] mx-auto">
+              {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} />}
               {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
               {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
-              
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
-              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { setSales(prev => prev.map(s => s.id === id ? {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id} : s)); persist('sales', sales.find(s => s.id === id)!, id); }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
+              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => handleCompleteSale([{id: generateUniqueId('sale'), timestamp: Date.now(), items: [{id:'q1', productId:'quitacao', productName:'Quitação', category:'FIADO', quantity:1, unitPrice:amt, totalPrice:amt}], paymentMethod:PaymentMethod.CASH, payments:[{method:PaymentMethod.CASH, amount:amt}], total:amt, customerName:name, userId:currentUser.id, shiftId:shifts.find(s=>s.status==='open')?.id || ''}])} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
               {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={(data) => data==='EXPORT_NOW'?console.log('Export'):setProducts(data.products)} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
@@ -327,29 +295,29 @@ export const App: React.FC = () => {
           {statusModalOpen && (
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
               <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setStatusModalOpen(false)} />
-              <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-                 <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase mb-8 italic">Saúde do Sistema</h3>
-                 <div className="space-y-4">
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
-                       <p className="text-xs font-bold uppercase">Conexão Local (Wi-Fi)</p>
-                       <span className={`w-2.5 h-2.5 rounded-full ${navigator.onLine ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
+              <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+                 <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-8 italic tracking-tighter leading-none">Diagnóstico de Saúde</h3>
+                 <div className="space-y-4 text-left">
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Servidor Botequista</p>
+                       <span className={`w-3 h-3 rounded-full ${serverHealth === 'ok' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
                     </div>
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
-                       <p className="text-xs font-bold uppercase">Servidor App</p>
-                       <span className={`w-2.5 h-2.5 rounded-full ${serverHealth === 'ok' ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></span>
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Banco de Dados</p>
+                       <span className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`}></span>
                     </div>
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
-                       <p className="text-xs font-bold uppercase">Banco de Dados</p>
-                       <span className={`w-2.5 h-2.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Rede Local</p>
+                       <span className={`w-3 h-3 rounded-full ${navigator.onLine ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></span>
                     </div>
                  </div>
-                 {lastSyncTime && <p className="mt-8 text-[9px] font-black text-slate-400 uppercase italic">Resposta da Nuvem: {new Date(lastSyncTime).toLocaleTimeString()}</p>}
-                 <button onClick={() => setStatusModalOpen(false)} className="mt-8 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl">Fechar</button>
+                 {lastSyncTime && <p className="mt-8 text-[9px] font-black text-slate-400 uppercase italic">Última Resposta: {new Date(lastSyncTime).toLocaleTimeString()}</p>}
+                 <button onClick={() => setStatusModalOpen(false)} className="mt-8 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Fechar Diagnóstico</button>
               </div>
             </div>
           )}
        </main>
-       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser.username} />
+       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} />
     </div>
   );
 };

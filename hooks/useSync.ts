@@ -2,8 +2,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category } from '../types';
-import { SyncQueue, QueueItem } from '../utils/syncQueue';
-import { idb } from '../utils/idb';
+import { SyncQueue } from '../utils/syncQueue';
 
 interface SyncProps {
   setProducts: (data: any) => void;
@@ -25,7 +24,6 @@ export const useSync = (props: SyncProps) => {
   const isProcessingQueue = useRef(false);
   const localMeta = useRef<Record<string, number>>({});
   const initialLoadDone = useRef(false);
-  const lastDataHash = useRef<Record<string, string>>({});
   const errorCount = useRef(0);
   const serverTombstones = useRef<Set<string>>(new Set());
 
@@ -34,18 +32,20 @@ export const useSync = (props: SyncProps) => {
     setUsers, setShifts, setUnits, setCategories, setDbStatus, activeUnitId, config
   } = props;
 
+  const ensureArray = (data: any): any[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data.filter(Boolean);
+    if (typeof data === 'object') return Object.values(data).filter(Boolean);
+    return [];
+  };
+
   const getPersistedBlacklist = useCallback(() => {
       if (!activeUnitId) return new Set<string>();
       try {
           const raw = localStorage.getItem(`btq_zombie_blacklist_${activeUnitId}`);
           return new Set<string>(raw ? JSON.parse(raw) : []);
-      } catch {
-          return new Set<string>();
-      }
+      } catch { return new Set<string>(); }
   }, [activeUnitId]);
-
-  const getPath = (node: string) => activeUnitId ? `data/units/${activeUnitId}/${node}` : null;
-  const getMetaPath = () => activeUnitId ? `data/units/${activeUnitId}/_meta` : null;
 
   const registerLocalDeletion = useCallback((id: string) => {
       if (!activeUnitId) return;
@@ -54,30 +54,18 @@ export const useSync = (props: SyncProps) => {
       localStorage.setItem(`btq_zombie_blacklist_${activeUnitId}`, JSON.stringify(Array.from(currentList)));
   }, [activeUnitId, getPersistedBlacklist]);
 
-  useEffect(() => {
-      lastDataHash.current = {};
-      initialLoadDone.current = false;
-      serverTombstones.current.clear();
-      if (activeUnitId) setDbStatus('loading');
-  }, [activeUnitId, setDbStatus]);
-
   const processQueue = useCallback(async (token: string) => {
     if (isProcessingQueue.current) return;
     await SyncQueue.init();
     const item = SyncQueue.peek();
     if (!item) return;
-
     const effectiveUnitId = item.unitId || activeUnitId;
     if (!effectiveUnitId) return;
-
     isProcessingQueue.current = true;
     try {
         const path = `data/units/${effectiveUnitId}/${item.node}`;
-        if (item.itemId) {
-            await saveItemToFirebase(config.url, item.data, item.itemId, undefined, token, path);
-        } else {
-            await saveToFirebase(config.url, item.data, undefined, token, path);
-        }
+        if (item.itemId) await saveItemToFirebase(config.url, item.data, item.itemId, undefined, token, path);
+        else await saveToFirebase(config.url, item.data, undefined, token, path);
         await SyncQueue.dequeue(item.id);
         isProcessingQueue.current = false;
         processQueue(token);
@@ -93,9 +81,15 @@ export const useSync = (props: SyncProps) => {
       const queue = SyncQueue.getAll();
       const localBlacklist = getPersistedBlacklist();
       const pendingItems = queue.filter(q => q.node.startsWith(nodeKey) && (q.unitId === activeUnitId || (!q.unitId && activeUnitId)));
-      const safeServerData = Array.isArray(serverData) ? serverData : [];
-      const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
+      
+      const safeServerData = ensureArray(serverData).map(item => {
+          if (nodeKey === 'openTabs' && item && item.items && !Array.isArray(item.items)) {
+              return { ...item, items: ensureArray(item.items) };
+          }
+          return item;
+      });
 
+      const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
       pendingItems.forEach(q => {
           if (!q.node.includes('/') && q.itemId) {
              if (q.data) dataMap.set(q.itemId, { ...q.data, id: q.itemId });
@@ -111,7 +105,7 @@ export const useSync = (props: SyncProps) => {
                   const tabId = parts[1];
                   const tab = dataMap.get(tabId);
                   if (tab) {
-                      const currentItems = Array.isArray(tab.items) ? tab.items : [];
+                      const currentItems = ensureArray(tab.items);
                       const itemsMap = new Map(currentItems.map((i: any) => [i.id, i]));
                       if (q.itemId) {
                           if (q.data) itemsMap.set(q.itemId, q.data);
@@ -140,7 +134,7 @@ export const useSync = (props: SyncProps) => {
       processQueue(token);
 
       if (activeUnitId) {
-         const metaRaw = await loadFromFirebase(config.url, undefined, token, getMetaPath()!);
+         const metaRaw = await loadFromFirebase(config.url, undefined, token, `data/units/${activeUnitId}/_meta`);
          const serverMeta = metaRaw || {};
          
          if (serverMeta.deleted_tabs) {
@@ -150,24 +144,20 @@ export const useSync = (props: SyncProps) => {
              });
          }
 
-         const tRaw = await loadFromFirebase(config.url, undefined, token, getPath('openTabs')!);
-         const mergedTabs = smartMerge(tRaw || [], 'openTabs');
-         setOpenTabs(mergedTabs);
-         
-         const limitConfig: Record<string, string> = {
-            'sales': 'orderBy="$key"&limitToLast=200',
-            'shifts': 'orderBy="$key"&limitToLast=50'
-         };
-
-         // Ordem de carregamento forçada para evitar flashes de estado vazio
          const nodesToCheck = [
              { key: 'products', setter: setProducts },
              { key: 'modifierGroups', setter: setModifierGroups },
              { key: 'categories', setter: setCategories },
              { key: 'categoryModifiers', setter: setCategoryModifiers },
              { key: 'sales', setter: setSales },
-             { key: 'shifts', setter: setShifts }
+             { key: 'shifts', setter: setShifts },
+             { key: 'openTabs', setter: setOpenTabs }
          ];
+
+         const limitConfig: Record<string, string> = {
+            'sales': 'orderBy="$key"&limitToLast=200',
+            'shifts': 'orderBy="$key"&limitToLast=50'
+         };
 
          for (const node of nodesToCheck) {
              const serverTs = serverMeta[`${node.key}_ts`];
@@ -175,17 +165,19 @@ export const useSync = (props: SyncProps) => {
              
              if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
                  const query = limitConfig[node.key] || '';
-                 const data = await loadFromFirebase(config.url, undefined, token, getPath(node.key)!, query);
-                 if (data) {
+                 const path = `data/units/${activeUnitId}/${node.key}`;
+                 const data = await loadFromFirebase(config.url, undefined, token, path, query);
+                 
+                 // PROTEÇÃO CRÍTICA: Se data for null (erro de rede/auth), não limpamos o estado local.
+                 if (data !== null) {
                      const merged = smartMerge(data, node.key);
                      node.setter(merged);
-                     localMeta.current[node.key] = serverMeta[`${node.key}_ts`] || Date.now();
+                     localMeta.current[node.key] = serverTs || Date.now();
                  }
              }
          }
          initialLoadDone.current = true;
-         // Delay de segurança para o React processar todos os setters antes de mudar o status do banco
-         setTimeout(() => setDbStatus('success'), 100);
+         setDbStatus('success');
       }
     } catch (e) {
       errorCount.current += 1;
@@ -202,8 +194,8 @@ export const useSync = (props: SyncProps) => {
             loadFromFirebase(config.url, undefined, token, 'users'),
             loadFromFirebase(config.url, undefined, token, 'units')
         ]);
-        if (uRaw) setUsers(uRaw);
-        if (Array.isArray(unitsRaw)) setUnits(unitsRaw);
+        if (uRaw !== null) setUsers(ensureArray(uRaw));
+        if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
       }
   }, [config, setUsers, setUnits]);
 
@@ -216,7 +208,6 @@ export const useSync = (props: SyncProps) => {
 
   const refresh = useCallback(() => {
      localMeta.current = {};
-     lastDataHash.current = {}; 
      initialLoadDone.current = false;
      serverTombstones.current.clear();
      fetchGlobal();
