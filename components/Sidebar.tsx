@@ -98,7 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       <aside className={`fixed top-0 left-0 h-full bg-slate-900 dark:bg-slate-950 z-[70] transition-all duration-300 flex flex-col border-r border-slate-800
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-        ${isCollapsed ? 'w-20 md:overflow-visible' : 'w-64 overflow-hidden'}
+        ${isCollapsed ? 'w-20' : 'w-64'}
       `}>
         <div className="p-4 flex items-center justify-between shrink-0">
           <div className={`flex items-center transition-all duration-300 ${isCollapsed ? 'justify-center w-full' : 'gap-3'}`}>
@@ -117,14 +117,15 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {isCollapsed && (
-          <div className="px-3 mb-4">
+          <div className="px-3 mb-4 shrink-0">
             <button onClick={onToggleCollapse} className="w-full h-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors">
               <svg className="w-4 h-4 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
             </button>
           </div>
         )}
 
-        <nav className={`flex-1 flex flex-col gap-1 px-3 ${isCollapsed ? 'overflow-visible' : 'overflow-y-auto no-scrollbar'}`}>
+        {/* NAVEGAÇÃO CENTRAL COM SCROLLBAR */}
+        <nav className={`flex-1 flex flex-col gap-1 px-3 overflow-y-auto overflow-x-hidden transition-all duration-300 custom-scrollbar ${isCollapsed ? 'md:overflow-y-visible' : ''}`}>
           <SectionLabel label="Operação" />
           {renderItem('pos', 'Vendas', 'pos', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" strokeWidth={2.5}/></svg>)}
           {renderItem('shifts', 'Turnos', 'shifts_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth={2.5}/></svg>)}
@@ -139,18 +140,18 @@ const Sidebar: React.FC<SidebarProps> = ({
           {renderItem('products', 'Cardápio', 'products', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7" strokeWidth={2.5}/></svg>)}
           {renderItem('users', 'Equipe', 'users_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" strokeWidth={2.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M23 21v-2a4 4 0 0 0-3-3.87" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>)}
           {renderItem('settings', 'Ajustes', 'settings', (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           ))}
         </nav>
 
+        {/* PARTE FIXA INFERIOR */}
         <div className="p-4 border-t border-slate-800 space-y-2 shrink-0 bg-slate-900/50 dark:bg-slate-950/50">
-          {/* 1. GUIA */}
+          {/* GUIA RETORNOU PARA O LUGAR CORRETO (PARTE FIXA) */}
           {renderItem('help', 'Guia', 'help_view', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeWidth={2.5}/></svg>)}
-          
-          {/* 2. USUÁRIO LOGADO */}
+
           {!isCollapsed ? (
             <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/50 rounded-2xl border border-slate-700/50 my-2 animate-in fade-in zoom-in-95">
                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-black text-[10px] text-white shrink-0 uppercase">
@@ -166,23 +167,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-black text-[10px] text-white shrink-0 uppercase shadow-lg">
                   {currentUser?.displayName?.slice(0, 2) || '??'}
                </div>
-               <div className="absolute left-full ml-4 px-3 py-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-90 group-hover:scale-100 whitespace-nowrap shadow-2xl z-[100] border border-slate-800">
-                  Perfil: @{currentUser?.username}
-               </div>
             </div>
           )}
 
-          {/* 3. SAIR */}
           <button onClick={() => setShowLogoutConfirm(true)} className={`w-full flex items-center gap-4 px-6 py-3 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all group relative ${isCollapsed ? 'justify-center px-0 mx-auto w-12' : ''}`}>
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">Sair</span>}
-            {isCollapsed && (
-              <div className="absolute left-full ml-4 px-3 py-2 bg-red-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-90 group-hover:scale-100 whitespace-nowrap shadow-2xl z-[100] w-max border border-red-700/50">
-                Sair
-              </div>
-            )}
           </button>
         </div>
+
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+          }
+        `}</style>
       </aside>
 
       {showLogoutConfirm && (
