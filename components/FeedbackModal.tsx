@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
+import { View } from '../types';
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: string;
+  activeView: View;
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentUser }) => {
+const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentUser, activeView }) => {
   const [type, setType] = useState<'bug' | 'feature'>('bug');
   const [description, setDescription] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -32,14 +34,17 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
     setFeedbackStatus('idle');
     setErrorMessage('');
 
+    // Detecção Mobile vs Desktop baseada no viewport
+    const deviceType = window.innerWidth < 768 ? '📱 Mobile' : '💻 Desktop';
+
     // Timeout de 10 segundos para não travar a UI se o servidor demorar
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
     try {
-      // Detecção de ambiente local para evitar erro 404 no Vite puro (sem Vercel Functions rodando)
+      // Detecção de ambiente local para evitar erro 404 no Vite puro
       const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-      const isVitePort = typeof window !== 'undefined' && window.location.port !== '3000'; // Assume 3000 como prod/preview
+      const isVitePort = typeof window !== 'undefined' && window.location.port !== '3000';
 
       if (isLocalhost && isVitePort) {
          console.warn("⚠️ Ambiente Local (Vite): API Route '/api/feedback' indisponível. Simulando sucesso.");
@@ -52,11 +57,16 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, currentU
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, description, user: currentUser }),
+        body: JSON.stringify({ 
+          type, 
+          description, 
+          user: currentUser,
+          view: activeView.toUpperCase(),
+          device: deviceType
+        }),
         signal: controller.signal
       });
 
-      // Proteção contra resposta HTML (Erro 404/500 da Vercel)
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
          throw new Error(`Erro do Servidor (Status ${response.status}). Verifique os logs.`);

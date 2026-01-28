@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { type, description, user } = req.body;
+    const { type, description, user, view, device } = req.body;
     
     // PREMISSA DE SEGURANÇA: Uso estrito de variáveis de ambiente do servidor (Vercel)
     const token = process.env.GITHUB_TOKEN;
@@ -40,17 +40,19 @@ export default async function handler(req: any, res: any) {
 
     const title = `[APP REPORT] ${type === 'bug' ? '🐞 BUG' : '💡 FEATURE'} - ${dateStr}`;
     const body = `
-### Relato do Usuário
+### 📝 Relato do Usuário
 **Tipo:** ${type === 'bug' ? 'Erro Encontrado' : 'Sugestão de Melhoria'}
-**Reportado por:** ${user || 'Anônimo'}
+**Reportado por:** @${user || 'Anônimo'}
+**Módulo Operacional:** ${view || 'N/A'}
+**Plataforma:** ${device || 'N/A'}
 **Data/Hora (Brasília):** ${fullTimeStr}
 
 ---
-### Descrição
+### 🔍 Descrição
 ${description}
 
 ---
-*Gerado automaticamente via Botequista App*
+*Gerado automaticamente via Botequista Pro Diagnostics*
     `;
 
     // Chamada à API do GitHub
@@ -64,7 +66,7 @@ ${description}
       body: JSON.stringify({ 
         title, 
         body, 
-        labels: [type === 'bug' ? 'bug' : 'enhancement'] 
+        labels: [type === 'bug' ? 'bug' : 'enhancement', (device?.toLowerCase().includes('mobile') ? 'mobile' : 'desktop')] 
       })
     });
 

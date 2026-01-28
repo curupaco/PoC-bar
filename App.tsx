@@ -318,7 +318,7 @@ export const App: React.FC = () => {
             </div>
           )}
        </main>
-       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} />
+       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
     </div>
   );
 };
