@@ -1,10 +1,11 @@
-const CACHE_NAME = 'botequista-v23';
+const CACHE_NAME = 'botequista-v24';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/manifest.json?v=3',
   '/logo.svg',
-  '/logo.svg?v=2',
+  '/logo.svg?v=3',
   'https://cdn.tailwindcss.com'
 ];
 
