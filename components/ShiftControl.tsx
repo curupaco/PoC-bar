@@ -102,7 +102,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     const cVal = parseCurrencyValue(valChange);
     const sVal = parseCurrencyValue(valSecondary);
     if (pVal === 0 && cVal === 0 && sVal === 0) {
-      setOpenError("NÃO É PERMITIDO ABRIR UM TURNO COM TODOS OS VALORES ZERADOS.");
+      setOpenError("ABRIR ZERADO? NEM PENSAR! INFORME O FUNDO DE CAIXA. 💸");
       return;
     }
     setIsProcessing(true);

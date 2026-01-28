@@ -173,7 +173,23 @@ export const POS: React.FC<POSProps> = ({
      setIsClosingTab(false);
   };
 
-  if (!activeShift) return <div className="p-10 text-center font-black uppercase text-slate-400 italic">Abra um turno para vender.</div>;
+  if (!activeShift) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center space-y-8 animate-in fade-in zoom-in duration-500">
+         <div className="relative group">
+            <div className="absolute inset-0 bg-red-600/20 blur-[60px] rounded-full group-hover:bg-red-600/30 transition-all"></div>
+            <div className="w-48 h-48 bg-white dark:bg-slate-900 rounded-[50px] flex items-center justify-center border-4 border-slate-100 dark:border-slate-800 shadow-2xl relative z-10 rotate-3 transition-transform hover:rotate-6 hover:scale-105">
+               <span className="text-8xl filter drop-shadow-lg">🍺</span>
+            </div>
+         </div>
+         <div className="space-y-3 relative z-10">
+            <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Bar Fechado!</h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">O barril está descansando. Abra o turno para começar a festa.</p>
+         </div>
+         <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 hover:bg-red-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-red-600/20 active:scale-95 transition-all relative z-10">Abrir Turno</button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full gap-4 relative overflow-hidden">
