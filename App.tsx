@@ -209,6 +209,64 @@ export const App: React.FC = () => {
      }, 0);
   }, [sales]);
 
+  // Lógica de Exportação de Backup
+  const handleExportData = useCallback(() => {
+    const backupData = {
+      products,
+      sales,
+      users,
+      shifts,
+      openTabs,
+      modifierGroups,
+      categoryModifiers,
+      categories,
+      units,
+      config: { penduraThreshold, longDurationThreshold },
+      meta: {
+        exportedAt: Date.now(),
+        exportedBy: currentUser?.username,
+        systemVersion: '3.9.x'
+      }
+    };
+
+    const jsonString = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `botequista_backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, penduraThreshold, longDurationThreshold, currentUser]);
+
+  // Lógica de Importação/Restauração
+  const handleDataManagement = useCallback((data: any) => {
+    if (data === 'EXPORT_NOW') {
+      handleExportData();
+      return;
+    }
+
+    // Importação de Dados
+    if (data) {
+      if (data.products) { setProducts(data.products); persist('products', data.products); }
+      if (data.sales) { setSales(data.sales); persist('sales', data.sales); }
+      if (data.users) { setUsers(data.users); persist('users', data.users); }
+      if (data.shifts) { setShifts(data.shifts); persist('shifts', data.shifts); }
+      if (data.units) { setUnits(data.units); persist('units', data.units); }
+      if (data.modifierGroups) { setModifierGroups(data.modifierGroups); persist('modifierGroups', data.modifierGroups); }
+      if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
+      if (data.categories) { setCategories(data.categories); persist('categories', data.categories); }
+      if (data.openTabs) { setOpenTabs(data.openTabs); persist('openTabs', data.openTabs); }
+      
+      if (data.config) {
+        if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
+        if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
+      }
+    }
+  }, [handleExportData, persist]);
+
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
   if (!activeUnitId) {
@@ -290,7 +348,7 @@ export const App: React.FC = () => {
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
               {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
-              {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={(data) => data==='EXPORT_NOW'?console.log('Export'):setProducts(data.products)} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
+              {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
           </div>
 
