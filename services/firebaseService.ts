@@ -25,6 +25,8 @@ export interface AppFullData {
 // CACHE DE TOKEN DE AUTENTICAÇÃO (Em Memória - Seguro para troca de dispositivos)
 let _cachedToken: string | null = null;
 let _tokenExpiration: number = 0;
+// Singleton Promise para deduplicação de chamadas de login simultâneas
+let _tokenPromise: Promise<string | null> | null = null;
 
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
@@ -88,32 +90,46 @@ const touchMetadata = async (url: string, token: string, path: string | undefine
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string | null> => {
   if (!apiKey) return null;
 
+  // 1. Verifica Cache Válido
   if (_cachedToken && Date.now() < _tokenExpiration - 60000) {
     return _cachedToken;
   }
 
-  try {
-    const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass, returnSecureToken: true })
-    });
-    
-    const data = await response.json();
-    
-    if (response.ok && data.idToken) {
-      _cachedToken = data.idToken;
-      const expiresInSeconds = parseInt(data.expiresIn || '3600', 10);
-      _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
-      return data.idToken;
-    } else {
-      console.error("Auth Error:", data.error);
-      return null;
-    }
-  } catch (e) {
-    console.error("Network Auth Error:", e);
-    return null;
+  // 2. Verifica se já existe uma promessa de login em andamento (Deduplicação)
+  if (_tokenPromise) {
+    return _tokenPromise;
   }
+
+  // 3. Inicia nova requisição
+  _tokenPromise = (async () => {
+    try {
+      const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass, returnSecureToken: true })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.idToken) {
+        _cachedToken = data.idToken;
+        const expiresInSeconds = parseInt(data.expiresIn || '3600', 10);
+        _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
+        return data.idToken;
+      } else {
+        console.error("Auth Error:", data.error);
+        return null;
+      }
+    } catch (e) {
+      console.error("Network Auth Error:", e);
+      return null;
+    } finally {
+      // Limpa a promessa para permitir novas tentativas no futuro
+      _tokenPromise = null;
+    }
+  })();
+
+  return _tokenPromise;
 };
 
 export const loadFromFirebase = async (url: string, encryptionKey?: string, token?: string, path?: string, queryParams?: string): Promise<any> => {

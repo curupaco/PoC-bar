@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem } from './types';
 import Sidebar from './components/Sidebar';
@@ -90,17 +89,18 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  const sanitizeTabs = (tabs: any[]): Tab[] => {
-    if (!tabs) return [];
-    return (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map(t => ({
+  // PERFORMANCE FIX: Memoizado para evitar recreação a cada render, o que causava loop no useSync
+  const handleSetOpenTabs = useCallback((tabs: any) => {
+    const sanitized = (!tabs) ? [] : (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map((t: any) => ({
       ...t,
       items: Array.isArray(t.items) ? t.items : (t.items ? (Object.values(t.items) as SaleItem[]) : [])
     }));
-  };
+    setOpenTabs(sanitized);
+  }, []);
 
   const { refresh, registerLocalDeletion } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
-    setOpenTabs: (data: any) => setOpenTabs(sanitizeTabs(data)), 
+    setOpenTabs: handleSetOpenTabs, // Usando a função memoizada
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
     activeUnitId, config: syncConfig
   });
