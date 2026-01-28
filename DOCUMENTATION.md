@@ -58,9 +58,12 @@ O **Botequista** é um sistema de gestão para bares focado em agilidade operaci
 - **Performance de Equipe:** Ranking de vendas por colaborador.
 
 ### C. Manutenção e Suporte
-- **Feedback System:** Modal integrado para reportar bugs ou sugerir melhorias diretamente para o GitHub Issues da equipe de desenvolvimento.
+- **Feedback System:** Modal integrado para reportar bugs ou sugerir melhorias diretamente para o GitHub Issues.
 - **Health Check:** Diagnóstico em tempo real da conexão com API, Banco de Dados e Latência.
-- **Backup & Rescue:** Ferramentas para exportar dados (JSON) e resgatar vendas do armazenamento local em caso de falha crítica.
+- **Backup & Restore (JSON):**
+    - **Exportação:** Geração de arquivo JSON via `Blob` e `URL.createObjectURL` contendo snapshot completo do estado (Produtos, Vendas, Usuários, Configurações).
+    - **Importação:** Leitura de arquivo via `FileReader` com restauração de estado e persistência imediata no Firebase + IndexedDB.
+    - **Resgate Local:** Recuperação de dados via `localStorage` (Mirror) em caso de falha crítica de rede ou cache.
 
 ---
 
