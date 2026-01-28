@@ -1,53 +1,74 @@
 # 🍺 Botequista Pro - Documentação Operacional
-**Versão:** 3.9.5
-**Stack:** React 19, Firebase RTDB, IndexedDB (Offline-First).
+**Versão:** 3.9.x
+**Stack:** React 19, Firebase RTDB, IndexedDB (Offline-First), Vercel Serverless Functions.
 
 ---
 
 ## 1. Visão Geral
-O **Botequista** é um PDV (Ponto de Venda) de alta performance projetado para operação crítica de bares. O sistema foca em imutabilidade financeira, auditoria de caixa e resiliência de dados em ambientes com internet instável através de uma fila de sincronização (Sync Queue).
+O **Botequista** é um sistema de gestão para bares focado em agilidade operacional e integridade financeira. Sua arquitetura **Offline-First** permite que o bar continue vendendo mesmo sem internet, sincronizando os dados automaticamente quando a conexão retorna.
 
 ---
 
 ## 2. Módulos Operacionais
 
 ### A. Vendas (PDV)
-- **Lançamento Rápido:** Venda direta no balcão clicando no produto e selecionando o pagamento.
-- **Gestão de Mesas/Comandas:** Abertura de contas nomeadas para controle de consumo prolongado.
-- **Produtos por Peso:** Teclado numérico integrado para lançamento de itens em gramas (KG).
-- **Adicionais (Upsell):** Abertura automática de menus de opções (ex: Gelo e Limão) ao selecionar produtos de categorias vinculadas.
-- **Descarte Seguro:** Botão de lixeira com modal de confirmação para anular mesas abertas erroneamente.
+- **Lançamento Rápido:** Interface otimizada para toque, com "Favoritos" e busca instantânea.
+- **Gestão de Mesas:** Abertura e controle de contas por nome ou número.
+- **Pagamento Múltiplo:** Suporte para dividir uma conta em vários métodos (ex: parte em Dinheiro, parte no PIX).
+- **Produtos por Peso:** Modal dedicado com teclado numérico para lançar itens em gramas (KG).
+- **Carrinho Mobile:** Interface adaptativa que transforma o PDV em uma lista expansível em telas pequenas.
 
-### B. Fluxo de Caixa e Turnos
-- **Abertura de Turno:** Registro obrigatório de fundo de reserva (Cofre, Gaveta e Reserva).
-- **Conferência Cega:** O fechamento exige que o operador conte o dinheiro físico. O sistema apura a "Quebra de Caixa" (sobra ou falta) comparando com o esperado.
-- **Tesouraria:** Registro imutável de Sangrias (retirada) e Suprimentos (entrada de troco) entre compartimentos de caixa.
+### B. Gestão de Cardápio & Upsell
+- **Categorias e Produtos:** CRUD completo com marcação de favoritos.
+- **Grupos de Adicionais:** Criação de menus de opções (ex: "Gelo e Limão", "Borda Recheada").
+- **Vínculos Automáticos:** Configuração de gatilhos onde selecionar uma categoria (ex: "Whiskys") abre automaticamente o modal de adicionais correspondente.
 
-### C. Gestão de Penduras (Fiados)
-- **Venda em Pendura:** Registro de débito vinculado ao nome do cliente.
-- **Quitação Integrada:** Localizado em *Relatórios > Penduras*. 
-- **Fluxo de Recebimento:** Ao clicar em "Quitar", o sistema abre um modal de valor (permitindo pagamento parcial) e redireciona automaticamente para o **Checkout do POS**. Isso garante que o pagamento seja registrado em um método real (PIX, Dinheiro, Cartão) e entre na contabilização do caixa do dia.
+### C. Fluxo de Caixa e Turnos
+- **Monitor de Turno:** Painel em tempo real com faturamento bruto, tickets e volume de itens.
+- **Conferência Cega:** O operador deve contar o dinheiro físico ao fechar. O sistema calcula a diferença (Quebra de Caixa) apenas após a contagem.
+- **Exportação de Fechamento:** Geração de imagem (PNG) do relatório final para envio via WhatsApp/E-mail.
 
----
+### D. Tesouraria Visual (Novo)
+- **Interface Gráfica:** Representação visual dos compartimentos: **Gaveta Operacional**, **Cofre Principal** e **Reserva**.
+- **Operações ATM:** Teclado numérico estilo caixa eletrônico para realizar:
+    - **Sangrias:** Retirada de excesso da gaveta para o cofre.
+    - **Suprimentos:** Entrada de troco do cofre para a gaveta.
+    - **Recolhimento:** Movimentação da reserva.
+- **Auditoria:** Log imutável de todas as transferências com timestamp e usuário responsável.
 
-## 3. Sincronização e Resiliência
-- **Sync Status:** Indicador visual no cabeçalho (Verde = Sincronizado | Amarelo = Pendente/Offline).
-- **IndexedDB:** Todas as vendas feitas offline são armazenadas no navegador e enviadas à nuvem assim que a conexão é restaurada.
-- **Multi-Unidade:** Isolamento estrito de dados. A troca de bar limpa o cache de memória para evitar contaminação de faturamento entre unidades.
-
----
-
-## 4. Relatórios de Performance
-- **Fechamento (PNG):** Gera um cupom digital completo do turno para compartilhamento ou impressão.
-- **Curva ABC (Produtos):** Ranking de itens por faturamento e volume de saída.
-- **Fluxo Horário:** Mapa de calor que identifica os horários de pico de atendimento.
-- **Ranking da Equipe:** Volume de vendas e ticket médio por colaborador.
+### E. Gestão de Penduras (Fiados)
+- **Carteira de Devedores:** Listagem de clientes com saldo devedor.
+- **Quitação Integrada:** O recebimento de uma dívida redireciona para o checkout do PDV, garantindo que o dinheiro entre no caixa do turno atual (contabilizado como receita financeira, não venda de produto).
 
 ---
 
-## 5. Segurança e Auditoria
-- **RBAC (Permissões):** Controle granular de quem pode anular vendas, editar preços ou acessar backups.
-- **Anulação Lógica:** Vendas excluídas permanecem no banco com a marca de "Excluída", registrando quem fez a ação e o horário, impedindo fraudes.
+## 3. Infraestrutura e Inteligência
+
+### A. Sincronização e Dados
+- **Fila de Sincronização (SyncQueue):** Vendas feitas offline são enfileiradas e enviadas sequencialmente ao Firebase.
+- **Busca Híbrida:** O histórico de vendas utiliza uma estratégia dupla:
+    1. **Local:** Para dados recentes e performance instantânea.
+    2. **Cloud (API):** Para buscar vendas antigas no servidor sem pesar o navegador.
+- **Multi-Unidade:** Suporte nativo para redes de bares (Franquias), com isolamento total de dados entre unidades.
+
+### B. Relatórios Gerenciais
+- **Financeiro:** Quebra por método de pagamento e Ticket Médio.
+- **Curva ABC:** Ranking de produtos por faturamento e volume de saída.
+- **Mapa Operacional:** Gráfico de calor (Heatmap) mostrando os horários de pico de atendimento.
+- **Performance de Equipe:** Ranking de vendas por colaborador.
+
+### C. Manutenção e Suporte
+- **Feedback System:** Modal integrado para reportar bugs ou sugerir melhorias diretamente para o GitHub Issues da equipe de desenvolvimento.
+- **Health Check:** Diagnóstico em tempo real da conexão com API, Banco de Dados e Latência.
+- **Backup & Rescue:** Ferramentas para exportar dados (JSON) e resgatar vendas do armazenamento local em caso de falha crítica.
 
 ---
-*Documentação atualizada conforme o estado real do sistema.*
+
+## 4. Segurança e Permissões (RBAC)
+O sistema possui um controle granular de acesso dividido em perfis:
+- **Operação:** Acesso ao PDV e Abertura de Turno.
+- **Gerência:** Acesso a Relatórios, Cancelamento de Vendas e Edição de Produtos.
+- **Administração:** Acesso total, incluindo Gestão de Unidades, Backups e Reset de Sistema.
+
+---
+*Documentação gerada automaticamente pelo Botequista System.*
