@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { View, User, Theme } from '../types';
 
@@ -44,7 +45,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose, 
   currentUser, 
   onLogout, 
-  onSwitchUnit,
   activeTabsCount, 
   isCollapsed, 
   onToggleCollapse,
@@ -138,7 +138,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           <SectionLabel label="Gestão" />
           {renderItem('products', 'Cardápio', 'products', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7" strokeWidth={2.5}/></svg>)}
           {renderItem('users', 'Equipe', 'users_admin', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" strokeWidth={2.5} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M23 21v-2a4 4 0 0 0-3-3.87" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>)}
-          {renderItem('settings', 'Ajustes', 'settings', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" strokeWidth={2.5}/><circle cx="12" cy="12" r="3" strokeWidth={2.5}/></svg>)}
+          {renderItem('settings', 'Ajustes', 'settings', (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+            </svg>
+          ))}
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-2 shrink-0 bg-slate-900/50 dark:bg-slate-950/50">
@@ -167,18 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* 3. TROCAR BAR */}
-          <button onClick={onSwitchUnit} className={`w-full flex items-center gap-4 px-6 py-3 rounded-2xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all group relative ${isCollapsed ? 'justify-center px-0 mx-auto w-12' : ''}`}>
-             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-             {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">Trocar Bar</span>}
-             {isCollapsed && (
-               <div className="absolute left-full ml-4 px-3 py-2 bg-slate-950 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-90 group-hover:scale-100 whitespace-nowrap shadow-2xl z-[100] w-max border border-slate-800">
-                 Trocar Bar
-               </div>
-             )}
-          </button>
-
-          {/* 4. SAIR */}
+          {/* 3. SAIR */}
           <button onClick={() => setShowLogoutConfirm(true)} className={`w-full flex items-center gap-4 px-6 py-3 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all group relative ${isCollapsed ? 'justify-center px-0 mx-auto w-12' : ''}`}>
             <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
             {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">Sair</span>}
