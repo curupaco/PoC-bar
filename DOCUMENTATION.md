@@ -1,6 +1,5 @@
-
 # 🍺 Botequista Pro - Documentação Técnica e Operacional
-**Versão:** 5.3.6 (Total Recovery Update)  
+**Versão:** 5.3.7
 **Desenvolvedor:** Senior Frontend Engineer  
 **Stack:** React 19, Firebase RTDB, Vercel Edge.
 
@@ -65,6 +64,36 @@ Para evitar a contaminação de dados (Data Leak) onde caches antigos persistiam
 1.  **State Purge:** Ao detectar mudança no `activeUnitId`, todos os arrays de dados (`sales`, `products`, `shifts`) são imediatamente zerados na memória.
 2.  **Metadata Wipe:** O hook de sincronização descarta as referências de tempo (`localMeta`) e a lista de exclusões (`serverTombstones`).
 3.  **Cold Start Forçado:** O sistema ignora qualquer cache prévio em memória e força uma nova negociação completa com o banco de dados da nova unidade, garantindo integridade absoluta dos relatórios financeiros.
+
+---
+
+## 8. Adicionais & Upsell Dinâmico
+A arquitetura de cardápio permite a criação de **Modifier Groups** (Grupos de Modificadores):
+- **Vínculos Inteligentes:** Você pode vincular um grupo (ex: "Gelo e Limão") a uma categoria inteira (ex: "Drinks").
+- **Automação de Venda:** Ao selecionar qualquer item da categoria, o PDV abre automaticamente o modal de opcionais, garantindo que o garçom nunca esqueça de oferecer adicionais, aumentando o ticket médio.
+
+---
+
+## 9. Central de Feedback & DevOps Integrado
+Implementamos uma ponte direta entre o usuário final e a equipe de desenvolvimento:
+- **API Feedback (`api/feedback.ts`):** Rota serverless que processa relatos de bugs e sugestões.
+- **GitHub Issues Integration:** Os feedbacks são convertidos automaticamente em *Issues* no repositório oficial, com labels de prioridade e contexto do dispositivo (Mobile/Desktop), acelerando o ciclo de correções.
+
+---
+
+## 10. Stack Tecnológica Detalhada
+- **Frontend:** React 19 (Hooks, Context, Memoization).
+- **Estilização:** Tailwind CSS com Design System customizado (Dark Mode First).
+- **Gráficos:** Recharts para visualização de performance.
+- **Persistência Local:** IndexedDB (via `idb` library) para alta capacidade de armazenamento offline.
+- **Segurança:** AES Encryption para dados sensíveis e SHA256 para hashes de senhas.
+- **Infraestrutura:** Vercel Edge Network para latência mínima em APIs.
+
+---
+
+## 11. Melhores Práticas Operacionais
+- **Encerramento Diário:** O sistema performa melhor quando os turnos são fechados diariamente, permitindo que o motor de busca na nuvem limpe buffers de sincronização obsoletos.
+- **Categorização Estrita:** A precisão dos gráficos de "Curva ABC" depende diretamente de categorias bem definidas no cadastro de produtos.
 
 ---
 *Documentação atualizada em: [Data de Hoje] (v5.3.7)*
