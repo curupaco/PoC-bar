@@ -38,6 +38,7 @@ export const App: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
   
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('btq_theme');
@@ -281,14 +282,14 @@ export const App: React.FC = () => {
           </header>
 
           <div className="flex-1 overflow-y-auto p-4 md:p-10 w-full max-w-[1750px] mx-auto">
-              {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} />}
+              {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} />}
               {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
               {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
               {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
-              {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => handleCompleteSale([{id: generateUniqueId('sale'), timestamp: Date.now(), items: [{id:'q1', productId:'quitacao', productName:'Quitação', category:'FIADO', quantity:1, unitPrice:amt, totalPrice:amt}], paymentMethod:PaymentMethod.CASH, payments:[{method:PaymentMethod.CASH, amount:amt}], total:amt, customerName:name, userId:currentUser.id, shiftId:shifts.find(s=>s.status==='open')?.id || ''}])} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
+              {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
               {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={(data) => data==='EXPORT_NOW'?console.log('Export'):setProducts(data.products)} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
           </div>

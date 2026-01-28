@@ -44,9 +44,18 @@ export const POS: React.FC<POSProps> = ({
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
-  const [editingWeightIndex, setEditingWeightIndex] = useState<number | null>(null);
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
+
+  // CORREÇÃO: Detecta se veio de um atalho de quitação dos relatórios
+  useEffect(() => {
+    if (shortcutCheckout) {
+      setActiveTabId('shortcut-payment');
+      setIsClosingTab(true);
+      setShowMobileCart(true); // Garante visibilidade no mobile
+    }
+  }, [shortcutCheckout]);
 
   useEffect(() => {
     if (toast) {
@@ -58,11 +67,12 @@ export const POS: React.FC<POSProps> = ({
   const showFeedback = useCallback((msg: string) => setToast(msg), []);
 
   const activeTab = useMemo(() => {
-    if (shortcutCheckout) return { id: 'shortcut', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
+    if (activeTabId === 'shortcut-payment' && shortcutCheckout) {
+       return { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
+    }
     return openTabs.find(t => t.id === activeTabId);
   }, [activeTabId, openTabs, shortcutCheckout]);
     
-  // Added casting to SaleItem[] to ensure type safety and avoid 'unknown' type issues
   const tabItems: SaleItem[] = useMemo(() => {
     if (!activeTab?.items) return [];
     const items = activeTab.items;
@@ -70,9 +80,9 @@ export const POS: React.FC<POSProps> = ({
   }, [activeTab]);
 
   const tabTotal = useMemo(() => {
-    if (shortcutCheckout) return shortcutCheckout.amount;
+    if (activeTabId === 'shortcut-payment' && shortcutCheckout) return shortcutCheckout.amount;
     return tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
-  }, [shortcutCheckout, tabItems]);
+  }, [activeTabId, shortcutCheckout, tabItems]);
 
   const executeAddItem = useCallback((product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTabId) return;
@@ -113,17 +123,54 @@ export const POS: React.FC<POSProps> = ({
   }, [activeTabId, activeTab, tabItems, onUpdateTabItem]);
 
   const processCompletion = (payments: any[]) => {
-    const isShortcut = activeTabId === 'shortcut';
+    const isShortcut = activeTabId === 'shortcut-payment';
     const totalAmount = payments.reduce((acc, p) => acc + p.amount, 0);
+    
+    // Se for quitação, cria o item especial de quitação para o histórico
+    const items = isShortcut 
+      ? [{ id: 'q1', productId: 'quitacao', productName: 'Quitação de Pendura', category: 'FIADO', quantity: 1, unitPrice: totalAmount, totalPrice: totalAmount }]
+      : tabItems;
+
     const newSale: Sale = {
-       id: generateUniqueId('sale'), timestamp: Date.now(), 
-       items: isShortcut ? [] : tabItems,
+       id: generateUniqueId('sale'), 
+       timestamp: Date.now(), 
+       items,
        paymentMethod: payments.length === 1 ? payments[0].method : PaymentMethod.MULTIPLE,
-       payments, total: totalAmount, tabName: activeTab?.name, customerName: payments[0]?.customerName,
-       userId: '', shiftId: activeShift?.id || ''
+       payments, 
+       total: totalAmount, 
+       tabName: isShortcut ? undefined : activeTab?.name, 
+       customerName: isShortcut ? shortcutCheckout?.name : payments[0]?.customerName,
+       userId: '', 
+       shiftId: activeShift?.id || ''
     };
+    
     onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
-    setActiveTabId(null); setIsClosingTab(false); setShowMobileCart(false);
+    
+    // Limpeza de estado
+    setActiveTabId(null); 
+    setIsClosingTab(false); 
+    setShowMobileCart(false);
+    if (isShortcut && onClearShortcut) onClearShortcut();
+  };
+
+  const handleConfirmDelete = () => {
+    if (tabToDelete) {
+       onDeleteTab(tabToDelete.id);
+       if (activeTabId === tabToDelete.id) {
+          setActiveTabId(null);
+          setShowMobileCart(false);
+       }
+       setTabToDelete(null);
+       showFeedback("COMANDA DESCARTADA");
+    }
+  };
+
+  const handleBackFromPayment = () => {
+     if (activeTabId === 'shortcut-payment') {
+        setActiveTabId(null);
+        if (onClearShortcut) onClearShortcut();
+     }
+     setIsClosingTab(false);
   };
 
   if (!activeShift) return <div className="p-10 text-center font-black uppercase text-slate-400 italic">Abra um turno para vender.</div>;
@@ -152,25 +199,31 @@ export const POS: React.FC<POSProps> = ({
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {openTabs.map(tab => (
-              <div key={tab.id} onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[35px] border-2 border-slate-200 dark:border-slate-800 cursor-pointer hover:border-red-500 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl">
-                <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
-                {/* Fixed line 153/162: Ensuring tab items are processed as an array and cast to SaleItem[] to fix 'unknown' type error. */}
-                <p className="font-black text-xl text-red-600 italic">
-                  {formatCurrency(
-                    (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
-                      .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
-                  )}
-                </p>
+              <div key={tab.id} className="relative group">
+                <div onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[35px] border-2 border-slate-200 dark:border-slate-800 cursor-pointer hover:border-red-500 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl">
+                  <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                  <p className="font-black text-xl text-red-600 italic">
+                    {formatCurrency(
+                      (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
+                        .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
+                    )}
+                  </p>
+                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
+                </button>
               </div>
             ))}
           </div>
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
-           {/* LISTA DE PRODUTOS */}
            <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
               <div className="flex items-center gap-4 mb-6 bg-white dark:bg-slate-900 p-4 rounded-[25px] border border-slate-200 dark:border-slate-800">
-                 <button onClick={() => setActiveTabId(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                 <button onClick={() => { setActiveTabId(null); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                  </button>
                  <h2 className="text-xl font-black uppercase italic text-red-600">{activeTab?.name}</h2>
@@ -178,7 +231,6 @@ export const POS: React.FC<POSProps> = ({
               <POSProductGrid products={products} onAddProduct={addToTab} />
            </div>
 
-           {/* COMANDA / CARRINHO (Sempre visível no Desktop, Overlay no Mobile) */}
            <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full lg:w-[420px] flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300`}>
               <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
                  <h3 className="font-black uppercase tracking-tighter italic">Itens na Comanda</h3>
@@ -206,22 +258,22 @@ export const POS: React.FC<POSProps> = ({
                       ))
                     )}
                   </div>
-                  <div className="p-8 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 space-y-4">
-                     <div className="flex justify-between items-center text-2xl font-black italic tracking-tighter">
+                  <div className="p-8 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 space-y-3">
+                     <div className="flex justify-between items-center text-2xl font-black italic tracking-tighter mb-2">
                         <span className="text-[10px] font-black uppercase not-italic text-slate-400">Total</span>
                         <span>{formatCurrency(tabTotal)}</span>
                      </div>
                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className="w-full bg-red-600 text-white py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30">Fechar Conta</button>
+                     <button onClick={() => setTabToDelete(activeTab!)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors">Descartar Mesa</button>
                   </div>
                 </>
               ) : (
                 <div className="flex-1 overflow-y-auto no-scrollbar">
-                  <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} />
+                  <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={handleBackFromPayment} onComplete={processCompletion} shortcutCheckout={activeTabId === 'shortcut-payment' ? shortcutCheckout : null} />
                 </div>
               )}
            </div>
 
-           {/* BOTÃO FLUTUANTE MOBILE (Para abrir a comanda) */}
            {activeTabId && !showMobileCart && !isClosingTab && (
              <button 
                onClick={() => setShowMobileCart(true)}
@@ -234,6 +286,20 @@ export const POS: React.FC<POSProps> = ({
                 <div className="w-10 h-10 bg-red-600 rounded-2xl flex items-center justify-center font-black text-sm">{tabItems.length}</div>
              </button>
            )}
+        </div>
+      )}
+
+      {tabToDelete && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setTabToDelete(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[1010] text-center border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Apagar "{tabToDelete.name}"?</h3>
+             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Esta ação é irreversível e removerá todos os itens desta mesa.</p>
+             <div className="flex flex-col gap-3">
+                <button onClick={handleConfirmDelete} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Descartar</button>
+                <button onClick={() => setTabToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Manter Mesa</button>
+             </div>
+          </div>
         </div>
       )}
 
