@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../types';
 
@@ -101,6 +100,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       return counted - expectedCashInDrawer;
   }, [actualCountedInput, expectedCashInDrawer]);
 
+  // Cálculo do Total de Abertura (Item 3 do Plano)
+  const totalOpeningCapital = useMemo(() => {
+    return parseCurrencyValue(valPrimary) + parseCurrencyValue(valChange) + parseCurrencyValue(valSecondary);
+  }, [valPrimary, valChange, valSecondary]);
+
   const handleOpenShift = async () => {
     if (!canOpen) return;
     setOpenError(null);
@@ -151,6 +155,15 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     setShowConferral(false); setActualCountedInput('');
   };
 
+  const getCompartmentIcon = (index: number) => {
+     switch(index) {
+        case 0: return '🔐'; // Cofre (Segurança)
+        case 1: return '💸'; // Gaveta (Fluxo)
+        case 2: return '🐷'; // Reserva (Porquinho/Economia)
+        default: return '💰';
+     }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-32 relative">
       {activeShift ? (
@@ -192,41 +205,77 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
            </div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 p-12 rounded-[40px] border-2 border-dashed border-slate-200 dark:border-slate-800 text-center animate-in fade-in duration-500">
-           <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter mb-4 italic">Abertura de Turno</h2>
-           <p className="text-slate-400 dark:text-slate-500 text-[10px] font-black uppercase tracking-widest mb-10">Informe os valores iniciais para começar a operar</p>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-8 text-left">
-              {[
-                { label: 'Fundo Principal', val: valPrimary, set: setValPrimary },
-                { label: 'Troco da Gaveta', val: valChange, set: setValChange },
-                { label: 'Caixa Reserva', val: valSecondary, set: setValSecondary }
-              ].map((item, idx) => (
-                <div key={idx} className="space-y-2">
-                   <label className="text-[10px] font-black text-slate-400 uppercase ml-2">{item.label}</label>
-                   <div className="relative">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                      <input 
-                        type="text" inputMode="decimal" value={item.val} onChange={e => { setOpenError(null); item.set(sanitizeCurrencyInput(e.target.value)); }} 
-                        className="w-full bg-slate-50 dark:bg-slate-950 pl-12 pr-6 py-6 rounded-3xl border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" 
-                        placeholder="0,00"
-                      />
+        <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
+           {/* Item 1: Container "Card Físico" Sólido e Arredondado */}
+           <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800">
+              
+              <div className="text-center mb-10">
+                 <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mb-3">Abertura de Turno</h2>
+                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Configure o capital inicial do dia</p>
+              </div>
+
+              {/* Item 3: Totalizador Automático */}
+              <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 mb-10 flex flex-col items-center">
+                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Capital Inicial Total</span>
+                 <span className={`text-4xl font-black tracking-tighter transition-all ${totalOpeningCapital > 0 ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}>
+                    {formatCurrency(totalOpeningCapital)}
+                 </span>
+              </div>
+
+              {/* Item 2: Inputs transformados em "Cards de Compartimento" */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                 {[
+                   { label: 'Fundo Cofre', val: valPrimary, set: setValPrimary, color: 'border-slate-200 focus-within:border-slate-400' },
+                   { label: 'Troco Gaveta', val: valChange, set: setValChange, color: 'border-emerald-200 focus-within:border-emerald-500 bg-emerald-50/30' },
+                   { label: 'Reserva', val: valSecondary, set: setValSecondary, color: 'border-blue-200 focus-within:border-blue-500' }
+                 ].map((item, idx) => (
+                   <div 
+                     key={idx} 
+                     className={`group relative p-6 rounded-[28px] border-2 transition-all duration-300 ${item.color} bg-white dark:bg-slate-950 shadow-sm hover:shadow-lg`}
+                   >
+                      <div className="flex justify-between items-start mb-4">
+                         <span className="text-4xl drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300">{getCompartmentIcon(idx)}</span>
+                         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right leading-tight">{item.label}</label>
+                      </div>
+                      
+                      <div className="relative">
+                         <span className="absolute left-0 top-1/2 -translate-y-1/2 font-black text-slate-300 text-sm">R$</span>
+                         <input 
+                           type="text" 
+                           inputMode="decimal" 
+                           value={item.val} 
+                           onChange={e => { setOpenError(null); item.set(sanitizeCurrencyInput(e.target.value)); }} 
+                           className="w-full text-right bg-transparent font-black text-2xl outline-none text-slate-800 dark:text-white placeholder-slate-200" 
+                           placeholder="0,00"
+                         />
+                      </div>
                    </div>
-                </div>
-              ))}
-           </div>
-           
-           {openError && (
-              <div className="max-w-4xl mx-auto mb-8 animate-in slide-in-from-top-2 duration-300">
-                 <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-4 rounded-2xl flex items-center justify-center gap-3">
+                 ))}
+              </div>
+              
+              {openError && (
+                 <div className="mb-8 animate-in slide-in-from-top-2 duration-300 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 p-4 rounded-2xl flex items-center justify-center gap-3">
                     <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">{openError}</p>
                  </div>
-              </div>
-           )}
+              )}
 
-           <button onClick={handleOpenShift} disabled={isProcessing} className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto disabled:opacity-50">
-              {isProcessing ? 'Abrindo...' : 'Iniciar Atividades do Turno'}
-           </button>
+              {/* Item 4: Adequação da Paleta de Cores (Botão Vermelho) */}
+              <button 
+                 onClick={handleOpenShift} 
+                 disabled={isProcessing} 
+                 className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-[24px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 hover:shadow-xl shadow-red-600/20"
+              >
+                 {isProcessing ? (
+                    'Processando...' 
+                 ) : (
+                    <>
+                       <span>Iniciar Operação</span>
+                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                    </>
+                 )}
+              </button>
+           </div>
         </div>
       )}
 
