@@ -1,18 +1,16 @@
-
-const CACHE_NAME = 'botequista-v20';
+const CACHE_NAME = 'botequista-v22';
 const ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  'https://cdn.tailwindcss.com',
-  'https://img.icons8.com/fluency/512/beer.png'
+  '/logo.svg',
+  'https://cdn.tailwindcss.com'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      // Tenta adicionar os assets básicos
-      return cache.addAll(ASSETS).catch(err => console.log('Erro no cache inicial:', err));
+      return cache.addAll(ASSETS);
     })
   );
   self.skipWaiting();
@@ -28,32 +26,32 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Estratégia: Network First, falling back to Cache for Navigation
+// Estratégia de Cache: Network First com Fallback para Cache
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Ignorar APIs e Banco de Dados para não cachear dados obsoletos
+  // Não cachear chamadas de API ou Firebase
   if (url.pathname.startsWith('/api/') || 
       url.hostname.includes('firebaseio.com') || 
       url.hostname.includes('googleapis.com')) {
     return; 
   }
 
-  // Se for navegação (abrir o app), tenta rede, se falhar ou 404, manda o index.html do cache
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .catch(() => {
-          return caches.match('/') || caches.match('/index.html');
-        })
-    );
-    return;
-  }
-
-  // Para outros assets (css, imagens, etc)
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).catch(() => new Response('', { status: 404 }));
-    })
+    fetch(event.request)
+      .then((response) => {
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) return cachedResponse;
+          
+          if (event.request.mode === 'navigate') {
+            return caches.match('/') || caches.match('/index.html');
+          }
+          
+          return new Response('Offline', { status: 404 });
+        });
+      })
   );
 });
