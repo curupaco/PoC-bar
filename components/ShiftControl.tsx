@@ -86,14 +86,20 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   }, [shiftSales]);
 
   const internalTransfers = useMemo(() => {
-    if (!activeShift || !activeShift.transactions) return 0;
+    if (!activeShift || !activeShift.transactions) return { incoming: 0, outgoing: 0, net: 0 };
     const incoming = activeShift.transactions.filter(t => t.to === 'Change').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
     const outgoing = activeShift.transactions.filter(t => t.from === 'Change').reduce((acc, t) => acc + (Number(t.amount) || 0), 0);
-    return incoming - outgoing;
+    return { incoming, outgoing, net: incoming - outgoing };
   }, [activeShift]);
 
   const openingBalance = Number(activeShift?.openingCashChange) || 0;
-  const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers;
+  const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers.net;
+
+  // Cálculo da diferença em tempo real para o modal
+  const currentDifference = useMemo(() => {
+      const counted = parseCurrencyValue(actualCountedInput);
+      return counted - expectedCashInDrawer;
+  }, [actualCountedInput, expectedCashInDrawer]);
 
   const handleOpenShift = async () => {
     if (!canOpen) return;
@@ -227,20 +233,81 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       {showConferral && activeShift && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <div className="mb-6">
-               <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Fechamento de Caixa</h3>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Conferência final de valores</p>
+          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-8">
+             
+             {/* COLUNA DA ESQUERDA: EXTRATO DO SISTEMA */}
+             <div className="flex-1 space-y-6">
+                <div className="mb-4">
+                   <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Fechamento</h3>
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Demonstrativo do Sistema</p>
+                </div>
+                
+                <div className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-3">
+                   <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-500 uppercase">Fundo de Abertura</span>
+                      <span className="font-black text-slate-700 dark:text-slate-300">{formatCurrency(openingBalance)}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-500 uppercase">Vendas Dinheiro</span>
+                      <span className="font-black text-emerald-600">+ {formatCurrency(cashMovements.total)}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-500 uppercase">Suprimentos</span>
+                      <span className="font-black text-blue-500">+ {formatCurrency(internalTransfers.incoming)}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-500 uppercase">Sangrias</span>
+                      <span className="font-black text-red-500">- {formatCurrency(internalTransfers.outgoing)}</span>
+                   </div>
+                   <div className="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+                   <div className="flex justify-between items-center text-sm">
+                      <span className="font-black text-slate-800 dark:text-white uppercase tracking-tight">Saldo Esperado na Gaveta</span>
+                      <span className="font-black text-slate-900 dark:text-white text-lg">{formatCurrency(expectedCashInDrawer)}</span>
+                   </div>
+                </div>
+
+                <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Outros (Cartão/Pix)</span>
+                   <span className="text-xs font-black text-slate-600 dark:text-slate-400">{formatCurrency(totalSoldInShift - cashMovements.total)}</span>
+                </div>
              </div>
-             <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl mb-8 border border-slate-200 dark:border-slate-800">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Contado (Físico)</label>
-               <div className="relative">
-                  <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">R$</span>
-                  <input autoFocus type="text" inputMode="decimal" value={actualCountedInput} onChange={e => setActualCountedInput(sanitizeCurrencyInput(e.target.value))} className="w-full pl-16 pr-6 py-5 rounded-2xl bg-white dark:bg-slate-900 font-black text-3xl outline-none focus:ring-4 focus:ring-blue-500/20 transition-all shadow-inner" placeholder="0,00" />
-               </div>
+
+             {/* COLUNA DA DIREITA: CONFERÊNCIA FÍSICA */}
+             <div className="flex-1 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 md:pl-8 pt-6 md:pt-0">
+                <div className="space-y-6">
+                   <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Contado (Físico)</label>
+                     <div className="relative">
+                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">R$</span>
+                        <input 
+                           autoFocus 
+                           type="text" 
+                           inputMode="decimal" 
+                           value={actualCountedInput} 
+                           onChange={e => setActualCountedInput(sanitizeCurrencyInput(e.target.value))} 
+                           className="w-full pl-16 pr-6 py-5 rounded-2xl bg-white dark:bg-slate-900 font-black text-3xl outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all shadow-inner text-emerald-600" 
+                           placeholder="0,00" 
+                        />
+                     </div>
+                   </div>
+
+                   {/* Indicador de Diferença em Tempo Real */}
+                   <div className={`p-4 rounded-2xl flex justify-between items-center border ${currentDifference === 0 ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800' : currentDifference > 0 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'}`}>
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${currentDifference === 0 ? 'text-slate-400' : currentDifference > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                         {currentDifference === 0 ? 'Caixa Batido' : currentDifference > 0 ? 'Sobra de Caixa' : 'Quebra de Caixa'}
+                      </span>
+                      <span className={`text-xl font-black ${currentDifference === 0 ? 'text-slate-400' : currentDifference > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                         {formatCurrency(Math.abs(currentDifference))}
+                      </span>
+                   </div>
+                </div>
+
+                <div className="mt-8 flex flex-col gap-3">
+                   <button onClick={handleConfirmClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all">Confirmar Fechamento</button>
+                   <button onClick={() => setShowConferral(false)} className="text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors py-3">Voltar</button>
+                </div>
              </div>
-             <button onClick={handleConfirmClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all">Confirmar Fechamento</button>
-             <button onClick={() => setShowConferral(false)} className="mt-4 text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors">Voltar</button>
+
           </div>
         </div>
       )}

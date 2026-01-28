@@ -213,27 +213,37 @@ export const POS: React.FC<POSProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {openTabs.map(tab => (
-              <div key={tab.id} className="relative group">
-                <div onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[35px] border-2 border-slate-200 dark:border-slate-800 cursor-pointer hover:border-red-500 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl">
-                  <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
-                  <p className="font-black text-xl text-red-600 italic">
-                    {formatCurrency(
-                      (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
-                        .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
-                    )}
-                  </p>
+          {openTabs.length === 0 && !isAddingTab ? (
+             <div className="flex flex-col items-center justify-center py-24 text-center opacity-60 animate-in slide-in-from-bottom-4">
+                <div className="w-40 h-40 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-8 shadow-inner">
+                   <span className="text-6xl grayscale">🦗</span>
                 </div>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
-                  className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
-                </button>
-              </div>
-            ))}
-          </div>
+                <h3 className="text-2xl font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter italic">Tudo calmo por aqui...</h3>
+                <p className="text-sm font-bold text-slate-400 mt-2 tracking-wide">O turno está rodando. Abra a primeira mesa para começar!</p>
+             </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {openTabs.map(tab => (
+                <div key={tab.id} className="relative group">
+                  <div onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[35px] border-2 border-slate-200 dark:border-slate-800 cursor-pointer hover:border-red-500 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl">
+                    <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                    <p className="font-black text-xl text-red-600 italic">
+                      {formatCurrency(
+                        (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
+                          .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
+                      )}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
+                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
