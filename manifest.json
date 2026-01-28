@@ -12,19 +12,19 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./logo.svg",
+      "src": "./logo.svg?v=2",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./logo.svg",
+      "src": "./logo.svg?v=2",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "./logo.svg",
+      "src": "./logo.svg?v=2",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "maskable"
