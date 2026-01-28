@@ -48,21 +48,20 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
     setTransferValue(''); setToast({ msg: "CONCLUÍDO", type: 'success' });
   };
 
-  // UI PROFISSIONAL PARA ACESSO RESTRITO
   if (!activeShift) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-12 animate-in fade-in duration-1000">
-        <div className="relative group">
-           <div className="absolute inset-0 bg-red-600/10 blur-[100px] rounded-full group-hover:bg-red-600/20 transition-all"></div>
-           <div className="w-56 h-56 bg-white dark:bg-slate-900 rounded-[70px] flex items-center justify-center border-2 border-slate-100 dark:border-slate-800 shadow-2xl relative z-10">
-              <svg className="w-28 h-28 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-           </div>
-        </div>
-        <div className="max-w-md space-y-4">
-           <h2 className="text-5xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Tesouraria Bloqueada</h2>
-           <p className="text-slate-500 dark:text-slate-400 font-medium text-xl px-12 leading-relaxed">Não é possível realizar movimentações financeiras sem um <span className="text-red-600 font-black">turno aberto</span>.</p>
-        </div>
-        <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-red-600 hover:bg-red-700 text-white px-20 py-6 rounded-[32px] font-black uppercase text-xs tracking-[0.3em] shadow-2xl shadow-red-500/30 active:scale-95 transition-all">Ir para Gestão de Turnos</button>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] text-center space-y-8 animate-in fade-in zoom-in duration-500">
+         <div className="relative group">
+            <div className="absolute inset-0 bg-emerald-600/20 blur-[60px] rounded-full group-hover:bg-emerald-600/30 transition-all"></div>
+            <div className="w-48 h-48 bg-white dark:bg-slate-900 rounded-[50px] flex items-center justify-center border-4 border-slate-100 dark:border-slate-800 shadow-2xl relative z-10 -rotate-3 transition-transform hover:-rotate-6 hover:scale-105">
+               <span className="text-8xl filter drop-shadow-lg">💸</span>
+            </div>
+         </div>
+         <div className="space-y-3 relative z-10">
+            <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Cofre Trancado!</h2>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Nem uma moeda sai daqui sem o gerente ver. Abra o turno primeiro.</p>
+         </div>
+         <button onClick={() => onViewChange && onViewChange('shifts')} className="bg-emerald-600 hover:bg-emerald-700 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-emerald-600/20 active:scale-95 transition-all relative z-10">Ir para Gestão de Turnos</button>
       </div>
     );
   }

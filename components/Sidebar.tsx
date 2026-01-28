@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, User, Theme } from '../types';
 
 interface SidebarProps {
@@ -50,6 +50,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
+
   const hasPerm = (perm: string) => currentUser?.username === 'admin' || currentUser?.permissions.includes(perm as any);
 
   const navItemClasses = (id: View) => `
@@ -147,6 +171,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-2 shrink-0 bg-slate-900/50 dark:bg-slate-950/50">
+          
+          {deferredPrompt && (
+            <button 
+              onClick={handleInstallClick} 
+              className={`w-full flex items-center gap-4 px-6 py-3.5 rounded-2xl text-emerald-500 hover:text-white hover:bg-emerald-600/20 font-bold transition-all group relative mb-2 ${isCollapsed ? 'justify-center px-0 mx-auto w-12' : ''}`}
+            >
+              <svg className="w-5 h-5 shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+              {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">Instalar App</span>}
+              {isCollapsed && (
+                <div className="absolute left-full ml-4 px-3 py-2 bg-emerald-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all scale-90 group-hover:scale-100 whitespace-nowrap shadow-2xl z-[100] w-max border border-emerald-700">Instalar</div>
+              )}
+            </button>
+          )}
+
           {renderItem('help', 'Guia', 'help_view', <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeWidth={2.5}/></svg>)}
 
           {!isCollapsed ? (
