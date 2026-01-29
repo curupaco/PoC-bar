@@ -29,11 +29,13 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
     if (!canExport || !reportRef.current) return;
     showToast("GERANDO RELATÓRIO...");
     
+    // Configuração robusta para evitar erros de CORS com CSS externo
     htmlToImage.toPng(reportRef.current, { 
       backgroundColor: isDark ? '#020617' : '#f8fafc',
       pixelRatio: 2,
       style: { borderRadius: '0px' },
       cacheBust: true,
+      // Filtro para garantir que elementos de script do Tailwind não causem problemas no clone
       filter: (node) => {
         const tagName = (node as HTMLElement).tagName ? (node as HTMLElement).tagName.toUpperCase() : '';
         return tagName !== 'SCRIPT';
@@ -54,6 +56,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
 
   const shift = useMemo(() => shifts.find(s => s.id === selectedShiftId), [shifts, selectedShiftId]);
 
+  // Cálculo de Categorias apenas para este Turno
   const categoryData = useMemo(() => {
     if (!shift || !reportData.activeDataSource) return [];
     
@@ -61,9 +64,10 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
     const categoryMap: Record<string, number> = {};
 
     shiftSales.forEach(sale => {
+      // FIX: Adicionada verificação de existência para items
       const items = sale.items || [];
       items.forEach(item => {
-        if (item.productId === 'quitacao') return; 
+        if (item.productId === 'quitacao') return; // Ignora quitações do gráfico de categorias
         const cat = item.category?.toUpperCase() || 'GERAL';
         categoryMap[cat] = (categoryMap[cat] || 0) + item.totalPrice;
       });
@@ -104,6 +108,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
       </div>
 
       <div ref={reportRef} className="space-y-6 p-2">
+        {/* HEADER DO RELATÓRIO */}
         <div className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
            <div className="text-center md:text-left">
               <h2 className="text-4xl font-normal font-barrio text-slate-900 dark:text-white leading-none">Botequista</h2>
@@ -122,6 +127,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+           {/* COLUNA 1: FINANÇAS POR PAGAMENTO */}
            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-4">Entradas por Pagamento</h3>
               <div className="space-y-4">
@@ -140,6 +146,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
               </div>
            </div>
 
+           {/* COLUNA 2: GRÁFICO DE CATEGORIAS */}
            <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm">
               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center italic">Performance por Categoria (R$)</h3>
               <div className="h-[240px] w-full">
@@ -160,10 +167,10 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
            </div>
         </div>
 
+        {/* AUDITORIA DE CAIXAS (ABERTURA E FECHAMENTO) */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm">
            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center italic">Auditoria de Saldos dos Compartimentos</h3>
-           {/* Grid Ajustado para 2 Colunas */}
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* CAIXA PRIMÁRIO */}
               <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
                  <p className="text-[9px] font-black text-slate-400 uppercase text-center mb-4">Caixa Primário (Cofre)</p>
@@ -200,9 +207,26 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
                     </div>
                  )}
               </div>
+
+              {/* CAIXA SECUNDÁRIO */}
+              <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
+                 <p className="text-[9px] font-black text-slate-400 uppercase text-center mb-4">Caixa Secundário</p>
+                 <div className="flex justify-between items-center px-2">
+                    <div className="text-center">
+                       <span className="text-[8px] font-bold text-slate-400 uppercase block">Abertura</span>
+                       <span className="text-sm font-black text-slate-600 dark:text-slate-400">{formatCurrency(shift.openingCashSecondary || 0)}</span>
+                    </div>
+                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth={3}/></svg>
+                    <div className="text-center">
+                       <span className="text-[8px] font-bold text-slate-500 uppercase block">Fechamento</span>
+                       <span className="text-sm font-black text-slate-800 dark:text-white">{formatCurrency(shift.finalCashSecondary || 0)}</span>
+                    </div>
+                 </div>
+              </div>
            </div>
         </div>
 
+        {/* AUDITORIA DE TRANSAÇÕES DE CAIXA (SANGRIAS/SUPRIMENTOS) */}
         {shift.transactions && shift.transactions.length > 0 && (
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm">
              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 italic">Movimentações de Tesouraria</h3>
@@ -212,7 +236,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
                       <div className="flex flex-col">
                          <span className="text-[9px] font-black text-slate-400 uppercase">@{t.user} • {new Date(t.timestamp).toLocaleTimeString()}</span>
                          <span className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase">
-                            {t.from === 'Change' ? 'SANGRIA (GAVETA ➔ COFRE)' : 'SUPRIMENTO (COFRE ➔ GAVETA)'}
+                            {t.from === 'Change' ? 'SANGRIA (GAVETA ➔ COFRE)' : (t.to === 'Change' ? 'SUPRIMENTO (COFRE ➔ GAVETA)' : 'TRANSFERÊNCIA INTERNA')}
                          </span>
                       </div>
                       <span className={`font-black text-sm ${t.from === 'Change' ? 'text-red-500' : 'text-emerald-500'}`}>

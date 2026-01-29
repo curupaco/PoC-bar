@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem, SESSION_DURATION } from './types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import POS from './components/POS';
@@ -28,26 +27,7 @@ const ALL_PERMISSIONS: UserPermission[] = [
 ];
 
 export const App: React.FC = () => {
-  // INÍCIO DA ALTERAÇÃO: Persistência de Login
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const savedSession = localStorage.getItem('btq_session');
-      if (savedSession) {
-        const { user, timestamp } = JSON.parse(savedSession);
-        // Verifica se a sessão tem menos de 12 horas
-        if (Date.now() - timestamp < SESSION_DURATION) {
-          return user;
-        } else {
-          localStorage.removeItem('btq_session');
-        }
-      }
-    } catch (e) {
-      console.error("Erro ao restaurar sessão de login:", e);
-    }
-    return null;
-  });
-  // FIM DA ALTERAÇÃO
-
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeView, setActiveView] = useState<View>('pos');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -109,6 +89,7 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
+  // PERFORMANCE FIX: Memoizado para evitar recreação a cada render, o que causava loop no useSync
   const handleSetOpenTabs = useCallback((tabs: any) => {
     const sanitized = (!tabs) ? [] : (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map((t: any) => ({
       ...t,
@@ -119,7 +100,7 @@ export const App: React.FC = () => {
 
   const { refresh, registerLocalDeletion } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
-    setOpenTabs: handleSetOpenTabs, 
+    setOpenTabs: handleSetOpenTabs, // Usando a função memoizada
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
     activeUnitId, config: syncConfig
   });
@@ -143,11 +124,7 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // INÍCIO DA ALTERAÇÃO: Limpeza de Sessão
-    localStorage.removeItem('btq_session');
-    // FIM DA ALTERAÇÃO
-    handleSwitchUnit(); 
-    setCurrentUser(null);
+    handleSwitchUnit(); setCurrentUser(null);
   };
 
   const handleSaveTab = useCallback((tab: Tab) => {
@@ -210,26 +187,13 @@ export const App: React.FC = () => {
 
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
-    let userToSet: User | null = null;
-
     if (u === 'admin' && p === 'admin') {
-      userToSet = { id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS };
-    } else {
-      const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
-      if (found) userToSet = found;
+      setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS });
+      return;
     }
-
-    if (userToSet) {
-      // INÍCIO DA ALTERAÇÃO: Salvando Sessão
-      setCurrentUser(userToSet);
-      localStorage.setItem('btq_session', JSON.stringify({
-        user: userToSet,
-        timestamp: Date.now()
-      }));
-      // FIM DA ALTERAÇÃO
-    } else {
-      setLoginError("Credenciais inválidas.");
-    }
+    const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
+    if (found) setCurrentUser(found);
+    else setLoginError("Credenciais inválidas.");
   };
 
   const isShiftOpen = useMemo(() => Array.isArray(shifts) && shifts.some(s => s.status === 'open'), [shifts]);
@@ -245,6 +209,7 @@ export const App: React.FC = () => {
      }, 0);
   }, [sales]);
 
+  // Lógica de Exportação de Backup
   const handleExportData = useCallback(() => {
     const backupData = {
       products,
@@ -276,12 +241,14 @@ export const App: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, penduraThreshold, longDurationThreshold, currentUser]);
 
+  // Lógica de Importação/Restauração
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') {
       handleExportData();
       return;
     }
 
+    // Importação de Dados
     if (data) {
       if (data.products) { setProducts(data.products); persist('products', data.products); }
       if (data.sales) { setSales(data.sales); persist('sales', data.sales); }
