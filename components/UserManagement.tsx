@@ -88,13 +88,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
       ? password 
       : hashPassword(password);
     
+    // GARANTIA: allowedUnits limpo de valores falsy e forçado para array
+    const finalUnits = selectedUnits.filter(Boolean);
+
     const newUser: User = {
       id: editingUser?.id || `user-${Date.now()}`,
       username: username.toLowerCase().trim(),
       password: finalPassword,
       displayName: displayName.trim(),
       permissions: selectedPerms,
-      allowedUnits: selectedUnits
+      allowedUnits: finalUnits
     };
 
     // CORREÇÃO ITEM 1: Passa o 'newUser' como segundo argumento para persistência atômica
@@ -108,7 +111,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
   };
 
   const toggleUnit = (unitId: string) => {
-    setSelectedUnits(prev => prev.includes(unitId) ? prev.filter(id => id !== unitId) : [...prev, unitId]);
+    const idStr = String(unitId);
+    setSelectedUnits(prev => {
+        const set = new Set(prev.map(String));
+        if (set.has(idStr)) set.delete(idStr);
+        else set.add(idStr);
+        return Array.from(set);
+    });
   };
 
   const activeUnits = units.filter(u => u.isActive);
@@ -160,16 +169,23 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Acesso às Unidades</span>
                     <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1"></div>
                  </div>
-                 <div className="flex flex-wrap gap-3 justify-center">
-                    {activeUnits.map(unit => (
-                       <button 
-                          key={unit.id}
-                          onClick={() => toggleUnit(unit.id)}
-                          className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 transition-all ${selectedUnits.includes(unit.id) ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg' : 'bg-slate-50 dark:bg-slate-950 text-slate-400 border-transparent hover:border-slate-200'}`}
-                       >
-                          {unit.name}
-                       </button>
-                    ))}
+                 <div className="flex flex-wrap gap-3 justify-center bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                    {activeUnits.map(unit => {
+                       const idStr = String(unit.id);
+                       const isSelected = selectedUnits.includes(idStr);
+                       return (
+                         <button 
+                            key={unit.id}
+                            onClick={() => toggleUnit(unit.id)}
+                            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2 transition-all ${isSelected ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg scale-105' : 'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}
+                         >
+                            {unit.name} {isSelected && '✓'}
+                         </button>
+                       );
+                    })}
+                    {selectedUnits.length === 0 && (
+                        <p className="w-full text-center text-[10px] font-bold text-red-500 uppercase">⚠ Nenhuma unidade selecionada (O usuário não poderá acessar nada)</p>
+                    )}
                  </div>
               </div>
             )}
@@ -225,7 +241,16 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {users.map(user => (
+        {users.map(user => {
+          // Normaliza visualização das unidades permitidas (caso venha do DB como objeto)
+          let userAllowed: string[] = [];
+          if (Array.isArray(user.allowedUnits)) {
+             userAllowed = user.allowedUnits.map(String);
+          } else if (user.allowedUnits && typeof user.allowedUnits === 'object') {
+             userAllowed = Object.values(user.allowedUnits).map(String);
+          }
+
+          return (
           <div key={user.id} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-red-500/20 transition-all flex flex-col justify-between h-64">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
@@ -244,7 +269,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                     setPassword(user.password);
                     setDisplayName(user.displayName);
                     setSelectedPerms(user.permissions);
-                    setSelectedUnits(user.allowedUnits || []);
+                    setSelectedUnits(userAllowed); // Usa a versão normalizada
                     setIsAdding(true);
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                  }} className="p-3 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
@@ -269,8 +294,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                    <span className="text-[7px] font-black uppercase bg-red-100 text-red-600 px-2 py-0.5 rounded">ACESSO TOTAL</span>
                  ) : (
                    <>
-                      {user.allowedUnits && user.allowedUnits.length > 0 ? (
-                        <span className="text-[7px] font-black uppercase bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded">{user.allowedUnits.length} UNIDADES</span>
+                      {userAllowed.length > 0 ? (
+                        <span className="text-[7px] font-black uppercase bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded">{userAllowed.length} UNIDADES</span>
                       ) : (
                         <span className="text-[7px] font-black uppercase bg-slate-100 text-slate-400 px-2 py-0.5 rounded">SEM ACESSO</span>
                       )}
@@ -280,7 +305,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
               </div>
             </div>
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );
