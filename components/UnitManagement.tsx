@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Unit, generateUniqueId } from '../types';
 
@@ -12,6 +11,8 @@ interface UnitManagementProps {
 const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose, activeUnitId }) => {
   const [name, setName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
 
   const handleCreate = () => {
     if (!name.trim()) return;
@@ -28,13 +29,30 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
     onUpdateUnits(units.map(u => u.id === id ? { ...u, isActive: !u.isActive } : u));
   };
 
+  const startEdit = (unit: Unit) => {
+    setEditingId(unit.id);
+    setEditName(unit.name);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+  };
+
+  const saveEdit = () => {
+    if (!editName.trim()) return;
+    const updatedUnits = units.map(u => u.id === editingId ? { ...u, name: editName.trim() } : u);
+    onUpdateUnits(updatedUnits);
+    cancelEdit();
+  };
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md animate-in fade-in">
       <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-[40px] shadow-2xl relative border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden">
         <div className="p-8 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-between items-center shrink-0">
            <div>
               <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Gestão de Franquia</h3>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Adicione ou remova bares da rede</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Adicione, edite ou remova bares da rede</p>
            </div>
            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">✕</button>
         </div>
@@ -61,19 +79,50 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
            <div className="grid grid-cols-1 gap-4">
               {units.map(unit => {
                  const isCurrent = unit.id === activeUnitId;
+                 const isEditing = unit.id === editingId;
+
                  return (
-                    <div key={unit.id} className={`p-6 rounded-3xl border flex justify-between items-center transition-all ${unit.isActive ? 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm' : 'bg-slate-100 dark:bg-slate-900 opacity-60 border-transparent'} ${isCurrent ? 'ring-2 ring-red-500 shadow-xl' : ''}`}>
-                       <div>
+                    <div key={unit.id} className={`p-6 rounded-3xl border flex flex-col sm:flex-row justify-between items-center gap-4 transition-all ${unit.isActive ? 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm' : 'bg-slate-100 dark:bg-slate-900 opacity-60 border-transparent'} ${isCurrent ? 'ring-2 ring-red-500 shadow-xl' : ''}`}>
+                       <div className="flex-1 w-full sm:w-auto">
                           <div className="flex items-center gap-2">
-                             <h4 className="font-black text-slate-800 dark:text-white uppercase">{unit.name}</h4>
-                             {isCurrent && <span className="bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-full">Você está aqui</span>}
+                             {isEditing ? (
+                                <div className="flex items-center gap-2 w-full">
+                                   <input
+                                      autoFocus
+                                      value={editName}
+                                      onChange={e => setEditName(e.target.value)}
+                                      className="flex-1 px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-red-500 font-black uppercase text-sm outline-none"
+                                      onKeyDown={e => {
+                                         if (e.key === 'Enter') saveEdit();
+                                         if (e.key === 'Escape') cancelEdit();
+                                      }}
+                                   />
+                                   <button onClick={saveEdit} className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                   </button>
+                                   <button onClick={cancelEdit} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                   </button>
+                                </div>
+                             ) : (
+                                <>
+                                   <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm sm:text-base">{unit.name}</h4>
+                                   <button onClick={() => startEdit(unit)} className="text-slate-300 hover:text-blue-500 transition-colors p-1">
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                   </button>
+                                   {isCurrent && <span className="bg-red-600 text-white text-[8px] sm:text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">Atual</span>}
+                                </>
+                             )}
                           </div>
                           <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {unit.id}</p>
                        </div>
-                       <div className="flex items-center gap-4">
-                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${unit.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-500'}`}>
+                       <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
+                          <button 
+                            onClick={() => toggleStatus(unit.id)}
+                            className={`text-[9px] font-black uppercase px-4 py-2 rounded-full transition-all ${unit.isActive ? 'bg-emerald-100 text-emerald-600 hover:bg-red-100 hover:text-red-600' : 'bg-slate-200 text-slate-500 hover:bg-emerald-100 hover:text-emerald-600'}`}
+                          >
                              {unit.isActive ? 'Ativo' : 'Suspenso'}
-                          </span>
+                          </button>
                        </div>
                     </div>
                  );
