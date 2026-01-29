@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category } from '../types';
@@ -40,6 +39,15 @@ export const useSync = (props: SyncProps) => {
     if (typeof data === 'object') return Object.values(data).filter(Boolean);
     return [];
   };
+
+  // INÍCIO DA ALTERAÇÃO: Prevenção de Race Condition
+  // Permite que componentes informem que houve uma alteração local recente.
+  // Adiciona um buffer de 10s ao timestamp local para impedir que uma leitura 
+  // imediata do servidor (que pode estar desatualizada/stale) sobrescreva o dado novo.
+  const updateLocalTimestamp = useCallback((key: string) => {
+    localMeta.current[key] = Date.now() + 10000;
+  }, []);
+  // FIM DA ALTERAÇÃO
 
   // Reset total ao trocar de unidade para evitar vazamento de dados (Issue de Faturamento Igual)
   useEffect(() => {
@@ -149,7 +157,8 @@ export const useSync = (props: SyncProps) => {
         { key: 'categoryModifiers', setter: setCategoryModifiers },
         { key: 'sales', setter: setSales },
         { key: 'shifts', setter: setShifts },
-        { key: 'openTabs', setter: setOpenTabs }
+        { key: 'openTabs', setter: setOpenTabs },
+        { key: 'users', setter: setUsers } // Garantindo que Users também seja verificado
       ];
 
       if (!initialLoadDone.current) {
@@ -198,6 +207,8 @@ export const useSync = (props: SyncProps) => {
         const serverTs = serverMeta[`${node.key}_ts`];
         const localTs = localMeta.current[node.key] || 0;
 
+        // Lógica de Sync: Só busca se o servidor tiver um timestamp MAIOR que o local.
+        // updateLocalTimestamp força o localTs para o futuro, prevenindo downloads indesejados.
         if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
           const query = limitConfig[node.key] || '';
           const path = `data/units/${activeUnitId}/${node.key}`;
@@ -239,7 +250,7 @@ export const useSync = (props: SyncProps) => {
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setDbStatus]);
+  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus]);
 
   const fetchGlobal = useCallback(async () => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);
@@ -268,5 +279,6 @@ export const useSync = (props: SyncProps) => {
      fetchData();
   }, [fetchGlobal, fetchData]);
 
-  return { refresh, registerLocalDeletion };
+  // Exportar updateLocalTimestamp para uso no App.tsx
+  return { refresh, registerLocalDeletion, updateLocalTimestamp };
 };

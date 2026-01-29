@@ -81,6 +81,36 @@ export const App: React.FC = () => {
   
   const [activeUnitId, setActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
 
+  // INÍCIO DA ALTERAÇÃO: Monitoramento Reativo de Sessão e Acesso
+  // 1. Mantém o objeto currentUser atualizado quando a lista global 'users' muda (ex: sync remoto)
+  useEffect(() => {
+    if (currentUser && users.length > 0) {
+      const freshUser = users.find(u => u.id === currentUser.id);
+      if (freshUser) {
+         // Compara permissões e unidades para evitar loops de renderização
+         const permsChanged = JSON.stringify(freshUser.permissions) !== JSON.stringify(currentUser.permissions);
+         const unitsChanged = JSON.stringify(freshUser.allowedUnits) !== JSON.stringify(currentUser.allowedUnits);
+         
+         if (permsChanged || unitsChanged) {
+            // Atualiza sessão sem logout
+            setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
+         }
+      }
+    }
+  }, [users, currentUser?.id]); 
+
+  // 2. Revogação Instantânea: Se perdeu acesso à unidade atual, expulsa para seleção
+  useEffect(() => {
+     if (activeUnitId && currentUser && currentUser.username !== 'admin') {
+        const hasAccess = currentUser.allowedUnits?.includes(activeUnitId);
+        if (!hasAccess) {
+           setActiveUnitId(null);
+           localStorage.removeItem('btq_active_unit');
+        }
+     }
+  }, [activeUnitId, currentUser]);
+  // FIM DA ALTERAÇÃO
+
   const syncConfig = useMemo(() => ({ 
     url: 'https://poc-botequista-default-rtdb.firebaseio.com', 
     key: 'AIzaSyDyOVNXnb7iB7Wk7stxrTPvQW4qmWTSQqs', 
@@ -98,12 +128,14 @@ export const App: React.FC = () => {
     setOpenTabs(sanitized);
   }, []);
 
-  const { refresh, registerLocalDeletion } = useSync({
+  // INÍCIO DA ALTERAÇÃO: Recebendo updateLocalTimestamp do useSync
+  const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
     setOpenTabs: handleSetOpenTabs, // Usando a função memoizada
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
     activeUnitId, config: syncConfig
   });
+  // FIM DA ALTERAÇÃO
 
   useEffect(() => {
     if (dbStatus === 'success') setLastSyncTime(Date.now());
@@ -161,29 +193,48 @@ export const App: React.FC = () => {
   }, [persist, registerLocalDeletion]);
 
   const handleUpdateProducts = useCallback((updater: any) => {
-    setProducts(prev => { const next = updater(prev); persist('products', next); return next; });
-  }, [persist]);
+    setProducts(prev => { 
+        const next = updater(prev); 
+        updateLocalTimestamp('products'); // Bloqueio de sync reverso
+        persist('products', next); 
+        return next; 
+    });
+  }, [persist, updateLocalTimestamp]);
 
   const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
     setShifts(newShifts);
+    updateLocalTimestamp('shifts'); // Bloqueio de sync reverso
     if (changedItem) persist('shifts', changedItem, changedItem.id);
     else persist('shifts', newShifts);
-  }, [persist]);
+  }, [persist, updateLocalTimestamp]);
 
+  // INÍCIO DA ALTERAÇÃO: Correção de Race Condition e Atualização Reativa de Sessão
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
+    
+    // 1. Bloqueia leituras do servidor para 'users' por alguns segundos
+    // Isso impede que o 'useSync' baixe uma versão antiga do servidor e sobrescreva a edição local
+    updateLocalTimestamp('users'); 
+
+    // 2. Atualização Reativa da Sessão (Reactive Session) - Edição Local (Admin editando a si mesmo)
+    if (changedItem && currentUser && changedItem.id === currentUser.id) {
+        setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
+    }
+
     if (changedItem) persist('users', changedItem, changedItem.id);
     else persist('users', newUsers);
-  }, [persist]);
+  }, [persist, updateLocalTimestamp, currentUser]);
+  // FIM DA ALTERAÇÃO
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
         const next = [...prev, ...newSalesList];
+        updateLocalTimestamp('sales'); // Bloqueio de sync reverso
         newSalesList.forEach(s => persist('sales', s, s.id));
         return next;
     });
     if (tabIdToClose) handleDeleteTab(tabIdToClose);
-  }, [persist, handleDeleteTab]);
+  }, [persist, handleDeleteTab, updateLocalTimestamp]);
 
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
@@ -250,22 +301,22 @@ export const App: React.FC = () => {
 
     // Importação de Dados
     if (data) {
-      if (data.products) { setProducts(data.products); persist('products', data.products); }
-      if (data.sales) { setSales(data.sales); persist('sales', data.sales); }
-      if (data.users) { setUsers(data.users); persist('users', data.users); }
-      if (data.shifts) { setShifts(data.shifts); persist('shifts', data.shifts); }
+      if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); persist('products', data.products); }
+      if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); persist('sales', data.sales); }
+      if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); persist('users', data.users); }
+      if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); persist('shifts', data.shifts); }
       if (data.units) { setUnits(data.units); persist('units', data.units); }
-      if (data.modifierGroups) { setModifierGroups(data.modifierGroups); persist('modifierGroups', data.modifierGroups); }
-      if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
-      if (data.categories) { setCategories(data.categories); persist('categories', data.categories); }
-      if (data.openTabs) { setOpenTabs(data.openTabs); persist('openTabs', data.openTabs); }
+      if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); persist('modifierGroups', data.modifierGroups); }
+      if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); persist('categoryModifiers', data.categoryModifiers); }
+      if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); persist('categories', data.categories); }
+      if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); persist('openTabs', data.openTabs); }
       
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
       }
     }
-  }, [handleExportData, persist]);
+  }, [handleExportData, persist, updateLocalTimestamp]);
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
