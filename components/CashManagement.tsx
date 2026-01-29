@@ -217,25 +217,31 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* COFRE PRINCIPAL (ESTILO FORTE/SEGURO) */}
-                <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden group w-full md:col-span-2 lg:col-span-1">
-                   <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-6">
-                         <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">🔒</div>
-                         <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Cofre Principal</h3>
-                      </div>
-                      <p className="text-3xl font-black tracking-tighter mb-8">{formatCurrency(activeShift.cashPrimary)}</p>
-                      <button 
-                        onClick={() => { setOperation('SUPPLY'); setKeypadValue(''); }}
-                        className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                      >
-                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
-                         Enviar Suprimento
-                      </button>
-                   </div>
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                </div>
+            {/* COFRE PRINCIPAL (ESTILO FORTE/SEGURO) */}
+            <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden group w-full border border-slate-800">
+               <div className="flex justify-between items-start relative z-10">
+                  <div className="flex items-center gap-4">
+                     <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl text-slate-400 shadow-inner">🔒</div>
+                     <div>
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Cofre Principal</h3>
+                        <p className="text-[10px] font-bold text-slate-500 uppercase">Reserva Segura</p>
+                     </div>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-4xl font-black tracking-tighter text-white">{formatCurrency(activeShift.cashPrimary)}</p>
+                  </div>
+               </div>
+               
+               <div className="mt-8 relative z-10">
+                  <button 
+                    onClick={() => { setOperation('SUPPLY'); setKeypadValue(''); }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                     Enviar Suprimento
+                  </button>
+               </div>
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
             </div>
         </div>
 
