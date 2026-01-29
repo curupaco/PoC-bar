@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Fundo Preto Sólido -->
+  <!-- Fundo Preto Sólido (Garante contraste no ícone) -->
   <rect width="512" height="512" fill="#020617"/>
   
-  <!-- Sombra da Tampinha -->
-  <circle cx="256" cy="265" r="200" fill="black" fill-opacity="0.4"/>
-  
-  <!-- Borda Metálica da Tampinha (Denteada) -->
-  <path d="M256 46l18-22 28 5 13-25 28 1 8 28 27-6 2 28 21-12-4 28 16-18-10-26 11-26-15-23 4-28-20-18 0-28-25-12-8-27 26-5-14-24-28 1-19-21-21 9-23-14-21 19-27-9-21 18-28-2-15 27-21 9-11 26-22 15 5 28-14 19 13 25-19 21 3 28 19 19 3 28 23 13 7 27 26-7 13 25 28 0 18 23 28-6 23 14 12-13z" fill="#94a3b8" transform="translate(0, 5)"/>
-  
-  <!-- Corpo da Tampinha -->
-  <circle cx="256" cy="256" r="170" fill="#cbd5e1"/>
-  <circle cx="256" cy="256" r="155" fill="#b91c1c"/>
-  
-  <!-- Brilho Superior -->
-  <circle cx="256" cy="256" r="155" fill="white" fill-opacity="0.1"/>
-
-  <!-- Letra B (Logo da Marca) -->
-  <path d="M205 170h65c17 0 29 8 29 27 0 12-6 21-17 25 14 4 22 14 22 31 0 21-14 34-35 34h-64V170zm34 25v24h29c6 0 10-4 10-12s-4-12-10-12h-29zm0 46v25h32c6 0 10-4 10-12.5s-4-12.5-10-12.5h-32z" fill="white" transform="scale(1.1) translate(-22, -22)"/>
+  <!-- Grupo Centralizado -->
+  <g transform="translate(256 256)">
+    <!-- Borda da Tampinha (Cinza Metálico) -->
+    <!-- Reduzido para r=190 para garantir margem de segurança (Safe Zone) -->
+    <circle r="190" fill="#94a3b8"/>
+    
+    <!-- Detalhe da Borda (Anel mais escuro para dar profundidade sem usar sombra complexa) -->
+    <circle r="180" fill="#cbd5e1"/>
+    
+    <!-- Interior da Tampinha (Vermelho da Marca) -->
+    <circle r="160" fill="#b91c1c"/>
+    
+    <!-- Letra B (Branco Puro) - Desenhada manualmente no centro -->
+    <path fill="#ffffff" d="M-35 -70 H 25 C 55 -70 75 -50 75 -20 C 75 0 60 15 40 20 C 65 25 80 45 80 75 C 80 110 55 130 15 130 H -35 V -70 Z M 0 -40 V 10 H 25 C 40 10 45 0 45 -15 C 45 -30 40 -40 25 -40 H 0 Z M 0 40 V 100 H 30 C 50 100 50 90 50 70 C 50 50 45 40 30 40 H 0 Z" transform="translate(-15 -10)"/>
+  </g>
 </svg>
