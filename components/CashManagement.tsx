@@ -223,7 +223,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                   <div className="flex items-center gap-4">
                      <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl text-slate-400 shadow-inner">🔒</div>
                      <div>
-                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Cofre Principal</h3>
+                        <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Cofre</h3>
                         <p className="text-[10px] font-bold text-slate-500 uppercase">Reserva Segura</p>
                      </div>
                   </div>
