@@ -151,6 +151,9 @@ export interface Sale {
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
 export type Theme = 'light' | 'dark';
 
+// 12 horas em milissegundos
+export const SESSION_DURATION = 12 * 60 * 60 * 1000;
+
 export const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
