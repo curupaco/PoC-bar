@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem } from './types';
 import Sidebar from './components/Sidebar';
@@ -19,6 +20,33 @@ import { SyncQueue } from './utils/syncQueue';
 import { hashPassword } from './services/cryptoService';
 import LoadingScreen from './components/LoadingScreen';
 import { getFirebaseToken } from './services/firebaseService';
+
+// --- SAFE STORAGE UTILITY ---
+// Previne tela branca em navegadores com cookies bloqueados ou modo anônimo estrito
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn('LocalStorage Access Denied:', e);
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // Falha silenciosa
+    }
+  },
+  removeItem: (key: string) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // Falha silenciosa
+    }
+  }
+};
 
 const ALL_PERMISSIONS: UserPermission[] = [
   'dashboard', 'pos', 'products', 'history', 'reports', 'settings',
@@ -58,12 +86,12 @@ export const App: React.FC = () => {
   });
   
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('btq_theme');
+    const saved = safeLocalStorage.getItem('btq_theme');
     return (saved as Theme) || 'dark';
   });
 
   useEffect(() => {
-    localStorage.setItem('btq_theme', theme);
+    safeLocalStorage.setItem('btq_theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
@@ -97,7 +125,7 @@ export const App: React.FC = () => {
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
   
-  const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
+  const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => safeLocalStorage.getItem('btq_active_unit'));
 
   const visibleUnits = useMemo(() => {
     if (!currentUser) return [];
@@ -133,11 +161,11 @@ export const App: React.FC = () => {
     if (validatedActiveUnitId) {
        if (rawActiveUnitId !== validatedActiveUnitId) {
           setRawActiveUnitId(validatedActiveUnitId);
-          localStorage.setItem('btq_active_unit', validatedActiveUnitId);
+          safeLocalStorage.setItem('btq_active_unit', validatedActiveUnitId);
        }
     } else if (rawActiveUnitId && visibleUnits.length > 1) {
        setRawActiveUnitId(null);
-       localStorage.removeItem('btq_active_unit');
+       safeLocalStorage.removeItem('btq_active_unit');
     }
   }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
 
@@ -197,7 +225,7 @@ export const App: React.FC = () => {
 
   const handleSwitchUnit = () => {
     setRawActiveUnitId(null);
-    localStorage.removeItem('btq_active_unit');
+    safeLocalStorage.removeItem('btq_active_unit');
     setProducts([]); setSales([]); setOpenTabs([]); setShifts([]);
     setModifierGroups([]); setCategories([]); setCategoryModifiers({});
     setDbStatus('idle'); setLastSyncTime(null);
@@ -376,7 +404,7 @@ export const App: React.FC = () => {
             {visibleUnits.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {visibleUnits.map(unit => (
-                    <button key={unit.id} onClick={() => { setRawActiveUnitId(unit.id); localStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
+                    <button key={unit.id} onClick={() => { setRawActiveUnitId(unit.id); safeLocalStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
                         <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
                     </button>
