@@ -10,7 +10,7 @@ interface CashManagementProps {
   onViewChange?: (view: any) => void;
 }
 
-type OperationType = 'SANGRIA' | 'SUPPLY' | 'COLLECT_RESERVE' | null;
+type OperationType = 'SANGRIA' | 'SUPPLY' | null;
 
 const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts, sales, currentUser, onViewChange }) => {
   const activeShift = shifts.find(s => s.status === 'open');
@@ -76,8 +76,8 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
         return;
     }
 
-    let fromBox: 'Primary' | 'Change' | 'Secondary';
-    let toBox: 'Primary' | 'Change' | 'Secondary';
+    let fromBox: 'Primary' | 'Change';
+    let toBox: 'Primary' | 'Change';
 
     // Definição contextual das caixas baseada na operação
     switch (operation) {
@@ -95,14 +95,6 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
             toBox = 'Change';
             if (activeShift.cashPrimary < rawValue) {
                 setToast({ msg: "SALDO INSUFICIENTE NO COFRE", type: 'error' });
-                return;
-            }
-            break;
-        case 'COLLECT_RESERVE': // Reserva -> Cofre
-            fromBox = 'Secondary';
-            toBox = 'Primary';
-            if (activeShift.cashSecondary < rawValue) {
-                setToast({ msg: "SALDO INSUFICIENTE NA RESERVA", type: 'error' });
                 return;
             }
             break;
@@ -144,7 +136,6 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       switch(op) {
           case 'SANGRIA': return 'Realizar Sangria';
           case 'SUPPLY': return 'Enviar Suprimento';
-          case 'COLLECT_RESERVE': return 'Recolher Reserva';
           default: return '';
       }
   };
@@ -153,7 +144,6 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       switch(op) {
           case 'SANGRIA': return 'text-red-600';
           case 'SUPPLY': return 'text-emerald-500';
-          case 'COLLECT_RESERVE': return 'text-blue-500';
           default: return 'text-slate-800';
       }
   };
@@ -225,16 +215,11 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                      Realizar Sangria
                   </button>
                </div>
-
-               {/* Background Pattern */}
-               <div className="absolute -right-10 -bottom-10 opacity-5 pointer-events-none">
-                  <svg className="w-64 h-64 text-slate-900 dark:text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" /><path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" /></svg>
-               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* COFRE PRINCIPAL (ESTILO FORTE/SEGURO) */}
-                <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden group">
+                <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden group w-full md:col-span-2 lg:col-span-1">
                    <div className="relative z-10">
                       <div className="flex items-center gap-3 mb-6">
                          <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">🔒</div>
@@ -250,23 +235,6 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                       </button>
                    </div>
                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
-                </div>
-
-                {/* RESERVA (ESTILO SECUNDÁRIO) */}
-                <div className="bg-slate-100 dark:bg-slate-800 p-8 rounded-[40px] border border-slate-200 dark:border-slate-700 relative overflow-hidden">
-                   <div className="relative z-10">
-                      <div className="flex items-center gap-3 mb-6">
-                         <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 shadow-sm">💼</div>
-                         <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Reserva</h3>
-                      </div>
-                      <p className="text-3xl font-black tracking-tighter text-slate-700 dark:text-slate-300 mb-8">{formatCurrency(activeShift.cashSecondary)}</p>
-                      <button 
-                        onClick={() => { setOperation('COLLECT_RESERVE'); setKeypadValue(''); }}
-                        className="w-full bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:text-red-600 border border-slate-200 dark:border-slate-700 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all"
-                      >
-                         Recolher p/ Cofre
-                      </button>
-                   </div>
                 </div>
             </div>
         </div>

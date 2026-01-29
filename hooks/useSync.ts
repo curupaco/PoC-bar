@@ -80,13 +80,22 @@ export const useSync = (props: SyncProps) => {
     await SyncQueue.init();
     const item = SyncQueue.peek();
     if (!item) return;
-    const effectiveUnitId = item.unitId || activeUnitId;
-    if (!effectiveUnitId) return;
+
+    // LÓGICA CORRIGIDA: Permite escrita GLOBAL se unitId for 'GLOBAL'
+    let path = '';
+    if (item.unitId === 'GLOBAL') {
+        path = item.node; // Escreve na raiz (ex: 'users', 'units')
+    } else {
+        const effectiveUnitId = item.unitId || activeUnitId;
+        if (!effectiveUnitId) return; // Segurança: impede escrita sem unidade definida
+        path = `data/units/${effectiveUnitId}/${item.node}`;
+    }
+
     isProcessingQueue.current = true;
     try {
-        const path = `data/units/${effectiveUnitId}/${item.node}`;
         if (item.itemId) await saveItemToFirebase(config.url, item.data, item.itemId, undefined, token, path);
         else await saveToFirebase(config.url, item.data, undefined, token, path);
+        
         await SyncQueue.dequeue(item.id);
         isProcessingQueue.current = false;
         processQueue(token);
@@ -158,7 +167,7 @@ export const useSync = (props: SyncProps) => {
         { key: 'sales', setter: setSales },
         { key: 'shifts', setter: setShifts },
         { key: 'openTabs', setter: setOpenTabs },
-        { key: 'users', setter: setUsers } // Garantindo que Users também seja verificado
+        // Users removido daqui pois é global e tratado no fetchGlobal
       ];
 
       if (!initialLoadDone.current) {
@@ -207,8 +216,6 @@ export const useSync = (props: SyncProps) => {
         const serverTs = serverMeta[`${node.key}_ts`];
         const localTs = localMeta.current[node.key] || 0;
 
-        // Lógica de Sync: Só busca se o servidor tiver um timestamp MAIOR que o local.
-        // updateLocalTimestamp força o localTs para o futuro, prevenindo downloads indesejados.
         if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
           const query = limitConfig[node.key] || '';
           const path = `data/units/${activeUnitId}/${node.key}`;
@@ -255,6 +262,9 @@ export const useSync = (props: SyncProps) => {
   const fetchGlobal = useCallback(async () => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);
       if(token) {
+        // Tenta processar a fila mesmo sem unidade ativa, caso haja itens GLOBAIS pendentes
+        processQueue(token);
+        
         const [uRaw, unitsRaw] = await Promise.all([
             loadFromFirebase(config.url, undefined, token, 'users'),
             loadFromFirebase(config.url, undefined, token, 'units')
@@ -262,23 +272,24 @@ export const useSync = (props: SyncProps) => {
         if (uRaw !== null) setUsers(ensureArray(uRaw));
         if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
       }
-  }, [config, setUsers, setUnits]);
+  }, [config, setUsers, setUnits, processQueue]);
 
   useEffect(() => {
     fetchGlobal();
-    fetchData(); 
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [fetchData, fetchGlobal]);
+    if (activeUnitId) {
+        fetchData(); 
+        const interval = setInterval(fetchData, 10000);
+        return () => clearInterval(interval);
+    }
+  }, [fetchData, fetchGlobal, activeUnitId]);
 
   const refresh = useCallback(() => {
      localMeta.current = {};
      initialLoadDone.current = false;
      serverTombstones.current.clear();
      fetchGlobal();
-     fetchData();
-  }, [fetchGlobal, fetchData]);
+     if(activeUnitId) fetchData();
+  }, [fetchGlobal, fetchData, activeUnitId]);
 
-  // Exportar updateLocalTimestamp para uso no App.tsx
   return { refresh, registerLocalDeletion, updateLocalTimestamp };
 };

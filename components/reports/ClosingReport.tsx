@@ -170,7 +170,7 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
         {/* AUDITORIA DE CAIXAS (ABERTURA E FECHAMENTO) */}
         <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm">
            <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8 text-center italic">Auditoria de Saldos dos Compartimentos</h3>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* CAIXA PRIMÁRIO */}
               <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
                  <p className="text-[9px] font-black text-slate-400 uppercase text-center mb-4">Caixa Primário (Cofre)</p>
@@ -206,22 +206,6 @@ const ClosingReport: React.FC<ClosingReportProps> = ({
                        {shift.cashDifference > 0 ? `Sobra: ${formatCurrency(shift.cashDifference)}` : `Falta: ${formatCurrency(Math.abs(shift.cashDifference))}`}
                     </div>
                  )}
-              </div>
-
-              {/* CAIXA SECUNDÁRIO */}
-              <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
-                 <p className="text-[9px] font-black text-slate-400 uppercase text-center mb-4">Caixa Secundário</p>
-                 <div className="flex justify-between items-center px-2">
-                    <div className="text-center">
-                       <span className="text-[8px] font-bold text-slate-400 uppercase block">Abertura</span>
-                       <span className="text-sm font-black text-slate-600 dark:text-slate-400">{formatCurrency(shift.openingCashSecondary || 0)}</span>
-                    </div>
-                    <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" strokeWidth={3}/></svg>
-                    <div className="text-center">
-                       <span className="text-[8px] font-bold text-slate-500 uppercase block">Fechamento</span>
-                       <span className="text-sm font-black text-slate-800 dark:text-white">{formatCurrency(shift.finalCashSecondary || 0)}</span>
-                    </div>
-                 </div>
               </div>
            </div>
         </div>
