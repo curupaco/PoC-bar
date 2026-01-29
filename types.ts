@@ -1,4 +1,3 @@
-
 export enum PaymentMethod {
   PIX = 'PIX',
   DEBITO = 'Débito',
@@ -53,13 +52,13 @@ export interface User {
   allowedUnits?: string[];
 }
 
-// Nova Interface para Auditoria de Caixa
+// Interface para Auditoria de Caixa - Atualizada sem Secondary
 export interface CashTransaction {
   id: string;
   timestamp: number;
   type: 'transfer';
-  from: 'Primary' | 'Change' | 'Secondary';
-  to: 'Primary' | 'Change' | 'Secondary';
+  from: 'Primary' | 'Change';
+  to: 'Primary' | 'Change';
   amount: number;
   user: string;
 }
@@ -73,13 +72,13 @@ export interface Shift {
   status: 'open' | 'closed';
   cashPrimary: number;   
   cashChange: number;    
-  cashSecondary: number; 
+  cashSecondary?: number; // Tornal opcional para legado
   openingCashPrimary?: number;
   openingCashChange?: number;
-  openingCashSecondary?: number;
+  openingCashSecondary?: number; // Tornal opcional para legado
   finalCashPrimary?: number;
   finalCashChange?: number;
-  finalCashSecondary?: number;
+  finalCashSecondary?: number; // Tornal opcional para legado
   actualCashCounted?: number; 
   cashDifference?: number;
   transactions?: CashTransaction[]; // Log de movimentações

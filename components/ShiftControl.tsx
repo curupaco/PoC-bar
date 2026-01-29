@@ -15,7 +15,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   
   const [valPrimary, setValPrimary] = useState('');
   const [valChange, setValChange] = useState('');
-  const [valSecondary, setValSecondary] = useState('');
   const [actualCountedInput, setActualCountedInput] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -94,24 +93,22 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   const openingBalance = Number(activeShift?.openingCashChange) || 0;
   const expectedCashInDrawer = openingBalance + cashMovements.total + internalTransfers.net;
 
-  // Cálculo da diferença em tempo real para o modal
   const currentDifference = useMemo(() => {
       const counted = parseCurrencyValue(actualCountedInput);
       return counted - expectedCashInDrawer;
   }, [actualCountedInput, expectedCashInDrawer]);
 
-  // Cálculo do Total de Abertura (Item 3 do Plano)
+  // Totalizador Automático (Agora sem Secondary)
   const totalOpeningCapital = useMemo(() => {
-    return parseCurrencyValue(valPrimary) + parseCurrencyValue(valChange) + parseCurrencyValue(valSecondary);
-  }, [valPrimary, valChange, valSecondary]);
+    return parseCurrencyValue(valPrimary) + parseCurrencyValue(valChange);
+  }, [valPrimary, valChange]);
 
   const handleOpenShift = async () => {
     if (!canOpen) return;
     setOpenError(null);
     const pVal = parseCurrencyValue(valPrimary);
     const cVal = parseCurrencyValue(valChange);
-    const sVal = parseCurrencyValue(valSecondary);
-    if (pVal === 0 && cVal === 0 && sVal === 0) {
+    if (pVal === 0 && cVal === 0) {
       setOpenError("ABRIR ZERADO? NEM PENSAR! INFORME O FUNDO DE CAIXA. 💸");
       return;
     }
@@ -124,14 +121,12 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       status: 'open',
       cashPrimary: pVal,
       cashChange: cVal,
-      cashSecondary: sVal,
       openingCashPrimary: pVal,
       openingCashChange: cVal,
-      openingCashSecondary: sVal,
       transactions: []
     };
     onUpdateShifts([newShift, ...shifts], newShift);
-    setValPrimary(''); setValChange(''); setValSecondary('');
+    setValPrimary(''); setValChange('');
     setIsProcessing(false);
   };
 
@@ -141,15 +136,12 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     const calculatedPrimary = (activeShift.openingCashPrimary || 0) + 
         (activeShift.transactions?.filter(t => t.to === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0) -
         (activeShift.transactions?.filter(t => t.from === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0);
-    const calculatedSecondary = (activeShift.openingCashSecondary || 0) +
-        (activeShift.transactions?.filter(t => t.to === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0) -
-        (activeShift.transactions?.filter(t => t.from === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0);
     const difference = actualCounted - expectedCashInDrawer;
     
     const closedShift: Shift = { 
       ...activeShift, status: 'closed', endTime: Date.now(), closedBy: currentUser.username,
       finalCashPrimary: calculatedPrimary, finalCashChange: expectedCashInDrawer, 
-      finalCashSecondary: calculatedSecondary, actualCashCounted: actualCounted, cashDifference: difference
+      actualCashCounted: actualCounted, cashDifference: difference
     };
     onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
     setShowConferral(false); setActualCountedInput('');
@@ -157,9 +149,8 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   const getCompartmentIcon = (index: number) => {
      switch(index) {
-        case 0: return '🔐'; // Cofre (Segurança)
-        case 1: return '💸'; // Gaveta (Fluxo)
-        case 2: return '🐷'; // Reserva (Porquinho/Economia)
+        case 0: return '🔐'; // Cofre
+        case 1: return '💸'; // Gaveta
         default: return '💰';
      }
   };
@@ -206,7 +197,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
         </div>
       ) : (
         <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
-           {/* Item 1: Container "Card Físico" Sólido e Arredondado */}
            <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800">
               
               <div className="text-center mb-10">
@@ -214,7 +204,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Configure o capital inicial do dia</p>
               </div>
 
-              {/* Item 3: Totalizador Automático */}
               <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 mb-10 flex flex-col items-center">
                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Capital Inicial Total</span>
                  <span className={`text-4xl font-black tracking-tighter transition-all ${totalOpeningCapital > 0 ? 'text-emerald-600 scale-110' : 'text-slate-300'}`}>
@@ -222,12 +211,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                  </span>
               </div>
 
-              {/* Item 2: Inputs transformados em "Cards de Compartimento" */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              {/* Grid Ajustado para 2 colunas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
                  {[
                    { label: 'Fundo Cofre', val: valPrimary, set: setValPrimary, color: 'border-slate-200 focus-within:border-slate-400' },
-                   { label: 'Troco Gaveta', val: valChange, set: setValChange, color: 'border-emerald-200 focus-within:border-emerald-500 bg-emerald-50/30' },
-                   { label: 'Reserva', val: valSecondary, set: setValSecondary, color: 'border-blue-200 focus-within:border-blue-500' }
+                   { label: 'Troco Gaveta', val: valChange, set: setValChange, color: 'border-emerald-200 focus-within:border-emerald-500 bg-emerald-50/30' }
                  ].map((item, idx) => (
                    <div 
                      key={idx} 
@@ -260,15 +248,12 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                  </div>
               )}
 
-              {/* Item 4: Adequação da Paleta de Cores (Botão Vermelho) */}
               <button 
                  onClick={handleOpenShift} 
                  disabled={isProcessing} 
                  className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-[24px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 hover:shadow-xl shadow-red-600/20"
               >
-                 {isProcessing ? (
-                    'Processando...' 
-                 ) : (
+                 {isProcessing ? 'Processando...' : (
                     <>
                        <span>Iniciar Operação</span>
                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
@@ -284,7 +269,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
           <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-8">
              
-             {/* COLUNA DA ESQUERDA: EXTRATO DO SISTEMA */}
              <div className="flex-1 space-y-6">
                 <div className="mb-4">
                    <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Fechamento</h3>
@@ -321,7 +305,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                 </div>
              </div>
 
-             {/* COLUNA DA DIREITA: CONFERÊNCIA FÍSICA */}
              <div className="flex-1 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 md:pl-8 pt-6 md:pt-0">
                 <div className="space-y-6">
                    <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
@@ -340,7 +323,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                      </div>
                    </div>
 
-                   {/* Indicador de Diferença em Tempo Real */}
                    <div className={`p-4 rounded-2xl flex justify-between items-center border ${currentDifference === 0 ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800' : currentDifference > 0 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'}`}>
                       <span className={`text-[10px] font-black uppercase tracking-widest ${currentDifference === 0 ? 'text-slate-400' : currentDifference > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                          {currentDifference === 0 ? 'Caixa Batido' : currentDifference > 0 ? 'Sobra de Caixa' : 'Quebra de Caixa'}
