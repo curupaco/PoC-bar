@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -28,6 +28,10 @@ const ALL_PERMISSIONS: UserPermission[] = [
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  // REF PARA QUEBRAR LOOP DE DEPENDÊNCIAS
+  const currentUserRef = useRef<User | null>(null);
+  useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+
   const [activeView, setActiveView] = useState<View>('pos');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -108,19 +112,22 @@ export const App: React.FC = () => {
          const unitsChanged = JSON.stringify(currentUnits) !== JSON.stringify(freshUnits);
          
          if (permsChanged || unitsChanged) {
-            console.log("Atualizando sessão do usuário (Permissões/Unidades alteradas)");
+            console.log("Atualizando sessão do usuário (Sync)");
             setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
          }
       }
     }
-  }, [users, currentUser?.id]); // Removido currentUser completo da dependência
+  }, [users, currentUser?.id]);
 
-  // 3. Revogação de Estado (Cleanup)
+  // 3. Revogação de Estado (Cleanup Assíncrono)
   useEffect(() => {
      if (activeUnitId && !hasActiveUnitAccess) {
-        // Se perdeu acesso, limpa o estado e o storage
-        setActiveUnitId(null);
-        localStorage.removeItem('btq_active_unit');
+        // Envolve em setTimeout para evitar update durante renderização (React Warning/Loop)
+        const t = setTimeout(() => {
+            setActiveUnitId(null);
+            localStorage.removeItem('btq_active_unit');
+        }, 0);
+        return () => clearTimeout(t);
      }
   }, [activeUnitId, hasActiveUnitAccess]);
   // FIM DA ALTERAÇÃO
@@ -222,20 +229,20 @@ export const App: React.FC = () => {
     else persist('shifts', newShifts);
   }, [persist, updateLocalTimestamp]);
 
+  // STABILITY FIX: Uso de Ref para acessar currentUser sem depender dele no array de dependências
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
-    
-    // 1. Bloqueia leituras do servidor para 'users' por alguns segundos
     updateLocalTimestamp('users'); 
 
-    // 2. Atualização Reativa da Sessão (Reactive Session) - Edição Local
-    if (changedItem && currentUser && changedItem.id === currentUser.id) {
+    // Acessa valor atual via REF para não recriar a função e loopar o sync
+    const current = currentUserRef.current;
+    if (changedItem && current && changedItem.id === current.id) {
         setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
     }
 
     if (changedItem) persist('users', changedItem, changedItem.id);
     else persist('users', newUsers);
-  }, [persist, updateLocalTimestamp, currentUser]);
+  }, [persist, updateLocalTimestamp]); // currentUser removido das dependências
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
