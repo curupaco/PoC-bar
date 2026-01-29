@@ -81,34 +81,48 @@ export const App: React.FC = () => {
   
   const [activeUnitId, setActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
 
-  // INÍCIO DA ALTERAÇÃO: Monitoramento Reativo de Sessão e Acesso
-  // 1. Mantém o objeto currentUser atualizado quando a lista global 'users' muda (ex: sync remoto)
+  // INÍCIO DA ALTERAÇÃO: Safe Unit Logic & Loop Prevention
+  
+  // 1. Verificação de Acesso (Calculada ANTES do useSync para evitar fetch proibido)
+  const hasActiveUnitAccess = useMemo(() => {
+    if (!currentUser || !activeUnitId) return true; // Se não tem usuário ou unidade, não bloqueia lógica interna
+    if (currentUser.username === 'admin') return true;
+    return currentUser.allowedUnits?.includes(activeUnitId) || false;
+  }, [currentUser, activeUnitId]);
+
+  // Se não tem acesso, passamos null para o useSync para ele não tentar baixar dados proibidos
+  const safeActiveUnitId = hasActiveUnitAccess ? activeUnitId : null;
+
+  // 2. Monitoramento Reativo de Sessão (Com Deep Compare mais seguro)
   useEffect(() => {
     if (currentUser && users.length > 0) {
       const freshUser = users.find(u => u.id === currentUser.id);
       if (freshUser) {
-         // Compara permissões e unidades para evitar loops de renderização
-         const permsChanged = JSON.stringify(freshUser.permissions) !== JSON.stringify(currentUser.permissions);
-         const unitsChanged = JSON.stringify(freshUser.allowedUnits) !== JSON.stringify(currentUser.allowedUnits);
+         // Ordena arrays para garantir comparação consistente e evitar loops falsos
+         const currentPerms = [...(currentUser.permissions || [])].sort();
+         const freshPerms = [...(freshUser.permissions || [])].sort();
+         const currentUnits = [...(currentUser.allowedUnits || [])].sort();
+         const freshUnits = [...(freshUser.allowedUnits || [])].sort();
+
+         const permsChanged = JSON.stringify(currentPerms) !== JSON.stringify(freshPerms);
+         const unitsChanged = JSON.stringify(currentUnits) !== JSON.stringify(freshUnits);
          
          if (permsChanged || unitsChanged) {
-            // Atualiza sessão sem logout
+            console.log("Atualizando sessão do usuário (Permissões/Unidades alteradas)");
             setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
          }
       }
     }
-  }, [users, currentUser?.id]); 
+  }, [users, currentUser?.id]); // Removido currentUser completo da dependência
 
-  // 2. Revogação de Estado (Cleanup): Limpa o ID da unidade se perder acesso
+  // 3. Revogação de Estado (Cleanup)
   useEffect(() => {
-     if (activeUnitId && currentUser && currentUser.username !== 'admin') {
-        const hasAccess = currentUser.allowedUnits?.includes(activeUnitId);
-        if (!hasAccess) {
-           setActiveUnitId(null);
-           localStorage.removeItem('btq_active_unit');
-        }
+     if (activeUnitId && !hasActiveUnitAccess) {
+        // Se perdeu acesso, limpa o estado e o storage
+        setActiveUnitId(null);
+        localStorage.removeItem('btq_active_unit');
      }
-  }, [activeUnitId, currentUser]);
+  }, [activeUnitId, hasActiveUnitAccess]);
   // FIM DA ALTERAÇÃO
 
   const syncConfig = useMemo(() => ({ 
@@ -119,7 +133,7 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  // PERFORMANCE FIX: Memoizado para evitar recreação a cada render, o que causava loop no useSync
+  // PERFORMANCE FIX: Memoizado para evitar recreação a cada render
   const handleSetOpenTabs = useCallback((tabs: any) => {
     const sanitized = (!tabs) ? [] : (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map((t: any) => ({
       ...t,
@@ -128,14 +142,14 @@ export const App: React.FC = () => {
     setOpenTabs(sanitized);
   }, []);
 
-  // INÍCIO DA ALTERAÇÃO: Recebendo updateLocalTimestamp do useSync
+  // Hook de Sincronização usando o ID Seguro
   const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
-    setOpenTabs: handleSetOpenTabs, // Usando a função memoizada
+    setOpenTabs: handleSetOpenTabs,
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
-    activeUnitId, config: syncConfig
+    activeUnitId: safeActiveUnitId, // Usa o ID filtrado
+    config: syncConfig
   });
-  // FIM DA ALTERAÇÃO
 
   useEffect(() => {
     if (dbStatus === 'success') setLastSyncTime(Date.now());
@@ -208,15 +222,13 @@ export const App: React.FC = () => {
     else persist('shifts', newShifts);
   }, [persist, updateLocalTimestamp]);
 
-  // INÍCIO DA ALTERAÇÃO: Correção de Race Condition e Atualização Reativa de Sessão
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     
     // 1. Bloqueia leituras do servidor para 'users' por alguns segundos
-    // Isso impede que o 'useSync' baixe uma versão antiga do servidor e sobrescreva a edição local
     updateLocalTimestamp('users'); 
 
-    // 2. Atualização Reativa da Sessão (Reactive Session) - Edição Local (Admin editando a si mesmo)
+    // 2. Atualização Reativa da Sessão (Reactive Session) - Edição Local
     if (changedItem && currentUser && changedItem.id === currentUser.id) {
         setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
     }
@@ -224,7 +236,6 @@ export const App: React.FC = () => {
     if (changedItem) persist('users', changedItem, changedItem.id);
     else persist('users', newUsers);
   }, [persist, updateLocalTimestamp, currentUser]);
-  // FIM DA ALTERAÇÃO
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
@@ -320,10 +331,7 @@ export const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  // INÍCIO DA ALTERAÇÃO: Render Guard (Bloqueio Visual Imediato)
-  // Verifica permissão antes de renderizar qualquer conteúdo da unidade
-  const hasActiveUnitAccess = !activeUnitId || (currentUser.username === 'admin' || currentUser.allowedUnits?.includes(activeUnitId));
-
+  // Render Guard (Bloqueio Visual Imediato)
   if (!activeUnitId || !hasActiveUnitAccess) {
     const allowedUnits = currentUser.username === 'admin' ? units : units.filter(u => currentUser.allowedUnits?.includes(u.id) && u.isActive);
     return (
@@ -343,7 +351,6 @@ export const App: React.FC = () => {
       </div>
     );
   }
-  // FIM DA ALTERAÇÃO
 
   if (dbStatus === 'loading' && products.length === 0) return <LoadingScreen message="Conectando ao Bar..." />;
 
