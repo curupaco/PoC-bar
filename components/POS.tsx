@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat } from '../types';
 import WeightModal from './pos/modals/WeightModal';
@@ -86,22 +85,48 @@ export const POS: React.FC<POSProps> = ({
 
   const executeAddItem = useCallback((product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTabId) return;
-    const modPrice = modifier ? modifier.price : 0;
-    const effectiveUnitPrice = safeFloat(product.price + modPrice);
-    const newItem: SaleItem = { 
-      id: generateUniqueId('it'), 
-      productId: product.id, 
-      productName: product.name, 
-      category: product.category || 'GERAL', 
-      quantity, 
-      unitPrice: effectiveUnitPrice, 
-      totalPrice: safeFloat(quantity * effectiveUnitPrice), 
-      modifier 
-    };
-    if (onUpdateTabItem) onUpdateTabItem(activeTabId, newItem);
-    showFeedback(`+${quantity} ${product.name}`);
+
+    // INÍCIO DA ALTERAÇÃO: Agrupamento de Itens
+    // Verifica se já existe um item igual na comanda (mesmo produto e mesmo modificador)
+    const existingItem = tabItems.find(item => 
+        item.productId === product.id && 
+        (
+            (!item.modifier && !modifier) || 
+            (item.modifier && modifier && item.modifier.name === modifier.name && item.modifier.price === modifier.price)
+        )
+    );
+
+    if (existingItem) {
+        // Atualiza quantidade do item existente
+        const newQty = existingItem.quantity + quantity;
+        const updatedItem: SaleItem = {
+            ...existingItem,
+            quantity: newQty,
+            totalPrice: safeFloat(newQty * existingItem.unitPrice)
+        };
+        if (onUpdateTabItem) onUpdateTabItem(activeTabId, updatedItem);
+        showFeedback(`+${quantity} ${product.name}`);
+    } else {
+        // Cria novo item se não existir correspondência
+        const modPrice = modifier ? modifier.price : 0;
+        const effectiveUnitPrice = safeFloat(product.price + modPrice);
+        const newItem: SaleItem = { 
+          id: generateUniqueId('it'), 
+          productId: product.id, 
+          productName: product.name, 
+          category: product.category || 'GERAL', 
+          quantity, 
+          unitPrice: effectiveUnitPrice, 
+          totalPrice: safeFloat(quantity * effectiveUnitPrice), 
+          modifier 
+        };
+        if (onUpdateTabItem) onUpdateTabItem(activeTabId, newItem);
+        showFeedback(`+${quantity} ${product.name}`);
+    }
+    // FIM DA ALTERAÇÃO
+
     setModifierModalData(null);
-  }, [activeTabId, onUpdateTabItem, showFeedback]);
+  }, [activeTabId, tabItems, onUpdateTabItem, showFeedback]);
 
   const addToTab = useCallback((product: Product, quantity: number = 1) => {
     if (!activeTabId) { showFeedback("ABRA UMA COMANDA PRIMEIRO!"); return; }
@@ -273,6 +298,7 @@ export const POS: React.FC<POSProps> = ({
                         <div key={idx} className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between items-center">
                           <div className="flex-1">
                             <p className="text-[10px] font-black uppercase leading-tight">{item.productName}</p>
+                            {item.modifier && <p className="text-[9px] font-bold text-slate-400">+ {item.modifier.name}</p>}
                             <p className="text-[11px] font-black text-red-600 mt-1">{formatCurrency(item.totalPrice)}</p>
                           </div>
                           <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">

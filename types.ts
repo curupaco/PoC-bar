@@ -1,3 +1,4 @@
+
 export enum PaymentMethod {
   PIX = 'PIX',
   DEBITO = 'Débito',
@@ -52,13 +53,13 @@ export interface User {
   allowedUnits?: string[];
 }
 
-// Interface para Auditoria de Caixa - Atualizada sem Secondary
+// Nova Interface para Auditoria de Caixa
 export interface CashTransaction {
   id: string;
   timestamp: number;
   type: 'transfer';
-  from: 'Primary' | 'Change';
-  to: 'Primary' | 'Change';
+  from: 'Primary' | 'Change' | 'Secondary';
+  to: 'Primary' | 'Change' | 'Secondary';
   amount: number;
   user: string;
 }
@@ -72,13 +73,13 @@ export interface Shift {
   status: 'open' | 'closed';
   cashPrimary: number;   
   cashChange: number;    
-  cashSecondary?: number; // Tornal opcional para legado
+  cashSecondary: number; 
   openingCashPrimary?: number;
   openingCashChange?: number;
-  openingCashSecondary?: number; // Tornal opcional para legado
+  openingCashSecondary?: number;
   finalCashPrimary?: number;
   finalCashChange?: number;
-  finalCashSecondary?: number; // Tornal opcional para legado
+  finalCashSecondary?: number;
   actualCashCounted?: number; 
   cashDifference?: number;
   transactions?: CashTransaction[]; // Log de movimentações
@@ -149,9 +150,6 @@ export interface Sale {
 
 export type View = 'dashboard' | 'products' | 'pos' | 'history' | 'reports' | 'settings' | 'users' | 'shifts' | 'cash' | 'help';
 export type Theme = 'light' | 'dark';
-
-// 12 horas em milissegundos
-export const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
 export const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
