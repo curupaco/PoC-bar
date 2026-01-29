@@ -1,7 +1,7 @@
 {
   "name": "Botequista - Gestão de Bar",
   "short_name": "Botequista",
-  "id": "/?source=pwa_v3",
+  "id": "/?source=pwa_v4",
   "description": "Sistema completo para gestão de bar, PDV e relatórios financeiros.",
   "start_url": "/?source=pwa",
   "scope": "/",
@@ -12,16 +12,22 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "./logo.svg?v=3",
+      "src": "./logo.svg?v=4",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "./logo.svg?v=3",
+      "src": "./logo.svg?v=4",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "./logo.svg?v=4",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
