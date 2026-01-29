@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação Operacional
-**Versão:** 3.9.x
+**Versão:** 3.9.1 (UI Fix)
 **Stack:** React 19, Firebase RTDB, IndexedDB (Offline-First), Vercel Serverless Functions.
 
 ---
@@ -29,7 +29,7 @@ O **Botequista** é um sistema de gestão para bares focado em agilidade operaci
 - **Exportação de Fechamento:** Geração de imagem (PNG) do relatório final para envio via WhatsApp/E-mail.
 
 ### D. Tesouraria Visual (Novo)
-- **Interface Gráfica:** Representação visual dos compartimentos: **Gaveta Operacional**, **Cofre Principal** e **Reserva**.
+- **Interface Gráfica:** Representação visual dos compartimentos: **Gaveta Operacional**, **Cofre** e **Reserva**.
 - **Operações ATM:** Teclado numérico estilo caixa eletrônico para realizar:
     - **Sangrias:** Retirada de excesso da gaveta para o cofre.
     - **Suprimentos:** Entrada de troco do cofre para a gaveta.
