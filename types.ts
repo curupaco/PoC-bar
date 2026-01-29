@@ -50,7 +50,8 @@ export interface User {
   password: string;
   displayName: string;
   permissions: UserPermission[];
-  allowedUnits?: string[];
+  // Flexibilizado para aceitar objeto indexado vindo do Firebase
+  allowedUnits?: string[] | { [key: string]: string }; 
 }
 
 // Nova Interface para Auditoria de Caixa

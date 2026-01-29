@@ -90,10 +90,27 @@ export const App: React.FC = () => {
   // CALCULO CENTRALIZADO DE UNIDADES PERMITIDAS (Segurança Visual)
   const visibleUnits = useMemo(() => {
     if (!currentUser) return [];
+    
+    // Admin tem acesso irrestrito
+    if (currentUser.username === 'admin') return units;
+
+    // Normalização estrita de allowedUnits
+    let allowedStrings: string[] = [];
+    const rawAllowed = currentUser.allowedUnits;
+
+    if (Array.isArray(rawAllowed)) {
+        allowedStrings = rawAllowed.map(String);
+    } else if (typeof rawAllowed === 'object' && rawAllowed !== null) {
+        // Suporte a objetos indexados do Firebase {0: "id1", 1: "id2"}
+        allowedStrings = Object.values(rawAllowed).map(String);
+    }
+
+    // Se a lista de permitidos estiver vazia, retorna nada (bloqueio total)
+    if (allowedStrings.length === 0) return [];
+
     return units.filter(u => {
-        if (currentUser.username === 'admin') return true;
-        // Verifica se a unidade está ativa E se o ID está na lista permitida do usuário
-        return u.isActive && Array.isArray(currentUser.allowedUnits) && currentUser.allowedUnits.includes(u.id);
+        // Conversão explícita para String em ambos os lados para evitar falhas "1" !== 1
+        return u.isActive && allowedStrings.includes(String(u.id));
     });
   }, [currentUser, units]);
 
@@ -101,18 +118,27 @@ export const App: React.FC = () => {
   const validatedActiveUnitId = useMemo(() => {
     if (!currentUser) return null;
     
-    // Se o usuário só tem 1 unidade, força o ID dessa unidade
+    // Se o usuário só tem 1 unidade visível, força o ID dessa unidade
     if (visibleUnits.length === 1) {
        return visibleUnits[0].id;
     }
 
+    // Se não há unidades visíveis para este usuário, bloqueia tudo
+    if (visibleUnits.length === 0 && currentUser.username !== 'admin') {
+       return null;
+    }
+
     if (!rawActiveUnitId) return null;
-    if (currentUser.username === 'admin') return rawActiveUnitId;
+    
+    // Se admin, permite o ID bruto (desde que exista nas unidades carregadas)
+    if (currentUser.username === 'admin') {
+       return units.some(u => u.id === rawActiveUnitId) ? rawActiveUnitId : null;
+    }
     
     // Verifica contra a lista CALCULADA de unidades visíveis
     const hasAccess = visibleUnits.some(u => u.id === rawActiveUnitId);
     return hasAccess ? rawActiveUnitId : null;
-  }, [currentUser, rawActiveUnitId, visibleUnits]);
+  }, [currentUser, rawActiveUnitId, visibleUnits, units]);
 
   // Efeito para sincronizar o localStorage com a unidade validada
   useEffect(() => {
@@ -123,7 +149,6 @@ export const App: React.FC = () => {
        }
     } else if (rawActiveUnitId && visibleUnits.length > 1) {
        // Se tem ID no storage mas não é valido e o usuário tem multiplas escolhas, limpa
-       // (Se tiver só 1, o validatedActiveUnitId já pegou acima)
        setRawActiveUnitId(null);
        localStorage.removeItem('btq_active_unit');
     }
@@ -134,16 +159,15 @@ export const App: React.FC = () => {
     if (currentUser && users.length > 0) {
       const freshUser = users.find(u => u.id === currentUser.id);
       if (freshUser) {
-         const currentPerms = [...(currentUser.permissions || [])].sort();
-         const freshPerms = [...(freshUser.permissions || [])].sort();
-         const currentUnits = [...(currentUser.allowedUnits || [])].sort();
-         const freshUnits = [...(freshUser.allowedUnits || [])].sort();
-
-         const permsChanged = JSON.stringify(currentPerms) !== JSON.stringify(freshPerms);
-         const unitsChanged = JSON.stringify(currentUnits) !== JSON.stringify(freshUnits);
+         // Atualiza a sessão apenas se houver mudança relevante
+         const currentPerms = JSON.stringify([...(currentUser.permissions || [])].sort());
+         const freshPerms = JSON.stringify([...(freshUser.permissions || [])].sort());
          
-         if (permsChanged || unitsChanged) {
-            console.log("Atualizando sessão do usuário (Sync)");
+         const currentUnits = JSON.stringify(currentUser.allowedUnits || []);
+         const freshUnits = JSON.stringify(freshUser.allowedUnits || []);
+
+         if (currentPerms !== freshPerms || currentUnits !== freshUnits) {
+            console.log("Sessão atualizada com novas permissões");
             setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
          }
       }
@@ -287,9 +311,15 @@ export const App: React.FC = () => {
       setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS });
       return;
     }
+    // Procura no array de usuários carregado
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
-    if (found) setCurrentUser(found);
-    else setLoginError("Credenciais inválidas.");
+    
+    if (found) {
+        // CLONE PROFUNDO DO USUÁRIO para evitar referência mutável
+        setCurrentUser(JSON.parse(JSON.stringify(found)));
+    } else {
+        setLoginError("Credenciais inválidas.");
+    }
   };
 
   const isShiftOpen = useMemo(() => Array.isArray(shifts) && shifts.some(s => s.status === 'open'), [shifts]);
