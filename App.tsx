@@ -28,6 +28,7 @@ const ALL_PERMISSIONS: UserPermission[] = [
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  
   // REF PARA QUEBRAR LOOP DE DEPENDÊNCIAS
   const currentUserRef = useRef<User | null>(null);
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
@@ -83,26 +84,60 @@ export const App: React.FC = () => {
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
   
-  const [activeUnitId, setActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
+  // Estado BRUTO da unidade (pode conter valor inválido carregado do storage)
+  const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
 
-  // INÍCIO DA ALTERAÇÃO: Safe Unit Logic & Loop Prevention
-  
-  // 1. Verificação de Acesso (Calculada ANTES do useSync para evitar fetch proibido)
-  const hasActiveUnitAccess = useMemo(() => {
-    if (!currentUser || !activeUnitId) return true; // Se não tem usuário ou unidade, não bloqueia lógica interna
-    if (currentUser.username === 'admin') return true;
-    return currentUser.allowedUnits?.includes(activeUnitId) || false;
-  }, [currentUser, activeUnitId]);
+  // CALCULO CENTRALIZADO DE UNIDADES PERMITIDAS (Segurança Visual)
+  const visibleUnits = useMemo(() => {
+    if (!currentUser) return [];
+    return units.filter(u => {
+        if (currentUser.username === 'admin') return true;
+        // Verifica se a unidade está ativa E se o ID está na lista permitida do usuário
+        return u.isActive && Array.isArray(currentUser.allowedUnits) && currentUser.allowedUnits.includes(u.id);
+    });
+  }, [currentUser, units]);
 
-  // Se não tem acesso, passamos null para o useSync para ele não tentar baixar dados proibidos
-  const safeActiveUnitId = hasActiveUnitAccess ? activeUnitId : null;
+  // CORREÇÃO DE SEGURANÇA: Validação Síncrona (Derived State)
+  const validatedActiveUnitId = useMemo(() => {
+    if (!currentUser || !rawActiveUnitId) return null;
+    if (currentUser.username === 'admin') return rawActiveUnitId;
+    
+    // Verifica contra a lista CALCULADA de unidades visíveis para consistência total
+    const hasAccess = visibleUnits.some(u => u.id === rawActiveUnitId);
+    return hasAccess ? rawActiveUnitId : null;
+  }, [currentUser, rawActiveUnitId, visibleUnits]);
 
-  // 2. Monitoramento Reativo de Sessão (Com Deep Compare mais seguro)
+  // AUTO-SELEÇÃO: Se o usuário só tem 1 unidade, seleciona automaticamente
+  useEffect(() => {
+    if (!currentUser || visibleUnits.length !== 1) return;
+    
+    // Se não temos um ID validado, OU se o ID validado é diferente da única opção (caso de troca de permissão)
+    const singleUnitId = visibleUnits[0].id;
+    if (validatedActiveUnitId !== singleUnitId) {
+       console.log("Auto-selecting single unit:", singleUnitId);
+       setRawActiveUnitId(singleUnitId);
+       localStorage.setItem('btq_active_unit', singleUnitId);
+    }
+  }, [visibleUnits, validatedActiveUnitId, currentUser]);
+
+  // Efeito colateral apenas para limpar o Storage se houver inconsistência (Cleanup)
+  useEffect(() => {
+    if (rawActiveUnitId && !validatedActiveUnitId && currentUser && visibleUnits.length > 0) {
+       // Apenas limpa se não for o caso de auto-seleção pendente
+       const isAutoSelecting = visibleUnits.length === 1 && visibleUnits[0].id !== rawActiveUnitId;
+       if (!isAutoSelecting) {
+          console.warn(`Acesso revogado à unidade ${rawActiveUnitId}. Resetando.`);
+          setRawActiveUnitId(null);
+          localStorage.removeItem('btq_active_unit');
+       }
+    }
+  }, [rawActiveUnitId, validatedActiveUnitId, currentUser, visibleUnits]);
+
+  // Monitoramento Reativo de Sessão
   useEffect(() => {
     if (currentUser && users.length > 0) {
       const freshUser = users.find(u => u.id === currentUser.id);
       if (freshUser) {
-         // Ordena arrays para garantir comparação consistente e evitar loops falsos
          const currentPerms = [...(currentUser.permissions || [])].sort();
          const freshPerms = [...(freshUser.permissions || [])].sort();
          const currentUnits = [...(currentUser.allowedUnits || [])].sort();
@@ -119,19 +154,6 @@ export const App: React.FC = () => {
     }
   }, [users, currentUser?.id]);
 
-  // 3. Revogação de Estado (Cleanup Assíncrono)
-  useEffect(() => {
-     if (activeUnitId && !hasActiveUnitAccess) {
-        // Envolve em setTimeout para evitar update durante renderização (React Warning/Loop)
-        const t = setTimeout(() => {
-            setActiveUnitId(null);
-            localStorage.removeItem('btq_active_unit');
-        }, 0);
-        return () => clearTimeout(t);
-     }
-  }, [activeUnitId, hasActiveUnitAccess]);
-  // FIM DA ALTERAÇÃO
-
   const syncConfig = useMemo(() => ({ 
     url: 'https://poc-botequista-default-rtdb.firebaseio.com', 
     key: 'REMOVED_FIREBASE_API_KEY', 
@@ -140,7 +162,6 @@ export const App: React.FC = () => {
     allPerms: ALL_PERMISSIONS 
   }), []);
 
-  // PERFORMANCE FIX: Memoizado para evitar recreação a cada render
   const handleSetOpenTabs = useCallback((tabs: any) => {
     const sanitized = (!tabs) ? [] : (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map((t: any) => ({
       ...t,
@@ -149,12 +170,12 @@ export const App: React.FC = () => {
     setOpenTabs(sanitized);
   }, []);
 
-  // Hook de Sincronização usando o ID Seguro
+  // Hook de Sincronização usando o ID VALIDADO (Nunca usa o raw)
   const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
     setOpenTabs: handleSetOpenTabs,
     setUsers, setShifts, setUnits, setCategories, setDbStatus,
-    activeUnitId: safeActiveUnitId, // Usa o ID filtrado
+    activeUnitId: validatedActiveUnitId, 
     config: syncConfig
   });
 
@@ -163,12 +184,12 @@ export const App: React.FC = () => {
   }, [dbStatus]);
 
   const persist = useCallback((node: string, data: any, itemId?: string) => {
-    if (!activeUnitId) return;
-    SyncQueue.enqueue({ node, data, itemId, unitId: activeUnitId, action: 'overwrite' });
-  }, [activeUnitId]);
+    if (!validatedActiveUnitId) return;
+    SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
+  }, [validatedActiveUnitId]);
 
   const handleSwitchUnit = () => {
-    setActiveUnitId(null);
+    setRawActiveUnitId(null);
     localStorage.removeItem('btq_active_unit');
     setProducts([]); setSales([]); setOpenTabs([]); setShifts([]);
     setModifierGroups([]); setCategories([]); setCategoryModifiers({});
@@ -229,12 +250,10 @@ export const App: React.FC = () => {
     else persist('shifts', newShifts);
   }, [persist, updateLocalTimestamp]);
 
-  // STABILITY FIX: Uso de Ref para acessar currentUser sem depender dele no array de dependências
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     updateLocalTimestamp('users'); 
 
-    // Acessa valor atual via REF para não recriar a função e loopar o sync
     const current = currentUserRef.current;
     if (changedItem && current && changedItem.id === current.id) {
         setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
@@ -242,7 +261,7 @@ export const App: React.FC = () => {
 
     if (changedItem) persist('users', changedItem, changedItem.id);
     else persist('users', newUsers);
-  }, [persist, updateLocalTimestamp]); // currentUser removido das dependências
+  }, [persist, updateLocalTimestamp]);
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
@@ -278,26 +297,12 @@ export const App: React.FC = () => {
      }, 0);
   }, [sales]);
 
-  // Lógica de Exportação de Backup
   const handleExportData = useCallback(() => {
     const backupData = {
-      products,
-      sales,
-      users,
-      shifts,
-      openTabs,
-      modifierGroups,
-      categoryModifiers,
-      categories,
-      units,
+      products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units,
       config: { penduraThreshold, longDurationThreshold },
-      meta: {
-        exportedAt: Date.now(),
-        exportedBy: currentUser?.username,
-        systemVersion: '3.9.x'
-      }
+      meta: { exportedAt: Date.now(), exportedBy: currentUser?.username, systemVersion: '3.9.x' }
     };
-
     const jsonString = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -310,14 +315,8 @@ export const App: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, penduraThreshold, longDurationThreshold, currentUser]);
 
-  // Lógica de Importação/Restauração
   const handleDataManagement = useCallback((data: any) => {
-    if (data === 'EXPORT_NOW') {
-      handleExportData();
-      return;
-    }
-
-    // Importação de Dados
+    if (data === 'EXPORT_NOW') { handleExportData(); return; }
     if (data) {
       if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); persist('products', data.products); }
       if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); persist('sales', data.sales); }
@@ -328,7 +327,6 @@ export const App: React.FC = () => {
       if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); persist('categoryModifiers', data.categoryModifiers); }
       if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); persist('categories', data.categories); }
       if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); persist('openTabs', data.openTabs); }
-      
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
@@ -338,21 +336,28 @@ export const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  // Render Guard (Bloqueio Visual Imediato)
-  if (!activeUnitId || !hasActiveUnitAccess) {
-    const allowedUnits = currentUser.username === 'admin' ? units : units.filter(u => currentUser.allowedUnits?.includes(u.id) && u.isActive);
+  // RENDER GUARD - BLOQUEIO VISUAL IMEDIATO
+  // Se não temos um ID validado, mostramos a seleção de unidades (Filtrada rigorosamente por visibleUnits)
+  if (!validatedActiveUnitId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
          <div className="max-w-2xl w-full animate-in fade-in zoom-in-95">
             <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-10 text-center italic">Qual o Bar de hoje?</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-               {allowedUnits.map(unit => (
-                  <button key={unit.id} onClick={() => { setActiveUnitId(unit.id); localStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
-                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
-                  </button>
-               ))}
-            </div>
+            {visibleUnits.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {visibleUnits.map(unit => (
+                    <button key={unit.id} onClick={() => { setRawActiveUnitId(unit.id); localStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
+                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
+                    </button>
+                ))}
+                </div>
+            ) : (
+                <div className="text-center py-10 bg-slate-100 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800">
+                    <p className="text-slate-500 font-bold uppercase text-xs">Nenhuma unidade disponível para seu perfil.</p>
+                    <p className="text-slate-400 text-[10px] mt-2">Contate o administrador.</p>
+                </div>
+            )}
             <button onClick={handleLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
          </div>
       </div>
@@ -361,7 +366,7 @@ export const App: React.FC = () => {
 
   if (dbStatus === 'loading' && products.length === 0) return <LoadingScreen message="Conectando ao Bar..." />;
 
-  const activeUnitName = units.find(u => u.id === activeUnitId)?.name || 'Bar';
+  const activeUnitName = units.find(u => u.id === validatedActiveUnitId)?.name || 'Bar';
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
@@ -376,11 +381,13 @@ export const App: React.FC = () => {
                 <div className="flex flex-col justify-center">
                    <h2 className="text-lg md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase">Botequista</h2>
                    <div className="flex items-center gap-2 mt-1 md:mt-1.5">
-                      <button onClick={handleSwitchUnit} className="bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all cursor-pointer">
+                      <button onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined} className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}>
                          {activeUnitName}
-                         <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                         {visibleUnits.length > 1 && <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
                       </button>
-                      <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
+                      {visibleUnits.length > 1 && (
+                        <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
+                      )}
                    </div>
                 </div>
              </div>
@@ -416,8 +423,8 @@ export const App: React.FC = () => {
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
-              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={activeUnitId} syncConfig={syncConfig} />}
-              {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={activeUnitId} syncConfig={syncConfig} theme={theme} />}
+              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
+              {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} theme={theme} />}
               {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
           </div>
