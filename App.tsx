@@ -99,7 +99,7 @@ export const App: React.FC = () => {
     }
   }, [users, currentUser?.id]); 
 
-  // 2. Revogação Instantânea: Se perdeu acesso à unidade atual, expulsa para seleção
+  // 2. Revogação de Estado (Cleanup): Limpa o ID da unidade se perder acesso
   useEffect(() => {
      if (activeUnitId && currentUser && currentUser.username !== 'admin') {
         const hasAccess = currentUser.allowedUnits?.includes(activeUnitId);
@@ -320,7 +320,11 @@ export const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  if (!activeUnitId) {
+  // INÍCIO DA ALTERAÇÃO: Render Guard (Bloqueio Visual Imediato)
+  // Verifica permissão antes de renderizar qualquer conteúdo da unidade
+  const hasActiveUnitAccess = !activeUnitId || (currentUser.username === 'admin' || currentUser.allowedUnits?.includes(activeUnitId));
+
+  if (!activeUnitId || !hasActiveUnitAccess) {
     const allowedUnits = currentUser.username === 'admin' ? units : units.filter(u => currentUser.allowedUnits?.includes(u.id) && u.isActive);
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
@@ -339,6 +343,7 @@ export const App: React.FC = () => {
       </div>
     );
   }
+  // FIM DA ALTERAÇÃO
 
   if (dbStatus === 'loading' && products.length === 0) return <LoadingScreen message="Conectando ao Bar..." />;
 
