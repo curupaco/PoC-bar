@@ -13,6 +13,7 @@ import Settings from './components/Settings';
 import Help from './components/Help';
 import Login from './components/Login';
 import FeedbackModal from './components/FeedbackModal';
+import ConfirmationModal from './components/ConfirmationModal'; // Novo Import
 import { useSync } from './hooks/useSync';
 import { SyncQueue } from './utils/syncQueue';
 import { hashPassword } from './services/cryptoService';
@@ -29,7 +30,6 @@ const ALL_PERMISSIONS: UserPermission[] = [
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   
-  // REF PARA QUEBRAR LOOP DE DEPENDÊNCIAS
   const currentUserRef = useRef<User | null>(null);
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
@@ -43,6 +43,19 @@ export const App: React.FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
+  
+  // Estado para Modal de Confirmação Global (Tipado corretamente)
+  const [confirmModal, setConfirmModal] = useState<{ 
+    isOpen: boolean; 
+    title: string; 
+    message: string; 
+    onConfirm: () => void; 
+    isDanger?: boolean;
+    confirmLabel?: string;
+    cancelLabel?: string;
+  }>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, isDanger: false
+  });
   
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = localStorage.getItem('btq_theme');
@@ -84,63 +97,38 @@ export const App: React.FC = () => {
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
   
-  // Estado BRUTO da unidade (pode conter valor inválido carregado do storage)
   const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => localStorage.getItem('btq_active_unit'));
 
-  // CALCULO CENTRALIZADO DE UNIDADES PERMITIDAS (Segurança Visual)
   const visibleUnits = useMemo(() => {
     if (!currentUser) return [];
-    
-    // Admin tem acesso irrestrito
     if (currentUser.username === 'admin') return units;
 
-    // Normalização estrita de allowedUnits
     let allowedStrings: string[] = [];
     const rawAllowed = currentUser.allowedUnits;
 
     if (Array.isArray(rawAllowed)) {
         allowedStrings = rawAllowed.map(String);
     } else if (typeof rawAllowed === 'object' && rawAllowed !== null) {
-        // Suporte a objetos indexados do Firebase {0: "id1", 1: "id2"}
         allowedStrings = Object.values(rawAllowed).map(String);
     }
 
-    // Se a lista de permitidos estiver vazia, retorna nada (bloqueio total)
     if (allowedStrings.length === 0) return [];
 
     return units.filter(u => {
-        // Conversão explícita para String em ambos os lados para evitar falhas "1" !== 1
         return u.isActive && allowedStrings.includes(String(u.id));
     });
   }, [currentUser, units]);
 
-  // CORREÇÃO DE SEGURANÇA: Validação Síncrona (Derived State)
   const validatedActiveUnitId = useMemo(() => {
     if (!currentUser) return null;
-    
-    // Se o usuário só tem 1 unidade visível, força o ID dessa unidade
-    if (visibleUnits.length === 1) {
-       return visibleUnits[0].id;
-    }
-
-    // Se não há unidades visíveis para este usuário, bloqueia tudo
-    if (visibleUnits.length === 0 && currentUser.username !== 'admin') {
-       return null;
-    }
-
+    if (visibleUnits.length === 1) return visibleUnits[0].id;
+    if (visibleUnits.length === 0 && currentUser.username !== 'admin') return null;
     if (!rawActiveUnitId) return null;
-    
-    // Se admin, permite o ID bruto (desde que exista nas unidades carregadas)
-    if (currentUser.username === 'admin') {
-       return units.some(u => u.id === rawActiveUnitId) ? rawActiveUnitId : null;
-    }
-    
-    // Verifica contra a lista CALCULADA de unidades visíveis
+    if (currentUser.username === 'admin') return units.some(u => u.id === rawActiveUnitId) ? rawActiveUnitId : null;
     const hasAccess = visibleUnits.some(u => u.id === rawActiveUnitId);
     return hasAccess ? rawActiveUnitId : null;
   }, [currentUser, rawActiveUnitId, visibleUnits, units]);
 
-  // Efeito para sincronizar o localStorage com a unidade validada
   useEffect(() => {
     if (validatedActiveUnitId) {
        if (rawActiveUnitId !== validatedActiveUnitId) {
@@ -148,21 +136,17 @@ export const App: React.FC = () => {
           localStorage.setItem('btq_active_unit', validatedActiveUnitId);
        }
     } else if (rawActiveUnitId && visibleUnits.length > 1) {
-       // Se tem ID no storage mas não é valido e o usuário tem multiplas escolhas, limpa
        setRawActiveUnitId(null);
        localStorage.removeItem('btq_active_unit');
     }
   }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
 
-  // Monitoramento Reativo de Sessão
   useEffect(() => {
     if (currentUser && users.length > 0) {
       const freshUser = users.find(u => u.id === currentUser.id);
       if (freshUser) {
-         // Atualiza a sessão apenas se houver mudança relevante
          const currentPerms = JSON.stringify([...(currentUser.permissions || [])].sort());
          const freshPerms = JSON.stringify([...(freshUser.permissions || [])].sort());
-         
          const currentUnits = JSON.stringify(currentUser.allowedUnits || []);
          const freshUnits = JSON.stringify(freshUser.allowedUnits || []);
 
@@ -190,7 +174,6 @@ export const App: React.FC = () => {
     setOpenTabs(sanitized);
   }, []);
 
-  // Hook de Sincronização usando o ID VALIDADO (Nunca usa o raw)
   const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales, 
     setOpenTabs: handleSetOpenTabs,
@@ -208,7 +191,6 @@ export const App: React.FC = () => {
     SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
   }, [validatedActiveUnitId]);
 
-  // NOVO: Persistência Global (Users/Units)
   const persistGlobal = useCallback((node: string, data: any, itemId?: string) => {
     SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
   }, []);
@@ -222,8 +204,24 @@ export const App: React.FC = () => {
     refresh(); 
   };
 
-  const handleLogout = () => {
-    handleSwitchUnit(); setCurrentUser(null);
+  // Logout Real
+  const performLogout = () => {
+    handleSwitchUnit(); 
+    setCurrentUser(null);
+    setConfirmModal(prev => ({...prev, isOpen: false}));
+  };
+
+  // Solicitação de Logout (Abre Modal) - Agora com textos temáticos de Bar
+  const requestLogout = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Vai abandonar o barco?',
+      message: 'O bar vai sentir sua falta. Tem certeza que quer sair agora?',
+      onConfirm: performLogout,
+      confirmLabel: 'Passar a Régua',
+      cancelLabel: 'Pedir a Saideira',
+      isDanger: true
+    });
   };
 
   const handleSaveTab = useCallback((tab: Tab) => {
@@ -275,7 +273,6 @@ export const App: React.FC = () => {
     else persist('shifts', newShifts);
   }, [persist, updateLocalTimestamp]);
 
-  // UPDATE USERS AGORA USA PERSIST GLOBAL
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     updateLocalTimestamp('users'); 
@@ -289,7 +286,6 @@ export const App: React.FC = () => {
     else persistGlobal('users', newUsers);
   }, [persistGlobal, updateLocalTimestamp]);
 
-  // NOVA FUNÇÃO PARA UNITS GLOBAL
   const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
       setUnits(newUnits);
       persistGlobal('units', newUnits);
@@ -311,11 +307,8 @@ export const App: React.FC = () => {
       setCurrentUser({ id: 'admin', username: 'admin', password: 'admin', displayName: 'Administrador', permissions: ALL_PERMISSIONS });
       return;
     }
-    // Procura no array de usuários carregado
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
-    
     if (found) {
-        // CLONE PROFUNDO DO USUÁRIO para evitar referência mutável
         setCurrentUser(JSON.parse(JSON.stringify(found)));
     } else {
         setLoginError("Credenciais inválidas.");
@@ -358,7 +351,6 @@ export const App: React.FC = () => {
     if (data) {
       if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); persist('products', data.products); }
       if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); persist('sales', data.sales); }
-      // Correção na importação para usar Global
       if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); persistGlobal('users', data.users); }
       if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); persist('shifts', data.shifts); }
       if (data.units) { setUnits(data.units); persistGlobal('units', data.units); }
@@ -376,7 +368,6 @@ export const App: React.FC = () => {
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  // RENDER GUARD - SELEÇÃO DE UNIDADE
   if (!validatedActiveUnitId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
@@ -397,8 +388,19 @@ export const App: React.FC = () => {
                     <p className="text-slate-400 text-[10px] mt-2">Contate o administrador.</p>
                 </div>
             )}
-            <button onClick={handleLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
+            <button onClick={requestLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
          </div>
+         {/* Modal de Confirmação para a tela de Seleção de Unidade */}
+         <ConfirmationModal
+            isOpen={confirmModal.isOpen}
+            title={confirmModal.title}
+            message={confirmModal.message}
+            onConfirm={confirmModal.onConfirm}
+            onCancel={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
+            isDanger={confirmModal.isDanger}
+            confirmLabel={confirmModal.confirmLabel}
+            cancelLabel={confirmModal.cancelLabel}
+         />
       </div>
     );
   }
@@ -409,7 +411,8 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
-       <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={handleLogout} onSwitchUnit={handleSwitchUnit} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
+       {/* Sidebar recebe requestLogout para acionar o modal global */}
+       <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={requestLogout} onSwitchUnit={handleSwitchUnit} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
        
        <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
           <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 p-3 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[40px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
@@ -417,16 +420,20 @@ export const App: React.FC = () => {
                 <button onClick={() => setIsSidebarOpen(true)} className="md:hidden w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-white transition-all active:scale-95">
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                 </button>
-                <div className="flex flex-col justify-center">
-                   <h2 className="text-lg md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase">Botequista</h2>
-                   <div className="flex items-center gap-2 mt-1 md:mt-1.5">
-                      <button onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined} className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}>
-                         {activeUnitName}
-                         {visibleUnits.length > 1 && <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
-                      </button>
-                      {visibleUnits.length > 1 && (
-                        <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
-                      )}
+                
+                {/* LOGO NO MOBILE - Apenas Tipografia (Sem Ícone SVG duplicado) */}
+                <div className="flex items-center gap-3">
+                   <div className="flex flex-col justify-center">
+                      <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
+                      <div className="flex items-center gap-2 mt-1 md:mt-1.5">
+                          <button onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined} className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}>
+                            {activeUnitName}
+                            {visibleUnits.length > 1 && <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
+                          </button>
+                          {visibleUnits.length > 1 && (
+                            <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
+                          )}
+                      </div>
                    </div>
                 </div>
              </div>
@@ -493,7 +500,20 @@ export const App: React.FC = () => {
             </div>
           )}
        </main>
+       
        <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
+       
+       {/* Modal Global de Confirmação (Estilo System Screen) */}
+       <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
+          isDanger={confirmModal.isDanger}
+          confirmLabel={confirmModal.confirmLabel}
+          cancelLabel={confirmModal.cancelLabel}
+       />
     </div>
   );
 };

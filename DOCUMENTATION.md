@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação Operacional
-**Versão:** 3.9.1 (UI Fix)
+**Versão:** 3.9.3 (Fix UI & Security)
 **Stack:** React 19, Firebase RTDB, IndexedDB (Offline-First), Vercel Serverless Functions.
 
 ---
@@ -49,6 +49,7 @@ O **Botequista** é um sistema de gestão para bares focado em agilidade operaci
 - **Busca Híbrida:** O histórico de vendas utiliza uma estratégia dupla:
     1. **Local:** Para dados recentes e performance instantânea.
     2. **Cloud (API):** Para buscar vendas antigas no servidor sem pesar o navegador.
+- **Otimização Mobile:** Timeout de requisição ajustado para 60s para suportar alta latência de redes móveis (3G/4G).
 - **Multi-Unidade:** Suporte nativo para redes de bares (Franquias), com isolamento total de dados entre unidades.
 
 ### B. Relatórios Gerenciais
@@ -72,6 +73,7 @@ O sistema possui um controle granular de acesso dividido em perfis:
 - **Operação:** Acesso ao PDV e Abertura de Turno.
 - **Gerência:** Acesso a Relatórios, Cancelamento de Vendas e Edição de Produtos.
 - **Administração:** Acesso total, incluindo Gestão de Unidades, Backups e Reset de Sistema.
+- **Logout Seguro:** Confirmação obrigatória (`window.confirm`) antes de encerrar a sessão para evitar toques acidentais no mobile.
 
 ---
 *Documentação gerada automaticamente pelo Botequista System.*

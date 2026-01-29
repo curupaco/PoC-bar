@@ -20,8 +20,8 @@ interface SidebarProps {
   theme: Theme;
 }
 
-// Logo Vetorial Inline (Consistência visual com LoadingScreen e eliminação de bugs de imagem quebrada)
-const LogoIcon = ({ className }: { className?: string }) => (
+// Restauração do Ícone Vetorial (Tampinha) para a Sidebar
+export const LogoIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="50" cy="52" r="46" fill="black" fillOpacity="0.2" />
     <path d="M50 4L54.1 8.8L60.3 7.6L63.2 13.1L69.4 13.2L71.1 19.3L77 20.7L77.4 26.9L82.1 29.6L81.2 35.8L84.8 39.8L82.6 45.6L85 51.3L81.6 56.4L82.6 62.6L78.1 66.5L78.1 72.7L72.4 75.3L70.6 81.3L64.8 82.5L61.7 87.9L55.5 87.6L51.3 92.2L46 90.1L40.9 93.3L36.2 89.2L30.1 90.7L26.7 85.5L20.5 85.1L18.4 79.1L12.9 77.1L12.1 70.9L7.2 67.5L7.8 61.3L4 57.1L6.1 51.4L4 45.6L7.2 40.5L6 34.3L10.3 30.2L10.4 24L15.6 21.2L17.2 15.2L23 13.7L25.9 8.2L32.1 8.2L36 3L42.2 4.4L47.3 1.2L50 4Z" fill="#94a3b8" />
@@ -76,7 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`group w-full flex items-center gap-4 p-3 rounded-2xl transition-all duration-200 relative
           ${isActive 
             ? 'bg-red-600 text-white shadow-lg shadow-red-900/20' 
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }`}
         title={isCollapsed ? label : ''}
       >
@@ -104,9 +104,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const SectionTitle = ({ label }: { label: string }) => {
-    if (isCollapsed) return <div className="h-px bg-slate-800 my-4 mx-2"></div>;
+    if (isCollapsed) return <div className="h-px bg-slate-200 dark:bg-slate-800 my-4 mx-2"></div>;
     return (
-      <h3 className="px-3 mb-3 text-[9px] font-black uppercase text-slate-500 tracking-[0.2em] mt-6">
+      <h3 className="px-3 mb-3 text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em] mt-6">
         {label}
       </h3>
     );
@@ -121,22 +121,26 @@ const Sidebar: React.FC<SidebarProps> = ({
       />
 
       <aside
-        className={`fixed md:absolute top-0 left-0 h-full bg-[#0B1120] border-r border-slate-800 z-[100] transition-all duration-300 flex flex-col ${
+        className={`fixed md:absolute top-0 left-0 h-full bg-white dark:bg-[#0B1120] border-r border-slate-200 dark:border-slate-800 z-[100] transition-all duration-300 flex flex-col ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         } ${isCollapsed ? 'w-20' : 'w-64'}`}
       >
-        {/* 1. LOGO & TOGGLE */}
-        <div className={`h-28 flex items-center shrink-0 ${isCollapsed ? 'justify-center flex-col gap-4 py-4' : 'justify-between px-6'}`}>
-           <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center w-full' : ''}`}>
+        {/* 1. LOGO & TOGGLE - Layout corrigido com Position Absolute para evitar saltos */}
+        <div className={`h-28 flex items-center shrink-0 relative transition-all duration-300 ${isCollapsed ? 'justify-center' : 'px-6'}`}>
+           <div className={`flex items-center gap-3 transition-all duration-300 ${isCollapsed ? 'scale-90 mb-6' : ''}`}>
               <LogoIcon className="w-10 h-10 drop-shadow-lg shrink-0" />
               {!isCollapsed && (
-                <span className="font-barrio text-2xl text-white tracking-tight animate-in fade-in duration-300">BOTEQUISTA</span>
+                <span className="font-barrio text-2xl text-slate-900 dark:text-white tracking-tight animate-in fade-in duration-300">BOTEQUISTA</span>
               )}
            </div>
            
            <button 
              onClick={onToggleCollapse} 
-             className="hidden md:flex text-slate-500 hover:text-white transition-colors p-2 rounded-xl hover:bg-white/10 active:scale-95"
+             className={`hidden md:flex items-center justify-center text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all duration-300 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 active:scale-95 absolute ${
+                isCollapsed 
+                  ? 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-8' 
+                  : 'top-1/2 right-6 -translate-y-1/2'
+             }`}
              title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
            >
              {isCollapsed ? (
@@ -217,7 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* 5. FIXO (Guia, Usuário, Sair) */}
-        <div className="p-4 border-t border-slate-800 bg-[#0B1120] space-y-2">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1120] space-y-2">
             
             {/* Guia */}
             <NavItem 
@@ -229,29 +233,29 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {/* User Profile */}
             {currentUser && (
-              <div className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-900 border border-slate-800 ${isCollapsed ? 'justify-center' : ''}`}>
+              <div className={`flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ${isCollapsed ? 'justify-center' : ''}`}>
                  <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-[10px] font-black text-white shrink-0 shadow-lg shadow-red-900/20">
                     {currentUser.username.slice(0, 2).toUpperCase()}
                  </div>
                  {!isCollapsed && (
                     <div className="flex-1 min-w-0 overflow-hidden">
-                       <p className="text-[10px] font-black text-white uppercase truncate">{currentUser.displayName}</p>
+                       <p className="text-[10px] font-black text-slate-900 dark:text-white uppercase truncate">{currentUser.displayName}</p>
                        <p className="text-[8px] font-bold text-slate-500 uppercase truncate">@{currentUser.username}</p>
                     </div>
                  )}
               </div>
             )}
 
-            {/* Sair */}
+            {/* Sair (Simples trigger - O App lida com a confirmação) */}
             <button 
               onClick={onLogout}
-              className={`group w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 border border-slate-800 hover:border-slate-600 hover:bg-slate-800 ${isCollapsed ? 'justify-center' : ''}`}
+              className={`group w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 ${isCollapsed ? 'justify-center' : ''}`}
             >
-               <div className="w-6 h-6 flex items-center justify-center text-slate-500 group-hover:text-white transition-colors">
+               <div className="w-6 h-6 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                </div>
                {!isCollapsed && (
-                 <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-white tracking-widest animate-in slide-in-from-left-2">Sair</span>
+                 <span className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white tracking-widest animate-in slide-in-from-left-2">Sair</span>
                )}
             </button>
         </div>

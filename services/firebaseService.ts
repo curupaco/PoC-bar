@@ -36,7 +36,8 @@ const ensureArray = (data: any): any[] => {
 };
 
 // FIX 3: Timeout Wrapper para Fetch
-const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 15000): Promise<Response> => {
+// AUMENTADO PARA 60s (Mobile Fix): Redes móveis têm latência alta. 15s causava aborto prematuro.
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 60000): Promise<Response> => {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
   try {
