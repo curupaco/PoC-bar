@@ -99,39 +99,35 @@ export const App: React.FC = () => {
 
   // CORREÇÃO DE SEGURANÇA: Validação Síncrona (Derived State)
   const validatedActiveUnitId = useMemo(() => {
-    if (!currentUser || !rawActiveUnitId) return null;
+    if (!currentUser) return null;
+    
+    // Se o usuário só tem 1 unidade, força o ID dessa unidade
+    if (visibleUnits.length === 1) {
+       return visibleUnits[0].id;
+    }
+
+    if (!rawActiveUnitId) return null;
     if (currentUser.username === 'admin') return rawActiveUnitId;
     
-    // Verifica contra a lista CALCULADA de unidades visíveis para consistência total
+    // Verifica contra a lista CALCULADA de unidades visíveis
     const hasAccess = visibleUnits.some(u => u.id === rawActiveUnitId);
     return hasAccess ? rawActiveUnitId : null;
   }, [currentUser, rawActiveUnitId, visibleUnits]);
 
-  // AUTO-SELEÇÃO: Se o usuário só tem 1 unidade, seleciona automaticamente
+  // Efeito para sincronizar o localStorage com a unidade validada
   useEffect(() => {
-    if (!currentUser || visibleUnits.length !== 1) return;
-    
-    // Se não temos um ID validado, OU se o ID validado é diferente da única opção (caso de troca de permissão)
-    const singleUnitId = visibleUnits[0].id;
-    if (validatedActiveUnitId !== singleUnitId) {
-       console.log("Auto-selecting single unit:", singleUnitId);
-       setRawActiveUnitId(singleUnitId);
-       localStorage.setItem('btq_active_unit', singleUnitId);
-    }
-  }, [visibleUnits, validatedActiveUnitId, currentUser]);
-
-  // Efeito colateral apenas para limpar o Storage se houver inconsistência (Cleanup)
-  useEffect(() => {
-    if (rawActiveUnitId && !validatedActiveUnitId && currentUser && visibleUnits.length > 0) {
-       // Apenas limpa se não for o caso de auto-seleção pendente
-       const isAutoSelecting = visibleUnits.length === 1 && visibleUnits[0].id !== rawActiveUnitId;
-       if (!isAutoSelecting) {
-          console.warn(`Acesso revogado à unidade ${rawActiveUnitId}. Resetando.`);
-          setRawActiveUnitId(null);
-          localStorage.removeItem('btq_active_unit');
+    if (validatedActiveUnitId) {
+       if (rawActiveUnitId !== validatedActiveUnitId) {
+          setRawActiveUnitId(validatedActiveUnitId);
+          localStorage.setItem('btq_active_unit', validatedActiveUnitId);
        }
+    } else if (rawActiveUnitId && visibleUnits.length > 1) {
+       // Se tem ID no storage mas não é valido e o usuário tem multiplas escolhas, limpa
+       // (Se tiver só 1, o validatedActiveUnitId já pegou acima)
+       setRawActiveUnitId(null);
+       localStorage.removeItem('btq_active_unit');
     }
-  }, [rawActiveUnitId, validatedActiveUnitId, currentUser, visibleUnits]);
+  }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
 
   // Monitoramento Reativo de Sessão
   useEffect(() => {
@@ -188,6 +184,11 @@ export const App: React.FC = () => {
     SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
   }, [validatedActiveUnitId]);
 
+  // NOVO: Persistência Global (Users/Units)
+  const persistGlobal = useCallback((node: string, data: any, itemId?: string) => {
+    SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
+  }, []);
+
   const handleSwitchUnit = () => {
     setRawActiveUnitId(null);
     localStorage.removeItem('btq_active_unit');
@@ -237,7 +238,7 @@ export const App: React.FC = () => {
   const handleUpdateProducts = useCallback((updater: any) => {
     setProducts(prev => { 
         const next = updater(prev); 
-        updateLocalTimestamp('products'); // Bloqueio de sync reverso
+        updateLocalTimestamp('products'); 
         persist('products', next); 
         return next; 
     });
@@ -245,11 +246,12 @@ export const App: React.FC = () => {
 
   const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
     setShifts(newShifts);
-    updateLocalTimestamp('shifts'); // Bloqueio de sync reverso
+    updateLocalTimestamp('shifts');
     if (changedItem) persist('shifts', changedItem, changedItem.id);
     else persist('shifts', newShifts);
   }, [persist, updateLocalTimestamp]);
 
+  // UPDATE USERS AGORA USA PERSIST GLOBAL
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     updateLocalTimestamp('users'); 
@@ -259,14 +261,20 @@ export const App: React.FC = () => {
         setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
     }
 
-    if (changedItem) persist('users', changedItem, changedItem.id);
-    else persist('users', newUsers);
-  }, [persist, updateLocalTimestamp]);
+    if (changedItem) persistGlobal('users', changedItem, changedItem.id);
+    else persistGlobal('users', newUsers);
+  }, [persistGlobal, updateLocalTimestamp]);
+
+  // NOVA FUNÇÃO PARA UNITS GLOBAL
+  const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
+      setUnits(newUnits);
+      persistGlobal('units', newUnits);
+  }, [persistGlobal]);
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
         const next = [...prev, ...newSalesList];
-        updateLocalTimestamp('sales'); // Bloqueio de sync reverso
+        updateLocalTimestamp('sales');
         newSalesList.forEach(s => persist('sales', s, s.id));
         return next;
     });
@@ -320,9 +328,11 @@ export const App: React.FC = () => {
     if (data) {
       if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); persist('products', data.products); }
       if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); persist('sales', data.sales); }
-      if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); persist('users', data.users); }
+      // Correção na importação para usar Global
+      if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); persistGlobal('users', data.users); }
       if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); persist('shifts', data.shifts); }
-      if (data.units) { setUnits(data.units); persist('units', data.units); }
+      if (data.units) { setUnits(data.units); persistGlobal('units', data.units); }
+      
       if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); persist('modifierGroups', data.modifierGroups); }
       if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); persist('categoryModifiers', data.categoryModifiers); }
       if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); persist('categories', data.categories); }
@@ -332,12 +342,11 @@ export const App: React.FC = () => {
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
       }
     }
-  }, [handleExportData, persist, updateLocalTimestamp]);
+  }, [handleExportData, persist, persistGlobal, updateLocalTimestamp]);
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
-  // RENDER GUARD - BLOQUEIO VISUAL IMEDIATO
-  // Se não temos um ID validado, mostramos a seleção de unidades (Filtrada rigorosamente por visibleUnits)
+  // RENDER GUARD - SELEÇÃO DE UNIDADE
   if (!validatedActiveUnitId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
@@ -425,7 +434,7 @@ export const App: React.FC = () => {
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
               {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} theme={theme} />}
-              {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={setUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
+              {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={handleUpdateUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
           </div>
 

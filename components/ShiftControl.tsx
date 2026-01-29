@@ -15,7 +15,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
   
   const [valPrimary, setValPrimary] = useState('');
   const [valChange, setValChange] = useState('');
-  const [valSecondary, setValSecondary] = useState('');
   const [actualCountedInput, setActualCountedInput] = useState('');
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -102,16 +101,16 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
   // Cálculo do Total de Abertura (Item 3 do Plano)
   const totalOpeningCapital = useMemo(() => {
-    return parseCurrencyValue(valPrimary) + parseCurrencyValue(valChange) + parseCurrencyValue(valSecondary);
-  }, [valPrimary, valChange, valSecondary]);
+    return parseCurrencyValue(valPrimary) + parseCurrencyValue(valChange);
+  }, [valPrimary, valChange]);
 
   const handleOpenShift = async () => {
     if (!canOpen) return;
     setOpenError(null);
     const pVal = parseCurrencyValue(valPrimary);
     const cVal = parseCurrencyValue(valChange);
-    const sVal = parseCurrencyValue(valSecondary);
-    if (pVal === 0 && cVal === 0 && sVal === 0) {
+    
+    if (pVal === 0 && cVal === 0) {
       setOpenError("ABRIR ZERADO? NEM PENSAR! INFORME O FUNDO DE CAIXA. 💸");
       return;
     }
@@ -124,14 +123,14 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       status: 'open',
       cashPrimary: pVal,
       cashChange: cVal,
-      cashSecondary: sVal,
+      cashSecondary: 0, // Desativado
       openingCashPrimary: pVal,
       openingCashChange: cVal,
-      openingCashSecondary: sVal,
+      openingCashSecondary: 0, // Desativado
       transactions: []
     };
     onUpdateShifts([newShift, ...shifts], newShift);
-    setValPrimary(''); setValChange(''); setValSecondary('');
+    setValPrimary(''); setValChange('');
     setIsProcessing(false);
   };
 
@@ -141,15 +140,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
     const calculatedPrimary = (activeShift.openingCashPrimary || 0) + 
         (activeShift.transactions?.filter(t => t.to === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0) -
         (activeShift.transactions?.filter(t => t.from === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0);
-    const calculatedSecondary = (activeShift.openingCashSecondary || 0) +
-        (activeShift.transactions?.filter(t => t.to === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0) -
-        (activeShift.transactions?.filter(t => t.from === 'Secondary').reduce((sum, t) => sum + t.amount, 0) || 0);
+    
     const difference = actualCounted - expectedCashInDrawer;
     
     const closedShift: Shift = { 
       ...activeShift, status: 'closed', endTime: Date.now(), closedBy: currentUser.username,
       finalCashPrimary: calculatedPrimary, finalCashChange: expectedCashInDrawer, 
-      finalCashSecondary: calculatedSecondary, actualCashCounted: actualCounted, cashDifference: difference
+      finalCashSecondary: 0, actualCashCounted: actualCounted, cashDifference: difference
     };
     onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
     setShowConferral(false); setActualCountedInput('');
@@ -159,7 +156,6 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
      switch(index) {
         case 0: return '🔐'; // Cofre (Segurança)
         case 1: return '💸'; // Gaveta (Fluxo)
-        case 2: return '🐷'; // Reserva (Porquinho/Economia)
         default: return '💰';
      }
   };
@@ -223,11 +219,10 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
               </div>
 
               {/* Item 2: Inputs transformados em "Cards de Compartimento" */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10 max-w-2xl mx-auto">
                  {[
                    { label: 'Fundo Cofre', val: valPrimary, set: setValPrimary, color: 'border-slate-200 focus-within:border-slate-400' },
-                   { label: 'Troco Gaveta', val: valChange, set: setValChange, color: 'border-emerald-200 focus-within:border-emerald-500 bg-emerald-50/30' },
-                   { label: 'Reserva', val: valSecondary, set: setValSecondary, color: 'border-blue-200 focus-within:border-blue-500' }
+                   { label: 'Troco Gaveta', val: valChange, set: setValChange, color: 'border-emerald-200 focus-within:border-emerald-500 bg-emerald-50/30' }
                  ].map((item, idx) => (
                    <div 
                      key={idx} 
