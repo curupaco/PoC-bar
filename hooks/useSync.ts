@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category } from '../types';
@@ -146,6 +147,20 @@ export const useSync = (props: SyncProps) => {
           const idsToDelete = new Set([...blacklist, ...serverTombstones.current]);
           for (const id of idsToDelete) { if (dataMap.has(id)) dataMap.delete(id); }
       }
+
+      // CORREÇÃO: Deduplicação de Categorias por Nome
+      // Como a relação é feita pelo nome da categoria (string), e não pelo ID, 
+      // podemos eliminar duplicatas de nome mantendo apenas uma instância.
+      if (nodeKey === 'categories') {
+          const uniqueNames = new Set<string>();
+          return Array.from(dataMap.values()).filter((cat: any) => {
+              const name = cat.name?.trim().toUpperCase();
+              if (!name || uniqueNames.has(name)) return false;
+              uniqueNames.add(name);
+              return true;
+          });
+      }
+
       return Array.from(dataMap.values());
   }, [activeUnitId]);
 

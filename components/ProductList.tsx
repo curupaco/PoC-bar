@@ -1,10 +1,11 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab, Category } from '../types';
 import ProductItemsTab from './products/ProductItemsTab';
 import ModifierGroupsTab from './products/ModifierGroupsTab';
 import CategoryLinksTab from './products/CategoryLinksTab';
 import CategoriesTab from './products/CategoriesTab';
+import ModifierGroupModal from './products/ModifierGroupModal';
 
 interface ProductListProps {
   products: Product[];
@@ -36,6 +37,13 @@ const ProductList: React.FC<ProductListProps> = ({
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS' | 'LINKS' | 'CATEGORIES_MANAGE'>('ITEMS');
   const [showModal, setShowModal] = useState(false);
   
+  // UX-01: Estado para feedback visual (Toast)
+  const [toast, setToast] = useState<string | null>(null);
+
+  // States para Grupos de Modificadores
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<ModifierGroup | null>(null);
+
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<{id: string, name: string, type: 'prod' | 'mod'} | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +59,16 @@ const ProductList: React.FC<ProductListProps> = ({
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
+
+  // Limpa o toast automaticamente
+  useEffect(() => {
+    if (toast) {
+      const t = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [toast]);
+
+  const showFeedback = (msg: string) => setToast(msg);
 
   const handleSaveProduct = () => {
     setError(null);
@@ -70,6 +88,7 @@ const ProductList: React.FC<ProductListProps> = ({
         sellType,
         modifierGroupId: modGroupId || undefined
       } : p));
+      showFeedback("PRODUTO ATUALIZADO!");
     } else {
       const newProduct: Product = {
         id: generateUniqueId('prod'),
@@ -81,14 +100,34 @@ const ProductList: React.FC<ProductListProps> = ({
         modifierGroupId: modGroupId || undefined
       };
       setProducts(prev => [...prev, newProduct]);
+      showFeedback("PRODUTO CADASTRADO!");
     }
 
-    // Se a categoria não existir, cria automaticamente se tivermos a função
-    if (setCategories && !categories.some(c => c.name === finalCategory)) {
-        setCategories(prev => [...prev, { id: generateUniqueId('cat'), name: finalCategory }]);
+    // CORREÇÃO: Criação segura de categoria com verificação atômica dentro do updater
+    // Isso previne que salvamentos rápidos criem categorias duplicadas por race condition
+    if (setCategories) {
+        setCategories(prev => {
+            const exists = prev.some(c => c.name.toUpperCase().trim() === finalCategory);
+            if (exists) return prev;
+            return [...prev, { id: generateUniqueId('cat'), name: finalCategory }];
+        });
     }
 
     closeModal();
+  };
+
+  const handleSaveGroup = (group: ModifierGroup) => {
+    setModifierGroups(prev => {
+      const exists = prev.some(g => g.id === group.id);
+      if (exists) {
+        return prev.map(g => g.id === group.id ? group : g);
+      } else {
+        return [...prev, group];
+      }
+    });
+    showFeedback("MENU DE OPÇÕES SALVO!");
+    setShowGroupModal(false);
+    setEditingGroup(null);
   };
 
   const openEditProduct = (p: Product) => {
@@ -124,21 +163,44 @@ const ProductList: React.FC<ProductListProps> = ({
     if (!deleteConfirmId) return;
     if (deleteConfirmId.type === 'prod') {
       setProducts(prev => prev.filter(p => p.id !== deleteConfirmId.id));
+      showFeedback("ITEM REMOVIDO");
     } else {
       setModifierGroups(prev => prev.filter(g => g.id !== deleteConfirmId.id));
+      showFeedback("GRUPO REMOVIDO");
     }
     setDeleteConfirmId(null);
   };
 
   // Safe category list including distinct categories from products if missing in official list
+  // CORREÇÃO: Normalização estrita (trim + upper) para evitar duplicatas visuais (ex: "BEBIDAS" vs "BEBIDAS ")
   const allCategories = useMemo(() => {
-     const catNames = new Set(categories.map(c => c.name));
-     products.forEach(p => { if(p.category) catNames.add(p.category); });
+     const catNames = new Set<string>();
+     
+     // 1. Normaliza categorias oficiais
+     categories.forEach(c => {
+         if (c.name) catNames.add(c.name.trim().toUpperCase());
+     });
+
+     // 2. Normaliza categorias vindas dos produtos (para capturar órfãs)
+     products.forEach(p => { 
+         if(p.category) catNames.add(p.category.trim().toUpperCase()); 
+     });
+     
      return Array.from(catNames).sort();
   }, [categories, products]);
 
   return (
-    <div className="max-w-7xl mx-auto pb-32">
+    <div className="max-w-7xl mx-auto pb-32 relative">
+      {/* TOAST NOTIFICATION (UX-01) */}
+      {toast && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1200] animate-in slide-in-from-top-4 fade-in">
+           <div className="bg-emerald-600 text-white px-8 py-3 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl flex items-center gap-3 border border-emerald-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              {toast}
+           </div>
+        </div>
+      )}
+
       {/* NAVEGAÇÃO DE ABAS */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
         <button onClick={() => setActiveTab('ITEMS')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'ITEMS' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Produtos</button>
@@ -168,9 +230,9 @@ const ProductList: React.FC<ProductListProps> = ({
       {activeTab === 'GROUPS' && (
         <ModifierGroupsTab 
           modifierGroups={modifierGroups}
-          onEdit={(g) => { /* Lógica de edição de grupos a ser implementada se necessário, por simplicidade usamos o modal de produtos ou criamos um específico aqui */ }} 
+          onEdit={(g) => { setEditingGroup(g); setShowGroupModal(true); }}
           onDelete={(id, name) => setDeleteConfirmId({id, name, type: 'mod'})}
-          onShowModal={() => {/* Lógica para adicionar grupo */}}
+          onShowModal={() => { setEditingGroup(null); setShowGroupModal(true); }}
         />
       )}
 
@@ -191,6 +253,14 @@ const ProductList: React.FC<ProductListProps> = ({
           setProducts={setProducts}
         />
       )}
+
+      {/* MODAL DE GRUPO DE MODIFICADORES */}
+      <ModifierGroupModal 
+        isOpen={showGroupModal}
+        onClose={() => setShowGroupModal(false)}
+        onSave={handleSaveGroup}
+        initialData={editingGroup}
+      />
 
       {/* MODAL DE PRODUTO */}
       {showModal && (

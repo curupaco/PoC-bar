@@ -327,7 +327,13 @@ export const App: React.FC = () => {
         return next;
     });
     if (tabIdToClose) handleDeleteTab(tabIdToClose);
-  }, [persist, handleDeleteTab, updateLocalTimestamp]);
+
+    // UX-03 Fix: Retornar para Relatórios após quitação de atalho
+    if (shortcutCheckout) {
+        setActiveView('reports');
+        setShortcutCheckout(null);
+    }
+  }, [persist, handleDeleteTab, updateLocalTimestamp, shortcutCheckout]);
 
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
