@@ -15,6 +15,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Sincronização Híbrida:**
     *   **Escrita:** Fila FIFO (`SyncQueue`) com retry exponencial para garantir que nenhuma venda seja perdida.
     *   **Leitura:** Estratégia "Stale-While-Revalidate" para dados recentes e busca via Cloud Function para histórico profundo (> 2000 registros).
+    *   **Deduplicação de Categorias:** O frontend aplica normalização estrita (Trim + UpperCase) ao agregar categorias vindas de produtos e da lista oficial para evitar duplicatas visuais causadas por erros de digitação (ex: "Bebidas" vs "BEBIDAS ").
 
 ---
 

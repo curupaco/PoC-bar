@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useMemo, useDeferredValue } from 'react';
 import { Product, formatCurrency } from '../../types';
 
 interface ProductItemsTabProps {
@@ -16,7 +16,7 @@ interface ProductItemsTabProps {
   canDelete: boolean;
 }
 
-const ProductItemsTab: React.FC<ProductItemsTabProps> = ({
+const ProductItemsTab: React.FC<ProductItemsTabProps> = React.memo(({
   products,
   searchTerm,
   setSearchTerm,
@@ -30,19 +30,33 @@ const ProductItemsTab: React.FC<ProductItemsTabProps> = ({
   canDelete
 }) => {
   
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Otimização TEC-01: Adia o processamento da busca para manter a UI responsiva
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
-  const groupedProducts = filteredProducts.reduce((acc, p) => {
-    const cat = p.category.toUpperCase().trim() || 'GERAL';
-    if (!acc[cat]) acc[cat] = [];
-    acc[cat].push(p);
-    return acc;
-  }, {} as Record<string, Product[]>);
+  const { groupedProducts, sortedCategories, resultCount } = useMemo(() => {
+    const term = deferredSearchTerm.toLowerCase();
+    
+    const filtered = products.filter(p => 
+      !term || 
+      p.name.toLowerCase().includes(term) || 
+      p.category.toLowerCase().includes(term)
+    );
 
-  const sortedCategories = Object.keys(groupedProducts).sort();
+    const grouped = filtered.reduce((acc, p) => {
+      const cat = p.category.toUpperCase().trim() || 'GERAL';
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(p);
+      return acc;
+    }, {} as Record<string, Product[]>);
+
+    const sorted = Object.keys(grouped).sort();
+    
+    return { 
+        groupedProducts: grouped, 
+        sortedCategories: sorted,
+        resultCount: filtered.length
+    };
+  }, [products, deferredSearchTerm]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -99,10 +113,10 @@ const ProductItemsTab: React.FC<ProductItemsTabProps> = ({
             )}
           </div>
         ))}
-        {filteredProducts.length === 0 && <div className="py-20 text-center text-slate-400 font-black uppercase text-[10px] tracking-[0.4em] italic opacity-30">Nenhum produto encontrado</div>}
+        {resultCount === 0 && <div className="py-20 text-center text-slate-400 font-black uppercase text-[10px] tracking-[0.4em] italic opacity-30">Nenhum produto encontrado</div>}
       </div>
     </div>
   );
-};
+});
 
 export default ProductItemsTab;

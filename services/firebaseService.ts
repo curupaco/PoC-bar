@@ -28,6 +28,8 @@ let _tokenExpiration: number = 0;
 // Singleton Promise para deduplicação de chamadas de login simultâneas
 let _tokenPromise: Promise<string | null> | null = null;
 
+const REFRESH_TOKEN_KEY = 'btq_secure_rt';
+
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data.filter(Boolean);
@@ -88,21 +90,59 @@ const touchMetadata = async (url: string, token: string, path: string | undefine
   }, 5000).catch(e => console.warn("Meta touch fail", e));
 };
 
+// TEC-02: Implementação de Refresh Token Silencioso
+const refreshAuthToken = async (apiKey: string): Promise<string | null> => {
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!refreshToken) return null;
+
+  try {
+    const response = await fetchWithTimeout(`https://securetoken.googleapis.com/v1/token?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=refresh_token&refresh_token=${refreshToken}`
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.id_token) {
+      _cachedToken = data.id_token;
+      // Atualiza o refresh token também (rotação)
+      if (data.refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
+      
+      const expiresInSeconds = parseInt(data.expires_in || '3600', 10);
+      _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
+      return data.id_token;
+    } else {
+      console.warn("Refresh Token Expired/Invalid:", data.error);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      return null;
+    }
+  } catch (e) {
+    console.error("Refresh Network Error:", e);
+    return null;
+  }
+};
+
 export const getFirebaseToken = async (email: string, pass: string, apiKey: string): Promise<string | null> => {
   if (!apiKey) return null;
 
-  // 1. Verifica Cache Válido
-  if (_cachedToken && Date.now() < _tokenExpiration - 60000) {
+  // 1. Verifica Cache Válido (Buffer de 5min antes de expirar)
+  if (_cachedToken && Date.now() < _tokenExpiration - 300000) {
     return _cachedToken;
   }
 
-  // 2. Verifica se já existe uma promessa de login em andamento (Deduplicação)
+  // 2. Deduplicação de Promessas
   if (_tokenPromise) {
     return _tokenPromise;
   }
 
-  // 3. Inicia nova requisição
+  // 3. Inicia Fluxo de Autenticação
   _tokenPromise = (async () => {
+    // 3a. Tenta Refresh Token primeiro (Mais rápido e seguro)
+    const refreshedToken = await refreshAuthToken(apiKey);
+    if (refreshedToken) return refreshedToken;
+
+    // 3b. Fallback para Credenciais (Email/Senha)
     try {
       const response = await fetchWithTimeout(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`, {
         method: 'POST',
@@ -114,6 +154,8 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
       
       if (response.ok && data.idToken) {
         _cachedToken = data.idToken;
+        if (data.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        
         const expiresInSeconds = parseInt(data.expiresIn || '3600', 10);
         _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
         return data.idToken;
@@ -125,7 +167,6 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
       console.error("Network Auth Error:", e);
       return null;
     } finally {
-      // Limpa a promessa para permitir novas tentativas no futuro
       _tokenPromise = null;
     }
   })();

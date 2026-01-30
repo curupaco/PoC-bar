@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { PaymentMethod, formatCurrency, sanitizeCurrencyInput, parseCurrencyValue, safeFloat } from '../../types';
 
@@ -138,7 +139,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
        {toast && <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[50] bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{toast}</div>}
        {validationError && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[50] bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-xl cursor-pointer" onClick={() => setValidationError(null)}>{validationError}</div>}
 
-       <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-32">
+       {/* UX-02: Increased padding-bottom (pb-80) to avoid keyboard overlap */}
+       <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-80">
           <button onClick={onBack} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500">← Voltar à comanda</button>
           
           <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-center">
