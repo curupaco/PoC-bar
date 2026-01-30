@@ -294,6 +294,16 @@ export const App: React.FC = () => {
     });
   }, [persist, updateLocalTimestamp]);
 
+  // CORREÇÃO: Persistência de Vínculos de Categoria (Correção do Bug)
+  const handleUpdateCategoryModifiers = useCallback((updater: (prev: Record<string, string>) => Record<string, string>) => {
+    setCategoryModifiers(prev => {
+        const next = updater(prev);
+        updateLocalTimestamp('categoryModifiers');
+        persist('categoryModifiers', next);
+        return next;
+    });
+  }, [persist, updateLocalTimestamp]);
+
   const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
     setShifts(newShifts);
     updateLocalTimestamp('shifts');
@@ -498,7 +508,7 @@ export const App: React.FC = () => {
 
           <div className="flex-1 overflow-y-auto p-4 md:p-10 w-full max-w-[1750px] mx-auto">
               {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} />}
-              {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={setCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
+              {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={handleUpdateCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
               {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
