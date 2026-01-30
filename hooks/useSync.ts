@@ -42,15 +42,12 @@ export const useSync = (props: SyncProps) => {
   };
 
   // INÍCIO DA ALTERAÇÃO: Prevenção de Race Condition
-  // Permite que componentes informem que houve uma alteração local recente.
-  // Adiciona um buffer de 10s ao timestamp local para impedir que uma leitura 
-  // imediata do servidor (que pode estar desatualizada/stale) sobrescreva o dado novo.
   const updateLocalTimestamp = useCallback((key: string) => {
     localMeta.current[key] = Date.now() + 10000;
   }, []);
   // FIM DA ALTERAÇÃO
 
-  // Reset total ao trocar de unidade para evitar vazamento de dados (Issue de Faturamento Igual)
+  // Reset total ao trocar de unidade para evitar vazamento de dados
   useEffect(() => {
     if (activeUnitId !== currentUnitRef.current) {
       localMeta.current = {};
@@ -82,13 +79,12 @@ export const useSync = (props: SyncProps) => {
     const item = SyncQueue.peek();
     if (!item) return;
 
-    // LÓGICA CORRIGIDA: Permite escrita GLOBAL se unitId for 'GLOBAL'
     let path = '';
     if (item.unitId === 'GLOBAL') {
-        path = item.node; // Escreve na raiz (ex: 'users', 'units')
+        path = item.node; 
     } else {
         const effectiveUnitId = item.unitId || activeUnitId;
-        if (!effectiveUnitId) return; // Segurança: impede escrita sem unidade definida
+        if (!effectiveUnitId) return; 
         path = `data/units/${effectiveUnitId}/${item.node}`;
     }
 
@@ -108,9 +104,23 @@ export const useSync = (props: SyncProps) => {
     }
   }, [config, activeUnitId]);
 
-  const smartMerge = useCallback((serverData: any[], nodeKey: string, queue: QueueItem[], blacklist: Set<string>) => {
+  const smartMerge = useCallback((serverData: any, nodeKey: string, queue: QueueItem[], blacklist: Set<string>) => {
       const pendingItems = queue.filter(q => q.node.startsWith(nodeKey) && (q.unitId === activeUnitId || (!q.unitId && activeUnitId)));
       
+      // FIX CRÍTICO: Tratamento especial para categoryModifiers (Objeto Simples vs Coleção)
+      // categoryModifiers não tem IDs internos, é um mapa { Categoria: GrupoID }.
+      // A lógica padrão de 'ensureArray' + 'map by ID' destruía essa estrutura.
+      if (nodeKey === 'categoryModifiers') {
+          let mergedData = serverData || {};
+          // Aplica atualizações pendentes na ordem da fila (sobrescreve o objeto)
+          pendingItems.forEach(q => {
+             if (q.data && typeof q.data === 'object') {
+                 mergedData = q.data;
+             }
+          });
+          return mergedData;
+      }
+
       const safeServerData = ensureArray(serverData).map(item => {
           if (nodeKey === 'openTabs' && item && item.items && !Array.isArray(item.items)) {
               return { ...item, items: ensureArray(item.items) };
@@ -148,9 +158,6 @@ export const useSync = (props: SyncProps) => {
           for (const id of idsToDelete) { if (dataMap.has(id)) dataMap.delete(id); }
       }
 
-      // CORREÇÃO: Deduplicação de Categorias por Nome
-      // Como a relação é feita pelo nome da categoria (string), e não pelo ID, 
-      // podemos eliminar duplicatas de nome mantendo apenas uma instância.
       if (nodeKey === 'categories') {
           const uniqueNames = new Set<string>();
           return Array.from(dataMap.values()).filter((cat: any) => {
@@ -182,7 +189,6 @@ export const useSync = (props: SyncProps) => {
         { key: 'sales', setter: setSales },
         { key: 'shifts', setter: setShifts },
         { key: 'openTabs', setter: setOpenTabs },
-        // Users removido daqui pois é global e tratado no fetchGlobal
       ];
 
       if (!initialLoadDone.current) {
@@ -277,9 +283,7 @@ export const useSync = (props: SyncProps) => {
   const fetchGlobal = useCallback(async () => {
       const token = await getFirebaseToken(config.email, config.pass, config.key);
       if(token) {
-        // Tenta processar a fila mesmo sem unidade ativa, caso haja itens GLOBAIS pendentes
         processQueue(token);
-        
         const [uRaw, unitsRaw] = await Promise.all([
             loadFromFirebase(config.url, undefined, token, 'users'),
             loadFromFirebase(config.url, undefined, token, 'units')
