@@ -119,7 +119,7 @@ const CategoriesTab: React.FC<CategoriesTabProps> = ({ categories, setCategories
              className="px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-sm border-2 border-transparent focus:border-red-500 outline-none w-full shadow-inner"
              onKeyDown={e => e.key === 'Enter' && handleAdd()}
            />
-           <button onClick={handleAdd} className="bg-red-600 text-white px-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700 shadow-lg active:scale-95 transition-all">Add</button>
+           <button onClick={handleAdd} className="bg-red-600 text-white px-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700 shadow-lg active:scale-95 transition-all">Adicionar</button>
         </div>
       </div>
 
