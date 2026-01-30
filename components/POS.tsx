@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat } from '../types';
 import WeightModal from './pos/modals/WeightModal';
@@ -355,7 +356,7 @@ export const POS: React.FC<POSProps> = ({
         </div>
       )}
 
-      <WeightModal product={weightModalProduct} onConfirm={(w) => { addToTab(weightModalProduct!, w); setWeightModalProduct(null); }} onClose={() => setWeightModalProduct(null)} showFeedback={showFeedback} />
+      <WeightModal product={weightModalProduct} onConfirm={(w) => { executeAddItem(weightModalProduct!, w); setWeightModalProduct(null); }} onClose={() => setWeightModalProduct(null)} showFeedback={showFeedback} />
       <UpsellModal data={modifierModalData} onConfirm={(opt) => modifierModalData && executeAddItem(modifierModalData.product, modifierModalData.quantity, opt)} onClose={() => setModifierModalData(null)} />
     </div>
   );
