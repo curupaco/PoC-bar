@@ -62,17 +62,17 @@ const Help: React.FC = () => {
           </div>
         </section>
 
-        {/* Card 4: Gestão de Fluxo (Blind Close) */}
+        {/* Card 4: Gestão de Fluxo (Atualizado) */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-100 dark:border-emerald-900 shadow-sm space-y-6 flex flex-col h-full hover:border-emerald-500/50 transition-all group">
           <div className="flex items-center gap-4 text-emerald-600">
             <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight italic">Fechamento Cego</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Fechamento Transparente</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-emerald-600 font-black">O Conceito:</span> O sistema <span className="underline">não mostra</span> quanto dinheiro deveria ter na gaveta. O operador é obrigado a contar.</p>
-            <p>• <span className="text-emerald-600 font-black">Resultado:</span> A sobra ou falta só aparece após a confirmação, prevenindo furtos ou "ajustes" manuais no dinheiro.</p>
+            <p>• <span className="text-emerald-600 font-black">O Conceito:</span> O sistema exibe o valor exato esperado na gaveta (Fundo + Vendas - Sangrias).</p>
+            <p>• <span className="text-emerald-600 font-black">Resultado:</span> O operador conta o físico e o sistema destaca a <span className="underline">Sobra</span> ou <span className="underline">Falta</span> na hora para ajuste.</p>
           </div>
         </section>
 
