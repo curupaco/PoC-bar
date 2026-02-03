@@ -41,6 +41,7 @@ export const POS: React.FC<POSProps> = ({
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
   const [isAddingTab, setIsAddingTab] = useState(false);
+  const [isRenamingTab, setIsRenamingTab] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
@@ -48,12 +49,11 @@ export const POS: React.FC<POSProps> = ({
   const [toast, setToast] = useState<string | null>(null);
   const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
 
-  // CORREÇÃO: Detecta se veio de um atalho de quitação dos relatórios
   useEffect(() => {
     if (shortcutCheckout) {
       setActiveTabId('shortcut-payment');
       setIsClosingTab(true);
-      setShowMobileCart(true); // Garante visibilidade no mobile
+      setShowMobileCart(true);
     }
   }, [shortcutCheckout]);
 
@@ -87,8 +87,6 @@ export const POS: React.FC<POSProps> = ({
   const executeAddItem = useCallback((product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTabId) return;
 
-    // INÍCIO DA ALTERAÇÃO: Agrupamento de Itens
-    // Verifica se já existe um item igual na comanda (mesmo produto e mesmo modificador)
     const existingItem = tabItems.find(item => 
         item.productId === product.id && 
         (
@@ -98,7 +96,6 @@ export const POS: React.FC<POSProps> = ({
     );
 
     if (existingItem) {
-        // Atualiza quantidade do item existente
         const newQty = existingItem.quantity + quantity;
         const updatedItem: SaleItem = {
             ...existingItem,
@@ -108,7 +105,6 @@ export const POS: React.FC<POSProps> = ({
         if (onUpdateTabItem) onUpdateTabItem(activeTabId, updatedItem);
         showFeedback(`+${quantity} ${product.name}`);
     } else {
-        // Cria novo item se não existir correspondência
         const modPrice = modifier ? modifier.price : 0;
         const effectiveUnitPrice = safeFloat(product.price + modPrice);
         const newItem: SaleItem = { 
@@ -124,7 +120,6 @@ export const POS: React.FC<POSProps> = ({
         if (onUpdateTabItem) onUpdateTabItem(activeTabId, newItem);
         showFeedback(`+${quantity} ${product.name}`);
     }
-    // FIM DA ALTERAÇÃO
 
     setModifierModalData(null);
   }, [activeTabId, tabItems, onUpdateTabItem, showFeedback]);
@@ -148,11 +143,38 @@ export const POS: React.FC<POSProps> = ({
     if (onUpdateTabItem) onUpdateTabItem(activeTabId, updatedItem);
   }, [activeTabId, activeTab, tabItems, onUpdateTabItem]);
 
+  const handleQuickSale = () => {
+    const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const expressName = `EXPRESSA #${shortId}`;
+    const newTabId = generateUniqueId('tab-express');
+    
+    onSaveTab({
+      id: newTabId,
+      name: expressName,
+      items: [],
+      openedAt: Date.now()
+    });
+    
+    setActiveTabId(newTabId);
+    showFeedback("VENDA RÁPIDA INICIADA ⚡");
+  };
+
+  const handleRenameTab = () => {
+    if (!activeTabId || !newTabName.trim()) return;
+    const updatedTab: Tab = {
+      ...activeTab!,
+      name: newTabName.toUpperCase().trim()
+    };
+    onSaveTab(updatedTab);
+    setNewTabName('');
+    setIsRenamingTab(false);
+    showFeedback("COMANDA RENOMEADA");
+  };
+
   const processCompletion = (payments: any[]) => {
     const isShortcut = activeTabId === 'shortcut-payment';
     const totalAmount = payments.reduce((acc, p) => acc + p.amount, 0);
     
-    // Se for quitação, cria o item especial de quitação para o histórico
     const items = isShortcut 
       ? [{ id: 'q1', productId: 'quitacao', productName: 'Quitação de Pendura', category: 'FIADO', quantity: 1, unitPrice: totalAmount, totalPrice: totalAmount }]
       : tabItems;
@@ -172,7 +194,6 @@ export const POS: React.FC<POSProps> = ({
     
     onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
     
-    // Limpeza de estado
     setActiveTabId(null); 
     setIsClosingTab(false); 
     setShowMobileCart(false);
@@ -189,14 +210,6 @@ export const POS: React.FC<POSProps> = ({
        setTabToDelete(null);
        showFeedback("COMANDA DESCARTADA");
     }
-  };
-
-  const handleBackFromPayment = () => {
-     if (activeTabId === 'shortcut-payment') {
-        setActiveTabId(null);
-        if (onClearShortcut) onClearShortcut();
-     }
-     setIsClosingTab(false);
   };
 
   if (!activeShift) {
@@ -228,14 +241,23 @@ export const POS: React.FC<POSProps> = ({
       {!activeTabId ? (
         <div className="space-y-6 animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
-            <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Comandas Abertas</h2>
-            {!isAddingTab && <button onClick={() => setIsAddingTab(true)} className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">Abrir Mesa/Comanda</button>}
+            <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Vendas</h2>
+            <div className="flex w-full sm:w-auto gap-3">
+              <button onClick={handleQuickSale} className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all flex items-center justify-center gap-2">
+                <span>⚡</span>
+                <span>Venda Rápida</span>
+              </button>
+              <button onClick={() => setIsAddingTab(true)} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">Abrir Mesa</button>
+            </div>
           </div>
           
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
               <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO DA MESA..." className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" onKeyDown={e => e.key === 'Enter' && newTabName && (onSaveTab({id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}), setActiveTabId(null), setIsAddingTab(false))} />
-              <button onClick={() => { if(newTabName){ onSaveTab({id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}); setNewTabName(''); setIsAddingTab(false); } }} className="bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Confirmar</button>
+              <div className="flex gap-2">
+                <button onClick={() => { if(newTabName){ onSaveTab({id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Confirmar</button>
+                <button onClick={() => { setIsAddingTab(false); setNewTabName(''); }} className="px-6 py-4 rounded-2xl font-black uppercase text-xs text-slate-400">Cancelar</button>
+              </div>
             </div>
           )}
 
@@ -245,29 +267,35 @@ export const POS: React.FC<POSProps> = ({
                    <span className="text-6xl grayscale">🦗</span>
                 </div>
                 <h3 className="text-2xl font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter italic">Tudo calmo por aqui...</h3>
-                <p className="text-sm font-bold text-slate-400 mt-2 tracking-wide">O turno está rodando. Abra a primeira mesa para começar!</p>
+                <p className="text-sm font-bold text-slate-400 mt-2 tracking-wide">O turno está rodando. Use a venda rápida para agilizar!</p>
              </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {openTabs.map(tab => (
-                <div key={tab.id} className="relative group">
-                  <div onClick={() => setActiveTabId(tab.id)} className="bg-white dark:bg-slate-900 p-6 rounded-[35px] border-2 border-slate-200 dark:border-slate-800 cursor-pointer hover:border-red-500 transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl">
-                    <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
-                    <p className="font-black text-xl text-red-600 italic">
-                      {formatCurrency(
-                        (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
-                          .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
-                      )}
-                    </p>
+              {openTabs.map(tab => {
+                const isExpress = tab.name.startsWith('EXPRESSA');
+                return (
+                  <div key={tab.id} className="relative group">
+                    <div onClick={() => setActiveTabId(tab.id)} className={`p-6 rounded-[35px] border-2 cursor-pointer transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl ${isExpress ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-500'}`}>
+                      <div className="flex justify-between items-start">
+                        <h3 className="font-black uppercase text-sm truncate flex-1">{tab.name}</h3>
+                        {isExpress && <span className="text-[8px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded ml-1">⚡</span>}
+                      </div>
+                      <p className={`font-black text-xl italic ${isExpress ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {formatCurrency(
+                          (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
+                            .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
+                        )}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
+                      className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
+                    </button>
                   </div>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
-                    className="absolute -top-2 -right-2 w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -275,17 +303,45 @@ export const POS: React.FC<POSProps> = ({
         <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
            <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
               <div className="flex items-center gap-4 mb-6 bg-white dark:bg-slate-900 p-4 rounded-[25px] border border-slate-200 dark:border-slate-800">
-                 <button onClick={() => { setActiveTabId(null); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
+                 <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                  </button>
-                 <h2 className="text-xl font-black uppercase italic text-red-600">{activeTab?.name}</h2>
+                 
+                 {isRenamingTab ? (
+                    <div className="flex-1 flex gap-2">
+                       <input 
+                          autoFocus
+                          value={newTabName}
+                          onChange={e => setNewTabName(e.target.value)}
+                          placeholder="NOVO NOME..."
+                          className="flex-1 bg-slate-50 dark:bg-slate-950 px-4 py-2 rounded-xl font-black uppercase outline-none border-2 border-red-500"
+                          onKeyDown={e => e.key === 'Enter' && handleRenameTab()}
+                       />
+                       <button onClick={handleRenameTab} className="bg-red-600 text-white px-4 rounded-xl font-black text-[10px] uppercase">OK</button>
+                       <button onClick={() => setIsRenamingTab(false)} className="text-slate-400 font-black text-[10px] uppercase px-2">X</button>
+                    </div>
+                 ) : (
+                    <div className="flex-1 flex items-center gap-2">
+                       <h2 className={`text-xl font-black uppercase italic ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {activeTab?.name}
+                       </h2>
+                       {activeTabId !== 'shortcut-payment' && (
+                          <button onClick={() => { setNewTabName(activeTab?.name || ''); setIsRenamingTab(true); }} className="text-slate-300 hover:text-slate-600 transition-colors p-1">
+                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          </button>
+                       )}
+                    </div>
+                 )}
               </div>
               <POSProductGrid products={products} onAddProduct={addToTab} />
            </div>
 
            <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full lg:w-[420px] flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300`}>
-              <div className="p-6 bg-slate-900 text-white flex justify-between items-center shrink-0">
-                 <h3 className="font-black uppercase tracking-tighter italic">Itens na Comanda</h3>
+              <div className={`p-6 text-white flex justify-between items-center shrink-0 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-700' : 'bg-slate-900'}`}>
+                 <div className="flex items-center gap-2">
+                    <h3 className="font-black uppercase tracking-tighter italic">Itens na Comanda</h3>
+                    {activeTab?.name.startsWith('EXPRESSA') && <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded">MODO RÁPIDO</span>}
+                 </div>
                  <button onClick={() => setShowMobileCart(false)} className="lg:hidden p-2 bg-white/10 rounded-xl">✕</button>
               </div>
 
@@ -316,13 +372,16 @@ export const POS: React.FC<POSProps> = ({
                         <span className="text-[10px] font-black uppercase not-italic text-slate-400">Total</span>
                         <span>{formatCurrency(tabTotal)}</span>
                      </div>
-                     <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className="w-full bg-red-600 text-white py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30">Fechar Conta</button>
-                     <button onClick={() => setTabToDelete(activeTab!)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors">Descartar Mesa</button>
+                     <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
+                     <button onClick={() => setTabToDelete(activeTab!)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
+                        Descartar Venda
+                     </button>
                   </div>
                 </>
               ) : (
                 <div className="flex-1 overflow-y-auto no-scrollbar">
-                  <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={handleBackFromPayment} onComplete={processCompletion} shortcutCheckout={activeTabId === 'shortcut-payment' ? shortcutCheckout : null} />
+                  <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={activeTabId === 'shortcut-payment' ? shortcutCheckout : null} />
                 </div>
               )}
            </div>
@@ -330,13 +389,13 @@ export const POS: React.FC<POSProps> = ({
            {activeTabId && !showMobileCart && !isClosingTab && (
              <button 
                onClick={() => setShowMobileCart(true)}
-               className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-5 rounded-[30px] shadow-2xl flex items-center gap-4 z-[400] animate-in slide-in-from-bottom-10"
+               className={`lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 text-white px-8 py-5 rounded-[30px] shadow-2xl flex items-center gap-4 z-[400] animate-in slide-in-from-bottom-10 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-900' : 'bg-slate-900'}`}
              >
                 <div className="flex flex-col text-left">
-                   <span className="text-[8px] font-black uppercase opacity-60">Ver Comanda</span>
+                   <span className="text-[8px] font-black uppercase opacity-60">Ver Carrinho</span>
                    <span className="text-lg font-black italic leading-none">{formatCurrency(tabTotal)}</span>
                 </div>
-                <div className="w-10 h-10 bg-red-600 rounded-2xl flex items-center justify-center font-black text-sm">{tabItems.length}</div>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-500' : 'bg-red-600'}`}>{tabItems.length}</div>
              </button>
            )}
         </div>
@@ -346,11 +405,11 @@ export const POS: React.FC<POSProps> = ({
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setTabToDelete(null)} />
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[1010] text-center border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
-             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Apagar "{tabToDelete.name}"?</h3>
-             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Esta ação é irreversível e removerá todos os itens desta mesa.</p>
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Anular Venda?</h3>
+             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a descartar "{tabToDelete.name}". Esta ação é irreversível.</p>
              <div className="flex flex-col gap-3">
                 <button onClick={handleConfirmDelete} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Descartar</button>
-                <button onClick={() => setTabToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Manter Mesa</button>
+                <button onClick={() => setTabToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
              </div>
           </div>
         </div>
