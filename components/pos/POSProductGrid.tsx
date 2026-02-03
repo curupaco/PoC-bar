@@ -75,9 +75,13 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
     filteredProducts.filter(p => p.isFavorite),
   [filteredProducts]);
 
-  const categories: string[] = useMemo(() => 
-    (Array.from(new Set(filteredProducts.map(p => p.category))) as string[]).sort(),
-  [filteredProducts]);
+  // CORREÇÃO: Normalização estrita para remover duplicatas (ex: "Bebida" vs "BEBIDA ")
+  const categories: string[] = useMemo(() => {
+    const uniqueNormalized = new Set(
+      filteredProducts.map(p => (p.category || 'GERAL').trim().toUpperCase())
+    );
+    return Array.from(uniqueNormalized).sort();
+  }, [filteredProducts]);
 
   const toggleCategory = (cat: string) => {
     setCollapsedCats(prev => {
@@ -135,7 +139,8 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
           )}
           
           {categories.map(cat => {
-            const catProducts = filteredProducts.filter(p => p.category === cat);
+            // CORREÇÃO: Filtra produtos comparando com o nome da categoria também normalizado
+            const catProducts = filteredProducts.filter(p => (p.category || 'GERAL').trim().toUpperCase() === cat);
             const isExpanded = expandedLists.has(cat);
             const visibleProducts = isExpanded || debouncedTerm ? catProducts : catProducts.slice(0, 12);
             const hasMore = catProducts.length > 12;
@@ -148,7 +153,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
                 >
                   <div className="flex items-center gap-2">
                     <svg className={`w-3 h-3 md:w-4 md:h-4 text-red-600 transition-transform duration-300 ${collapsedCats.has(cat) ? '-rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M19 9l-7 7-7-7" /></svg>
-                    <h3 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] md:tracking-[0.3em] group-hover:text-red-500 transition-colors">{cat}</h3>
+                    <h3 className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest md:tracking-[0.3em] group-hover:text-red-500 transition-colors">{cat}</h3>
                   </div>
                   <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
                   <span className="text-[8px] md:text-[9px] font-black text-slate-300 uppercase whitespace-nowrap">{catProducts.length} ITENS</span>
