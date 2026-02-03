@@ -33,9 +33,12 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   const [paymentMethodInput, setPaymentMethodInput] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-  
-  // CORREÇÃO ITEM 2: Prevenção de Duplo Clique
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Detecta se é uma venda rápida baseada no ID ou padrão de nome
+  const isQuickSale = useMemo(() => {
+    return activeTabId?.startsWith('tab-express') || false;
+  }, [activeTabId]);
 
   useEffect(() => {
     if (toast) {
@@ -58,6 +61,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
       setCustomerNameInput('');
       setValidationError(null);
       setIsProcessing(false); 
+      setPaymentMethodInput(PaymentMethod.CASH);
     }
   }, [activeTabId, shortcutCheckout, tabTotal]);
 
@@ -68,7 +72,18 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
     return activeDebtors.has(customerNameInput.trim().toUpperCase());
   }, [customerNameInput, activeDebtors]);
 
+  const availableMethods = useMemo(() => {
+    const all = Object.values(PaymentMethod);
+    // Venda rápida não permite Pendura nem Múltiplo (para forçar agilidade)
+    if (isQuickSale) {
+      return all.filter(m => m !== PaymentMethod.PENDURA && m !== PaymentMethod.MULTIPLE);
+    }
+    return all;
+  }, [isQuickSale]);
+
   const handleAddPayment = () => {
+    if (isQuickSale) return; // Desabilitado em venda rápida
+
     const amountToPay = parseCurrencyValue(paymentAmountInput);
     
     if (amountToPay <= 0) { setToast("VALOR INVÁLIDO"); return; }
@@ -97,23 +112,35 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
   const handleFinishSale = () => {
     if (isProcessing) return;
 
-    if (currentPayments.length === 0) {
+    // Se for venda rápida ou apenas um pagamento sendo feito agora
+    if (isQuickSale || currentPayments.length === 0) {
         const val = parseCurrencyValue(paymentAmountInput);
-        if (val >= remainingBalance - 0.05 || (!paymentAmountInput && paymentMethodInput === PaymentMethod.CASH)) {
-             if (paymentMethodInput === PaymentMethod.PENDURA && !customerNameInput.trim()) {
-                setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
-                return;
-             }
-             
-             setIsProcessing(true); 
-             const finalAmount = val > 0 ? val : remainingBalance;
-             onComplete([{
-                method: paymentMethodInput,
-                amount: finalAmount,
-                customerName: customerNameInput.trim() || undefined
-             }]);
-             return;
+        const handed = parseCurrencyValue(cashReceivedInput);
+        const finalAmount = val > 0 ? val : remainingBalance;
+        let change = 0;
+        
+        if (paymentMethodInput === PaymentMethod.CASH && handed > finalAmount) {
+          change = safeFloat(handed - finalAmount);
         }
+
+        if (finalAmount < remainingBalance - 0.05) {
+           setValidationError("VALOR INSUFICIENTE PARA FINALIZAR.");
+           return;
+        }
+
+        if (paymentMethodInput === PaymentMethod.PENDURA && !customerNameInput.trim()) {
+           setValidationError("NOME DO CLIENTE OBRIGATÓRIO!");
+           return;
+        }
+        
+        setIsProcessing(true); 
+        onComplete([{
+           method: paymentMethodInput,
+           amount: finalAmount,
+           customerName: customerNameInput.trim() || undefined,
+           change: change > 0 ? change : undefined
+        }]);
+        return;
     }
 
     if (remainingBalance > 0.05) {
@@ -139,16 +166,15 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
        {toast && <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[50] bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{toast}</div>}
        {validationError && <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[50] bg-red-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] shadow-xl cursor-pointer" onClick={() => setValidationError(null)}>{validationError}</div>}
 
-       {/* UX-02: Increased padding-bottom (pb-80) to avoid keyboard overlap */}
        <div className="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-80">
           <button onClick={onBack} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500">← Voltar à comanda</button>
           
-          <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Falta Pagar</p>
-            <p className="text-4xl font-black tracking-tighter">{formatCurrency(remainingBalance)}</p>
+          <div className={`p-6 rounded-3xl border text-center ${isQuickSale ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{isQuickSale ? 'Valor Total Balcão' : 'Falta Pagar'}</p>
+            <p className={`text-4xl font-black tracking-tighter ${isQuickSale ? 'text-emerald-600' : ''}`}>{formatCurrency(remainingBalance)}</p>
           </div>
 
-          {currentPayments.length > 0 && (
+          {!isQuickSale && currentPayments.length > 0 && (
             <div className="space-y-2">
                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-2">Pagamentos Lançados</p>
                {currentPayments.map((p, idx) => (
@@ -168,20 +194,20 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
           )}
 
           <div className="space-y-4">
-            <select 
-               value={paymentMethodInput} 
-               onChange={e => { 
-                  const method = e.target.value as PaymentMethod;
-                  setPaymentMethodInput(method); 
-                  setCashReceivedInput(''); 
-                  if (method !== PaymentMethod.PENDURA && activeTabId !== 'shortcut-payment') {
-                      setCustomerNameInput(''); 
-                  }
-               }} 
-               className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xs uppercase outline-none border border-slate-200 dark:border-slate-700 shadow-sm focus:ring-2 focus:ring-red-500"
-            >
-              {Object.values(PaymentMethod).map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
+            <div className="space-y-2">
+               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Método de Pagamento</label>
+               <div className="grid grid-cols-2 gap-2">
+                  {availableMethods.map(m => (
+                     <button 
+                        key={m} 
+                        onClick={() => setPaymentMethodInput(m)}
+                        className={`py-4 rounded-2xl font-black text-[10px] uppercase border-2 transition-all ${paymentMethodInput === m ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white shadow-lg' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 border-transparent hover:border-slate-200'}`}
+                     >
+                        {m}
+                     </button>
+                  ))}
+               </div>
+            </div>
 
             {(paymentMethodInput === PaymentMethod.PENDURA || activeTabId === 'shortcut-payment') && (
                <div className="space-y-1 animate-in fade-in slide-in-from-top-2">
@@ -204,22 +230,23 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                </div>
             )}
 
-            {paymentMethodInput === PaymentMethod.CASH ? (
-               <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                     <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor a Cobrar</label>
-                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs">R$</span>
-                        <input 
-                           type="text" 
-                           inputMode="decimal" 
-                           value={paymentAmountInput} 
-                           onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} 
-                           className="w-full pl-8 pr-2 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-lg outline-none shadow-inner" 
-                           placeholder="" 
-                        />
-                     </div>
+            <div className="grid grid-cols-2 gap-3">
+               <div className="space-y-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor Cobrado</label>
+                  <div className="relative">
+                     <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs">R$</span>
+                     <input 
+                        type="text" 
+                        inputMode="decimal" 
+                        value={paymentAmountInput} 
+                        onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} 
+                        className="w-full pl-8 pr-2 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-lg outline-none shadow-inner" 
+                        placeholder="" 
+                     />
                   </div>
+               </div>
+               
+               {paymentMethodInput === PaymentMethod.CASH && (
                   <div className="space-y-1">
                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor Entregue</label>
                      <div className="relative">
@@ -234,46 +261,33 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         />
                      </div>
                   </div>
-               </div>
-            ) : (
-               <div className="space-y-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor do Pagamento</label>
-                  <div className="relative">
-                     <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
-                     <input 
-                        type="text" 
-                        inputMode="decimal" 
-                        value={paymentAmountInput} 
-                        onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))} 
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 font-black text-xl outline-none shadow-inner" 
-                        placeholder="" 
-                     />
-                  </div>
-               </div>
-            )}
+               )}
+            </div>
 
-            <button onClick={handleAddPayment} disabled={remainingBalance <= 0.05} className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
-               <span>ADICIONAR PAGAMENTO</span>
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
-            </button>
+            {!isQuickSale && (
+               <button onClick={handleAddPayment} disabled={remainingBalance <= 0.05} className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all flex items-center justify-center gap-2">
+                  <span>ADICIONAR PAGAMENTO</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+               </button>
+            )}
           </div>
        </div>
 
        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] mt-auto pb-12 space-y-4 z-10 sticky bottom-0">
           {liveChange > 0 && (
             <div className="bg-emerald-600 text-white p-4 rounded-2xl flex flex-col items-center justify-center shadow-lg animate-in zoom-in-95 border-2 border-emerald-400">
-                <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco Calculado:</span>
+                <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco a devolver:</span>
                 <span className="text-3xl font-black tracking-tighter">{formatCurrency(liveChange)}</span>
             </div>
           )}
           
           <button 
             onClick={handleFinishSale} 
-            disabled={remainingBalance > 0.05 || isProcessing}
+            disabled={(!isQuickSale && remainingBalance > 0.05) || isProcessing}
             className={`w-full py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center gap-1 
-              ${remainingBalance <= 0.05 && !isProcessing ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
+              ${isProcessing ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isQuickSale ? 'bg-emerald-600 text-white' : (remainingBalance <= 0.05 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed')}`}
           >
-            <span>{isProcessing ? 'PROCESSANDO...' : 'CONCLUIR VENDA'}</span>
+            <span>{isProcessing ? 'PROCESSANDO...' : isQuickSale ? 'FINALIZAR BALCÃO' : 'CONCLUIR VENDA'}</span>
             <span className="text-[10px] opacity-70 italic">Total: {formatCurrency(tabTotal)}</span>
           </button>
        </div>
