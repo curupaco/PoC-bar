@@ -9,13 +9,15 @@
 
 **[📘 Documentação Técnica Completa](DOCUMENTATION.md)**
 
+> *Este repositório representa uma Prova de Conceito funcional, desenvolvida com foco em arquitetura offline-first e performance.*
+
 </div>
 
 ---
 
 ## ⚡ Visão Geral
 
-O **Botequista Pro** é uma solução **PWA (Progressive Web App)** de classe empresarial para gestão de bares e restaurantes. Projetado sob a filosofia **Offline-First**, ele garante que a operação de vendas (PDV) continue fluida e sem interrupções, independentemente da estabilidade da conexão de internet.
+O **Botequista Pro** é uma solução **PWA (Progressive Web App)** de nível enterprise para gestão de bares e restaurantes. Projetado sob a filosofia **Offline-First**, ele garante que a operação de vendas (PDV) continue fluida e sem interrupções, independentemente da estabilidade da conexão de internet.
 
 Diferente de sistemas web tradicionais, o Botequista trata a nuvem como um "estado eventual", priorizando a responsividade local e a segurança dos dados na ponta (Edge).
 
@@ -64,6 +66,28 @@ sequenceDiagram
 
 ---
 
+## 🧠 Decisões de Engenharia
+
+### Por que Firebase RTDB e não Firestore?
+Optamos pelo **Realtime Database** pela sua estrutura JSON nativa, que mapeia diretamente para objetos JavaScript e facilita o espelhamento "raw" no IndexedDB. O overhead de latência do Firestore e o modelo de cobrança por leitura não se adequavam à nossa estratégia de sincronização frequente de pequenos pacotes de estado (SyncQueue).
+
+### Por que PWA e não App Nativo?
+O **Botequista** precisa rodar em hardware heterogêneo (tablets baratos Android, iPads antigos, PCs Windows). O PWA oferece:
+1.  **Deploy Instantâneo:** Atualizações críticas chegam a todos os terminais em segundos via Vercel.
+2.  **Custo Zero de Distribuição:** Sem taxas de Apple/Google Store ou tempo de aprovação.
+3.  **Capacidades Nativas:** Service Workers modernos já permitem cache robusto e acesso a hardware suficiente para PDV.
+
+### Trade-offs do Offline-First
+A arquitetura "Local-First" traz desafios específicos que foram aceitos em prol da disponibilidade:
+*   **Consistência Eventual:** A UI é otimista; o usuário vê a ação concluída antes do servidor confirmar.
+*   **Gestão de Conflitos:** Utilizamos a estratégia *Last-Write-Wins* baseada em timestamp do cliente, assumindo que a operação mais recente no ponto físico de venda é a autoridade máxima.
+
+### Limitações Conhecidas
+*   **Safari/iOS:** O ciclo de vida do Service Worker no iOS é agressivo. Se o app não for adicionado à Home Screen ("Add to Home Screen"), o Safari pode limpar o IndexedDB após 7 dias de inatividade.
+*   **Concorrência:** Não há bloqueio de registro (Locking) em tempo real entre dispositivos.
+
+---
+
 ## 📸 Interface do Sistema
 
 > *O design prioriza contraste, legibilidade em ambientes noturnos e áreas de toque grandes para telas touch.*
@@ -91,8 +115,8 @@ Engenharia de cardápio integrada. Identifique automaticamente quais produtos s�
 ## 🔧 Instalação e Desenvolvimento
 
 ```bash
-# 1. Clone o repositório oficial
-git clone https://github.com/botequista/sistema.git
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/botequista.git
 
 # 2. Instale as dependências
 npm install
@@ -111,4 +135,4 @@ npm run dev
 Distribuído sob licença proprietária para uso comercial restrito.
 
 ---
-*Developed with High-Performance React Standard.*
+*Designed with Offline-First Architecture, Performance and Business-Critical Reliability in mind.*
