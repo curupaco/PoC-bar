@@ -14,12 +14,13 @@ import Settings from './components/Settings';
 import Help from './components/Help';
 import Login from './components/Login';
 import FeedbackModal from './components/FeedbackModal';
-import ConfirmationModal from './components/ConfirmationModal'; // Novo Import
+import ConfirmationModal from './components/ConfirmationModal';
 import { useSync } from './hooks/useSync';
 import { SyncQueue } from './utils/syncQueue';
 import { hashPassword } from './services/cryptoService';
 import LoadingScreen from './components/LoadingScreen';
 import { getFirebaseToken } from './services/firebaseService';
+import { idb } from './utils/idb';
 
 // --- SAFE STORAGE UTILITY ---
 // Previne tela branca em navegadores com cookies bloqueados ou modo anônimo estrito
@@ -72,7 +73,7 @@ export const App: React.FC = () => {
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
   
-  // Estado para Modal de Confirmação Global (Tipado corretamente)
+  // Estado para Modal de Confirmação Global
   const [confirmModal, setConfirmModal] = useState<{ 
     isOpen: boolean; 
     title: string; 
@@ -210,6 +211,18 @@ export const App: React.FC = () => {
     config: syncConfig
   });
 
+  // CORREÇÃO CRÍTICA (SNAPSHOT OTIMISTA): Função auxiliar para gravar no disco IMEDIATAMENTE
+  const saveLocalCache = useCallback((key: string, data: any) => {
+    if (!validatedActiveUnitId) return;
+    const cacheKey = `btq_cache_${validatedActiveUnitId}`;
+    // Fire and forget, mas garante persistência física
+    idb.get(cacheKey).then((current: any) => {
+        const next = current || {};
+        next[key] = data;
+        idb.set(cacheKey, next);
+    }).catch(err => console.warn('Cache write failed', err));
+  }, [validatedActiveUnitId]);
+
   useEffect(() => {
     if (dbStatus === 'success') setLastSyncTime(Date.now());
   }, [dbStatus]);
@@ -239,7 +252,7 @@ export const App: React.FC = () => {
     setConfirmModal(prev => ({...prev, isOpen: false}));
   };
 
-  // Solicitação de Logout (Abre Modal) - Agora com textos temáticos de Bar
+  // Solicitação de Logout (Abre Modal)
   const requestLogout = () => {
     setConfirmModal({
       isOpen: true,
@@ -253,67 +266,92 @@ export const App: React.FC = () => {
   };
 
   const handleSaveTab = useCallback((tab: Tab) => {
+    const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
-      const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
-      if (idx >= 0) { const next = [...prev]; next[idx] = sanitizedTab; return next; }
-      return [...prev, sanitizedTab];
+      let nextTabs;
+      if (idx >= 0) { 
+          nextTabs = [...prev]; 
+          nextTabs[idx] = sanitizedTab; 
+      } else {
+          nextTabs = [...prev, sanitizedTab];
+      }
+      // CORREÇÃO #16 & #17: Snapshot imediato do novo estado
+      saveLocalCache('openTabs', nextTabs);
+      return nextTabs;
     });
+    // Atualiza Timestamp para evitar que o Sync sobrescreva com dados velhos
+    updateLocalTimestamp('openTabs');
     persist('openTabs', tab, tab.id);
-  }, [persist]);
+  }, [persist, saveLocalCache, updateLocalTimestamp]);
 
   const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
-    setOpenTabs(prev => prev.map(t => {
-        if (t.id === tabId) {
-            const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
-            const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
-            if (idx > -1) {
-                if (item.quantity <= 0) currentItems.splice(idx, 1);
-                else currentItems[idx] = item;
-            } else if (item.quantity > 0) currentItems.push(item);
-            return { ...t, items: currentItems };
-        }
-        return t;
-    }));
+    setOpenTabs(prev => {
+        const nextTabs = prev.map(t => {
+            if (t.id === tabId) {
+                const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
+                const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
+                if (idx > -1) {
+                    if (item.quantity <= 0) currentItems.splice(idx, 1);
+                    else currentItems[idx] = item;
+                } else if (item.quantity > 0) currentItems.push(item);
+                return { ...t, items: currentItems };
+            }
+            return t;
+        });
+        // CORREÇÃO #16 & #17: Snapshot imediato
+        saveLocalCache('openTabs', nextTabs);
+        return nextTabs;
+    });
+    updateLocalTimestamp('openTabs');
     persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
-  }, [persist]);
+  }, [persist, saveLocalCache, updateLocalTimestamp]);
 
   const handleDeleteTab = useCallback((tabId: string) => {
-    setOpenTabs(prev => prev.filter(t => t.id !== tabId));
+    setOpenTabs(prev => {
+        const nextTabs = prev.filter(t => t.id !== tabId);
+        // CORREÇÃO #16 & #17: Snapshot imediato
+        saveLocalCache('openTabs', nextTabs);
+        return nextTabs;
+    });
+    updateLocalTimestamp('openTabs');
     persist('openTabs', null, tabId);
     persist(`_meta/deleted_tabs/${tabId}`, Date.now());
     registerLocalDeletion(tabId);
-  }, [persist, registerLocalDeletion]);
+  }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp]);
 
   const handleUpdateProducts = useCallback((updater: any) => {
     setProducts(prev => { 
         const next = updater(prev); 
         updateLocalTimestamp('products'); 
+        saveLocalCache('products', next); // Snapshot
         persist('products', next); 
         return next; 
     });
-  }, [persist, updateLocalTimestamp]);
+  }, [persist, updateLocalTimestamp, saveLocalCache]);
 
-  // CORREÇÃO: Persistência de Vínculos de Categoria (Correção do Bug)
   const handleUpdateCategoryModifiers = useCallback((updater: (prev: Record<string, string>) => Record<string, string>) => {
     setCategoryModifiers(prev => {
         const next = updater(prev);
         updateLocalTimestamp('categoryModifiers');
+        saveLocalCache('categoryModifiers', next); // Snapshot
         persist('categoryModifiers', next);
         return next;
     });
-  }, [persist, updateLocalTimestamp]);
+  }, [persist, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
     setShifts(newShifts);
     updateLocalTimestamp('shifts');
+    saveLocalCache('shifts', newShifts); // Snapshot
     if (changedItem) persist('shifts', changedItem, changedItem.id);
     else persist('shifts', newShifts);
-  }, [persist, updateLocalTimestamp]);
+  }, [persist, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
     updateLocalTimestamp('users'); 
+    saveLocalCache('users', newUsers); // Snapshot
 
     const current = currentUserRef.current;
     if (changedItem && current && changedItem.id === current.id) {
@@ -322,28 +360,32 @@ export const App: React.FC = () => {
 
     if (changedItem) persistGlobal('users', changedItem, changedItem.id);
     else persistGlobal('users', newUsers);
-  }, [persistGlobal, updateLocalTimestamp]);
+  }, [persistGlobal, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
       setUnits(newUnits);
+      saveLocalCache('units', newUnits); // Snapshot
       persistGlobal('units', newUnits);
-  }, [persistGlobal]);
+  }, [persistGlobal, saveLocalCache]);
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
         const next = [...prev, ...newSalesList];
-        updateLocalTimestamp('sales');
-        newSalesList.forEach(s => persist('sales', s, s.id));
+        // CORREÇÃO #16 & #17: Gravar vendas no cache local imediatamente
+        saveLocalCache('sales', next);
         return next;
     });
+    
+    updateLocalTimestamp('sales');
+    newSalesList.forEach(s => persist('sales', s, s.id));
+    
     if (tabIdToClose) handleDeleteTab(tabIdToClose);
 
-    // UX-03 Fix: Retornar para Relatórios após quitação de atalho
     if (shortcutCheckout) {
         setActiveView('reports');
         setShortcutCheckout(null);
     }
-  }, [persist, handleDeleteTab, updateLocalTimestamp, shortcutCheckout]);
+  }, [persist, handleDeleteTab, updateLocalTimestamp, shortcutCheckout, saveLocalCache]);
 
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
@@ -393,22 +435,22 @@ export const App: React.FC = () => {
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') { handleExportData(); return; }
     if (data) {
-      if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); persist('products', data.products); }
-      if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); persist('sales', data.sales); }
-      if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); persistGlobal('users', data.users); }
-      if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); persist('shifts', data.shifts); }
-      if (data.units) { setUnits(data.units); persistGlobal('units', data.units); }
+      if (data.products) { setProducts(data.products); updateLocalTimestamp('products'); saveLocalCache('products', data.products); persist('products', data.products); }
+      if (data.sales) { setSales(data.sales); updateLocalTimestamp('sales'); saveLocalCache('sales', data.sales); persist('sales', data.sales); }
+      if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); saveLocalCache('users', data.users); persistGlobal('users', data.users); }
+      if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); saveLocalCache('shifts', data.shifts); persist('shifts', data.shifts); }
+      if (data.units) { setUnits(data.units); saveLocalCache('units', data.units); persistGlobal('units', data.units); }
       
-      if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); persist('modifierGroups', data.modifierGroups); }
-      if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); persist('categoryModifiers', data.categoryModifiers); }
-      if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); persist('categories', data.categories); }
-      if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); persist('openTabs', data.openTabs); }
+      if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); saveLocalCache('modifierGroups', data.modifierGroups); persist('modifierGroups', data.modifierGroups); }
+      if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); saveLocalCache('categoryModifiers', data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
+      if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); saveLocalCache('categories', data.categories); persist('categories', data.categories); }
+      if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); saveLocalCache('openTabs', data.openTabs); persist('openTabs', data.openTabs); }
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
       }
     }
-  }, [handleExportData, persist, persistGlobal, updateLocalTimestamp]);
+  }, [handleExportData, persist, persistGlobal, updateLocalTimestamp, saveLocalCache]);
 
   if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
 
@@ -434,7 +476,6 @@ export const App: React.FC = () => {
             )}
             <button onClick={requestLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
          </div>
-         {/* Modal de Confirmação para a tela de Seleção de Unidade */}
          <ConfirmationModal
             isOpen={confirmModal.isOpen}
             title={confirmModal.title}
@@ -455,7 +496,6 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
-       {/* Sidebar recebe requestLogout para acionar o modal global */}
        <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={requestLogout} onSwitchUnit={handleSwitchUnit} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
        
        <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
@@ -465,7 +505,6 @@ export const App: React.FC = () => {
                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
                 </button>
                 
-                {/* LOGO NO MOBILE - Apenas Tipografia (Sem Ícone SVG duplicado) */}
                 <div className="flex items-center gap-3">
                    <div className="flex flex-col justify-center">
                       <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
@@ -513,7 +552,7 @@ export const App: React.FC = () => {
               {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
               {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
               {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
-              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => prev.map(x => x.id === id ? ns : x)); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
+              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => { const next = prev.map(x => x.id === id ? ns : x); saveLocalCache('sales', next); return next; }); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
               {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} theme={theme} />}
               {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={handleUpdateUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
               {activeView === 'help' && <Help />}
