@@ -88,6 +88,17 @@ A arquitetura "Local-First" traz desafios específicos que foram aceitos em prol
 
 ---
 
+## 📸 Interface do Sistema
+
+> *O design prioriza contraste, legibilidade em ambientes noturnos e áreas de toque grandes para telas touch.*
+
+| **Terminal de Vendas (PDV)** | **Relatórios Gerenciais** |
+| :---: | :---: |
+| ![PDV Screen](https://placehold.co/800x600/0f172a/ffffff?text=Interface+PDV+Dark+Mode) | ![Dashboard Analytics](https://placehold.co/800x600/0f172a/ffffff?text=Analytics+e+KPIs) |
+| *Fluxo rápido com botões de acesso imediato* | *Curva ABC e Fluxo de Caixa em tempo real* |
+
+---
+
 ## 🚀 Funcionalidades Chave
 
 ### 1. Venda Expressa (Speed-Checkout)
