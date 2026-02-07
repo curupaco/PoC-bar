@@ -1,100 +1,114 @@
-
 # 🍺 Botequista Pro - Sistema de Gestão para Bares (PWA)
+
+<div align="center">
 
 ![React](https://img.shields.io/badge/React-19-blue?logo=react&style=for-the-badge)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&style=for-the-badge)
-![Vite](https://img.shields.io/badge/Vite-5.0-purple?logo=vite&style=for-the-badge)
 ![Firebase](https://img.shields.io/badge/Firebase-RTDB-orange?logo=firebase&style=for-the-badge)
-![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.4-cyan?logo=tailwindcss&style=for-the-badge)
-![PWA](https://img.shields.io/badge/PWA-Offline--First-green?style=for-the-badge)
+![PWA](https://img.shields.io/badge/PWA-Offline_First-green?style=for-the-badge)
 
-> **Versão:** 3.9.6 (Express Update)
+**[📘 Documentação Técnica Completa](DOCUMENTATION.md)**
 
-O **Botequista Pro** é uma solução **PWA (Progressive Web App)** completa para gestão de bares e restaurantes, projetada para alta disponibilidade em ambientes com conectividade instável. 
-
-Diferente de sistemas web tradicionais, ele opera com uma arquitetura **Offline-First Real**, garantindo que a operação de vendas nunca pare, mesmo sem internet.
+</div>
 
 ---
 
-## 🚀 Diferenciais de Engenharia
+## ⚡ Visão Geral
 
-### 1. Arquitetura Offline-First & SyncQueue
-O maior desafio técnico deste projeto foi garantir consistência de dados entre o cliente (Bar) e a nuvem (Firebase) em conexões 3G/4G instáveis.
-*   **Persistência Local:** Utiliza `IndexedDB` (via wrapper `idb`) para armazenar o estado completo da aplicação no dispositivo.
-*   **Fila de Sincronização:** Mutações (vendas, edições) são adicionadas a uma `SyncQueue` persistente. Um worker em background tenta enviar os dados para a Vercel/Firebase e realiza *retry* exponencial em caso de falha.
-*   **Smart Merge:** Algoritmo de reconciliação de dados que evita sobrescrita acidental de vendas ao recuperar a conexão.
+O **Botequista Pro** é uma solução **PWA (Progressive Web App)** de classe empresarial para gestão de bares e restaurantes. Projetado sob a filosofia **Offline-First**, ele garante que a operação de vendas (PDV) continue fluida e sem interrupções, independentemente da estabilidade da conexão de internet.
 
-### 2. React 19 & Performance
-*   Uso dos novos hooks e padrões do **React 19**.
-*   **Virtualização & Memoização:** Componentes como `ProductItemsTab` utilizam `useDeferredValue` e `React.memo` para manter a interface fluida (60fps) mesmo renderizando listas com centenas de produtos em dispositivos móveis modestos.
-
-### 3. Segurança & RBAC
-*   Sistema robusto de **Controle de Acesso Baseado em Funções (RBAC)**.
-*   Perfis granulares: Operador, Gerente e Admin, com permissões específicas para anular vendas, fechar caixa ou gerenciar estoque.
+Diferente de sistemas web tradicionais, o Botequista trata a nuvem como um "estado eventual", priorizando a responsividade local e a segurança dos dados na ponta (Edge).
 
 ---
 
-## ⚡ Funcionalidades Principais
+## 🏛️ Arquitetura Offline & Sync
 
-### 🖥️ Terminal de Vendas (PDV)
-*   **Modo Venda Rápida (Novo):** Interface otimizada para alto giro de balcão. Bloqueia "Pendura" e força pagamento imediato para agilidade máxima.
-*   **Gestão de Mesas:** Abertura, acompanhamento e fechamento de contas de longo prazo.
-*   **Mobile-First:** Interface 100% responsiva, funcionando como aplicativo nativo em Android/iOS.
+O coração do sistema é uma **SyncQueue** (Fila de Sincronização) resiliente. O diagrama abaixo ilustra como garantimos que nenhuma venda seja perdida:
 
-### 💰 Tesouraria Blindada (Blind Close)
-*   **Fechamento Cego:** O operador deve contar o dinheiro físico e informar ao sistema *sem saber* quanto o computador registrou. O sistema calcula a sobra/quebra automaticamente, prevenindo furtos.
-*   **Auditoria:** Registro imutável de Sangrias (retiradas) e Suprimentos (fundo de troco).
+```mermaid
+sequenceDiagram
+    participant User as 👤 Operador
+    participant UI as 🖥️ Interface
+    participant IDB as 🗄️ IndexedDB (Local)
+    participant Worker as ⚙️ Sync Worker
+    participant Cloud as ☁️ Firebase
 
-### 📊 Inteligência de Negócio
-*   **Relatórios em Tempo Real:** Faturamento, Ticket Médio e Curva ABC de produtos.
-*   **Gestão de Fiados:** Controle de dívidas de clientes com sistema de quitação parcial ou total.
-*   **Exportação:** Geração de comprovantes e relatórios em PNG/PDF direto no navegador.
+    User->>UI: Realiza Venda (Sem Internet)
+    UI->>IDB: Persiste Venda (Criptografada)
+    UI->>Worker: Enfileira Job { action: 'SAVE_SALE' }
+    UI-->>User: ✅ Feedback Imediato "Salvo"
+    
+    loop Background Sync
+        Worker->>Worker: Verifica Conexão...
+        alt Online
+            Worker->>Cloud: PUT /sales/{id}
+            Cloud-->>Worker: 200 OK
+            Worker->>IDB: Remove Job da Fila
+            Worker->>UI: Atualiza Status (Sincronizado)
+        else Offline
+            Worker->>Worker: Aguarda (Exponential Backoff)
+        end
+    end
+```
 
----
+### Stack Tecnológica
 
-## 🛠️ Stack Tecnológica
-
-| Camada | Tecnologia | Descrição |
+| Camada | Tecnologia | Destaques |
 | :--- | :--- | :--- |
-| **Frontend** | React 19 + TypeScript | Interface reativa e tipagem estrita. |
-| **Build Tool** | Vite | HMR instantâneo e build otimizado. |
-| **Estilização** | Tailwind CSS | Design System consistente e Dark Mode nativo. |
-| **Banco de Dados** | Firebase RTDB | Banco NoSQL em tempo real. |
-| **Backend (API)** | Vercel Serverless | Functions para operações sensíveis e busca. |
-| **Local Storage** | IndexedDB (`idb`) | Banco de dados transacional no navegador. |
-| **Gráficos** | Recharts | Visualização de dados financeiros. |
+| **Frontend** | React 19 | Hooks modernos, `useDeferredValue` para performance. |
+| **Linguagem** | TypeScript | Tipagem estrita e interfaces compartilhadas. |
+| **Persistência** | IndexedDB (`idb`) | Banco transacional no navegador. |
+| **Backend** | Firebase RTDB | NoSQL em tempo real com regras de validação. |
+| **API** | Vercel Serverless | Functions para buscas pesadas e relatórios. |
+| **Design** | Tailwind CSS | Sistema de design tokenizado e Dark Mode nativo. |
 
 ---
 
-## 📸 Screenshots
+## 📸 Interface do Sistema
 
-| PDV Mobile | Relatórios & Analytics |
+> *O design prioriza contraste, legibilidade em ambientes noturnos e áreas de toque grandes para telas touch.*
+
+| **Terminal de Vendas (PDV)** | **Relatórios Gerenciais** |
 | :---: | :---: |
-| *Interface ágil para lançamento de pedidos* | *Controle financeiro e Curva ABC* |
-| ![PDV Placeholder](https://placehold.co/400x800/0f172a/white?text=PDV+Mobile) | ![Dashboard Placeholder](https://placehold.co/400x800/0f172a/white?text=Dashboard) |
+| ![PDV Screen](./docs/screenshots/pdv_screen.png) | ![Dashboard Analytics](./docs/screenshots/analytics_screen.png) |
+| *Fluxo rápido com botões de acesso imediato* | *Curva ABC e Fluxo de Caixa em tempo real* |
 
 ---
 
-## 🔧 Como Executar Localmente
+## 🚀 Funcionalidades Chave
+
+### 1. Venda Expressa (Speed-Checkout)
+Para bares com alto giro de balcão. O sistema gera automaticamente uma comanda temporária, bloqueia métodos de pagamento demorados (como "Pendura") e foca em fechar o pedido em menos de 3 cliques.
+
+### 2. Tesouraria "Blind Close"
+O fechamento de caixa é "cego". O operador insere a contagem física do dinheiro sem saber o valor esperado pelo sistema. O Botequista calcula automaticamente sobras ou quebras, prevenindo furtos e erros de contagem.
+
+### 3. Gestão de Inventário & Curva ABC
+Engenharia de cardápio integrada. Identifique automaticamente quais produtos são seus "Carro-Chefe" (Alta Venda / Alta Margem) e quais são "Abacaxis" (Baixa Venda / Baixa Margem).
+
+---
+
+## 🔧 Instalação e Desenvolvimento
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/botequista-pro.git
+# 1. Clone o repositório oficial
+git clone https://github.com/botequista/sistema.git
 
 # 2. Instale as dependências
 npm install
 
-# 3. Configure as variáveis de ambiente (.env)
-# Crie um arquivo .env na raiz com sua chave API do Google/Firebase
-API_KEY=sua_chave_aqui
+# 3. Configure o ambiente
+# Crie um arquivo .env na raiz com as chaves do Firebase
+cp .env.example .env
 
-# 4. Execute em modo de desenvolvimento
+# 4. Inicie o servidor local
 npm run dev
 ```
 
 ## 📜 Licença
 
-Este projeto é proprietário e desenvolvido para fins de portfólio e uso comercial restrito.
+© 2024 Botequista Systems. Todos os direitos reservados.
+Distribuído sob licença proprietária para uso comercial restrito.
 
 ---
-*Desenvolvido com ❤️ e muita cafeína.*
+*Developed with High-Performance React Standard.*
