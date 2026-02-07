@@ -94,7 +94,7 @@ A arquitetura "Local-First" traz desafios específicos que foram aceitos em prol
 
 | **Terminal de Vendas (PDV)** | **Relatórios Gerenciais** |
 | :---: | :---: |
-| ![PDV Screen](./docs/screenshots/pdv_screen.png) | ![Dashboard Analytics](./docs/screenshots/analytics_screen.png) |
+| ![PDV Screen](https://placehold.co/800x600/0f172a/ffffff?text=Interface+PDV+Dark+Mode) | ![Dashboard Analytics](https://placehold.co/800x600/0f172a/ffffff?text=Analytics+e+KPIs) |
 | *Fluxo rápido com botões de acesso imediato* | *Curva ABC e Fluxo de Caixa em tempo real* |
 
 ---
