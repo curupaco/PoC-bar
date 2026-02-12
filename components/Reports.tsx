@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO } from '../types';
 import { getFirebaseToken } from '../services/firebaseService'; // Import necessário para Issue 1
@@ -46,8 +47,21 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
            // Obtém token atualizado
            const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
            
+           // LÓGICA DE CORREÇÃO DE PENDURAS:
+           // Se estiver na aba PENDURAS, ignoramos o filtro visual de data e buscamos 6 meses para trás.
+           // Isso garante que dívidas antigas sejam computadas no saldo.
+           let queryStartDate = startDate;
+           let queryEndDate = endDate;
+
+           if (activeCategory === 'PENDURAS') {
+              const d = new Date();
+              d.setMonth(d.getMonth() - 6); // Retrocede 6 meses
+              queryStartDate = formatDateToISO(d);
+              queryEndDate = formatDateToISO(new Date()); // Até hoje
+           }
+
            // Envia headers seguros e datas para a Cloud Function (Issue 1 & 3)
-           const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${startDate}&endDate=${endDate}`, {
+           const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${queryStartDate}&endDate=${queryEndDate}`, {
               headers: {
                  'x-fb-url': syncConfig.url,
                  'x-fb-token': token || ''
@@ -70,7 +84,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
      };
 
      // CORREÇÃO ITEM 2: Adicionada categoria 'FECHAMENTO' para garantir que relatórios de turno carreguem vendas antigas
-     if (periodLabel === 'MÊS' || periodLabel === 'ANO' || activeCategory === 'FINANCEIRO' || activeCategory === 'FECHAMENTO') {
+     // CORREÇÃO PENDURAS: Adicionado 'PENDURAS' para disparar o fetch estendido
+     if (periodLabel === 'MÊS' || periodLabel === 'ANO' || activeCategory === 'FINANCEIRO' || activeCategory === 'FECHAMENTO' || activeCategory === 'PENDURAS') {
          fetchCloudHistory();
      }
   }, [activeUnitId, periodLabel, startDate, endDate, activeCategory, syncConfig]);
