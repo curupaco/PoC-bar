@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO } from '../../types';
+import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
 import { getFirebaseToken } from '../../services/firebaseService'; // Import necessário para Issue 1
 import ClosingReport from './components/ClosingReport';
 import FinancialReport from './components/FinancialReport';
@@ -55,7 +55,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
            if (activeCategory === 'PENDURAS') {
               const d = new Date();
-              d.setMonth(d.getMonth() - 6); // Retrocede 6 meses
+              d.setFullYear(d.getFullYear() - 5); // Retrocede 5 anos (Correção de Limite Rígido)
               queryStartDate = formatDateToISO(d);
               queryEndDate = formatDateToISO(new Date()); // Até hoje
            }
@@ -185,7 +185,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .filter((_, idx) => Object.keys(totalsByMethod)[idx] !== PaymentMethod.PENDURA)
       .reduce((acc, curr) => acc + curr.total, 0);
 
-    const operationalCount = filteredSales.filter(s => !s.items?.some(i => i.productId === 'quitacao')).length;
+    const operationalCount = filteredSales.filter(s => !s.items?.some(i => i.productId === PRODUCT_ID_DEBT_SETTLEMENT)).length;
     const avgTicket = operationalCount > 0 ? grandTotal / operationalCount : 0;
 
     const shiftTotalsByMethod = Object.values(PaymentMethod).reduce((acc: Record<string, number>, method) => {
@@ -219,7 +219,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }).filter(u => u.count > 0 || u.total > 0).sort((a, b) => b.total - a.total);
 
     const productStats = filteredSales.flatMap((s: Sale) => s.items || [])
-      .filter(item => item.productId !== 'quitacao')
+      .filter(item => item.productId !== PRODUCT_ID_DEBT_SETTLEMENT)
       .reduce((acc: Record<string, { name: string, qty: number, total: number }>, item) => {
       if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
       acc[item.productName].qty += item.quantity;
@@ -249,7 +249,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       }
 
       if (debtAmount > 0) acc[name] = (acc[name] || 0) + debtAmount;
-      if (s.items?.some(item => item.productId === 'quitacao')) acc[name] = (acc[name] || 0) - s.total;
+      if (s.items?.some(item => item.productId === PRODUCT_ID_DEBT_SETTLEMENT)) acc[name] = (acc[name] || 0) - s.total;
       
       return acc;
     }, {} as Record<string, number>);

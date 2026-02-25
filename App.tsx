@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem } from './types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT } from './types';
 import Sidebar from './shared/ui/Sidebar';
 import Dashboard from './features/dashboard/Dashboard';
 import POS from './features/pos/POS';
@@ -409,7 +409,7 @@ export const App: React.FC = () => {
         let debit = 0;
         if (s.paymentMethod === 'Pendura') debit = s.total;
         if (s.payments) { const pPart = s.payments.find(p => p.method === 'Pendura'); if(pPart) debit = pPart.amount; }
-        if (s.items?.some(i => i.productId === 'quitacao')) debit -= s.total;
+        if (s.items?.some(i => i.productId === PRODUCT_ID_DEBT_SETTLEMENT)) debit -= s.total;
         return acc + debit;
      }, 0);
   }, [sales]);

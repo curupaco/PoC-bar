@@ -236,7 +236,7 @@ export const useSync = (props: SyncProps) => {
       }
 
       const limitConfig: Record<string, string> = {
-         'sales': 'orderBy="$key"&limitToLast=200',
+         'sales': 'orderBy="$key"&limitToLast=1000',
          'shifts': 'orderBy="$key"&limitToLast=50'
       };
 
