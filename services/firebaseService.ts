@@ -33,7 +33,14 @@ const REFRESH_TOKEN_KEY = 'btq_secure_rt';
 const ensureArray = (data: any): any[] => {
   if (!data) return [];
   if (Array.isArray(data)) return data.filter(Boolean);
-  if (typeof data === 'object') return Object.values(data).filter(Boolean);
+  if (typeof data === 'object') {
+    return Object.entries(data).map(([key, value]: [string, any]) => {
+      if (value && typeof value === 'object') {
+        return value.id ? value : { ...value, id: key };
+      }
+      return value;
+    }).filter(Boolean);
+  }
   return [];
 };
 
