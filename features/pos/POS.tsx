@@ -239,7 +239,7 @@ export const POS: React.FC<POSProps> = ({
       )}
 
       {!activeTabId ? (
-        <div className="space-y-6 animate-in fade-in">
+        <div className="flex-1 overflow-y-auto space-y-6 animate-in fade-in p-1">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
             <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Vendas</h2>
             <div className="flex w-full sm:w-auto gap-3">
