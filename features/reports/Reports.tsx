@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
-import { getFirebaseToken } from '../../services/firebaseService'; // Import necessário para Issue 1
+import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService'; // Import necessário para Issue 1
 import ClosingReport from './components/ClosingReport';
 import FinancialReport from './components/FinancialReport';
 import PenduraReport from './components/PenduraReport';
@@ -47,34 +47,45 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
            // Obtém token atualizado
            const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
            
-           // LÓGICA DE CORREÇÃO DE PENDURAS:
-           // Se estiver na aba PENDURAS, ignoramos o filtro visual de data e buscamos 6 meses para trás.
-           // Isso garante que dívidas antigas sejam computadas no saldo.
-           let queryStartDate = startDate;
-           let queryEndDate = endDate;
-
            if (activeCategory === 'PENDURAS') {
-              const d = new Date();
-              d.setFullYear(d.getFullYear() - 5); // Retrocede 5 anos (Correção de Limite Rígido)
-              queryStartDate = formatDateToISO(d);
-              queryEndDate = formatDateToISO(new Date()); // Até hoje
-           }
-
-           // Envia headers seguros e datas para a Cloud Function (Issue 1 & 3)
-           const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${queryStartDate}&endDate=${queryEndDate}`, {
-              headers: {
-                 'x-fb-url': syncConfig.url,
-                 'x-fb-token': token || ''
-              }
-           });
-
-           if (res.ok) {
-              const data = await res.json();
-              if (data.fullHistory) {
-                 setCloudSales(data.fullHistory);
+              // BUSCA DIRETA NO FIREBASE (Simplificada para garantir retorno)
+              // Busca as últimas 5000 vendas. Isso deve cobrir o histórico de penduras da maioria dos bares.
+              // O uso de startAt com chaves pode ser frágil se o formato da chave variar.
+              const query = `orderBy="$key"&limitToLast=5000`;
+              const path = `data/units/${activeUnitId}/sales`;
+              
+              const rawData = await loadFromFirebase(syncConfig.url, undefined, token, path, query);
+              
+              if (rawData) {
+                  const salesArray = Array.isArray(rawData) ? rawData : Object.entries(rawData).map(([key, value]: [string, any]) => {
+                      return value.id ? value : { ...value, id: key };
+                  });
+                  setCloudSales(salesArray.filter(Boolean));
+              } else {
+                 // Fallback para dados locais se a nuvem falhar
+                 setCloudSales(null);
               }
            } else {
-              console.warn("Cloud Report: Status", res.status);
+               // Lógica original para outros relatórios (mantida por enquanto, ou pode ser migrada também)
+               let queryStartDate = startDate;
+               let queryEndDate = endDate;
+               
+               // Envia headers seguros e datas para a Cloud Function (Issue 1 & 3)
+               const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${queryStartDate}&endDate=${queryEndDate}`, {
+                  headers: {
+                     'x-fb-url': syncConfig.url,
+                     'x-fb-token': token || ''
+                  }
+               });
+    
+               if (res.ok) {
+                  const data = await res.json();
+                  if (data.fullHistory) {
+                     setCloudSales(data.fullHistory);
+                  }
+               } else {
+                  console.warn("Cloud Report: Status", res.status);
+               }
            }
         } catch (e) {
            console.log("Cloud report fetch failed, using local cache.", e);
@@ -91,7 +102,17 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   }, [activeUnitId, periodLabel, startDate, endDate, activeCategory, syncConfig]);
 
   // Restante do componente mantido, apenas usando cloudSales se disponível
-  const activeDataSource = cloudSales || sales;
+  // CORREÇÃO: Merge de dados locais (sales) com dados da nuvem (cloudSales)
+  // Isso garante que uma venda recém-criada (que está em 'sales' mas ainda não no 'cloudSales') apareça imediatamente.
+  const activeDataSource = useMemo(() => {
+      if (!cloudSales) return sales;
+      
+      const salesMap = new Map(cloudSales.map(s => [s.id, s]));
+      // Sobrescreve/Adiciona com dados locais mais recentes
+      sales.forEach(s => salesMap.set(s.id, s));
+      
+      return Array.from(salesMap.values());
+  }, [cloudSales, sales]);
   
   useEffect(() => {
     if (!selectedShiftId && shifts && shifts.length > 0) {
@@ -141,6 +162,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const filteredSales = useMemo<Sale[]>(() => {
     // Se temos cloudSales, elas já vieram filtradas do backend pelo range de datas (Issue 3)
     // Então só precisamos filtrar localmente se estivermos usando dados locais ou para garantir precisão de hora
+    
+    // CORREÇÃO PENDURAS: Se estiver na aba PENDURAS, ignoramos o filtro de data local para mostrar todo o histórico carregado (5 anos)
+    if (activeCategory === 'PENDURAS') {
+        return (activeDataSource || []).filter(s => !s.deleted);
+    }
+
     const safeParse = (dateStr: string, hour: number, min: number, sec: number) => {
       const parts = dateStr.split('-');
       const year = parseInt(parts[0], 10);
