@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { safeFloat, parseCurrencyValue } from '../types';
+import { safeFloat, parseCurrencyValue } from '../src/types';
 
 describe('Financial Utilities', () => {
     describe('safeFloat', () => {

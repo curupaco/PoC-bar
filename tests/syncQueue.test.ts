@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SyncQueue } from '../utils/syncQueue';
-import { idb } from '../utils/idb';
+import { SyncQueue } from '../src/utils/syncQueue';
+import { idb } from '../src/utils/idb';
 
 // Mock do IDB
-vi.mock('../utils/idb', () => ({
+vi.mock('../src/utils/idb', () => ({
     idb: {
         get: vi.fn(),
         set: vi.fn(),

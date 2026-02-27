@@ -28,7 +28,7 @@ export const idb = {
   },
   async set(key: string, val: any): Promise<void> {
     if (!dbPromise) return;
-    return (await dbPromise).put(STORE_NAME, val, key);
+    await (await dbPromise).put(STORE_NAME, val, key);
   },
   async del(key: string): Promise<void> {
     if (!dbPromise) return;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { User, UserPermission } from '../types';
+import { User, UserPermission } from '../src/types';
 
 // Função auxiliar baseada na lógica do App.tsx e dos componentes
 function hasPermission(user: User | null, permission: UserPermission): boolean {
