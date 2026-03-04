@@ -8,12 +8,15 @@ import PenduraReport from './components/PenduraReport';
 import TeamReport from './components/TeamReport';
 import ProductReport from './components/ProductReport';
 import OperationalReport from './components/OperationalReport';
+import AuditReport from './components/AuditReport';
+import { AuditLog } from '../../types';
 
 interface ReportsProps {
   sales: Sale[];
   products: Product[];
   users: User[];
   shifts: Shift[];
+  auditLogs: AuditLog[];
   currentUser: User;
   onQuitarPendura: (customerName: string, amount: number) => void;
   theme?: Theme;
@@ -22,12 +25,12 @@ interface ReportsProps {
   syncConfig?: { url: string; key: string; email: string; pass: string }; // Config recebida do App
 }
 
-type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS';
+type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA';
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
-  
+
   const [startDate, setStartDate] = useState(() => formatDateToISO(new Date()));
   const [endDate, setEndDate] = useState(() => formatDateToISO(new Date()));
   const [periodLabel, setPeriodLabel] = useState('HOJE');
@@ -39,81 +42,81 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   // FIX ISSUE 1 & 3: Busca segura com Headers e Filtro de Data
   useEffect(() => {
-     const fetchCloudHistory = async () => {
-        if (!activeUnitId || !syncConfig) return;
-        
-        setIsLoadingCloud(true);
-        try {
-           // Obtém token atualizado
-           const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
-           
-           if (activeCategory === 'PENDURAS') {
-              // BUSCA DIRETA NO FIREBASE (Simplificada para garantir retorno)
-              // Busca as últimas 5000 vendas. Isso deve cobrir o histórico de penduras da maioria dos bares.
-              // O uso de startAt com chaves pode ser frágil se o formato da chave variar.
-              const query = `orderBy="$key"&limitToLast=5000`;
-              const path = `data/units/${activeUnitId}/sales`;
-              
-              const rawData = await loadFromFirebase(syncConfig.url, undefined, token, path, query);
-              
-              if (rawData) {
-                  const salesArray = Array.isArray(rawData) ? rawData : Object.entries(rawData).map(([key, value]: [string, any]) => {
-                      return value.id ? value : { ...value, id: key };
-                  });
-                  setCloudSales(salesArray.filter(Boolean));
-              } else {
-                 // Fallback para dados locais se a nuvem falhar
-                 setCloudSales(null);
-              }
-           } else {
-               // Lógica original para outros relatórios (mantida por enquanto, ou pode ser migrada também)
-               let queryStartDate = startDate;
-               let queryEndDate = endDate;
-               
-               // Envia headers seguros e datas para a Cloud Function (Issue 1 & 3)
-               const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${queryStartDate}&endDate=${queryEndDate}`, {
-                  headers: {
-                     'x-fb-url': syncConfig.url,
-                     'x-fb-token': token || ''
-                  }
-               });
-    
-               if (res.ok) {
-                  const data = await res.json();
-                  if (data.fullHistory) {
-                     setCloudSales(data.fullHistory);
-                  }
-               } else {
-                  console.warn("Cloud Report: Status", res.status);
-               }
-           }
-        } catch (e) {
-           console.log("Cloud report fetch failed, using local cache.", e);
-        } finally {
-           setIsLoadingCloud(false);
-        }
-     };
+    const fetchCloudHistory = async () => {
+      if (!activeUnitId || !syncConfig) return;
 
-     // CORREÇÃO ITEM 2: Adicionada categoria 'FECHAMENTO' para garantir que relatórios de turno carreguem vendas antigas
-     // CORREÇÃO PENDURAS: Adicionado 'PENDURAS' para disparar o fetch estendido
-     if (periodLabel === 'MÊS' || periodLabel === 'ANO' || activeCategory === 'FINANCEIRO' || activeCategory === 'FECHAMENTO' || activeCategory === 'PENDURAS') {
-         fetchCloudHistory();
-     }
+      setIsLoadingCloud(true);
+      try {
+        // Obtém token atualizado
+        const token = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
+
+        if (activeCategory === 'PENDURAS') {
+          // BUSCA DIRETA NO FIREBASE (Simplificada para garantir retorno)
+          // Busca as últimas 5000 vendas. Isso deve cobrir o histórico de penduras da maioria dos bares.
+          // O uso de startAt com chaves pode ser frágil se o formato da chave variar.
+          const query = `orderBy="$key"&limitToLast=5000`;
+          const path = `data/units/${activeUnitId}/sales`;
+
+          const rawData = await loadFromFirebase(syncConfig.url, undefined, token, path, query);
+
+          if (rawData) {
+            const salesArray = Array.isArray(rawData) ? rawData : Object.entries(rawData).map(([key, value]: [string, any]) => {
+              return value.id ? value : { ...value, id: key };
+            });
+            setCloudSales(salesArray.filter(Boolean));
+          } else {
+            // Fallback para dados locais se a nuvem falhar
+            setCloudSales(null);
+          }
+        } else {
+          // Lógica original para outros relatórios (mantida por enquanto, ou pode ser migrada também)
+          let queryStartDate = startDate;
+          let queryEndDate = endDate;
+
+          // Envia headers seguros e datas para a Cloud Function (Issue 1 & 3)
+          const res = await fetch(`/api/reports?unitId=${activeUnitId}&startDate=${queryStartDate}&endDate=${queryEndDate}`, {
+            headers: {
+              'x-fb-url': syncConfig.url,
+              'x-fb-token': token || ''
+            }
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.fullHistory) {
+              setCloudSales(data.fullHistory);
+            }
+          } else {
+            console.warn("Cloud Report: Status", res.status);
+          }
+        }
+      } catch (e) {
+        console.log("Cloud report fetch failed, using local cache.", e);
+      } finally {
+        setIsLoadingCloud(false);
+      }
+    };
+
+    // CORREÇÃO ITEM 2: Adicionada categoria 'FECHAMENTO' para garantir que relatórios de turno carreguem vendas antigas
+    // CORREÇÃO PENDURAS: Adicionado 'PENDURAS' para disparar o fetch estendido
+    if (periodLabel === 'MÊS' || periodLabel === 'ANO' || activeCategory === 'FINANCEIRO' || activeCategory === 'FECHAMENTO' || activeCategory === 'PENDURAS') {
+      fetchCloudHistory();
+    }
   }, [activeUnitId, periodLabel, startDate, endDate, activeCategory, syncConfig]);
 
   // Restante do componente mantido, apenas usando cloudSales se disponível
   // CORREÇÃO: Merge de dados locais (sales) com dados da nuvem (cloudSales)
   // Isso garante que uma venda recém-criada (que está em 'sales' mas ainda não no 'cloudSales') apareça imediatamente.
   const activeDataSource = useMemo(() => {
-      if (!cloudSales) return sales;
-      
-      const salesMap = new Map(cloudSales.map(s => [s.id, s]));
-      // Sobrescreve/Adiciona com dados locais mais recentes
-      sales.forEach(s => salesMap.set(s.id, s));
-      
-      return Array.from(salesMap.values());
+    if (!cloudSales) return sales;
+
+    const salesMap = new Map(cloudSales.map(s => [s.id, s]));
+    // Sobrescreve/Adiciona com dados locais mais recentes
+    sales.forEach(s => salesMap.set(s.id, s));
+
+    return Array.from(salesMap.values());
   }, [cloudSales, sales]);
-  
+
   useEffect(() => {
     if (!selectedShiftId && shifts && shifts.length > 0) {
       setSelectedShiftId(shifts[0].id);
@@ -140,16 +143,16 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const now = new Date();
     let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    if (type === 'ONTEM') { 
-      start.setDate(now.getDate() - 1); 
-      end.setDate(now.getDate() - 1); 
+
+    if (type === 'ONTEM') {
+      start.setDate(now.getDate() - 1);
+      end.setDate(now.getDate() - 1);
     }
-    else if (type === 'SEMANA') { 
-      start.setDate(now.getDate() - now.getDay()); 
+    else if (type === 'SEMANA') {
+      start.setDate(now.getDate() - now.getDay());
     }
-    else if (type === 'MÊS') { 
-      start = new Date(now.getFullYear(), now.getMonth(), 1); 
+    else if (type === 'MÊS') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
       end = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Fim do mês
     }
 
@@ -162,10 +165,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const filteredSales = useMemo<Sale[]>(() => {
     // Se temos cloudSales, elas já vieram filtradas do backend pelo range de datas (Issue 3)
     // Então só precisamos filtrar localmente se estivermos usando dados locais ou para garantir precisão de hora
-    
+
     // CORREÇÃO PENDURAS: Se estiver na aba PENDURAS, ignoramos o filtro de data local para mostrar todo o histórico carregado (5 anos)
     if (activeCategory === 'PENDURAS') {
-        return (activeDataSource || []).filter(s => !s.deleted);
+      return (activeDataSource || []).filter(s => !s.deleted);
     }
 
     const safeParse = (dateStr: string, hour: number, min: number, sec: number) => {
@@ -178,7 +181,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
     const startTs = safeParse(startDate, 0, 0, 0);
     const endTs = safeParse(endDate, 23, 59, 59);
-    
+
     return (activeDataSource || []).filter((s: Sale) => {
       if (s.deleted) return false;
       return s.timestamp >= startTs && s.timestamp <= endTs;
@@ -197,10 +200,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     filteredSales.forEach((sale: Sale) => {
       if (sale.payments) {
         sale.payments.forEach(p => {
-           if (totalsByMethod[p.method]) {
-             totalsByMethod[p.method].total += p.amount;
-             totalsByMethod[p.method].count += 1; 
-           }
+          if (totalsByMethod[p.method]) {
+            totalsByMethod[p.method].total += p.amount;
+            totalsByMethod[p.method].count += 1;
+          }
         });
       } else if (totalsByMethod[sale.paymentMethod]) {
         totalsByMethod[sale.paymentMethod].count += 1;
@@ -221,20 +224,20 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }, {} as Record<string, number>);
 
     shiftSales.forEach((s: Sale) => {
-       if (s.payments) {
-          s.payments.forEach(p => {
-             if (shiftTotalsByMethod[p.method] !== undefined) {
-                shiftTotalsByMethod[p.method] += p.amount;
-             }
-          });
-       } else if (shiftTotalsByMethod[s.paymentMethod] !== undefined) {
-          shiftTotalsByMethod[s.paymentMethod] += s.total;
-       }
+      if (s.payments) {
+        s.payments.forEach(p => {
+          if (shiftTotalsByMethod[p.method] !== undefined) {
+            shiftTotalsByMethod[p.method] += p.amount;
+          }
+        });
+      } else if (shiftTotalsByMethod[s.paymentMethod] !== undefined) {
+        shiftTotalsByMethod[s.paymentMethod] += s.total;
+      }
     });
 
     const shiftTotalRevenue = Object.entries(shiftTotalsByMethod)
-       .filter(([method]) => method !== PaymentMethod.PENDURA)
-       .reduce((acc, [_, total]) => acc + total, 0);
+      .filter(([method]) => method !== PaymentMethod.PENDURA)
+      .reduce((acc, [_, total]) => acc + total, 0);
 
     const teamStats = (users || []).map(u => {
       const uSales = filteredSales.filter((s: Sale) => s.userId === u.id);
@@ -248,11 +251,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     const productStats = filteredSales.flatMap((s: Sale) => s.items || [])
       .filter(item => item.productId !== PRODUCT_ID_DEBT_SETTLEMENT)
       .reduce((acc: Record<string, { name: string, qty: number, total: number }>, item) => {
-      if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
-      acc[item.productName].qty += item.quantity;
-      acc[item.productName].total += item.totalPrice;
-      return acc;
-    }, {} as Record<string, { name: string, qty: number, total: number }>);
+        if (!acc[item.productName]) acc[item.productName] = { name: item.productName, qty: 0, total: 0 };
+        acc[item.productName].qty += item.quantity;
+        acc[item.productName].total += item.totalPrice;
+        return acc;
+      }, {} as Record<string, { name: string, qty: number, total: number }>);
 
     const topProducts = (Object.values(productStats) as { name: string, qty: number, total: number }[]).sort((a, b) => b.total - a.total);
 
@@ -266,18 +269,18 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       if (s.deleted) return acc;
       if (!s.customerName) return acc;
       const name = s.customerName.trim().toUpperCase();
-      
+
       let debtAmount = 0;
       if (s.payments) {
-         const penduraPart = s.payments.find(p => p.method === PaymentMethod.PENDURA);
-         if (penduraPart) debtAmount = penduraPart.amount;
+        const penduraPart = s.payments.find(p => p.method === PaymentMethod.PENDURA);
+        if (penduraPart) debtAmount = penduraPart.amount;
       } else if (s.paymentMethod === PaymentMethod.PENDURA) {
-         debtAmount = s.total;
+        debtAmount = s.total;
       }
 
       if (debtAmount > 0) acc[name] = (acc[name] || 0) + debtAmount;
       if (s.items?.some(item => item.productId === PRODUCT_ID_DEBT_SETTLEMENT)) acc[name] = (acc[name] || 0) - s.total;
-      
+
       return acc;
     }, {} as Record<string, number>);
 
@@ -286,7 +289,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
 
-    return { 
+    return {
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftTotalsByMethod, shiftTotalRevenue,
       teamStats, topProducts, hourlyMap, operationalCount, activeDataSource
     };
@@ -298,15 +301,15 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const renderActiveReport = () => {
     if (isLoadingCloud) {
-       return (
-          <div className="flex flex-col items-center justify-center py-20">
-             <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-             <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Calculando números na nuvem...</p>
-          </div>
-       );
+      return (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Calculando números na nuvem...</p>
+        </div>
+      );
     }
 
-    if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO') {
+    if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO' && activeCategory !== 'AUDITORIA') {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-black uppercase tracking-[0.3em] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in italic">
           <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth={2} /></svg>
@@ -315,13 +318,18 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       );
     }
 
-    switch(activeCategory) {
+    switch (activeCategory) {
       case 'FECHAMENTO': return <ClosingReport shifts={shifts} selectedShiftId={selectedShiftId} setSelectedShiftId={setSelectedShiftId} reportData={reportData} canExport={canExport} showToast={showToast} theme={theme} />;
       case 'FINANCEIRO': return <FinancialReport reportData={reportData} />;
       case 'PENDURAS': return <PenduraReport reportData={reportData} onQuitarPendura={onQuitarPendura} canSettle={canSettle} />;
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
       case 'PRODUTOS': return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL': return <OperationalReport reportData={reportData} theme={theme} />;
+      case 'AUDITORIA': {
+        const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const recentLogs = auditLogs.filter(log => log.timestamp >= sevenDaysAgo);
+        return <AuditReport auditLogs={recentLogs} />;
+      }
       default: return null;
     }
   };
@@ -344,7 +352,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
         <div className="flex flex-wrap justify-center bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1">
-          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS'] as ReportCategory[]).map(cat => {
+          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'AUDITORIA'] as ReportCategory[]).map(cat => {
             const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
             return (
               <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>

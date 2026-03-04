@@ -15,6 +15,7 @@ interface SyncProps {
   setShifts: (data: any) => void;
   setUnits: (data: any) => void;
   setCategories: (data: any) => void;
+  setAuditLogs: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
   activeUnitId: string | null;
   config: { url: string; key: string; email: string; pass: string; allPerms: any[]; }
@@ -29,9 +30,9 @@ export const useSync = (props: SyncProps) => {
   const serverTombstones = useRef<Set<string>>(new Set());
   const currentUnitRef = useRef<string | null>(null);
 
-  const { 
-    setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs, 
-    setUsers, setShifts, setUnits, setCategories, setDbStatus, activeUnitId, config
+  const {
+    setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
+    setUsers, setShifts, setUnits, setCategories, setAuditLogs, setDbStatus, activeUnitId, config
   } = props;
 
   const ensureArray = (data: any): any[] => {
@@ -66,18 +67,18 @@ export const useSync = (props: SyncProps) => {
   }, [activeUnitId]);
 
   const getPersistedBlacklist = useCallback(async () => {
-      if (!activeUnitId) return new Set<string>();
-      const key = `btq_blacklist_idb_${activeUnitId}`;
-      const list = await idb.get<string[]>(key);
-      return new Set<string>(list || []);
+    if (!activeUnitId) return new Set<string>();
+    const key = `btq_blacklist_idb_${activeUnitId}`;
+    const list = await idb.get<string[]>(key);
+    return new Set<string>(list || []);
   }, [activeUnitId]);
 
   const registerLocalDeletion = useCallback(async (id: string) => {
-      if (!activeUnitId) return;
-      const key = `btq_blacklist_idb_${activeUnitId}`;
-      const current = await getPersistedBlacklist();
-      current.add(id);
-      await idb.set(key, Array.from(current));
+    if (!activeUnitId) return;
+    const key = `btq_blacklist_idb_${activeUnitId}`;
+    const current = await getPersistedBlacklist();
+    current.add(id);
+    await idb.set(key, Array.from(current));
   }, [activeUnitId, getPersistedBlacklist]);
 
   const processQueue = useCallback(async (token: string) => {
@@ -88,94 +89,94 @@ export const useSync = (props: SyncProps) => {
 
     let path = '';
     if (item.unitId === 'GLOBAL') {
-        path = item.node; 
+      path = item.node;
     } else {
-        const effectiveUnitId = item.unitId || activeUnitId;
-        if (!effectiveUnitId) return; 
-        path = `data/units/${effectiveUnitId}/${item.node}`;
+      const effectiveUnitId = item.unitId || activeUnitId;
+      if (!effectiveUnitId) return;
+      path = `data/units/${effectiveUnitId}/${item.node}`;
     }
 
     isProcessingQueue.current = true;
     try {
-        if (item.itemId) await saveItemToFirebase(config.url, item.data, item.itemId, undefined, token, path);
-        else await saveToFirebase(config.url, item.data, undefined, token, path);
-        
-        await SyncQueue.dequeue(item.id);
-        isProcessingQueue.current = false;
-        processQueue(token);
+      if (item.itemId) await saveItemToFirebase(config.url, item.data, item.itemId, undefined, token, path);
+      else await saveToFirebase(config.url, item.data, undefined, token, path);
+
+      await SyncQueue.dequeue(item.id);
+      isProcessingQueue.current = false;
+      processQueue(token);
     } catch (e) {
-        const currentRetry = item.retryCount || 0;
-        if (currentRetry >= 10) await SyncQueue.dequeue(item.id);
-        else await SyncQueue.update({ ...item, retryCount: currentRetry + 1 });
-        isProcessingQueue.current = false;
+      const currentRetry = item.retryCount || 0;
+      if (currentRetry >= 10) await SyncQueue.dequeue(item.id);
+      else await SyncQueue.update({ ...item, retryCount: currentRetry + 1 });
+      isProcessingQueue.current = false;
     }
   }, [config, activeUnitId]);
 
   const smartMerge = useCallback((serverData: any, nodeKey: string, queue: QueueItem[], blacklist: Set<string>) => {
-      const pendingItems = queue.filter(q => q.node.startsWith(nodeKey) && (q.unitId === activeUnitId || (!q.unitId && activeUnitId)));
-      
-      // FIX CRÍTICO: Tratamento especial para categoryModifiers (Objeto Simples vs Coleção)
-      // categoryModifiers não tem IDs internos, é um mapa { Categoria: GrupoID }.
-      // A lógica padrão de 'ensureArray' + 'map by ID' destruía essa estrutura.
-      if (nodeKey === 'categoryModifiers') {
-          let mergedData = serverData || {};
-          // Aplica atualizações pendentes na ordem da fila (sobrescreve o objeto)
-          pendingItems.forEach(q => {
-             if (q.data && typeof q.data === 'object') {
-                 mergedData = q.data;
-             }
-          });
-          return mergedData;
-      }
+    const pendingItems = queue.filter(q => q.node.startsWith(nodeKey) && (q.unitId === activeUnitId || (!q.unitId && activeUnitId)));
 
-      const safeServerData = ensureArray(serverData).map(item => {
-          if (nodeKey === 'openTabs' && item && item.items && !Array.isArray(item.items)) {
-              return { ...item, items: ensureArray(item.items) };
-          }
-          return item;
-      });
-
-      const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
+    // FIX CRÍTICO: Tratamento especial para categoryModifiers (Objeto Simples vs Coleção)
+    // categoryModifiers não tem IDs internos, é um mapa { Categoria: GrupoID }.
+    // A lógica padrão de 'ensureArray' + 'map by ID' destruía essa estrutura.
+    if (nodeKey === 'categoryModifiers') {
+      let mergedData = serverData || {};
+      // Aplica atualizações pendentes na ordem da fila (sobrescreve o objeto)
       pendingItems.forEach(q => {
-          if (!q.node.includes('/') && q.itemId) {
-             if (q.data) dataMap.set(q.itemId, { ...q.data, id: q.itemId });
-             else dataMap.delete(q.itemId);
-          }
+        if (q.data && typeof q.data === 'object') {
+          mergedData = q.data;
+        }
       });
+      return mergedData;
+    }
 
-      if (nodeKey === 'openTabs') {
-          const nestedItems = pendingItems.filter(q => q.node.includes('/items'));
-          nestedItems.forEach(q => {
-              const parts = q.node.split('/');
-              if (parts.length >= 3) {
-                  const tabId = parts[1];
-                  const tab = dataMap.get(tabId);
-                  if (tab) {
-                      const currentItems = ensureArray(tab.items);
-                      const itemsMap = new Map(currentItems.map((i: any) => [i.id, i]));
-                      if (q.itemId) {
-                          if (q.data) itemsMap.set(q.itemId, q.data);
-                          else itemsMap.delete(q.itemId);
-                      }
-                      dataMap.set(tabId, { ...tab, items: Array.from(itemsMap.values()) });
-                  }
-              }
-          });
-          const idsToDelete = new Set([...blacklist, ...serverTombstones.current]);
-          for (const id of idsToDelete) { if (dataMap.has(id)) dataMap.delete(id); }
+    const safeServerData = ensureArray(serverData).map(item => {
+      if (nodeKey === 'openTabs' && item && item.items && !Array.isArray(item.items)) {
+        return { ...item, items: ensureArray(item.items) };
       }
+      return item;
+    });
 
-      if (nodeKey === 'categories') {
-          const uniqueNames = new Set<string>();
-          return Array.from(dataMap.values()).filter((cat: any) => {
-              const name = cat.name?.trim().toUpperCase();
-              if (!name || uniqueNames.has(name)) return false;
-              uniqueNames.add(name);
-              return true;
-          });
+    const dataMap = new Map(safeServerData.map((item: any) => [item.id, item]));
+    pendingItems.forEach(q => {
+      if (!q.node.includes('/') && q.itemId) {
+        if (q.data) dataMap.set(q.itemId, { ...q.data, id: q.itemId });
+        else dataMap.delete(q.itemId);
       }
+    });
 
-      return Array.from(dataMap.values());
+    if (nodeKey === 'openTabs') {
+      const nestedItems = pendingItems.filter(q => q.node.includes('/items'));
+      nestedItems.forEach(q => {
+        const parts = q.node.split('/');
+        if (parts.length >= 3) {
+          const tabId = parts[1];
+          const tab = dataMap.get(tabId);
+          if (tab) {
+            const currentItems = ensureArray(tab.items);
+            const itemsMap = new Map(currentItems.map((i: any) => [i.id, i]));
+            if (q.itemId) {
+              if (q.data) itemsMap.set(q.itemId, q.data);
+              else itemsMap.delete(q.itemId);
+            }
+            dataMap.set(tabId, { ...tab, items: Array.from(itemsMap.values()) });
+          }
+        }
+      });
+      const idsToDelete = new Set([...blacklist, ...serverTombstones.current]);
+      for (const id of idsToDelete) { if (dataMap.has(id)) dataMap.delete(id); }
+    }
+
+    if (nodeKey === 'categories') {
+      const uniqueNames = new Set<string>();
+      return Array.from(dataMap.values()).filter((cat: any) => {
+        const name = cat.name?.trim().toUpperCase();
+        if (!name || uniqueNames.has(name)) return false;
+        uniqueNames.add(name);
+        return true;
+      });
+    }
+
+    return Array.from(dataMap.values());
   }, [activeUnitId]);
 
   const fetchData = useCallback(async () => {
@@ -187,7 +188,7 @@ export const useSync = (props: SyncProps) => {
       await SyncQueue.init();
       const currentQueue = SyncQueue.getAll();
       const currentBlacklist = await getPersistedBlacklist();
-      
+
       const nodesToCheck = [
         { key: 'products', setter: setProducts },
         { key: 'modifierGroups', setter: setModifierGroups },
@@ -196,6 +197,7 @@ export const useSync = (props: SyncProps) => {
         { key: 'sales', setter: setSales },
         { key: 'shifts', setter: setShifts },
         { key: 'openTabs', setter: setOpenTabs },
+        { key: 'auditLogs', setter: setAuditLogs },
       ];
 
       if (!initialLoadDone.current) {
@@ -219,25 +221,26 @@ export const useSync = (props: SyncProps) => {
 
       const metaRaw = await loadFromFirebase(config.url, undefined, token, `data/units/${activeUnitId}/_meta`);
       const serverMeta = metaRaw || {};
-      
+
       const now = Date.now();
       const cutoff24h = now - (24 * 60 * 60 * 1000);
 
       if (serverMeta.deleted_tabs) {
-          const keysToDelete: string[] = [];
-          Object.entries(serverMeta.deleted_tabs).forEach(([id, ts]: [string, any]) => {
-              const timestamp = Number(ts);
-              if (timestamp > cutoff24h) serverTombstones.current.add(id);
-              else keysToDelete.push(id);
-          });
-          if (keysToDelete.length > 0 && config.email.includes('admin')) {
-             keysToDelete.forEach(id => saveItemToFirebase(config.url, null, id, undefined, token, `data/units/${activeUnitId}/_meta/deleted_tabs`));
-          }
+        const keysToDelete: string[] = [];
+        Object.entries(serverMeta.deleted_tabs).forEach(([id, ts]: [string, any]) => {
+          const timestamp = Number(ts);
+          if (timestamp > cutoff24h) serverTombstones.current.add(id);
+          else keysToDelete.push(id);
+        });
+        if (keysToDelete.length > 0 && config.email.includes('admin')) {
+          keysToDelete.forEach(id => saveItemToFirebase(config.url, null, id, undefined, token, `data/units/${activeUnitId}/_meta/deleted_tabs`));
+        }
       }
 
       const limitConfig: Record<string, string> = {
-         'sales': 'orderBy="$key"&limitToLast=1000',
-         'shifts': 'orderBy="$key"&limitToLast=50'
+        'sales': 'orderBy="$key"&limitToLast=1000',
+        'shifts': 'orderBy="$key"&limitToLast=50',
+        'auditLogs': 'orderBy="$key"&limitToLast=2000'
       };
 
       const promises = nodesToCheck.map(async (node) => {
@@ -258,7 +261,7 @@ export const useSync = (props: SyncProps) => {
       });
 
       const results = await Promise.all(promises);
-      
+
       if (fetchStartedForUnit !== activeUnitId) return;
 
       const cacheToSave = await idb.get<Record<string, any>>(`btq_cache_${activeUnitId}`) || {};
@@ -272,9 +275,9 @@ export const useSync = (props: SyncProps) => {
           hasNewData = true;
         }
       });
-      
+
       if (hasNewData) {
-         await idb.set(`btq_cache_${activeUnitId}`, cacheToSave);
+        await idb.set(`btq_cache_${activeUnitId}`, cacheToSave);
       }
 
       initialLoadDone.current = true;
@@ -288,33 +291,33 @@ export const useSync = (props: SyncProps) => {
   }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus]);
 
   const fetchGlobal = useCallback(async () => {
-      const token = await getFirebaseToken(config.email, config.pass, config.key);
-      if(token) {
-        processQueue(token);
-        const [uRaw, unitsRaw] = await Promise.all([
-            loadFromFirebase(config.url, undefined, token, 'users'),
-            loadFromFirebase(config.url, undefined, token, 'units')
-        ]);
-        if (uRaw !== null) setUsers(ensureArray(uRaw));
-        if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
-      }
+    const token = await getFirebaseToken(config.email, config.pass, config.key);
+    if (token) {
+      processQueue(token);
+      const [uRaw, unitsRaw] = await Promise.all([
+        loadFromFirebase(config.url, undefined, token, 'users'),
+        loadFromFirebase(config.url, undefined, token, 'units')
+      ]);
+      if (uRaw !== null) setUsers(ensureArray(uRaw));
+      if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
+    }
   }, [config, setUsers, setUnits, processQueue]);
 
   useEffect(() => {
     fetchGlobal();
     if (activeUnitId) {
-        fetchData(); 
-        const interval = setInterval(fetchData, 10000);
-        return () => clearInterval(interval);
+      fetchData();
+      const interval = setInterval(fetchData, 10000);
+      return () => clearInterval(interval);
     }
   }, [fetchData, fetchGlobal, activeUnitId]);
 
   const refresh = useCallback(() => {
-     localMeta.current = {};
-     initialLoadDone.current = false;
-     serverTombstones.current.clear();
-     fetchGlobal();
-     if(activeUnitId) fetchData();
+    localMeta.current = {};
+    initialLoadDone.current = false;
+    serverTombstones.current.clear();
+    fetchGlobal();
+    if (activeUnitId) fetchData();
   }, [fetchGlobal, fetchData, activeUnitId]);
 
   return { refresh, registerLocalDeletion, updateLocalTimestamp };

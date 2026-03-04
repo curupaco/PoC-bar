@@ -1,5 +1,5 @@
 export type View = 'pos' | 'products' | 'shifts' | 'cash' | 'users' | 'dashboard' | 'history' | 'reports' | 'settings' | 'help';
-export type UserPermission = 'dashboard' | 'pos' | 'products' | 'history' | 'reports' | 'settings' | 'users_admin' | 'shifts_admin' | 'cash_admin' | 'open_shift' | 'close_shift' | 'delete_sale' | 'delete_product' | 'edit_product' | 'export_report' | 'clear_fiado' | 'full_reset' | 'manage_backup' | 'help_view' | 'manage_units';
+export type UserPermission = 'dashboard' | 'pos' | 'products' | 'history' | 'reports' | 'settings' | 'users_admin' | 'shifts_admin' | 'cash_admin' | 'open_shift' | 'close_shift' | 'delete_sale' | 'delete_product' | 'edit_product' | 'export_report' | 'clear_fiado' | 'full_reset' | 'manage_backup' | 'help_view' | 'manage_units' | 'view_audit_logs';
 export type Theme = 'light' | 'dark';
 export type SellType = 'unit' | 'weight';
 
@@ -115,6 +115,17 @@ export interface Shift {
   transactions?: CashTransaction[];
 }
 
+export interface AuditLog {
+  id: string;
+  timestamp: number;
+  userId: string;
+  username: string;
+  action: string; // 'TAB_OPEN', 'TAB_ITEM_ADD', 'TAB_ITEM_REMOVE', 'TAB_CLOSE', 'SHIFT_OPEN', 'SHIFT_CLOSE', 'PAYMENT'
+  details: string;
+  unitId: string;
+}
+
+
 export interface Unit {
   id: string;
   name: string;
@@ -167,8 +178,8 @@ export const getBusinessDateStart = (timestamp: number): number => {
 };
 
 export const formatDateToISO = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };

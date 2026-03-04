@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT } from './types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, View, UserPermission, PaymentMethod, generateUniqueId, Theme, CashTransaction, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, formatCurrency, AuditLog } from './types';
 import Sidebar from './shared/ui/Sidebar';
 import Dashboard from './features/dashboard/Dashboard';
 import POS from './features/pos/POS';
@@ -53,12 +53,12 @@ const ALL_PERMISSIONS: UserPermission[] = [
   'dashboard', 'pos', 'products', 'history', 'reports', 'settings',
   'users_admin', 'shifts_admin', 'cash_admin', 'open_shift', 'close_shift',
   'delete_sale', 'delete_product', 'edit_product', 'export_report',
-  'clear_fiado', 'full_reset', 'manage_backup', 'help_view', 'manage_units'
+  'clear_fiado', 'full_reset', 'manage_backup', 'help_view', 'manage_units', 'view_audit_logs'
 ];
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
+
   const currentUserRef = useRef<User | null>(null);
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
 
@@ -72,20 +72,20 @@ export const App: React.FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
-  
+
   // Estado para Modal de Confirmação Global
-  const [confirmModal, setConfirmModal] = useState<{ 
-    isOpen: boolean; 
-    title: string; 
-    message: string; 
-    onConfirm: () => void; 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
     isDanger?: boolean;
     confirmLabel?: string;
     cancelLabel?: string;
   }>({
-    isOpen: false, title: '', message: '', onConfirm: () => {}, isDanger: false
+    isOpen: false, title: '', message: '', onConfirm: () => { }, isDanger: false
   });
-  
+
   const [theme, setTheme] = useState<Theme>(() => {
     const saved = safeLocalStorage.getItem('btq_theme');
     return (saved as Theme) || 'dark';
@@ -102,12 +102,12 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     const checkServer = async () => {
-       try {
-          const res = await fetch('/api/health');
-          setServerHealth(res.ok ? 'ok' : 'error');
-       } catch {
-          setServerHealth('error');
-       }
+      try {
+        const res = await fetch('/api/health');
+        setServerHealth(res.ok ? 'ok' : 'error');
+      } catch {
+        setServerHealth('error');
+      }
     };
     checkServer();
     const interval = setInterval(checkServer, 20000);
@@ -123,9 +123,10 @@ export const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
-  
+
   const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => safeLocalStorage.getItem('btq_active_unit'));
 
   const visibleUnits = useMemo(() => {
@@ -136,15 +137,15 @@ export const App: React.FC = () => {
     const rawAllowed = currentUser.allowedUnits;
 
     if (Array.isArray(rawAllowed)) {
-        allowedStrings = rawAllowed.map(String);
+      allowedStrings = rawAllowed.map(String);
     } else if (typeof rawAllowed === 'object' && rawAllowed !== null) {
-        allowedStrings = Object.values(rawAllowed).map(String);
+      allowedStrings = Object.values(rawAllowed).map(String);
     }
 
     if (allowedStrings.length === 0) return [];
 
     return units.filter(u => {
-        return u.isActive && allowedStrings.includes(String(u.id));
+      return u.isActive && allowedStrings.includes(String(u.id));
     });
   }, [currentUser, units]);
 
@@ -160,13 +161,13 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (validatedActiveUnitId) {
-       if (rawActiveUnitId !== validatedActiveUnitId) {
-          setRawActiveUnitId(validatedActiveUnitId);
-          safeLocalStorage.setItem('btq_active_unit', validatedActiveUnitId);
-       }
+      if (rawActiveUnitId !== validatedActiveUnitId) {
+        setRawActiveUnitId(validatedActiveUnitId);
+        safeLocalStorage.setItem('btq_active_unit', validatedActiveUnitId);
+      }
     } else if (rawActiveUnitId && visibleUnits.length > 1) {
-       setRawActiveUnitId(null);
-       safeLocalStorage.removeItem('btq_active_unit');
+      setRawActiveUnitId(null);
+      safeLocalStorage.removeItem('btq_active_unit');
     }
   }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
 
@@ -174,25 +175,25 @@ export const App: React.FC = () => {
     if (currentUser && users.length > 0) {
       const freshUser = users.find(u => u.id === currentUser.id);
       if (freshUser) {
-         const currentPerms = JSON.stringify([...(currentUser.permissions || [])].sort());
-         const freshPerms = JSON.stringify([...(freshUser.permissions || [])].sort());
-         const currentUnits = JSON.stringify(currentUser.allowedUnits || []);
-         const freshUnits = JSON.stringify(freshUser.allowedUnits || []);
+        const currentPerms = JSON.stringify([...(currentUser.permissions || [])].sort());
+        const freshPerms = JSON.stringify([...(freshUser.permissions || [])].sort());
+        const currentUnits = JSON.stringify(currentUser.allowedUnits || []);
+        const freshUnits = JSON.stringify(freshUser.allowedUnits || []);
 
-         if (currentPerms !== freshPerms || currentUnits !== freshUnits) {
-            console.log("Sessão atualizada com novas permissões");
-            setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
-         }
+        if (currentPerms !== freshPerms || currentUnits !== freshUnits) {
+          console.log("Sessão atualizada com novas permissões");
+          setCurrentUser(prev => prev ? ({ ...prev, ...freshUser }) : null);
+        }
       }
     }
   }, [users, currentUser?.id]);
 
-  const syncConfig = useMemo(() => ({ 
-    url: 'https://poc-botequista-default-rtdb.firebaseio.com', 
-    key: 'REMOVED_FIREBASE_API_KEY', 
-    email: 'curupaco@gmail.com', 
-    pass: 'REMOVED_FIREBASE_PASSWORD', 
-    allPerms: ALL_PERMISSIONS 
+  const syncConfig = useMemo(() => ({
+    url: 'https://poc-botequista-default-rtdb.firebaseio.com',
+    key: 'REMOVED_FIREBASE_API_KEY',
+    email: 'curupaco@gmail.com',
+    pass: 'REMOVED_FIREBASE_PASSWORD',
+    allPerms: ALL_PERMISSIONS
   }), []);
 
   const handleSetOpenTabs = useCallback((tabs: any) => {
@@ -204,10 +205,10 @@ export const App: React.FC = () => {
   }, []);
 
   const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
-    setProducts, setModifierGroups, setCategoryModifiers, setSales, 
+    setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
-    setUsers, setShifts, setUnits, setCategories, setDbStatus,
-    activeUnitId: validatedActiveUnitId, 
+    setUsers, setShifts, setUnits, setCategories, setAuditLogs, setDbStatus,
+    activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
 
@@ -217,9 +218,9 @@ export const App: React.FC = () => {
     const cacheKey = `btq_cache_${validatedActiveUnitId}`;
     // Fire and forget, mas garante persistência física
     idb.get(cacheKey).then((current: any) => {
-        const next = current || {};
-        next[key] = data;
-        idb.set(cacheKey, next);
+      const next = current || {};
+      next[key] = data;
+      idb.set(cacheKey, next);
     }).catch(err => console.warn('Cache write failed', err));
   }, [validatedActiveUnitId]);
 
@@ -236,20 +237,39 @@ export const App: React.FC = () => {
     SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
   }, []);
 
+  const addAuditLog = useCallback((action: string, details: string) => {
+    if (!validatedActiveUnitId || !currentUserRef.current) return;
+    const log: AuditLog = {
+      id: generateUniqueId('log'),
+      timestamp: Date.now(),
+      userId: currentUserRef.current.id,
+      username: currentUserRef.current.username,
+      action,
+      details,
+      unitId: validatedActiveUnitId
+    };
+    setAuditLogs(prev => {
+      const next = [log, ...prev].slice(0, 2000);
+      saveLocalCache('auditLogs', next);
+      return next;
+    });
+    persist('auditLogs', log, log.id);
+  }, [validatedActiveUnitId, persist, saveLocalCache]);
+
   const handleSwitchUnit = () => {
     setRawActiveUnitId(null);
     safeLocalStorage.removeItem('btq_active_unit');
     setProducts([]); setSales([]); setOpenTabs([]); setShifts([]);
     setModifierGroups([]); setCategories([]); setCategoryModifiers({});
     setDbStatus('idle'); setLastSyncTime(null);
-    refresh(); 
+    refresh();
   };
 
   // Logout Real
   const performLogout = () => {
-    handleSwitchUnit(); 
+    handleSwitchUnit();
     setCurrentUser(null);
-    setConfirmModal(prev => ({...prev, isOpen: false}));
+    setConfirmModal(prev => ({ ...prev, isOpen: false }));
   };
 
   // Solicitação de Logout (Abre Modal)
@@ -270,11 +290,12 @@ export const App: React.FC = () => {
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
       let nextTabs;
-      if (idx >= 0) { 
-          nextTabs = [...prev]; 
-          nextTabs[idx] = sanitizedTab; 
+      if (idx >= 0) {
+        nextTabs = [...prev];
+        nextTabs[idx] = sanitizedTab;
       } else {
-          nextTabs = [...prev, sanitizedTab];
+        nextTabs = [...prev, sanitizedTab];
+        console.log(`[MESA_ABERTURA] ID: ${tab.id} | Nome: ${tab.name} | Aberta por: ${currentUserRef.current?.username}`);
       }
       // CORREÇÃO #16 & #17: Snapshot imediato do novo estado
       saveLocalCache('openTabs', nextTabs);
@@ -283,25 +304,45 @@ export const App: React.FC = () => {
     // Atualiza Timestamp para evitar que o Sync sobrescreva com dados velhos
     updateLocalTimestamp('openTabs');
     persist('openTabs', tab, tab.id);
-  }, [persist, saveLocalCache, updateLocalTimestamp]);
+
+    const isNew = !openTabs.some(t => t.id === tab.id);
+    if (isNew) {
+      console.log(`[MESA_ABERTURA] ID: ${tab.id} | Nome: ${tab.name} | Aberta por: ${currentUserRef.current?.username}`);
+      addAuditLog('TAB_OPEN', `Mesa aberta: ${tab.name}`);
+    } else {
+      addAuditLog('TAB_UPDATE', `Mesa atualizada: ${tab.name}`);
+    }
+
+  }, [persist, saveLocalCache, updateLocalTimestamp, openTabs, addAuditLog]);
 
   const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
     setOpenTabs(prev => {
-        const nextTabs = prev.map(t => {
-            if (t.id === tabId) {
-                const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
-                const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
-                if (idx > -1) {
-                    if (item.quantity <= 0) currentItems.splice(idx, 1);
-                    else currentItems[idx] = item;
-                } else if (item.quantity > 0) currentItems.push(item);
-                return { ...t, items: currentItems };
+      const nextTabs = prev.map(t => {
+        if (t.id === tabId) {
+          const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
+          const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
+          if (idx > -1) {
+            if (item.quantity <= 0) {
+              console.log(`[MESA_INCREMENTO] Removido item da Mesa ${t.name}: ${item.productName}`);
+              currentItems.splice(idx, 1);
+            } else {
+              const diff = item.quantity - currentItems[idx].quantity;
+              if (diff !== 0) {
+                console.log(`[MESA_INCREMENTO] Mesa ${t.name} | ${diff > 0 ? 'Adicionado' : 'Removido'} ${Math.abs(diff)}x ${item.productName}`);
+              }
+              currentItems[idx] = item;
             }
-            return t;
-        });
-        // CORREÇÃO #16 & #17: Snapshot imediato
-        saveLocalCache('openTabs', nextTabs);
-        return nextTabs;
+          } else if (item.quantity > 0) {
+            console.log(`[MESA_INCREMENTO] Mesa ${t.name} | Novo item: ${item.quantity}x ${item.productName}`);
+            currentItems.push(item);
+          }
+          return { ...t, items: currentItems };
+        }
+        return t;
+      });
+      // CORREÇÃO #16 & #17: Snapshot imediato
+      saveLocalCache('openTabs', nextTabs);
+      return nextTabs;
     });
     updateLocalTimestamp('openTabs');
     persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
@@ -309,34 +350,35 @@ export const App: React.FC = () => {
 
   const handleDeleteTab = useCallback((tabId: string) => {
     setOpenTabs(prev => {
-        const nextTabs = prev.filter(t => t.id !== tabId);
-        // CORREÇÃO #16 & #17: Snapshot imediato
-        saveLocalCache('openTabs', nextTabs);
-        return nextTabs;
+      const nextTabs = prev.filter(t => t.id !== tabId);
+      // CORREÇÃO #16 & #17: Snapshot imediato
+      saveLocalCache('openTabs', nextTabs);
+      return nextTabs;
     });
     updateLocalTimestamp('openTabs');
     persist('openTabs', null, tabId);
     persist(`_meta/deleted_tabs/${tabId}`, Date.now());
     registerLocalDeletion(tabId);
-  }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp]);
+    addAuditLog('TAB_DELETE', `Mesa descartada ID: ${tabId}`);
+  }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp, addAuditLog]);
 
   const handleUpdateProducts = useCallback((updater: any) => {
-    setProducts(prev => { 
-        const next = updater(prev); 
-        updateLocalTimestamp('products'); 
-        saveLocalCache('products', next); // Snapshot
-        persist('products', next); 
-        return next; 
+    setProducts(prev => {
+      const next = updater(prev);
+      updateLocalTimestamp('products');
+      saveLocalCache('products', next); // Snapshot
+      persist('products', next);
+      return next;
     });
   }, [persist, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateCategoryModifiers = useCallback((updater: (prev: Record<string, string>) => Record<string, string>) => {
     setCategoryModifiers(prev => {
-        const next = updater(prev);
-        updateLocalTimestamp('categoryModifiers');
-        saveLocalCache('categoryModifiers', next); // Snapshot
-        persist('categoryModifiers', next);
-        return next;
+      const next = updater(prev);
+      updateLocalTimestamp('categoryModifiers');
+      saveLocalCache('categoryModifiers', next); // Snapshot
+      persist('categoryModifiers', next);
+      return next;
     });
   }, [persist, updateLocalTimestamp, saveLocalCache]);
 
@@ -344,18 +386,22 @@ export const App: React.FC = () => {
     setShifts(newShifts);
     updateLocalTimestamp('shifts');
     saveLocalCache('shifts', newShifts); // Snapshot
-    if (changedItem) persist('shifts', changedItem, changedItem.id);
+    if (changedItem) {
+      persist('shifts', changedItem, changedItem.id);
+      const action = changedItem.status === 'open' ? 'SHIFT_OPEN' : 'SHIFT_CLOSE';
+      addAuditLog(action, `Turno ${changedItem.id} ${changedItem.status === 'open' ? 'aberto' : 'fechado'} por @${currentUserRef.current?.username}`);
+    }
     else persist('shifts', newShifts);
-  }, [persist, updateLocalTimestamp, saveLocalCache]);
+  }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog]);
 
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
-    updateLocalTimestamp('users'); 
+    updateLocalTimestamp('users');
     saveLocalCache('users', newUsers); // Snapshot
 
     const current = currentUserRef.current;
     if (changedItem && current && changedItem.id === current.id) {
-        setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
+      setCurrentUser(prev => prev ? ({ ...prev, ...changedItem }) : null);
     }
 
     if (changedItem) persistGlobal('users', changedItem, changedItem.id);
@@ -363,29 +409,37 @@ export const App: React.FC = () => {
   }, [persistGlobal, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
-      setUnits(newUnits);
-      saveLocalCache('units', newUnits); // Snapshot
-      persistGlobal('units', newUnits);
+    setUnits(newUnits);
+    saveLocalCache('units', newUnits); // Snapshot
+    persistGlobal('units', newUnits);
   }, [persistGlobal, saveLocalCache]);
 
   const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
-        const next = [...prev, ...newSalesList];
-        // CORREÇÃO #16 & #17: Gravar vendas no cache local imediatamente
-        saveLocalCache('sales', next);
-        return next;
+      const next = [...prev, ...newSalesList];
+      // CORREÇÃO #16 & #17: Gravar vendas no cache local imediatamente
+      saveLocalCache('sales', next);
+      return next;
     });
-    
+
     updateLocalTimestamp('sales');
-    newSalesList.forEach(s => persist('sales', s, s.id));
-    
-    if (tabIdToClose) handleDeleteTab(tabIdToClose);
+    newSalesList.forEach(s => {
+      console.log(`[PAGAMENTO] Venda ID: ${s.id} | Mesa: ${s.tabName || 'Balcão'} | Valor: ${formatCurrency(s.total)} | Forma: ${s.paymentMethod}`);
+      persist('sales', s, s.id);
+    });
+
+    if (tabIdToClose) {
+      const tab = openTabs.find(t => t.id === tabIdToClose);
+      console.log(`[MESA_FECHAMENTO] Mesa: ${tab?.name || tabIdToClose} | Total Pago: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
+      addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab?.name || tabIdToClose} | Total: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
+      handleDeleteTab(tabIdToClose);
+    }
 
     if (shortcutCheckout) {
-        setActiveView('reports');
-        setShortcutCheckout(null);
+      setActiveView('reports');
+      setShortcutCheckout(null);
     }
-  }, [persist, handleDeleteTab, updateLocalTimestamp, shortcutCheckout, saveLocalCache]);
+  }, [persist, handleDeleteTab, updateLocalTimestamp, shortcutCheckout, saveLocalCache, openTabs, addAuditLog]);
 
   const handleLogin = (u: string, p: string) => {
     setLoginError(null);
@@ -395,23 +449,23 @@ export const App: React.FC = () => {
     }
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
     if (found) {
-        setCurrentUser(JSON.parse(JSON.stringify(found)));
+      setCurrentUser(JSON.parse(JSON.stringify(found)));
     } else {
-        setLoginError("Credenciais inválidas.");
+      setLoginError("Credenciais inválidas.");
     }
   };
 
   const isShiftOpen = useMemo(() => Array.isArray(shifts) && shifts.some(s => s.status === 'open'), [shifts]);
 
   const totalPendura = useMemo(() => {
-     return sales.reduce((acc, s) => {
-        if (s.deleted) return acc;
-        let debit = 0;
-        if (s.paymentMethod === 'Pendura') debit = s.total;
-        if (s.payments) { const pPart = s.payments.find(p => p.method === 'Pendura'); if(pPart) debit = pPart.amount; }
-        if (s.items?.some(i => i.productId === PRODUCT_ID_DEBT_SETTLEMENT)) debit -= s.total;
-        return acc + debit;
-     }, 0);
+    return sales.reduce((acc, s) => {
+      if (s.deleted) return acc;
+      let debit = 0;
+      if (s.paymentMethod === 'Pendura') debit = s.total;
+      if (s.payments) { const pPart = s.payments.find(p => p.method === 'Pendura'); if (pPart) debit = pPart.amount; }
+      if (s.items?.some(i => i.productId === PRODUCT_ID_DEBT_SETTLEMENT)) debit -= s.total;
+      return acc + debit;
+    }, 0);
   }, [sales]);
 
   const handleExportData = useCallback(() => {
@@ -440,7 +494,7 @@ export const App: React.FC = () => {
       if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); saveLocalCache('users', data.users); persistGlobal('users', data.users); }
       if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); saveLocalCache('shifts', data.shifts); persist('shifts', data.shifts); }
       if (data.units) { setUnits(data.units); saveLocalCache('units', data.units); persistGlobal('units', data.units); }
-      
+
       if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); saveLocalCache('modifierGroups', data.modifierGroups); persist('modifierGroups', data.modifierGroups); }
       if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); saveLocalCache('categoryModifiers', data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
       if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); saveLocalCache('categories', data.categories); persist('categories', data.categories); }
@@ -457,35 +511,35 @@ export const App: React.FC = () => {
   if (!validatedActiveUnitId) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-         <div className="max-w-2xl w-full animate-in fade-in zoom-in-95">
-            <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-10 text-center italic">Qual o Bar de hoje?</h2>
-            {visibleUnits.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {visibleUnits.map(unit => (
-                    <button key={unit.id} onClick={() => { setRawActiveUnitId(unit.id); safeLocalStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
-                        <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
-                    </button>
-                ))}
-                </div>
-            ) : (
-                <div className="text-center py-10 bg-slate-100 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800">
-                    <p className="text-slate-500 font-bold uppercase text-xs">Nenhuma unidade disponível para seu perfil.</p>
-                    <p className="text-slate-400 text-[10px] mt-2">Contate o administrador.</p>
-                </div>
-            )}
-            <button onClick={requestLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
-         </div>
-         <ConfirmationModal
-            isOpen={confirmModal.isOpen}
-            title={confirmModal.title}
-            message={confirmModal.message}
-            onConfirm={confirmModal.onConfirm}
-            onCancel={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
-            isDanger={confirmModal.isDanger}
-            confirmLabel={confirmModal.confirmLabel}
-            cancelLabel={confirmModal.cancelLabel}
-         />
+        <div className="max-w-2xl w-full animate-in fade-in zoom-in-95">
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-10 text-center italic">Qual o Bar de hoje?</h2>
+          {visibleUnits.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {visibleUnits.map(unit => (
+                <button key={unit.id} onClick={() => { setRawActiveUnitId(unit.id); safeLocalStorage.setItem('btq_active_unit', unit.id); setDbStatus('loading'); }} className="bg-white dark:bg-slate-900 p-10 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors">{unit.name}</h3>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 bg-slate-100 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800">
+              <p className="text-slate-500 font-bold uppercase text-xs">Nenhuma unidade disponível para seu perfil.</p>
+              <p className="text-slate-400 text-[10px] mt-2">Contate o administrador.</p>
+            </div>
+          )}
+          <button onClick={requestLogout} className="mt-12 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
+        </div>
+        <ConfirmationModal
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          isDanger={confirmModal.isDanger}
+          confirmLabel={confirmModal.confirmLabel}
+          cancelLabel={confirmModal.cancelLabel}
+        />
       </div>
     );
   }
@@ -496,107 +550,107 @@ export const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
-       <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={requestLogout} onSwitchUnit={handleSwitchUnit} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
-       
-       <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
-          <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 p-3 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[40px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
-             <div className="flex items-center gap-3 md:gap-4">
-                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-white transition-all active:scale-95">
-                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
-                </button>
-                
-                <div className="flex items-center gap-3">
-                   <div className="flex flex-col justify-center">
-                      <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
-                      <div className="flex items-center gap-2 mt-1 md:mt-1.5">
-                          <button onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined} className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}>
-                            {activeUnitName}
-                            {visibleUnits.length > 1 && <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
-                          </button>
-                          {visibleUnits.length > 1 && (
-                            <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
-                          )}
-                      </div>
-                   </div>
+      <Sidebar activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} currentUser={currentUser} onLogout={requestLogout} onSwitchUnit={handleSwitchUnit} isShiftOpen={isShiftOpen} activeTabsCount={openTabs.length} totalPendura={totalPendura} penduraThreshold={penduraThreshold} isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} dbStatus={dbStatus} isOnline={navigator.onLine} theme={theme} />
+
+      <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 p-3 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[40px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
+          <div className="flex items-center gap-3 md:gap-4">
+            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-600 dark:text-white transition-all active:scale-95">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col justify-center">
+                <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
+                <div className="flex items-center gap-2 mt-1 md:mt-1.5">
+                  <button onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined} className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2 py-0.5 rounded-md text-[7px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}>
+                    {activeUnitName}
+                    {visibleUnits.length > 1 && <svg className="w-2.5 h-2.5 md:hidden opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>}
+                  </button>
+                  {visibleUnits.length > 1 && (
+                    <button onClick={handleSwitchUnit} className="hidden md:block bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-0.5 rounded-lg text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase transition-all">Trocar Unidade</button>
+                  )}
                 </div>
-             </div>
-
-             <div className="flex items-center gap-2 md:gap-5">
-                 <button onClick={() => setStatusModalOpen(true)} className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3 rounded-[16px] md:rounded-[22px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02]">
-                    <div className="hidden sm:flex flex-col items-end">
-                       <span className={`text-[8px] md:text-[10px] font-black uppercase ${dbStatus === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
-                          {dbStatus === 'success' ? 'SINCRONIZADO' : dbStatus === 'loading' ? 'PENDENTE' : 'OFFLINE'}
-                       </span>
-                    </div>
-                    <div className="relative flex items-center justify-center">
-                       <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500'} ${dbStatus === 'loading' ? 'animate-ping' : ''}`}></div>
-                       {dbStatus === 'success' && <div className="absolute inset-0 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 animate-pulse"></div>}
-                    </div>
-                 </button>
-
-                 <div className="flex gap-1.5 md:gap-2 border-l border-slate-100 dark:border-slate-800 pl-2 md:pl-5">
-                    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition-all shadow-sm active:scale-90">
-                       {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2.5}/></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5}/></svg>}
-                    </button>
-                    <button onClick={() => setFeedbackOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-90">
-                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                    </button>
-                 </div>
-             </div>
-          </header>
-
-          <div className="flex-1 overflow-y-auto p-4 md:p-10 w-full max-w-[1750px] mx-auto">
-              {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} />}
-              {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={handleUpdateCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
-              {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
-              {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
-              {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
-              {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
-              {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if(s) { const ns = {...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id}; persist('sales', ns, id); setSales(prev => { const next = prev.map(x => x.id === id ? ns : x); saveLocalCache('sales', next); return next; }); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
-              {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} theme={theme} />}
-              {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={handleUpdateUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
-              {activeView === 'help' && <Help />}
-          </div>
-
-          {statusModalOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-              <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setStatusModalOpen(false)} />
-              <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-                 <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-8 italic tracking-tighter leading-none">Diagnóstico de Saúde</h3>
-                 <div className="space-y-4 text-left">
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Servidor Botequista</p>
-                       <span className={`w-3 h-3 rounded-full ${serverHealth === 'ok' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
-                    </div>
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Banco de Dados</p>
-                       <span className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`}></span>
-                    </div>
-                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Rede Local</p>
-                       <span className={`w-3 h-3 rounded-full ${navigator.onLine ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></span>
-                    </div>
-                 </div>
-                 {lastSyncTime && <p className="mt-8 text-[9px] font-black text-slate-400 uppercase italic">Última Resposta: {new Date(lastSyncTime).toLocaleTimeString()}</p>}
-                 <button onClick={() => setStatusModalOpen(false)} className="mt-8 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Fechar Diagnóstico</button>
               </div>
             </div>
-          )}
-       </main>
-       
-       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
-       
-       {/* Modal Global de Confirmação (Estilo System Screen) */}
-       <ConfirmationModal
-          isOpen={confirmModal.isOpen}
-          title={confirmModal.title}
-          message={confirmModal.message}
-          onConfirm={confirmModal.onConfirm}
-          onCancel={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
-          isDanger={confirmModal.isDanger}
-          confirmLabel={confirmModal.confirmLabel}
-          cancelLabel={confirmModal.cancelLabel}
-       />
+          </div>
+
+          <div className="flex items-center gap-2 md:gap-5">
+            <button onClick={() => setStatusModalOpen(true)} className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3 rounded-[16px] md:rounded-[22px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02]">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className={`text-[8px] md:text-[10px] font-black uppercase ${dbStatus === 'success' ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  {dbStatus === 'success' ? 'SINCRONIZADO' : dbStatus === 'loading' ? 'PENDENTE' : 'OFFLINE'}
+                </span>
+              </div>
+              <div className="relative flex items-center justify-center">
+                <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500'} ${dbStatus === 'loading' ? 'animate-ping' : ''}`}></div>
+                {dbStatus === 'success' && <div className="absolute inset-0 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 animate-pulse"></div>}
+              </div>
+            </button>
+
+            <div className="flex gap-1.5 md:gap-2 border-l border-slate-100 dark:border-slate-800 pl-2 md:pl-5">
+              <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-red-500 transition-all shadow-sm active:scale-90">
+                {theme === 'dark' ? <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" strokeWidth={2.5} /></svg> : <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5} /></svg>}
+              </button>
+              <button onClick={() => setFeedbackOpen(true)} className="w-10 h-10 md:w-11 md:h-11 rounded-xl md:rounded-[16px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-500 transition-all shadow-sm active:scale-90">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-10 w-full max-w-[1750px] mx-auto">
+          {activeView === 'pos' && <POS products={products} modifierGroups={modifierGroups} categoryModifiers={categoryModifiers} openTabs={openTabs} onSaveTab={handleSaveTab} onUpdateTabItem={handleUpdateTabItem} onDeleteTab={handleDeleteTab} onCompleteSale={handleCompleteSale} activeShift={shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={penduraThreshold} longDurationThreshold={longDurationThreshold} dbStatus={dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} />}
+          {activeView === 'products' && <ProductList products={products} setProducts={handleUpdateProducts} modifierGroups={modifierGroups} setModifierGroups={setModifierGroups} categoryModifiers={categoryModifiers} setCategoryModifiers={handleUpdateCategoryModifiers} categories={categories} setCategories={setCategories} openTabs={openTabs} onSaveTab={handleSaveTab} currentUser={currentUser} />}
+          {activeView === 'shifts' && <ShiftControl shifts={shifts} onUpdateShifts={handleUpdateShifts} currentUser={currentUser} sales={sales} activeTabsCount={openTabs.length} />}
+          {activeView === 'cash' && <CashManagement shifts={shifts} onUpdateShifts={handleUpdateShifts} sales={sales} currentUser={currentUser} onViewChange={setActiveView} />}
+          {activeView === 'users' && <UserManagement users={users} units={units} onUpdateUsers={handleUpdateUsers} />}
+          {activeView === 'dashboard' && <Dashboard sales={sales} products={products} theme={theme} />}
+          {activeView === 'history' && <SalesHistory sales={sales} onDeleteSale={(id) => { const s = sales.find(x => x.id === id); if (s) { const ns = { ...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id }; persist('sales', ns, id); setSales(prev => { const next = prev.map(x => x.id === id ? ns : x); saveLocalCache('sales', next); return next; }); addAuditLog('SALE_DELETE', `Venda anulada ID: ${id}`); } }} users={users} currentUser={currentUser} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} />}
+          {activeView === 'reports' && <Reports sales={sales} products={products} users={users} shifts={shifts} auditLogs={auditLogs} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={penduraThreshold} activeUnitId={validatedActiveUnitId} syncConfig={syncConfig} theme={theme} />}
+          {activeView === 'settings' && <Settings products={products} sales={sales} openTabs={openTabs} users={users} shifts={shifts} units={units} onUpdateUnits={handleUpdateUnits} onImport={handleDataManagement} dbStatus={dbStatus} currentUser={currentUser} penduraThreshold={penduraThreshold} setPenduraThreshold={setPenduraThreshold} longDurationThreshold={longDurationThreshold} setLongDurationThreshold={setLongDurationThreshold} />}
+          {activeView === 'help' && <Help />}
+        </div>
+
+        {statusModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setStatusModalOpen(false)} />
+            <div className="bg-white dark:bg-slate-900 w-full max-sm:rounded-[40px] sm:max-w-sm sm:rounded-[40px] p-10 shadow-2xl relative border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-8 italic tracking-tighter leading-none">Diagnóstico de Saúde</h3>
+              <div className="space-y-4 text-left">
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Servidor Botequista</p>
+                  <span className={`w-3 h-3 rounded-full ${serverHealth === 'ok' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Banco de Dados</p>
+                  <span className={`w-3 h-3 rounded-full ${dbStatus === 'success' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-amber-500 animate-pulse'}`}></span>
+                </div>
+                <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Rede Local</p>
+                  <span className={`w-3 h-3 rounded-full ${navigator.onLine ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></span>
+                </div>
+              </div>
+              {lastSyncTime && <p className="mt-8 text-[9px] font-black text-slate-400 uppercase italic">Última Resposta: {new Date(lastSyncTime).toLocaleTimeString()}</p>}
+              <button onClick={() => setStatusModalOpen(false)} className="mt-8 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">Fechar Diagnóstico</button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
+
+      {/* Modal Global de Confirmação (Estilo System Screen) */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+        confirmLabel={confirmModal.confirmLabel}
+        cancelLabel={confirmModal.cancelLabel}
+      />
     </div>
   );
 };
