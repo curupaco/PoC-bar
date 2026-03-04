@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 3.9.6 (Express Update)
+**Versão:** 4.0.0 (Audit & Landing Update)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -11,7 +11,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 
 ### Diferenciais Técnicos
 *   **Offline-First Real:** Utiliza `idb` (IndexedDB Wrapper) para persistir o estado completo da aplicação localmente.
-*   **Venda Expressa (Novo):** Fluxo otimizado para giro de balcão com auto-geração de comandas e restrições de pagamento para agilidade operacional.
+*   **Venda Expressa:** Fluxo otimizado para giro de balcão com auto-geração de comandas.
+*   **Registro de Auditoria (Novo):** Sistema de rastreabilidade de eventos críticos para resolução de conflitos de sincronia.
 *   **Deduplicação de Categorias:** O frontend aplica normalização estrita (Trim + UpperCase) ao agregar categorias.
 
 ---
@@ -23,14 +24,14 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Venda Expressa (⚡):** 
     *   Criação instantânea de comanda com nome aleatório (ex: `EXPRESSA #A1B2`).
     *   **Bloqueio de Pendura:** Vendas rápidas não permitem o método "Pendura", garantindo recebimento imediato.
-    *   **Pagamento Único:** A interface de checkout é simplificada para apenas uma forma de pagamento, forçando a agilidade no balcão.
-    *   **Conversão:** Caso o cliente mude de ideia, uma venda expressa pode ser renomeada para uma mesa fixa a qualquer momento.
+    *   **Pagamento Único:** Checkout simplificado para apenas uma forma de pagamento.
+    *   **Conversão:** Uma venda expressa pode ser renomeada para uma mesa fixa a qualquer momento.
 
 ### B. Gestão de Inventário
 1.  **Aba Produtos:** Listagem com busca global e edição rápida.
 2.  **Aba Adicionais:** Criação de grupos de modificadores.
 3.  **Aba Vínculos:** Ligação automática de categorias a grupos de adicionais.
-4.  **Aba Categorias:** Gestão de taxonomia.
+4.  **Aba Categorias:** Gestão de taxonomia profissional.
 
 ### C. Tesouraria e Fluxo de Caixa
 *   **Conferência Cega (Blind Close):** O operador informa o valor contado fisicamente sem saber o esperado.
@@ -38,17 +39,30 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 
 ### D. Relatórios e Inteligência
 *   **Fechamento de Turno:** Gera comprovante digital em PNG.
-*   **Curva ABC:** Identifica produtos "Carro-Chefe".
+*   **Curva ABC:** Identifica produtos "Carro-Chefe" para otimização de estoque.
 *   **Carteira de Penduras:** Gestão de dívidas e quitação automática.
+*   **Registro de Auditoria (Timeline):** Registro cronológico de ações sensíveis (abertura de turno, deleção de itens, fechamento de mesas).
 
 ---
 
-## 3. Segurança e Infraestrutura
+## 3. Segurança e Sincronização
+
+### Registro de Auditoria (Auditoria de Eventos)
+O sistema registra automaticamente ações críticas para evitar "perda de dados" aparente entre dispositivos.
+*   **Retenção:** Dados mantidos por 7 dias para análise de discrepâncias.
+*   **Eventos Rastreados:** 
+    *   `SHIFT_OPEN` / `SHIFT_CLOSE`
+    *   `TAB_OPEN` / `TAB_CLOSE` / `TAB_DELETE`
+    *   `ITEM_ADD` / `ITEM_DELETE`
+    *   Controles de Sincronia.
 
 ### Controle de Acesso (RBAC)
 *   **Operador:** Vendas, Venda Expressa e Abertura de Turno.
-*   **Gerente:** Cancelamento de Vendas, Fechamento de Caixa, Edição de Cardápio.
-*   **Admin:** Gestão de Unidades e Backups.
+*   **Gerente:** Cancelamento de Vendas, Fechamento de Caixa, Edição de Cardápio e **Visualização de Auditoria**.
+*   **Admin:** Gestão de Unidades, Backups e permissões totais.
+
+### Sincronização (Firebase Sync)
+Utiliza uma camada intermediária de `useSync` para garantir que mudanças feitos em um tablet reflitam instantaneamente no smartphone do dono. Em caso de conflito, a última alteração válida no banco de dados prevalece, com log de auditoria disparado em caso de deleções.
 
 ---
-*Documentação gerada pelo Botequista System v3.9.6*
+*Documentação atualizada em Março de 2026. Botequista System v4.0.0*
