@@ -579,16 +579,16 @@ export const App: React.FC = () => {
             <button onClick={() => setStatusModalOpen(true)} className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-3 rounded-[16px] md:rounded-[22px] bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-all hover:scale-[1.02]">
               <div className="hidden sm:flex flex-col items-end">
                 <span className={`text-[8px] md:text-[10px] font-black uppercase ${dbStatus === 'success' && serverHealth === 'ok' ? 'text-emerald-500' :
-                    dbStatus === 'success' ? 'text-amber-500' : 'text-red-500'
+                  dbStatus === 'success' ? 'text-amber-500' : 'text-red-500'
                   }`}>
-                  {dbStatus === 'success' && serverHealth === 'ok' ? 'SISTEMA OK' :
+                  {dbStatus === 'success' && serverHealth === 'ok' ? 'SINCRONIZADO' :
                     dbStatus === 'success' ? 'ERRO API' :
                       dbStatus === 'loading' ? 'PENDENTE' : 'OFFLINE'}
                 </span>
               </div>
               <div className="relative flex items-center justify-center">
                 <div className={`w-2.5 h-2.5 md:w-3 md:h-3 rounded-full ${dbStatus === 'success' && serverHealth === 'ok' ? 'bg-emerald-500' :
-                    dbStatus === 'success' ? 'bg-amber-500' : 'bg-red-500'
+                  dbStatus === 'success' ? 'bg-amber-500' : 'bg-red-500'
                   } ${dbStatus === 'loading' ? 'animate-ping' : ''}`}></div>
                 {dbStatus === 'success' && serverHealth === 'ok' && <div className="absolute inset-0 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 animate-pulse"></div>}
               </div>
