@@ -73,6 +73,7 @@ export interface Tab {
   name: string;
   items: SaleItem[];
   openedAt: number;
+  version?: number;
 }
 
 export interface User {
@@ -113,6 +114,7 @@ export interface Shift {
   actualCashCounted?: number;
   cashDifference?: number;
   transactions?: CashTransaction[];
+  version?: number;
 }
 
 export interface AuditLog {

@@ -294,6 +294,7 @@ export const App: React.FC = () => {
         nextTabs = [...prev];
         nextTabs[idx] = sanitizedTab;
       } else {
+        sanitizedTab.version = 1;
         nextTabs = [...prev, sanitizedTab];
         console.log(`[MESA_ABERTURA] ID: ${tab.id} | Nome: ${tab.name} | Aberta por: ${currentUserRef.current?.username}`);
       }
@@ -350,8 +351,10 @@ export const App: React.FC = () => {
 
   const handleDeleteTab = useCallback((tabId: string) => {
     setOpenTabs(prev => {
+      // Recomendação B: Idempotência - Não fecha o que já está fechado
+      if (!prev.some(t => t.id === tabId)) return prev;
+
       const nextTabs = prev.filter(t => t.id !== tabId);
-      // CORREÇÃO #16 & #17: Snapshot imediato
       saveLocalCache('openTabs', nextTabs);
       return nextTabs;
     });
@@ -383,6 +386,18 @@ export const App: React.FC = () => {
   }, [persist, updateLocalTimestamp, saveLocalCache]);
 
   const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
+    // Recomendação B: Gateway de Idempotência
+    if (changedItem && changedItem.status === 'closed') {
+      const existing = shifts.find(s => s.id === changedItem.id);
+      if (existing && existing.status === 'closed') {
+        console.warn(`[GATEWAY] Turno ${changedItem.id} já consta como fechado. Ignorando atualização de estado.`);
+
+        // Ainda gera o log conforme solicitado pelo usuário
+        addAuditLog('SHIFT_CLOSE', `TENTATIVA DUPLICADA: Turno ${changedItem.id} fechado por @${currentUserRef.current?.username}`);
+        return;
+      }
+    }
+
     setShifts(newShifts);
     updateLocalTimestamp('shifts');
     saveLocalCache('shifts', newShifts); // Snapshot
@@ -392,7 +407,7 @@ export const App: React.FC = () => {
       addAuditLog(action, `Turno ${changedItem.id} ${changedItem.status === 'open' ? 'aberto' : 'fechado'} por @${currentUserRef.current?.username}`);
     }
     else persist('shifts', newShifts);
-  }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog]);
+  }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog, shifts]);
 
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
@@ -429,10 +444,16 @@ export const App: React.FC = () => {
     });
 
     if (tabIdToClose) {
+      // Recomendação B: Só tenta fechar se a mesa ainda existir no estado atual
       const tab = openTabs.find(t => t.id === tabIdToClose);
-      console.log(`[MESA_FECHAMENTO] Mesa: ${tab?.name || tabIdToClose} | Total Pago: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
-      addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab?.name || tabIdToClose} | Total: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
-      handleDeleteTab(tabIdToClose);
+      if (tab) {
+        console.log(`[MESA_FECHAMENTO] Mesa: ${tab.name} | Total Pago: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
+        addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab.name} | Total: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
+        handleDeleteTab(tabIdToClose);
+      } else {
+        console.warn(`[GATEWAY] Tentativa de fechar mesa já fechada ou inexistente: ${tabIdToClose}`);
+        addAuditLog('TAB_CLOSE', `TENTATIVA DUPLICADA: Mesa ID ${tabIdToClose} já fechada.`);
+      }
     }
 
     if (shortcutCheckout) {

@@ -127,7 +127,8 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
          openingCashPrimary: pVal,
          openingCashChange: cVal,
          openingCashSecondary: 0, // Desativado
-         transactions: []
+         transactions: [],
+         version: 1
       };
 
       console.log(`[TURNO_ABERTURA] ID: ${newShift.id} | Usuário: ${newShift.openedBy} | Fundo: ${formatCurrency(pVal + cVal)}`);
@@ -137,8 +138,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       setIsProcessing(false);
    };
 
-   const handleConfirmClose = () => {
-      if (!canClose || !activeShift) return;
+   const handleConfirmClose = async () => {
+      if (!canClose || !activeShift || isProcessing) return;
+
+      setIsProcessing(true);
+      // Pequeno delay para garantir que o estado da UI reflita a trava
+      await new Promise(r => setTimeout(r, 600));
+
       const actualCounted = parseCurrencyValue(actualCountedInput);
       const calculatedPrimary = (activeShift.openingCashPrimary || 0) +
          (activeShift.transactions?.filter(t => t.to === 'Primary').reduce((sum, t) => sum + t.amount, 0) || 0) -
@@ -149,13 +155,15 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       const closedShift: Shift = {
          ...activeShift, status: 'closed', endTime: Date.now(), closedBy: currentUser.username,
          finalCashPrimary: calculatedPrimary, finalCashChange: expectedCashInDrawer,
-         finalCashSecondary: 0, actualCashCounted: actualCounted, cashDifference: difference
+         finalCashSecondary: 0, actualCashCounted: actualCounted, cashDifference: difference,
+         version: (activeShift.version || 1) + 1
       };
 
       console.log(`[TURNO_FECHAMENTO] ID: ${closedShift.id} | Usuário: ${closedShift.closedBy} | Total Vendas: ${formatCurrency(totalSoldInShift)} | Diferença: ${formatCurrency(difference)}`);
 
       onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
       setShowConferral(false); setActualCountedInput('');
+      setIsProcessing(false);
    };
 
    const getCompartmentIcon = (index: number) => {
@@ -353,7 +361,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                      </div>
 
                      <div className="mt-8 flex flex-col gap-3">
-                        <button onClick={handleConfirmClose} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all">Confirmar Fechamento</button>
+                        <button
+                           onClick={handleConfirmClose}
+                           disabled={isProcessing}
+                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-50"
+                        >
+                           {isProcessing ? 'PROCESSANDO...' : 'Confirmar Fechamento'}
+                        </button>
                         <button onClick={() => setShowConferral(false)} className="text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors py-3">Voltar</button>
                      </div>
                   </div>
