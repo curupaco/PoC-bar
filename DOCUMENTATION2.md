@@ -1,0 +1,247 @@
+# 🍺 Botequista — O Sistema que Trabalha Enquanto o Bar Não Para
+
+> *Material de apresentação comercial — versão para donos de bar, gerentes e investidores.*
+
+---
+
+## O Problema que Todo Bar Enfrenta
+
+Todo dono de bar já passou por isso:
+
+- O garçom anotou o pedido, mas o cliente jura que pediu outro.
+- O caixa fechou errado. Falta dinheiro e ninguém sabe explicar.
+- O sistema travou exatamente na hora do rush da sexta.
+- O gerente precisava de um número, mas o sistema estava offline.
+- A internet caiu e as vendas pararam.
+
+O **Botequista** foi construído para resolver cada um desses problemas — com tecnologia de ponta, mas sem precisar de um técnico de TI na equipe.
+
+---
+
+## O que é o Botequista?
+
+O Botequista é um **sistema de gestão completo para bares**, que roda direto no navegador — sem instalação, sem mensalidade de app store, sem complicação.
+
+Funciona no celular do garçom, no tablet do caixa e no notebook do dono, **tudo ao mesmo tempo**.
+
+E o melhor: **mesmo sem internet, o bar continua vendendo**.
+
+---
+
+## Por Que o Botequista é Diferente?
+
+### ☁️ Offline-First — O Bar Não Para Nunca
+
+A maioria dos sistemas web para quando a internet cai. O Botequista não.
+
+Toda venda é **salva no dispositivo imediatamente**, com confirmação visual para o operador. Quando a internet volta, tudo é sincronizado automaticamente com a nuvem, sem perder um centavo.
+
+> É o único sistema que trata a internet como opcional, não como requisito.
+
+---
+
+### ⚡ Venda Expressa — Balcão no Ritmo Certo
+
+Para o bar que vende rápido, cada segundo conta. Com um único toque, o sistema abre uma **comanda temporária com código automático** (ex.: `EXPRESSA #A3K7`), pronta para o cliente pagar na hora.
+
+- Sem precisar nomear a mesa.
+- Sem risco de "anotar no fiado" por engano — métodos de pendura são bloqueados automaticamente.
+- Checkout em 3 cliques.
+
+---
+
+### 🔒 Conferência Cega — Fim do "Mão na Botija"
+
+O fechamento de caixa no Botequista é **cego**.
+
+O operador informa o valor físico que contou na gaveta, sem saber o que o sistema espera. O Botequista então revela automaticamente se houve sobra ou quebra — e registra a diferença com hora e responsável.
+
+Resultado? O operador não tem como "acertar as contas" antes de mostrar pro dono.
+
+---
+
+### 📊 Relatórios que Falam a Língua do Bar
+
+O módulo de relatórios do Botequista tem **7 visões diferentes**:
+
+| Relatório | O que mostra |
+|---|---|
+| **Fechamento de Turno** | Faturamento, formas de pagamento, comprovante exportável em PNG |
+| **Financeiro** | Breakdown por método (Pix, Cartão, Dinheiro, Pendura) com totais e contagens |
+| **Penduras** | Todos os clientes no fiado com seus saldos, em tempo real, com botão para quitar |
+| **Equipe** | Ranking de vendas por operador — quem mais vende e quanto |
+| **Operacional** | Mapa de calor de horário de pico, ticket médio e total de transações |
+| **Produtos** | Quais itens mais vendem e mais faturam (Curva ABC) |
+| **Auditoria** | Linha do tempo de todas as ações críticas: abertura/fechamento de mesa, cancelamentos, turnos |
+
+---
+
+### 💰 Tesouraria com Teclado de ATM
+
+Esqueça campos de texto para fazer sangria e suprimento. O Botequista tem um **teclado numérico dedicado**, igual a um caixa eletrônico.
+
+- Digita o valor, confirma — pronto.
+- O sistema valida o saldo antes: se não tiver dinheiro na gaveta, a sangria não passa.
+- Cada movimentação fica registrada com horário e autor, visível em tempo real.
+
+---
+
+### 👥 Controle de Equipe (RBAC)
+
+Cada funcionário tem seu próprio acesso, com permissões configuráveis pelo dono. Exemplos do que é possível controlar:
+
+- Quem pode **cancelar vendas** — e quem não pode.
+- Quem pode **fechar o turno** — e quem só vende.
+- Quem pode **ver os relatórios financeiros** — e quem só opera o PDV.
+- Quem pode **editar o cardápio** — e quem só consulta.
+
+Mais de **20 permissões granulares** para montar a hierarquia certa para o seu bar.
+
+---
+
+### 🗂️ Cardápio Inteligente com Adicionais e Variações
+
+O cardápio do Botequista suporta:
+
+- **Categorias personalizadas** — Drinks, Petiscos, Cervejas, etc.
+- **Grupos de adicionais** — Ponto da carne, tamanho do copo, ingredientes extras.
+- **Vínculos automáticos** — Toda categoria pode ter adicionais padrão, sem precisar configurar produto por produto.
+- **Venda por peso** — Para itens a granel, o sistema abre um modal para digitar o peso e calcula automaticamente.
+- **Itens favoritos** — O operador pode marcar os mais vendidos para acesso rápido no PDV.
+
+---
+
+### 🏢 Suporte a Múltiplas Unidades (Rede de Bares)
+
+O Botequista foi pensado para crescer com você. A plataforma suporta **múltiplos pontos de venda** (unidades) com dados completamente isolados entre si.
+
+- Um operador pode ter acesso à Unidade A e B — mas não à C.
+- O dono (admin) vê todas as unidades.
+- Cada bar tem seu próprio banco de dados, cardápio e histórico de vendas.
+
+Ideal para redes, franquias ou donos com mais de um estabelecimento.
+
+---
+
+### 🧾 Comanda de Mesa com Colaboração em Tempo Real
+
+Mais de um garçom pode trabalhar na mesma mesa simultaneamente. O sistema sincroniza os itens em tempo real entre dispositivos — o que um adiciona aparece para o outro em segundos.
+
+- Renomeação de mesa a qualquer momento.
+- Conversão de venda expressa em mesa permanente.
+- Pagamento múltiplo: divide a conta entre Pix, dinheiro e cartão na mesma transação.
+- Quitação de pendura direto pelo fluxo de pagamento.
+
+---
+
+### 🛡️ Rastreabilidade Total — Auditoria de Eventos
+
+Toda ação crítica é registrada automaticamente com hora, usuário e detalhes:
+
+- Abertura e fechamento de turno
+- Abertura e fechamento de mesas
+- Cancelamento de vendas
+- Discarding de comandas
+- Tentativas duplicadas de fechamento
+
+O registro de auditoria é visível apenas para usuários com permissão, e fica disponível por 7 dias para análise de discrepâncias.
+
+---
+
+### 💾 Backup Automático + Resgate de Emergência
+
+O Botequista mantém **três camadas de proteção** para seus dados:
+
+1. **Firebase (Nuvem)** — sincronização em tempo real enquanto há internet.
+2. **IndexedDB (Dispositivo)** — cache local persistente, sobrevive a quedas de internet.
+3. **Backup Manual (JSON/GitHub)** — exportação periódica para arquivo ou Gist privado no GitHub.
+
+Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado salvo no cache do navegador.
+
+---
+
+## Para Quem é o Botequista?
+
+| Tipo de Negócio | Por Que Funciona |
+|---|---|
+| **Bar com alto giro de balcão** | Venda Expressa reduz o tempo de atendimento |
+| **Restaurante com mesas** | Comandas multiplas com colaboração de garçons |
+| **Bar com turno à noite** | Conferência Cega protege o empresário |
+| **Rede com múltiplos pontos** | Gestão centralizada com dados isolados por unidade |
+| **Negócio familiar** | Interface simples, sem necessidade de treinamento longo |
+| **Bar em local com internet instável** | Offline-First garante operação contínua |
+
+---
+
+## O Que Você NÃO Precisa Para Usar o Botequista
+
+❌ Instalar nada no computador  
+❌ Comprar hardware específico — funciona em qualquer dispositivo com navegador  
+❌ Contratar uma equipe de TI  
+❌ Pagar taxa de App Store  
+❌ Depender de internet 100% do tempo  
+
+---
+
+## O Que Vem Incluído
+
+✅ PDV (Ponto de Venda) completo com Venda Expressa  
+✅ Gestão de mesas e comandas em tempo real  
+✅ Cardápio com categorias, adicionais e variações  
+✅ Tesouraria com sangria, suprimento e conferência cega  
+✅ 7 tipos de relatórios gerenciais  
+✅ Controle de equipe com permissões granulares  
+✅ Gestão de penduras (fiado) com botão de quitação  
+✅ Suporte a múltiplas unidades  
+✅ Registro de auditoria completo  
+✅ Backup automático em nuvem + local  
+✅ Dark Mode nativo — importante para ambientes noturnos  
+✅ Funciona em tablet, celular e computador  
+
+---
+
+## Perguntas Frequentes
+
+**O sistema funciona sem internet?**  
+Sim. O Botequista salva tudo localmente e sincroniza automaticamente quando a conexão volta. O bar não para em nenhum momento.
+
+**Preciso comprar algum equipamento?**  
+Não. Funciona em qualquer dispositivo com um navegador moderno — Android, iOS, Windows, Mac.
+
+**Quantos usuários posso ter?**  
+Sem limite de usuários por unidade. Cada operador tem login e permissões individuais.
+
+**Como funciona o fechamento de caixa?**  
+O operador conta o dinheiro físico e informa o valor. O sistema calcula automaticamente a diferença, sem revelar o número esperado antes da contagem (Conferência Cega).
+
+**As vendas podem ser canceladas?**  
+Sim, por usuários com a permissão correta. Toda anulação fica registrada no log de auditoria com hora e responsável.
+
+**É possível dividir a conta?**  
+Sim. Um único pagamento pode ser dividido entre múltiplas formas (ex.: parte em Pix, parte em dinheiro).
+
+---
+
+## Tecnologia Que Você Não Precisa Entender, Mas Pode Confiar
+
+O Botequista é construído com tecnologia usada por grandes empresas globais:
+
+- **React 19** — Interface moderna e rápida
+- **Firebase** — Banco de dados em nuvem do Google, com 99,9% de disponibilidade
+- **IndexedDB** — Banco local no dispositivo (a mesma tecnologia usada pelo Chrome)
+- **Vercel** — Infraestrutura de deploy usada por startups e unicórnios
+
+Tudo isso significa que você tem, na prática, uma solução de nível enterprise — acessível para o bar da esquina.
+
+---
+
+## Próximos Passos
+
+Quer ver o Botequista em ação no seu bar?
+
+Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um período de avaliação direto pelo sistema.
+
+---
+
+*Botequista — Sistema de Gestão para Bares v4.0 | Março de 2026*  
+*Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

@@ -320,3 +320,419 @@ footer {
         padding: 4rem 0;
     }
 }
+
+/* =============================================
+   HERO ACTIONS
+   ============================================= */
+.hero-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Botão outline "Conheça mais" */
+.cta-outline {
+    background-color: transparent !important;
+    color: var(--text-light) !important;
+    border: 2px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    font-family: var(--font-main);
+}
+
+.cta-outline:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: translateY(-2px);
+    box-shadow: none !important;
+}
+
+/* =============================================
+   MODAL OVERLAY
+   ============================================= */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1rem;
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.modal-open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* =============================================
+   MODAL BOX
+   ============================================= */
+.modal-box {
+    background: #0b1120;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    width: 100%;
+    max-width: 760px;
+    margin: 2rem auto;
+    overflow: hidden;
+    transform: translateY(24px) scale(0.98);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.8),
+                0 0 0 1px rgba(185, 28, 28, 0.15);
+}
+
+.modal-overlay.modal-open .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+/* =============================================
+   MODAL HEADER
+   ============================================= */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+}
+
+.modal-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-brand {
+    font-size: 1.4rem;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.modal-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background: rgba(185, 28, 28, 0.2);
+    border-color: rgba(185, 28, 28, 0.4);
+    color: white;
+}
+
+/* =============================================
+   MODAL BODY
+   ============================================= */
+.modal-body {
+    padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+/* Hero block dentro do modal */
+.modal-hero-block {
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.modal-hero-block h2 {
+    font-size: 2.2rem;
+    line-height: 1.15;
+    background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.75rem;
+}
+
+.modal-hero-block p {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* =============================================
+   MODAL SECTION
+   ============================================= */
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.modal-section h3 {
+    font-size: 1.4rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.modal-section-dark {
+    background: rgba(185, 28, 28, 0.06);
+    border: 1px solid rgba(185, 28, 28, 0.15);
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+.modal-tag {
+    color: var(--primary-red);
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+/* =============================================
+   PROBLEMAS
+   ============================================= */
+.modal-problems {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+.modal-problem-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* =============================================
+   DIFERENCIAIS
+   ============================================= */
+.modal-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.modal-feature {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.modal-feature:hover {
+    border-color: rgba(185, 28, 28, 0.3);
+    background: rgba(185, 28, 28, 0.04);
+}
+
+.modal-feature-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.modal-feature h4 {
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.3px;
+    color: var(--text-light);
+    margin-bottom: 0.35rem;
+}
+
+.modal-feature p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* =============================================
+   RELATÓRIOS
+   ============================================= */
+.modal-reports {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 0.75rem;
+}
+
+.modal-report-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem 1.25rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.modal-report-item:hover {
+    border-color: rgba(185, 28, 28, 0.25);
+}
+
+.report-emoji {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.modal-report-item strong {
+    display: block;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: -0.2px;
+    margin-bottom: 0.25rem;
+}
+
+.modal-report-item p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* =============================================
+   PARA QUEM É
+   ============================================= */
+.modal-audience {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.modal-audience-item {
+    padding: 0.9rem 1.2rem;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-left: 3px solid var(--primary-red);
+    border-radius: 0 12px 12px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.modal-audience-item strong {
+    color: var(--text-light);
+}
+
+/* =============================================
+   NÃO PRECISA
+   ============================================= */
+.modal-nolist {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.6rem;
+}
+
+.modal-nolist-item {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding: 0.6rem 0.5rem;
+    font-weight: 500;
+}
+
+/* =============================================
+   CTA FINAL DO MODAL
+   ============================================= */
+.modal-cta {
+    text-align: center;
+    padding: 2rem;
+    background: radial-gradient(circle at 50% 0%, rgba(185, 28, 28, 0.12) 0%, transparent 70%);
+    border: 1px solid rgba(185, 28, 28, 0.15);
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.modal-cta p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.modal-cta-back {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.5rem 1rem;
+    transition: color 0.2s ease;
+    font-family: var(--font-main);
+}
+
+.modal-cta-back:hover {
+    color: var(--text-light);
+}
+
+/* =============================================
+   RESPONSIVE MODAL
+   ============================================= */
+@media (max-width: 600px) {
+    .modal-body {
+        padding: 1.5rem 1.25rem;
+        gap: 2rem;
+    }
+
+    .modal-hero-block h2 {
+        font-size: 1.6rem;
+    }
+
+    .modal-feature {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .modal-problems,
+    .modal-reports,
+    .modal-nolist {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+    }
+
+    .hero-actions .cta-button,
+    .hero-actions .cta-outline {
+        width: 100%;
+        text-align: center;
+    }
+}

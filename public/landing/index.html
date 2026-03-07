@@ -54,6 +54,7 @@
                 <p>Gestão ágil para quem entende de balcão. Controle vendas, estoque e caixa sem depender de internet
                     estável ou hardware caro.</p>
                 <div class="hero-actions">
+                    <button id="btn-conheca-mais" onclick="document.getElementById('conheca-modal').classList.add('modal-open')" class="cta-button cta-outline">Conheça mais</button>
                     <a href="https://wa.me/5511966989160?text=Olá!%20Vi%20a%20landing%20page%20do%20Botequista%20e%20gostaria%20de%20ser%20um%20Beta%20Tester%20do%20sistema."
                         class="cta-button">Quero o Botequista no meu bar</a>
                 </div>
@@ -261,6 +262,154 @@
                     style="color: var(--primary-red);">Fale com a gente</a></p>
         </footer>
     </div>
+
+    <!-- ===== MODAL: CONHEÇA MAIS ===== -->
+    <div id="conheca-modal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('modal-open')" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-box">
+
+            <div class="modal-header">
+                <div class="modal-logo">
+                    <svg width="32" height="32" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                        <circle r="190" cx="256" cy="256" fill="#94a3b8"/>
+                        <circle r="180" cx="256" cy="256" fill="#cbd5e1"/>
+                        <circle r="160" cx="256" cy="256" fill="#b91c1c"/>
+                        <path fill="#ffffff" d="M-35 -70 H 25 C 55 -70 75 -50 75 -20 C 75 0 60 15 40 20 C 65 25 80 45 80 75 C 80 110 55 130 15 130 H -35 V -70 Z M 0 -40 V 10 H 25 C 40 10 45 0 45 -15 C 45 -30 40 -40 25 -40 H 0 Z M 0 40 V 100 H 30 C 50 100 50 90 50 70 C 50 50 45 40 30 40 H 0 Z" transform="translate(256 256) translate(-15 -10) scale(0.8)"/>
+                    </svg>
+                    <span class="modal-brand font-title">Botequista</span>
+                </div>
+                <button class="modal-close" onclick="document.getElementById('conheca-modal').classList.remove('modal-open')" aria-label="Fechar">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="modal-hero-block">
+                    <h2 id="modal-title">O sistema que trabalha<br>enquanto o bar não para.</h2>
+                    <p>Tudo que você precisa saber antes de decidir — sem enrolação.</p>
+                </div>
+
+                <!-- O PROBLEMA -->
+                <div class="modal-section">
+                    <span class="modal-tag">O Problema</span>
+                    <h3>Situações que todo dono de bar já viveu</h3>
+                    <div class="modal-problems">
+                        <div class="modal-problem-item">😵 O caixa fechou errado e ninguém sabe explicar</div>
+                        <div class="modal-problem-item">📵 O sistema travou no rush da sexta-feira</div>
+                        <div class="modal-problem-item">🤷 O cliente jurou que pediu outra coisa</div>
+                        <div class="modal-problem-item">🌩️ A internet caiu e as vendas pararam</div>
+                        <div class="modal-problem-item">📓 A pendura ainda vive num caderninho</div>
+                        <div class="modal-problem-item">🔓 Não tem como saber se tiraram do caixa</div>
+                    </div>
+                </div>
+
+                <!-- DIFERENCIAIS -->
+                <div class="modal-section">
+                    <span class="modal-tag">Por que o Botequista é diferente</span>
+                    <div class="modal-features">
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">☁️</div>
+                            <div>
+                                <h4>Offline-First — O Bar Não Para Nunca</h4>
+                                <p>Toda venda é salva no dispositivo imediatamente. Quando a internet voltar, tudo sincroniza automaticamente — sem perder um centavo.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">⚡</div>
+                            <div>
+                                <h4>Venda Expressa — Balcão no Ritmo Certo</h4>
+                                <p>Um toque abre uma comanda instantânea. Checkout em 3 cliques. Pendura bloqueada automaticamente para vendas rápidas de balcão.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">🔒</div>
+                            <div>
+                                <h4>Conferência Cega — Fim do "Mão na Botija"</h4>
+                                <p>O operador conta o dinheiro físico sem saber o valor esperado. O sistema revela a diferença — e registra tudo com hora e responsável.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">💰</div>
+                            <div>
+                                <h4>Tesouraria com Teclado de ATM</h4>
+                                <p>Sangria e suprimento com teclado numérico dedicado. O sistema valida o saldo antes de confirmar — sem erro, sem fraude.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">👥</div>
+                            <div>
+                                <h4>Controle de Equipe (RBAC)</h4>
+                                <p>Mais de 20 permissões granulares. Defina quem pode cancelar venda, ver relatório, fechar turno ou editar cardápio.</p>
+                            </div>
+                        </div>
+
+                        <div class="modal-feature">
+                            <div class="modal-feature-icon">🏢</div>
+                            <div>
+                                <h4>Múltiplas Unidades</h4>
+                                <p>Ideal para redes e franquias. Cada bar tem dados isolados. O dono vê tudo, o garçom vê apenas o que deve.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RELATÓRIOS -->
+                <div class="modal-section">
+                    <span class="modal-tag">Relatórios</span>
+                    <h3>7 visões do seu negócio</h3>
+                    <div class="modal-reports">
+                        <div class="modal-report-item"><span class="report-emoji">📋</span><div><strong>Fechamento de Turno</strong><p>Faturamento, formas de pagamento e comprovante exportável em PNG</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">💳</span><div><strong>Financeiro</strong><p>Breakdown por Pix, Cartão, Dinheiro e Pendura com totais e contagens</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">📓</span><div><strong>Penduras</strong><p>Clientes no fiado com saldos em tempo real e quitação com 1 clique</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">🏆</span><div><strong>Equipe</strong><p>Ranking de vendas por operador — quem mais vende e quanto</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">⏰</span><div><strong>Operacional</strong><p>Mapa de calor de horário de pico, ticket médio e transações</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">📦</span><div><strong>Produtos (Curva ABC)</strong><p>Quais itens mais vendem e faturam — identifique seus carros-chefe</p></div></div>
+                        <div class="modal-report-item"><span class="report-emoji">🛡️</span><div><strong>Auditoria</strong><p>Linha do tempo de todas as ações críticas: mesas, cancelamentos e turnos</p></div></div>
+                    </div>
+                </div>
+
+                <!-- PARA QUEM É -->
+                <div class="modal-section">
+                    <span class="modal-tag">Para quem é</span>
+                    <div class="modal-audience">
+                        <div class="modal-audience-item">🍺 <strong>Bar com alto giro de balcão</strong> — Venda Expressa acelera o atendimento</div>
+                        <div class="modal-audience-item">🪑 <strong>Restaurante com mesas</strong> — Comandas com colaboração simultânea de garçons</div>
+                        <div class="modal-audience-item">🌙 <strong>Bar com turno à noite</strong> — Conferência Cega protege o empresário</div>
+                        <div class="modal-audience-item">🏙️ <strong>Rede com múltiplos pontos</strong> — Gestão centralizada com dados por unidade</div>
+                        <div class="modal-audience-item">👨‍👩‍👧 <strong>Negócio familiar</strong> — Interface simples, sem treinamento longo</div>
+                        <div class="modal-audience-item">📡 <strong>Local com internet instável</strong> — Offline-First garante operação contínua</div>
+                    </div>
+                </div>
+
+                <!-- VOCÊ NÃO PRECISA -->
+                <div class="modal-section modal-section-dark">
+                    <span class="modal-tag">Sem complicação</span>
+                    <h3>O que você <em>não</em> precisa para usar</h3>
+                    <div class="modal-nolist">
+                        <div class="modal-nolist-item">❌ Instalar nada no computador</div>
+                        <div class="modal-nolist-item">❌ Comprar hardware específico</div>
+                        <div class="modal-nolist-item">❌ Contratar equipe de TI</div>
+                        <div class="modal-nolist-item">❌ Pagar taxa de App Store</div>
+                        <div class="modal-nolist-item">❌ Depender de internet 100% do tempo</div>
+                    </div>
+                </div>
+
+                <!-- CTA FINAL -->
+                <div class="modal-cta">
+                    <p>Pronto para testar no seu bar?</p>
+                    <a href="https://wa.me/5511966989160?text=Olá!%20Quero%20saber%20mais%20sobre%20o%20Botequista%20e%20todas%20as%20funcionalidades!" class="cta-button" target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
+                    <button onclick="document.getElementById('conheca-modal').classList.remove('modal-open')" class="modal-cta-back">Voltar à página</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- ===== FIM DO MODAL ===== -->
+
 </body>
 
 </html>
