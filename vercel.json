@@ -3,11 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/landing",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/landing/(.*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
