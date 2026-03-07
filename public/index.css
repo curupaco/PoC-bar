@@ -1,0 +1,8 @@
+/* Arquivo CSS base para evitar 404 no console */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Barrio&display=swap');
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

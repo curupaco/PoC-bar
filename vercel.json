@@ -1,14 +1,22 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/landing",
-      "destination": "/index.html"
+      "src": "/landing(/.*)?",
+      "dest": "/index.html",
+      "continue": true
     },
     {
-      "source": "/landing/:path*",
-      "destination": "/index.html"
+      "src": "/index.css",
+      "dest": "/index.css"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/index.html"
     }
   ]
 }
