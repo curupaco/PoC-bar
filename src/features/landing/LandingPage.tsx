@@ -106,7 +106,7 @@ export const LandingPage: React.FC = () => {
           
           <section className="flex flex-col md:flex-row items-center gap-12">
             <div className="flex-1 bg-gradient-to-tr from-slate-900 to-slate-800 rounded-3xl p-2 border border-white/10 shadow-2xl skew-y-1 hover:skew-y-0 transition-transform duration-500">
-              <img src="/landing/assets/Screenshot_2026-03-03_21-28-22.png" alt="PDV Venda Expressa" className="rounded-2xl opacity-90 object-cover w-full" loading="lazy" />
+              <img src="/landing_assets/assets/Screenshot_2026-03-03_21-28-22.png" alt="PDV Venda Expressa" className="rounded-2xl opacity-90 object-cover w-full" loading="lazy" />
             </div>
             <div className="flex-1">
               <span className="text-red-500 font-bold uppercase tracking-widest text-xs mb-3 block">Agilidade no Balcão</span>
@@ -117,7 +117,7 @@ export const LandingPage: React.FC = () => {
 
           <section className="flex flex-col md:flex-row-reverse items-center gap-12">
             <div className="flex-1 bg-gradient-to-tr from-slate-900 to-slate-800 rounded-3xl p-2 border border-white/10 shadow-2xl -skew-y-1 hover:skew-y-0 transition-transform duration-500">
-              <img src="/landing/assets/Screenshot_2026-03-03_21-32-01.png" alt="Gestão de Penduras" className="rounded-2xl opacity-90 object-cover w-full" loading="lazy" />
+              <img src="/landing_assets/assets/Screenshot_2026-03-03_21-32-01.png" alt="Gestão de Penduras" className="rounded-2xl opacity-90 object-cover w-full" loading="lazy" />
             </div>
             <div className="flex-1">
               <span className="text-red-500 font-bold uppercase tracking-widest text-xs mb-3 block">Controle do Fiado</span>
