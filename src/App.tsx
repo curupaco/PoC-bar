@@ -23,6 +23,8 @@ import { getFirebaseToken } from './services/firebaseService';
 import { idb } from './utils/idb';
 
 // --- SAFE STORAGE UTILITY ---
+import { LandingPage } from './features/landing/LandingPage';
+
 // Previne tela branca em navegadores com cookies bloqueados ou modo anônimo estrito
 const safeLocalStorage = {
   getItem: (key: string): string | null => {
@@ -527,7 +529,12 @@ export const App: React.FC = () => {
     }
   }, [handleExportData, persist, persistGlobal, updateLocalTimestamp, saveLocalCache]);
 
-  if (!currentUser) return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
+  if (!currentUser) {
+    if (window.location.pathname.startsWith('/landing')) {
+      return <LandingPage />;
+    }
+    return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
+  }
 
   if (!validatedActiveUnitId) {
     return (
