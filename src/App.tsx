@@ -529,10 +529,11 @@ export const App: React.FC = () => {
     }
   }, [handleExportData, persist, persistGlobal, updateLocalTimestamp, saveLocalCache]);
 
+  if (window.location.pathname.startsWith('/landing')) {
+    return <LandingPage />;
+  }
+
   if (!currentUser) {
-    if (window.location.pathname.startsWith('/landing')) {
-      return <LandingPage />;
-    }
     return <Login onLogin={handleLogin} isLoading={dbStatus === 'loading' && users.length === 0} error={loginError} />;
   }
 
