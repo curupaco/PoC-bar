@@ -77,7 +77,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} 
                 className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
               >
-                Para Nerds 🤓
+                PARA NERDS 🤓
               </button>
               <a 
                 href="https://www.instagram.com/obotequista/" 
@@ -86,7 +86,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-pink-500 transition-colors"
               >
-                Instagram
+                INSTAGRAM
               </a>
               <a
                 href={whatsAppLink}
@@ -95,7 +95,7 @@ export const LandingPage: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className="w-full max-w-xs bg-red-600 text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl shadow-red-500/20 active:scale-95 transition-transform"
               >
-                Garantir Vaga Beta
+                GARANTIR VAGA BETA
               </a>
             </div>
           </div>
@@ -244,9 +244,9 @@ export const LandingPage: React.FC = () => {
             </div>
             <p className="text-slate-600 text-sm font-medium italic opacity-50">&copy; {new Date().getFullYear()} Botequista System. Feito com café e cerveja.</p>
             <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-slate-600">
-               <a href="https://www.instagram.com/obotequista/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors">Instagram</a>
-               <button onClick={() => setIsTermsModalOpen(true)} className="hover:text-red-500 transition-colors">Termos</button>
-               <button onClick={() => setIsPrivacyModalOpen(true)} className="hover:text-red-500 transition-colors">Privacidade</button>
+               <a href="https://www.instagram.com/obotequista/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors">INSTAGRAM</a>
+               <button onClick={() => setIsTermsModalOpen(true)} className="hover:text-red-500 transition-colors">TERMOS</button>
+               <button onClick={() => setIsPrivacyModalOpen(true)} className="hover:text-red-500 transition-colors">PRIVACIDADE</button>
             </div>
           </div>
         </footer>
@@ -327,25 +327,33 @@ export const LandingPage: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                 <p className="text-emerald-500 font-bold">$ ls modules/technical_specs</p>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
-                    <div>
-                      <h5 className="text-white font-bold mb-2 underline">Deduplicação Proativa</h5>
-                      <p className="text-slate-400 text-xs">Normalização de categorias via Trim + UpperCase no aggregate pipe.</p>
-                    </div>
-                    <div>
-                      <h5 className="text-white font-bold mb-2 underline">Interface Determinística</h5>
-                      <p className="text-slate-400 text-xs">Blind Close Mechanism: input de gaveta desconectado do esperado via backend.</p>
-                    </div>
-                    <div>
-                      <h5 className="text-white font-bold mb-2 underline">Sync Queue</h5>
-                      <p className="text-slate-400 text-xs">Fila de persistência FIFO com auto-retry e resolução de conflitos por timestamp.</p>
-                    </div>
-                    <div>
-                      <h5 className="text-white font-bold mb-2 underline">PWA Optimization</h5>
-                      <p className="text-slate-400 text-xs">Service Worker intercedendo em chamadas assets para garantir 100% uptime.</p>
-                    </div>
-                 </div>
+                <p className="text-emerald-500 font-bold">$ ls modules/technical_specs</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">Deduplicação Proativa</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Normalização de categorias via Trim + UpperCase no aggregate pipe.</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">Interface Determinística</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Blind Close Mechanism: input de gaveta desconectado do esperado via backend.</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">Sync Queue (FIFO)</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Fila de persistência com auto-retry e resolução de conflitos por timestamp LWW.</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">PWA Optimization</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Service Worker intercedendo em chamadas assets para garantir 100% uptime.</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">Optimistic UI</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Latência zero: feedbacks visuais imediatos antes da confirmação do servidor.</p>
+                  </div>
+                  <div>
+                    <h5 className="text-white font-bold mb-2 underline">Web Serial API</h5>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Driver nativo para impressoras térmicas ESC/POS sem necessidade de bridge externa.</p>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
