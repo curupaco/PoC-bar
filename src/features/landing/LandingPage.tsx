@@ -5,6 +5,9 @@ const whatsAppLink = "https://wa.me/5511966989160?text=Olá!%20Vi%20a%20landing%
 export const LandingPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNerdModalOpen, setIsNerdModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
@@ -54,9 +57,46 @@ export const LandingPage: React.FC = () => {
                   Garantir Vaga Beta
                 </a>
               </div>
-              <button className="md:hidden text-white">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="md:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors relative z-[60]"
+              >
+                {isMenuOpen ? (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                ) : (
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                )}
               </button>
+            </div>
+          </div>
+
+          {/* Mobile Menu Overlay */}
+          <div className={`fixed inset-0 z-50 md:hidden bg-[#020617]/95 backdrop-blur-2xl transition-all duration-500 ease-in-out ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+            <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
+              <button 
+                onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} 
+                className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+              >
+                Para Nerds 🤓
+              </button>
+              <a 
+                href="https://www.instagram.com/obotequista/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-pink-500 transition-colors"
+              >
+                Instagram
+              </a>
+              <a
+                href={whatsAppLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full max-w-xs bg-red-600 text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl shadow-red-500/20 active:scale-95 transition-transform"
+              >
+                Garantir Vaga Beta
+              </a>
             </div>
           </div>
         </nav>
@@ -205,8 +245,8 @@ export const LandingPage: React.FC = () => {
             <p className="text-slate-600 text-sm font-medium italic opacity-50">&copy; {new Date().getFullYear()} Botequista System. Feito com café e cerveja.</p>
             <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-slate-600">
                <a href="https://www.instagram.com/obotequista/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors">Instagram</a>
-               <a href="#" className="hover:text-red-500 transition-colors">Termos</a>
-               <a href="#" className="hover:text-red-500 transition-colors">Privacidade</a>
+               <button onClick={() => setIsTermsModalOpen(true)} className="hover:text-red-500 transition-colors">Termos</button>
+               <button onClick={() => setIsPrivacyModalOpen(true)} className="hover:text-red-500 transition-colors">Privacidade</button>
             </div>
           </div>
         </footer>
@@ -324,6 +364,81 @@ export const LandingPage: React.FC = () => {
                   Fechar Kernel
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Terms Modal */}
+      {isTermsModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-md" onClick={() => setIsTermsModalOpen(false)} />
+          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-xl font-black uppercase italic tracking-tighter">Termos de Uso</h3>
+              <button onClick={() => setIsTermsModalOpen(false)} className="text-slate-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto no-scrollbar text-slate-400 text-sm space-y-6 leading-relaxed">
+              <p>Bem-vindo ao <strong>Botequista</strong>. Ao utilizar nosso sistema, você concorda com os seguintes termos:</p>
+              
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">1. Status de Versão Beta</h4>
+                <p>O Botequista encontra-se em fase beta. Isso significa que, embora funcional, o sistema está em constante aprimoramento. O usuário aceita que podem ocorrer instabilidades pontuais e se compromete a reportar bugs encontrados.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">2. Propriedade dos Dados</h4>
+                <p>Todos os dados de transações, produtos e comandas inseridos são de propriedade exclusiva do estabelecimento usuário. O Botequista atua apenas como processador e custodiante dessas informações.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">3. Uso Offline e Sincronização</h4>
+                <p>A funcionalidade offline é um recurso de contingência. A sincronização final dos dados depende de uma conexão estável após o período de uso local. O sistema não se responsabiliza por perdas decorrentes de formatação de dispositivos antes da sincronização com a nuvem.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">4. Responsabilidade Fiscal</h4>
+                <p>O Botequista é uma ferramenta de gestão operacional e financeira interna. A emissão de documentos fiscais e o cumprimento das obrigações tributárias locais permanecem sob total responsabilidade do estabelecimento.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Modal */}
+      {isPrivacyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-md" onClick={() => setIsPrivacyModalOpen(false)} />
+          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-xl font-black uppercase italic tracking-tighter">Privacidade e Dados</h3>
+              <button onClick={() => setIsPrivacyModalOpen(false)} className="text-slate-400 hover:text-white">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-8 overflow-y-auto no-scrollbar text-slate-400 text-sm space-y-6 leading-relaxed">
+              <p>Sua privacidade é prioridade máxima no ecossistema <strong>Botequista</strong>. Nossa política está alinhada com a LGPD:</p>
+              
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">1. Coleta de Informações</h4>
+                <p>Coletamos apenas o estritamente necessário para a operação do bar: dados cadastrais da empresa, e-mail para login, logs de auditoria de operações de caixa e estatísticas de vendas para geração de relatórios.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">2. Armazenamento Seguro</h4>
+                <p>Os dados são armazenados de forma criptografada em servidores de classe mundial (Google Cloud/Firebase). Informações sensíveis como senhas nunca são armazenadas em texto plano (utilizamos hashing de mão única).</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">3. Não Compartilhamento</h4>
+                <p>O Botequista nunca venderá ou compartilhará seus dados de faturamento ou lista de clientes com terceiros. Seus dados são usados exclusivamente para a sua própria gestão e melhoria técnica do sistema.</p>
+              </section>
+
+              <section className="space-y-2">
+                <h4 className="text-white font-bold uppercase text-xs tracking-widest">4. Direitos do Usuário</h4>
+                <p>Você pode solicitar a exclusão total da sua conta e de todos os dados associados a qualquer momento, o que será processado em até 48 horas úteis, respeitando prazos legais de backup.</p>
+              </section>
             </div>
           </div>
         </div>
