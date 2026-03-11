@@ -50,13 +50,11 @@ Para o bar que vende rápido, cada segundo conta. Com um único toque, o sistema
 
 ---
 
-### 🔒 Conferência Cega — Fim do "Mão na Botija"
-
-O fechamento de caixa no Botequista é **cego**.
-
-O operador informa o valor físico que contou na gaveta, sem saber o que o sistema espera. O Botequista então revela automaticamente se houve sobra ou quebra — e registra a diferença com hora e responsável.
-
-Resultado? O operador não tem como "acertar as contas" antes de mostrar pro dono.
+O fechamento de caixa no Botequista é **estritamente cego**.
+ 
+ O operador informa o valor físico que contou na gaveta, enquanto os números do sistema ficam **ocultos** por padrão. Não há como "ajustar as contas" antes de enviar para o dono. O sistema registra a diferença real com hora e responsável.
+ 
+ > Se desejar, o dono (Admin) pode clicar em um botão secreto para revelar os valores e auditar em tempo real se a equipe está batendo o caixa corretamente.
 
 ---
 
@@ -141,8 +139,9 @@ Toda ação crítica é registrada automaticamente com hora, usuário e detalhes
 - Abertura e fechamento de turno
 - Abertura e fechamento de mesas
 - Cancelamento de vendas
-- Discarding de comandas
+- Descarte de comandas
 - Tentativas duplicadas de fechamento
+- Alertas de Saída Acidental (Protege sincronização de dados)
 
 O registro de auditoria é visível apenas para usuários com permissão, e fica disponível por 7 dias para análise de discrepâncias.
 
@@ -155,6 +154,7 @@ O Botequista mantém **três camadas de proteção** para seus dados:
 1. **Firebase (Nuvem)** — sincronização em tempo real enquanto há internet.
 2. **IndexedDB (Dispositivo)** — cache local persistente, sobrevive a quedas de internet.
 3. **Backup Manual (JSON/GitHub)** — exportação periódica para arquivo ou Gist privado no GitHub.
+4. **Guarda de Saída** — O navegador impede o fechamento da aba se houver dados ainda não sincronizados.
 
 Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado salvo no cache do navegador.
 
@@ -243,5 +243,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.0 | Março de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.1 | Março de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

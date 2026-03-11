@@ -60,13 +60,13 @@ export const SyncQueue = {
     };
     
     memoryQueue.push(newItem);
-    this.persist();
+    await this.persist();
   },
 
   async dequeue(id: string) {
     if (!isLoaded) await this.init();
     memoryQueue = memoryQueue.filter(q => q.id !== id);
-    this.persist();
+    await this.persist();
   },
 
   async update(updatedItem: QueueItem) {
@@ -74,12 +74,16 @@ export const SyncQueue = {
     const index = memoryQueue.findIndex(q => q.id === updatedItem.id);
     if (index > -1) {
         memoryQueue[index] = updatedItem;
-        this.persist();
+        await this.persist();
     }
   },
 
   peek(): QueueItem | undefined {
     return memoryQueue.sort((a, b) => a.timestamp - b.timestamp)[0];
+  },
+
+  getLength(): number {
+    return memoryQueue.length;
   },
 
   async persist() {

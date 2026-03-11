@@ -3,7 +3,7 @@ import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput
 
 interface ShiftControlProps {
    shifts: Shift[];
-   onUpdateShifts: (shifts: Shift[], changedItem?: Shift) => void;
+   onUpdateShifts: (shifts: Shift[], changedItem?: Shift) => Promise<void>;
    currentUser: User;
    sales: Sale[];
    activeTabsCount: number;
@@ -12,6 +12,7 @@ interface ShiftControlProps {
 const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts, currentUser, sales = [], activeTabsCount }) => {
    const activeShift = shifts.find(s => s.status === 'open');
    const [showConferral, setShowConferral] = useState(false);
+   const [revealSystem, setRevealSystem] = useState(false);
 
    const [valPrimary, setValPrimary] = useState('');
    const [valChange, setValChange] = useState('');
@@ -133,13 +134,14 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
       console.log(`[TURNO_ABERTURA] ID: ${newShift.id} | Usuário: ${newShift.openedBy} | Fundo: ${formatCurrency(pVal + cVal)}`);
 
-      onUpdateShifts([newShift, ...shifts], newShift);
+      await onUpdateShifts([newShift, ...shifts], newShift);
       setValPrimary(''); setValChange('');
       setIsProcessing(false);
    };
 
    const handleConfirmClose = async () => {
       if (!canClose || !activeShift || isProcessing) return;
+      setRevealSystem(false); // Reset for next time
 
       setIsProcessing(true);
       // Pequeno delay para garantir que o estado da UI reflita a trava
@@ -161,7 +163,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
       console.log(`[TURNO_FECHAMENTO] ID: ${closedShift.id} | Usuário: ${closedShift.closedBy} | Total Vendas: ${formatCurrency(totalSoldInShift)} | Diferença: ${formatCurrency(difference)}`);
 
-      onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
+      await onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
       setShowConferral(false); setActualCountedInput('');
       setIsProcessing(false);
    };
@@ -291,9 +293,14 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
          {showConferral && activeShift && (
             <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
                <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
-               <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-8">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-8 overflow-hidden">
+                   
+                   {/* Dica de Segurança Blind Mode */}
+                   <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                      <span className="text-6xl font-black">BLIND</span>
+                   </div>
 
-                  {/* COLUNA DA ESQUERDA: EXTRATO DO SISTEMA */}
+                   {/* COLUNA DA ESQUERDA: EXTRATO DO SISTEMA */}
                   <div className="flex-1 space-y-6">
                      <div className="mb-4">
                         <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Fechamento</h3>
@@ -301,34 +308,55 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                      </div>
 
                      <div className="bg-slate-50 dark:bg-slate-950/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-3">
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="font-bold text-slate-500 uppercase">Fundo de Abertura</span>
-                           <span className="font-black text-slate-700 dark:text-slate-300">{formatCurrency(openingBalance)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="font-bold text-slate-500 uppercase">Vendas Dinheiro</span>
-                           <span className="font-black text-emerald-600">+ {formatCurrency(cashMovements.total)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="font-bold text-slate-500 uppercase">Suprimentos</span>
-                           <span className="font-black text-blue-500">+ {formatCurrency(internalTransfers.incoming)}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-xs">
-                           <span className="font-bold text-slate-500 uppercase">Sangrias</span>
-                           <span className="font-black text-red-500">- {formatCurrency(internalTransfers.outgoing)}</span>
-                        </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-slate-500 uppercase">Fundo de Abertura</span>
+                            <span className="font-black text-slate-700 dark:text-slate-300">
+                               {revealSystem ? formatCurrency(openingBalance) : 'R$ •••,••'}
+                            </span>
+                         </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-slate-500 uppercase">Vendas Dinheiro</span>
+                            <span className="font-black text-emerald-600">
+                               {revealSystem ? `+ ${formatCurrency(cashMovements.total)}` : '+ R$ •••,••'}
+                            </span>
+                         </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-slate-500 uppercase">Suprimentos</span>
+                            <span className="font-black text-blue-500">
+                               {revealSystem ? `+ ${formatCurrency(internalTransfers.incoming)}` : '+ R$ •••,••'}
+                            </span>
+                         </div>
+                         <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-slate-500 uppercase">Sangrias</span>
+                            <span className="font-black text-red-500">
+                               {revealSystem ? `- ${formatCurrency(internalTransfers.outgoing)}` : '- R$ •••,••'}
+                            </span>
+                         </div>
                         <div className="h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
-                        <div className="flex justify-between items-center text-sm">
-                           <span className="font-black text-slate-800 dark:text-white uppercase tracking-tight">Saldo Esperado na Gaveta</span>
-                           <span className="font-black text-slate-900 dark:text-white text-lg">{formatCurrency(expectedCashInDrawer)}</span>
-                        </div>
+                         <div className="flex justify-between items-center text-sm">
+                            <span className="font-black text-slate-800 dark:text-white uppercase tracking-tight">Saldo Esperado na Gaveta</span>
+                            <span className="font-black text-slate-900 dark:text-white text-lg">
+                               {revealSystem ? formatCurrency(expectedCashInDrawer) : 'R$ •••,••'}
+                            </span>
+                         </div>
                      </div>
 
-                     <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Outros (Cartão/Pix)</span>
-                        <span className="text-xs font-black text-slate-600 dark:text-slate-400">{formatCurrency(totalSoldInShift - cashMovements.total)}</span>
-                     </div>
-                  </div>
+                      <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Outros (Cartão/Pix)</span>
+                         <span className="text-xs font-black text-slate-600 dark:text-slate-400">
+                            {revealSystem ? formatCurrency(totalSoldInShift - cashMovements.total) : 'R$ •••,••'}
+                         </span>
+                      </div>
+
+                      {currentUser.username === 'admin' && !revealSystem && (
+                         <button 
+                            onClick={() => setRevealSystem(true)}
+                            className="w-full py-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-600 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl transition-all"
+                         >
+                            Revelar Demonstrativo (Apenas Admin)
+                         </button>
+                      )}
+                   </div>
 
                   {/* COLUNA DA DIREITA: CONFERÊNCIA FÍSICA */}
                   <div className="flex-1 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 md:pl-8 pt-6 md:pt-0">
@@ -349,15 +377,12 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                            </div>
                         </div>
 
-                        {/* Indicador de Diferença em Tempo Real */}
-                        <div className={`p-4 rounded-2xl flex justify-between items-center border ${currentDifference === 0 ? 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800' : currentDifference > 0 ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-900/30' : 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30'}`}>
-                           <span className={`text-[10px] font-black uppercase tracking-widest ${currentDifference === 0 ? 'text-slate-400' : currentDifference > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                              {currentDifference === 0 ? 'Caixa Batido' : currentDifference > 0 ? 'Sobra de Caixa' : 'Quebra de Caixa'}
-                           </span>
-                           <span className={`text-xl font-black ${currentDifference === 0 ? 'text-slate-400' : currentDifference > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                              {formatCurrency(Math.abs(currentDifference))}
-                           </span>
-                        </div>
+                           {/* Diferença Oculta (Blind Mode) */}
+                         <div className={`p-4 rounded-2xl flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20`}>
+                            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">Status de Conferência</span>
+                            <span className="text-[10px] font-black uppercase text-slate-500 italic">🔒 Modo Cego Ativado</span>
+                         </div>
+       
                      </div>
 
                      <div className="mt-8 flex flex-col gap-3">

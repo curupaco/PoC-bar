@@ -11,10 +11,10 @@ interface POSProps {
   modifierGroups: ModifierGroup[];
   categoryModifiers: Record<string, string>;
   openTabs: Tab[];
-  onSaveTab: (tab: Tab) => void;
-  onUpdateTabItem?: (tabId: string, item: SaleItem) => void; 
-  onDeleteTab: (id: string) => void;
-  onCompleteSale: (sales: Sale[], tabIdToClose?: string) => void; 
+  onSaveTab: (tab: Tab) => Promise<void>;
+  onUpdateTabItem?: (tabId: string, item: SaleItem) => Promise<void>; 
+  onDeleteTab: (id: string) => Promise<void>;
+  onCompleteSale: (sales: Sale[], tabIdToClose?: string) => Promise<void>; 
   shortcutCheckout?: { name: string; amount: number } | null;
   onClearShortcut?: () => void;
   activeShift?: Shift;
@@ -84,7 +84,7 @@ export const POS: React.FC<POSProps> = ({
     return tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
   }, [activeTabId, shortcutCheckout, tabItems]);
 
-  const executeAddItem = useCallback((product: Product, quantity: number, modifier?: ModifierOption) => {
+  const executeAddItem = useCallback(async (product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTabId) return;
 
     const existingItem = tabItems.find(item => 
@@ -102,7 +102,7 @@ export const POS: React.FC<POSProps> = ({
             quantity: newQty,
             totalPrice: safeFloat(newQty * existingItem.unitPrice)
         };
-        if (onUpdateTabItem) onUpdateTabItem(activeTabId, updatedItem);
+        if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
         showFeedback(`+${quantity} ${product.name}`);
     } else {
         const modPrice = modifier ? modifier.price : 0;
@@ -117,14 +117,14 @@ export const POS: React.FC<POSProps> = ({
           totalPrice: safeFloat(quantity * effectiveUnitPrice), 
           modifier 
         };
-        if (onUpdateTabItem) onUpdateTabItem(activeTabId, newItem);
+        if (onUpdateTabItem) await onUpdateTabItem(activeTabId, newItem);
         showFeedback(`+${quantity} ${product.name}`);
     }
 
     setModifierModalData(null);
   }, [activeTabId, tabItems, onUpdateTabItem, showFeedback]);
 
-  const addToTab = useCallback((product: Product, quantity: number = 1) => {
+  const addToTab = useCallback(async (product: Product, quantity: number = 1) => {
     if (!activeTabId) { showFeedback("ABRA UMA COMANDA PRIMEIRO!"); return; }
     if (product.sellType === 'weight') { setWeightModalProduct(product); return; }
     let groupId = product.modifierGroupId || (product.category ? categoryModifiers[product.category.toUpperCase()] : undefined);
@@ -132,23 +132,23 @@ export const POS: React.FC<POSProps> = ({
         const group = modifierGroups.find(g => g.id === groupId);
         if (group && group.options.length > 0) { setModifierModalData({ product, group, quantity }); return; }
     }
-    executeAddItem(product, quantity);
+    await executeAddItem(product, quantity);
   }, [activeTabId, categoryModifiers, modifierGroups, executeAddItem, showFeedback]);
 
-  const updateItemQty = useCallback((index: number, delta: number) => {
+  const updateItemQty = useCallback(async (index: number, delta: number) => {
     if (!activeTabId || !activeTab) return;
     const item = tabItems[index];
     const newQty = item.quantity + delta;
     const updatedItem: SaleItem = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
-    if (onUpdateTabItem) onUpdateTabItem(activeTabId, updatedItem);
+    if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
   }, [activeTabId, activeTab, tabItems, onUpdateTabItem]);
 
-  const handleQuickSale = () => {
+  const handleQuickSale = async () => {
     const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
     const expressName = `EXPRESSA #${shortId}`;
     const newTabId = generateUniqueId('tab-express');
     
-    onSaveTab({
+    await onSaveTab({
       id: newTabId,
       name: expressName,
       items: [],
@@ -159,19 +159,19 @@ export const POS: React.FC<POSProps> = ({
     showFeedback("VENDA RÁPIDA INICIADA ⚡");
   };
 
-  const handleRenameTab = () => {
+  const handleRenameTab = async () => {
     if (!activeTabId || !newTabName.trim()) return;
     const updatedTab: Tab = {
       ...activeTab!,
       name: newTabName.toUpperCase().trim()
     };
-    onSaveTab(updatedTab);
+    await onSaveTab(updatedTab);
     setNewTabName('');
     setIsRenamingTab(false);
     showFeedback("COMANDA RENOMEADA");
   };
 
-  const processCompletion = (payments: any[]) => {
+  const processCompletion = async (payments: any[]) => {
     const isShortcut = activeTabId === 'shortcut-payment';
     const totalAmount = payments.reduce((acc, p) => acc + p.amount, 0);
     
@@ -192,7 +192,7 @@ export const POS: React.FC<POSProps> = ({
        shiftId: activeShift?.id || ''
     };
     
-    onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
+    await onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
     
     setActiveTabId(null); 
     setIsClosingTab(false); 
@@ -200,9 +200,9 @@ export const POS: React.FC<POSProps> = ({
     if (isShortcut && onClearShortcut) onClearShortcut();
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (tabToDelete) {
-       onDeleteTab(tabToDelete.id);
+       await onDeleteTab(tabToDelete.id);
        if (activeTabId === tabToDelete.id) {
           setActiveTabId(null);
           setShowMobileCart(false);
@@ -253,9 +253,16 @@ export const POS: React.FC<POSProps> = ({
           
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
-              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO DA MESA..." className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" onKeyDown={e => e.key === 'Enter' && newTabName && (onSaveTab({id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}), setActiveTabId(null), setIsAddingTab(false))} />
+              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO DA MESA..." className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" onKeyDown={async e => {
+                if (e.key === 'Enter' && newTabName) {
+                  await onSaveTab({ id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now() });
+                  setActiveTabId(null);
+                  setIsAddingTab(false);
+                  setNewTabName('');
+                }
+              }} />
               <div className="flex gap-2">
-                <button onClick={() => { if(newTabName){ onSaveTab({id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now()}); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Confirmar</button>
+                <button onClick={async () => { if (newTabName) { await onSaveTab({ id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now() }); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Confirmar</button>
                 <button onClick={() => { setIsAddingTab(false); setNewTabName(''); }} className="px-6 py-4 rounded-2xl font-black uppercase text-xs text-slate-400">Cancelar</button>
               </div>
             </div>

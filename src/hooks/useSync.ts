@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category } from '../types';
 import { SyncQueue, QueueItem } from '../utils/syncQueue';
@@ -29,6 +29,8 @@ export const useSync = (props: SyncProps) => {
   const errorCount = useRef(0);
   const serverTombstones = useRef<Set<string>>(new Set());
   const currentUnitRef = useRef<string | null>(null);
+
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
 
   const {
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
@@ -102,12 +104,14 @@ export const useSync = (props: SyncProps) => {
       else await saveToFirebase(config.url, item.data, undefined, token, path);
 
       await SyncQueue.dequeue(item.id);
+      setPendingSyncCount(SyncQueue.getLength());
       isProcessingQueue.current = false;
       processQueue(token);
     } catch (e) {
       const currentRetry = item.retryCount || 0;
       if (currentRetry >= 10) await SyncQueue.dequeue(item.id);
       else await SyncQueue.update({ ...item, retryCount: currentRetry + 1 });
+      setPendingSyncCount(SyncQueue.getLength());
       isProcessingQueue.current = false;
     }
   }, [config, activeUnitId]);
@@ -218,6 +222,7 @@ export const useSync = (props: SyncProps) => {
 
       errorCount.current = 0;
       processQueue(token);
+      setPendingSyncCount(SyncQueue.getLength());
 
       const metaRaw = await loadFromFirebase(config.url, undefined, token, `data/units/${activeUnitId}/_meta`);
       const serverMeta = metaRaw || {};
@@ -294,6 +299,7 @@ export const useSync = (props: SyncProps) => {
     const token = await getFirebaseToken(config.email, config.pass, config.key);
     if (token) {
       processQueue(token);
+      setPendingSyncCount(SyncQueue.getLength());
       const [uRaw, unitsRaw] = await Promise.all([
         loadFromFirebase(config.url, undefined, token, 'users'),
         loadFromFirebase(config.url, undefined, token, 'units')
@@ -320,5 +326,5 @@ export const useSync = (props: SyncProps) => {
     if (activeUnitId) fetchData();
   }, [fetchGlobal, fetchData, activeUnitId]);
 
-  return { refresh, registerLocalDeletion, updateLocalTimestamp };
+  return { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount };
 };

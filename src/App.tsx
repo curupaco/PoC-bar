@@ -74,6 +74,12 @@ export const App: React.FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [shortcutCheckout, setShortcutCheckout] = useState<{ name: string; amount: number } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'info' | 'error' } | null>(null);
+
+  const showToast = useCallback((msg: string, type: 'info' | 'error' = 'info') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
 
   // Estado para Modal de Confirmação Global
   const [confirmModal, setConfirmModal] = useState<{
@@ -206,7 +212,7 @@ export const App: React.FC = () => {
     setOpenTabs(sanitized);
   }, []);
 
-  const { refresh, registerLocalDeletion, updateLocalTimestamp } = useSync({
+  const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
     setUsers, setShifts, setUnits, setCategories, setAuditLogs, setDbStatus,
@@ -214,32 +220,48 @@ export const App: React.FC = () => {
     config: syncConfig
   });
 
+  // ITEM 2: Prevenção de fechamento de aba com sincronização pendente
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pendingSyncCount > 0) {
+        e.preventDefault();
+        e.returnValue = 'Existem dados pendentes de sincronização. Se você sair agora, as alterações podem ser perdidas.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [pendingSyncCount]);
+
   // CORREÇÃO CRÍTICA (SNAPSHOT OTIMISTA): Função auxiliar para gravar no disco IMEDIATAMENTE
-  const saveLocalCache = useCallback((key: string, data: any) => {
+  const saveLocalCache = useCallback(async (key: string, data: any) => {
     if (!validatedActiveUnitId) return;
     const cacheKey = `btq_cache_${validatedActiveUnitId}`;
-    // Fire and forget, mas garante persistência física
-    idb.get(cacheKey).then((current: any) => {
+    try {
+      const current: any = await idb.get(cacheKey);
       const next = current || {};
       next[key] = data;
-      idb.set(cacheKey, next);
-    }).catch(err => console.warn('Cache write failed', err));
+      await idb.set(cacheKey, next);
+    } catch (err) {
+      console.warn('Cache write failed', err);
+      throw err;
+    }
   }, [validatedActiveUnitId]);
 
   useEffect(() => {
     if (dbStatus === 'success') setLastSyncTime(Date.now());
   }, [dbStatus]);
 
-  const persist = useCallback((node: string, data: any, itemId?: string) => {
+  const persist = useCallback(async (node: string, data: any, itemId?: string) => {
     if (!validatedActiveUnitId) return;
-    SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
+    await SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
   }, [validatedActiveUnitId]);
 
-  const persistGlobal = useCallback((node: string, data: any, itemId?: string) => {
-    SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
+  const persistGlobal = useCallback(async (node: string, data: any, itemId?: string) => {
+    await SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
   }, []);
 
-  const addAuditLog = useCallback((action: string, details: string) => {
+  const addAuditLog = useCallback(async (action: string, details: string) => {
     if (!validatedActiveUnitId || !currentUserRef.current) return;
     const log: AuditLog = {
       id: generateUniqueId('log'),
@@ -250,13 +272,15 @@ export const App: React.FC = () => {
       details,
       unitId: validatedActiveUnitId
     };
-    setAuditLogs(prev => {
-      const next = [log, ...prev].slice(0, 2000);
-      saveLocalCache('auditLogs', next);
-      return next;
-    });
-    persist('auditLogs', log, log.id);
-  }, [validatedActiveUnitId, persist, saveLocalCache]);
+    try {
+      const nextLogs = [log, ...auditLogs].slice(0, 2000);
+      setAuditLogs(nextLogs);
+      await saveLocalCache('auditLogs', nextLogs);
+      await persist('auditLogs', log, log.id);
+    } catch (e) {
+      showToast("Falha ao registrar log de auditoria", "error");
+    }
+  }, [validatedActiveUnitId, persist, saveLocalCache, auditLogs, showToast]);
 
   const handleSwitchUnit = () => {
     setRawActiveUnitId(null);
@@ -287,7 +311,7 @@ export const App: React.FC = () => {
     });
   };
 
-  const handleSaveTab = useCallback((tab: Tab) => {
+  const handleSaveTab = useCallback(async (tab: Tab) => {
     const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
     setOpenTabs(prev => {
       const idx = prev.findIndex(t => t.id === tab.id);
@@ -300,13 +324,12 @@ export const App: React.FC = () => {
         nextTabs = [...prev, sanitizedTab];
         console.log(`[MESA_ABERTURA] ID: ${tab.id} | Nome: ${tab.name} | Aberta por: ${currentUserRef.current?.username}`);
       }
-      // CORREÇÃO #16 & #17: Snapshot imediato do novo estado
       saveLocalCache('openTabs', nextTabs);
       return nextTabs;
     });
-    // Atualiza Timestamp para evitar que o Sync sobrescreva com dados velhos
+
     updateLocalTimestamp('openTabs');
-    persist('openTabs', tab, tab.id);
+    await persist('openTabs', tab, tab.id);
 
     const isNew = !openTabs.some(t => t.id === tab.id);
     if (isNew) {
@@ -318,7 +341,7 @@ export const App: React.FC = () => {
 
   }, [persist, saveLocalCache, updateLocalTimestamp, openTabs, addAuditLog]);
 
-  const handleUpdateTabItem = useCallback((tabId: string, item: SaleItem) => {
+  const handleUpdateTabItem = useCallback(async (tabId: string, item: SaleItem) => {
     setOpenTabs(prev => {
       const nextTabs = prev.map(t => {
         if (t.id === tabId) {
@@ -343,17 +366,15 @@ export const App: React.FC = () => {
         }
         return t;
       });
-      // CORREÇÃO #16 & #17: Snapshot imediato
       saveLocalCache('openTabs', nextTabs);
       return nextTabs;
     });
     updateLocalTimestamp('openTabs');
-    persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
+    await persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
   }, [persist, saveLocalCache, updateLocalTimestamp]);
 
-  const handleDeleteTab = useCallback((tabId: string) => {
+  const handleDeleteTab = useCallback(async (tabId: string) => {
     setOpenTabs(prev => {
-      // Recomendação B: Idempotência - Não fecha o que já está fechado
       if (!prev.some(t => t.id === tabId)) return prev;
 
       const nextTabs = prev.filter(t => t.id !== tabId);
@@ -361,55 +382,64 @@ export const App: React.FC = () => {
       return nextTabs;
     });
     updateLocalTimestamp('openTabs');
-    persist('openTabs', null, tabId);
-    persist(`_meta/deleted_tabs/${tabId}`, Date.now());
-    registerLocalDeletion(tabId);
+    await persist('openTabs', null, tabId);
+    await persist(`_meta/deleted_tabs/${tabId}`, Date.now());
+    await registerLocalDeletion(tabId);
     addAuditLog('TAB_DELETE', `Mesa descartada ID: ${tabId}`);
   }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp, addAuditLog]);
 
-  const handleUpdateProducts = useCallback((updater: any) => {
-    setProducts(prev => {
-      const next = updater(prev);
-      updateLocalTimestamp('products');
-      saveLocalCache('products', next); // Snapshot
-      persist('products', next);
-      return next;
-    });
-  }, [persist, updateLocalTimestamp, saveLocalCache]);
+  const handleUpdateProducts = useCallback(async (updater: any) => {
+    try {
+      setProducts(prev => {
+        const next = updater(prev);
+        updateLocalTimestamp('products');
+        saveLocalCache('products', next);
+        persist('products', next);
+        return next;
+      });
+    } catch (e) {
+      showToast("Falha ao salvar produtos", "error");
+    }
+  }, [persist, updateLocalTimestamp, saveLocalCache, showToast]);
 
-  const handleUpdateCategoryModifiers = useCallback((updater: (prev: Record<string, string>) => Record<string, string>) => {
-    setCategoryModifiers(prev => {
-      const next = updater(prev);
-      updateLocalTimestamp('categoryModifiers');
-      saveLocalCache('categoryModifiers', next); // Snapshot
-      persist('categoryModifiers', next);
-      return next;
-    });
-  }, [persist, updateLocalTimestamp, saveLocalCache]);
+  const handleUpdateCategoryModifiers = useCallback(async (updater: (prev: Record<string, string>) => Record<string, string>) => {
+    try {
+      setCategoryModifiers(prev => {
+        const next = updater(prev);
+        updateLocalTimestamp('categoryModifiers');
+        saveLocalCache('categoryModifiers', next);
+        persist('categoryModifiers', next);
+        return next;
+      });
+    } catch (e) {
+      showToast("Falha ao salvar modificadores", "error");
+    }
+  }, [persist, updateLocalTimestamp, saveLocalCache, showToast]);
 
-  const handleUpdateShifts = useCallback((newShifts: Shift[], changedItem?: Shift) => {
-    // Recomendação B: Gateway de Idempotência
+  const handleUpdateShifts = useCallback(async (newShifts: Shift[], changedItem?: Shift) => {
     if (changedItem && changedItem.status === 'closed') {
       const existing = shifts.find(s => s.id === changedItem.id);
       if (existing && existing.status === 'closed') {
         console.warn(`[GATEWAY] Turno ${changedItem.id} já consta como fechado. Ignorando atualização de estado.`);
-
-        // Ainda gera o log conforme solicitado pelo usuário
         addAuditLog('SHIFT_CLOSE', `TENTATIVA DUPLICADA: Turno ${changedItem.id} fechado por @${currentUserRef.current?.username}`);
         return;
       }
     }
 
-    setShifts(newShifts);
-    updateLocalTimestamp('shifts');
-    saveLocalCache('shifts', newShifts); // Snapshot
-    if (changedItem) {
-      persist('shifts', changedItem, changedItem.id);
-      const action = changedItem.status === 'open' ? 'SHIFT_OPEN' : 'SHIFT_CLOSE';
-      addAuditLog(action, `Turno ${changedItem.id} ${changedItem.status === 'open' ? 'aberto' : 'fechado'} por @${currentUserRef.current?.username}`);
+    try {
+      setShifts(newShifts);
+      updateLocalTimestamp('shifts');
+      await saveLocalCache('shifts', newShifts);
+      if (changedItem) {
+        await persist('shifts', changedItem, changedItem.id);
+        const action = changedItem.status === 'open' ? 'SHIFT_OPEN' : 'SHIFT_CLOSE';
+        addAuditLog(action, `Turno ${changedItem.id} ${changedItem.status === 'open' ? 'aberto' : 'fechado'} por @${currentUserRef.current?.username}`);
+      }
+      else await persist('shifts', newShifts);
+    } catch (e) {
+      showToast("Falha ao atualizar turno", "error");
     }
-    else persist('shifts', newShifts);
-  }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog, shifts]);
+  }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog, shifts, showToast]);
 
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
     setUsers(newUsers);
@@ -431,27 +461,25 @@ export const App: React.FC = () => {
     persistGlobal('units', newUnits);
   }, [persistGlobal, saveLocalCache]);
 
-  const handleCompleteSale = useCallback((newSalesList: Sale[], tabIdToClose?: string) => {
+  const handleCompleteSale = useCallback(async (newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
       const next = [...prev, ...newSalesList];
-      // CORREÇÃO #16 & #17: Gravar vendas no cache local imediatamente
       saveLocalCache('sales', next);
       return next;
     });
 
     updateLocalTimestamp('sales');
-    newSalesList.forEach(s => {
+    for (const s of newSalesList) {
       console.log(`[PAGAMENTO] Venda ID: ${s.id} | Mesa: ${s.tabName || 'Balcão'} | Valor: ${formatCurrency(s.total)} | Forma: ${s.paymentMethod}`);
-      persist('sales', s, s.id);
-    });
+      await persist('sales', s, s.id);
+    }
 
     if (tabIdToClose) {
-      // Recomendação B: Só tenta fechar se a mesa ainda existir no estado atual
       const tab = openTabs.find(t => t.id === tabIdToClose);
       if (tab) {
         console.log(`[MESA_FECHAMENTO] Mesa: ${tab.name} | Total Pago: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
         addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab.name} | Total: ${formatCurrency(newSalesList.reduce((acc, s) => acc + s.total, 0))}`);
-        handleDeleteTab(tabIdToClose);
+        await handleDeleteTab(tabIdToClose);
       } else {
         console.warn(`[GATEWAY] Tentativa de fechar mesa já fechada ou inexistente: ${tabIdToClose}`);
         addAuditLog('TAB_CLOSE', `TENTATIVA DUPLICADA: Mesa ID ${tabIdToClose} já fechada.`);
@@ -674,6 +702,15 @@ export const App: React.FC = () => {
       </main>
 
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
+
+      {/* Toasts de Erro/Info */}
+      {toast && (
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-full font-black uppercase text-[10px] shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'
+          }`}>
+          {toast.type === 'error' && <span className="mr-2">⚠️</span>}
+          {toast.msg}
+        </div>
+      )}
 
       {/* Modal Global de Confirmação (Estilo System Screen) */}
       <ConfirmationModal

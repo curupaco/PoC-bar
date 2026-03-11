@@ -322,7 +322,7 @@ export const LandingPage: React.FC = () => {
                   <li><span className="text-emerald-400">Persistence:</span> Offline-First via IndexedDB (idb wrapper)</li>
                   <li><span className="text-emerald-400">Synchronization:</span> Custom `useSync` hook + Firebase Realtime DB</li>
                   <li><span className="text-emerald-400">Auth & Security:</span> Multi-unit RBAC (20+ permissions) + PBKDF2 Hashing</li>
-                  <li><span className="text-emerald-400">Reliability:</span> Idempotency Gateway + Audit Timeline (7-day retention)</li>
+                  <li><span className="text-emerald-400">Reliability:</span> Idempotency Gateway + Audit Timeline + Tab-Close Guard</li>
                 </ul>
               </div>
 
@@ -335,7 +335,7 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <h5 className="text-white font-bold mb-2 underline">Interface Determinística</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Blind Close Mechanism: input de gaveta desconectado do esperado via backend.</p>
+                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Blind Mode: input de gaveta desconectado visualmente do sistema via state mask.</p>
                   </div>
                   <div>
                     <h5 className="text-white font-bold mb-2 underline">Sync Queue (FIFO)</h5>
@@ -360,7 +360,7 @@ export const LandingPage: React.FC = () => {
                 <p className="text-emerald-500 font-bold">$ botequista --status</p>
                 <div className="flex items-center gap-4 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                   <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">System Ready: Production Build v4.0.0 Stable</p>
+                   <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">System Ready: Production Build v4.1.0 Stable</p>
                 </div>
               </div>
 
