@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, UserPermission, Unit } from '../../types';
 import { hashPassword } from '../../services/cryptoService';
+import { validateItemName } from '../../utils/wordValidator';
 
 interface UserManagementProps {
   users: User[];
@@ -70,6 +71,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
   const [selectedPerms, setSelectedPerms] = useState<UserPermission[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
     setUsername('');
@@ -79,10 +81,21 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
     setSelectedUnits([]);
     setEditingUser(null);
     setIsAdding(false);
+    setError(null);
   };
 
   const handleSave = () => {
-    if (!username || !password || !displayName) return;
+    setError(null);
+    if (!username || !password || !displayName) {
+        setError("Preencha todos os campos.");
+        return;
+    }
+
+    const uError = validateItemName(username.toUpperCase());
+    if (uError) { setError(`Login inválido: ${uError}`); return; }
+
+    const dError = validateItemName(displayName.toUpperCase());
+    if (dError) { setError(`Nome exibição inválido: ${dError}`); return; }
     
     const finalPassword = editingUser && editingUser.password === password 
       ? password 
@@ -230,6 +243,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                   </div>
                 ))}
               </div>
+
+              {error && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-2xl border border-red-100 dark:border-red-900/30">
+                  <p className="text-center text-[10px] font-black text-red-500 uppercase">{error}</p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-4 pt-8">

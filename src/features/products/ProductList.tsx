@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab, Category } from '../../types';
+import { validateItemName } from '../../utils/wordValidator';
 import ProductItemsTab from './components/ProductItemsTab';
 import ModifierGroupsTab from './components/ModifierGroupsTab';
 import CategoryLinksTab from './components/CategoryLinksTab';
@@ -75,6 +76,12 @@ const ProductList: React.FC<ProductListProps> = ({
     const numericPrice = parseCurrencyValue(price);
     const finalName = name.toUpperCase().trim();
     const finalCategory = category.toUpperCase().trim() || 'GERAL';
+
+    const nameError = validateItemName(finalName);
+    if (nameError) { setError(nameError); return; }
+
+    const categoryError = validateItemName(finalCategory);
+    if (categoryError && finalCategory !== 'GERAL') { setError(`Categoria inválida: ${categoryError}`); return; }
 
     if (!finalName) { setError("Nome é obrigatório."); return; }
     if (isNaN(numericPrice) || numericPrice < 0) { setError("Preço inválido."); return; }

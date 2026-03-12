@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
+import { validateItemName } from '../../utils/wordValidator';
 import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
 import POSProductGrid from './components/POSProductGrid';
@@ -160,10 +161,13 @@ export const POS: React.FC<POSProps> = ({
   };
 
   const handleRenameTab = async () => {
-    if (!activeTabId || !newTabName.trim()) return;
+    const finalName = newTabName.toUpperCase().trim();
+    const tError = validateItemName(finalName);
+    if (tError) { showFeedback(tError); return; }
+
     const updatedTab: Tab = {
       ...activeTab!,
-      name: newTabName.toUpperCase().trim()
+      name: finalName
     };
     await onSaveTab(updatedTab);
     setNewTabName('');
@@ -253,16 +257,41 @@ export const POS: React.FC<POSProps> = ({
           
           {isAddingTab && (
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
-              <input autoFocus value={newTabName} onChange={e => setNewTabName(e.target.value)} placeholder="NOME OU NÚMERO DA MESA..." className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" onKeyDown={async e => {
-                if (e.key === 'Enter' && newTabName) {
-                  await onSaveTab({ id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now() });
-                  setActiveTabId(null);
-                  setIsAddingTab(false);
-                  setNewTabName('');
-                }
-              }} />
+              <input 
+                autoFocus 
+                value={newTabName} 
+                onChange={e => setNewTabName(e.target.value)} 
+                placeholder="NOME OU NÚMERO DA MESA..." 
+                className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" 
+                onKeyDown={async e => {
+                  if (e.key === 'Enter' && newTabName) {
+                    const finalName = newTabName.toUpperCase().trim();
+                    const tError = validateItemName(finalName);
+                    if (tError) { showFeedback(tError); return; }
+                    
+                    await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now() });
+                    setActiveTabId(null);
+                    setIsAddingTab(false);
+                    setNewTabName('');
+                  }
+                }} 
+              />
               <div className="flex gap-2">
-                <button onClick={async () => { if (newTabName) { await onSaveTab({ id: generateUniqueId('tab'), name: newTabName.toUpperCase(), items: [], openedAt: Date.now() }); setNewTabName(''); setIsAddingTab(false); } }} className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Confirmar</button>
+                <button 
+                  onClick={async () => { 
+                    const finalName = newTabName.toUpperCase().trim();
+                    if (finalName) { 
+                      const tError = validateItemName(finalName);
+                      if (tError) { showFeedback(tError); return; }
+                      await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now() }); 
+                      setNewTabName(''); 
+                      setIsAddingTab(false); 
+                    } 
+                  }} 
+                  className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"
+                >
+                  Confirmar
+                </button>
                 <button onClick={() => { setIsAddingTab(false); setNewTabName(''); }} className="px-6 py-4 rounded-2xl font-black uppercase text-xs text-slate-400">Cancelar</button>
               </div>
             </div>
