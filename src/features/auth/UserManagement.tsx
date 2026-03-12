@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { User, UserPermission, Unit } from '../../types';
 import { hashPassword } from '../../services/cryptoService';
 import { validateItemName } from '../../utils/wordValidator';
@@ -63,6 +63,7 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
 ];
 
 const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUpdateUsers }) => {
+  const topRef = useRef<HTMLDivElement>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [username, setUsername] = useState('');
@@ -136,7 +137,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
   const activeUnits = units.filter(u => u.isActive);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-32">
+    <div ref={topRef} className="max-w-7xl mx-auto space-y-8 pb-32">
       <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
           <h2 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Gestão de Equipe</h2>
@@ -290,7 +291,9 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                     setSelectedPerms(user.permissions);
                     setSelectedUnits(userAllowed); // Usa a versão normalizada
                     setIsAdding(true);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => {
+                      topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
                  }} className="p-3 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                  </button>
