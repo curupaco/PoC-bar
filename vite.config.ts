@@ -12,7 +12,11 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(env.VITE_FIREBASE_API_KEY),
+      'import.meta.env.VITE_FIREBASE_DATABASE_URL': JSON.stringify(env.VITE_FIREBASE_DATABASE_URL),
+      'import.meta.env.VITE_FIREBASE_EMAIL': JSON.stringify(env.VITE_FIREBASE_EMAIL),
+      'import.meta.env.VITE_FIREBASE_PASSWORD': JSON.stringify(env.VITE_FIREBASE_PASSWORD)
     },
     resolve: {
       alias: {
