@@ -197,10 +197,10 @@ export const App: React.FC = () => {
   }, [users, currentUser?.id]);
 
   const syncConfig = useMemo(() => ({
-    url: 'https://poc-botequista-default-rtdb.firebaseio.com',
-    key: 'REMOVED_FIREBASE_API_KEY',
-    email: 'curupaco@gmail.com',
-    pass: 'REMOVED_FIREBASE_PASSWORD',
+    url: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+    key: import.meta.env.VITE_FIREBASE_API_KEY,
+    email: import.meta.env.VITE_FIREBASE_EMAIL,
+    pass: import.meta.env.VITE_FIREBASE_PASSWORD,
     allPerms: ALL_PERMISSIONS
   }), []);
 
