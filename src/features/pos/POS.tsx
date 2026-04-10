@@ -39,6 +39,9 @@ export const POS: React.FC<POSProps> = ({
   onClearShortcut,
   activeShift,
   onViewChange,
+  dbStatus,
+  penduraThreshold = 500,
+  longDurationThreshold = 4,
   stockTransactions = []
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);

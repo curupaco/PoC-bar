@@ -40,8 +40,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentUser,
   onLogout,
   activeTabsCount,
+  onSwitchUnit,
+  isShiftOpen,
+  totalPendura,
+  penduraThreshold,
   isCollapsed,
   onToggleCollapse,
+  dbStatus,
+  isOnline,
+  theme,
 }) => {
   
   const hasPermission = (perm: UserPermission) => {

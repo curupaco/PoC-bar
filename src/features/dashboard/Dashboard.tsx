@@ -84,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
     }, {});
 
     return Object.entries(revenueByUser)
-      .map(([name, total]) => ({ name, total }))
+      .map(([name, total]) => ({ name, total: Number(total) }))
       .sort((a, b) => b.total - a.total);
   }, [filteredSales, users]);
 
