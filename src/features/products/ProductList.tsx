@@ -57,6 +57,7 @@ const ProductList: React.FC<ProductListProps> = ({
   const [category, setCategory] = useState(''); 
   const [sellType, setSellType] = useState<SellType>('unit');
   const [modGroupId, setModGroupId] = useState<string>('');
+  const [trackStock, setTrackStock] = useState(true);
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
@@ -93,7 +94,8 @@ const ProductList: React.FC<ProductListProps> = ({
         price: numericPrice,
         category: finalCategory,
         sellType,
-        modifierGroupId: modGroupId || undefined
+        modifierGroupId: modGroupId || undefined,
+        trackStock
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -104,7 +106,8 @@ const ProductList: React.FC<ProductListProps> = ({
         category: finalCategory,
         sellType,
         isFavorite: false,
-        modifierGroupId: modGroupId || undefined
+        modifierGroupId: modGroupId || undefined,
+        trackStock
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -144,6 +147,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setCategory(p.category);
     setSellType(p.sellType);
     setModGroupId(p.modifierGroupId || '');
+    setTrackStock(p.trackStock ?? true);
     setShowModal(true);
   };
 
@@ -155,6 +159,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setCategory('');
     setSellType('unit');
     setModGroupId('');
+    setTrackStock(true);
     setError(null);
   };
 
@@ -351,6 +356,21 @@ const ProductList: React.FC<ProductListProps> = ({
                   <option value="">Sem adicionais</option>
                   {modifierGroups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={() => setTrackStock(!trackStock)}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${trackStock ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950'}`}
+                >
+                  <div className="flex flex-col items-start">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${trackStock ? 'text-indigo-600' : 'text-slate-400'}`}>Controlar Estoque</span>
+                    <span className="text-[9px] font-bold text-slate-400">Habilitar baixa automática e saldo</span>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${trackStock ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${trackStock ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
               </div>
 
               {error && (

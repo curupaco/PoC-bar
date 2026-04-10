@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
+import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction } from '../../types';
 import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService'; // Import necessário para Issue 1
 import ClosingReport from './components/ClosingReport';
 import FinancialReport from './components/FinancialReport';
@@ -8,6 +8,7 @@ import PenduraReport from './components/PenduraReport';
 import TeamReport from './components/TeamReport';
 import ProductReport from './components/ProductReport';
 import OperationalReport from './components/OperationalReport';
+import InventoryReport from './components/InventoryReport';
 import AuditReport from './components/AuditReport';
 import { AuditLog } from '../../types';
 
@@ -17,6 +18,7 @@ interface ReportsProps {
   users: User[];
   shifts: Shift[];
   auditLogs: AuditLog[];
+  stockTransactions: StockTransaction[];
   currentUser: User;
   onQuitarPendura: (customerName: string, amount: number) => void;
   theme?: Theme;
@@ -25,9 +27,9 @@ interface ReportsProps {
   syncConfig?: { url: string; key: string; email: string; pass: string }; // Config recebida do App
 }
 
-type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA';
+type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA' | 'ESTOQUE';
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], stockTransactions = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
 
@@ -325,6 +327,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
       case 'PRODUTOS': return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL': return <OperationalReport reportData={reportData} theme={theme} />;
+      case 'ESTOQUE': return <InventoryReport stockTransactions={stockTransactions} products={products} sales={filteredSales} theme={theme} />;
       case 'AUDITORIA': {
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         const recentLogs = auditLogs.filter(log => log.timestamp >= sevenDaysAgo);
@@ -352,7 +355,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
         <div className="flex flex-wrap justify-center bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1">
-          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'AUDITORIA'] as ReportCategory[]).map(cat => {
+          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'] as ReportCategory[]).map(cat => {
             const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
             return (
               <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>

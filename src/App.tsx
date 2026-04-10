@@ -11,6 +11,7 @@ import Reports from './features/reports/Reports';
 import UserManagement from './features/auth/UserManagement';
 import ShiftControl from './features/finance/ShiftControl';
 import CashManagement from './features/finance/CashManagement';
+import Inventory from './features/inventory/Inventory';
 import Settings from './features/settings/Settings';
 import Help from './features/help/Help';
 import Login from './features/auth/Login';
@@ -126,7 +127,8 @@ export const App: React.FC = () => {
       case 'franchise_dashboard': return <FranchiseDashboard units={store.units} franchises={store.franchises} currentUser={currentUser} syncConfig={store.syncConfig} />;
       case 'dashboard': return <Dashboard sales={store.sales} products={store.products} theme={theme} />;
       case 'history': return <SalesHistory sales={store.sales} onDeleteSale={(id) => { const s = store.sales.find(x => x.id === id); if (s) { const ns = { ...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id }; store.persist('sales', ns, id); store.setSales(prev => { const next = prev.map(x => x.id === id ? ns : x); store.saveLocalCache('sales', next); return next; }); store.addAuditLog('SALE_DELETE', `Venda anulada ID: ${id}`); } }} users={store.users} currentUser={currentUser} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} />;
-      case 'reports': return <Reports sales={store.sales} products={store.products} users={store.users} shifts={store.shifts} auditLogs={store.auditLogs} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={store.penduraThreshold} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} theme={theme} />;
+      case 'reports': return <Reports sales={store.sales} products={store.products} users={store.users} shifts={store.shifts} auditLogs={store.auditLogs} stockTransactions={store.stockTransactions} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={store.penduraThreshold} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} theme={theme} />;
+      case 'inventory': return <Inventory products={store.products} stockTransactions={store.stockTransactions} onUpdateStock={store.handleUpdateStock} currentUser={currentUser} activeUnitId={store.validatedActiveUnitId} />;
       case 'settings': return <Settings products={store.products} sales={store.sales} openTabs={store.openTabs} users={store.users} shifts={store.shifts} units={store.units} onUpdateUnits={store.handleUpdateUnits} onImport={store.handleDataManagement} dbStatus={store.dbStatus} currentUser={currentUser} penduraThreshold={store.penduraThreshold} setPenduraThreshold={store.setPenduraThreshold} longDurationThreshold={store.longDurationThreshold} setLongDurationThreshold={store.setLongDurationThreshold} />;
       case 'help': return <Help />;
       default: return null;

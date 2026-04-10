@@ -36,6 +36,10 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
     onUpdateUnits(units.map(u => u.id === id ? { ...u, isActive: !u.isActive } : u));
   };
 
+  const toggleStock = (id: string) => {
+    onUpdateUnits(units.map(u => u.id === id ? { ...u, useStock: !u.useStock } : u));
+  };
+
   const startEdit = (unit: Unit) => {
     setEditingId(unit.id);
     setEditName(unit.name);
@@ -125,10 +129,18 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
                        </div>
                        <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
                           <button 
+                            onClick={() => toggleStock(unit.id)}
+                            className={`text-[9px] font-black uppercase px-4 py-2 rounded-full transition-all flex items-center gap-2 ${unit.useStock ? 'bg-indigo-100 text-indigo-600 border border-indigo-200' : 'bg-slate-100 text-slate-400 border border-transparent'}`}
+                          >
+                             <span className={`w-1.5 h-1.5 rounded-full ${unit.useStock ? 'bg-indigo-500 animate-pulse' : 'bg-slate-300'}`}></span>
+                             {unit.useStock ? 'Estoque Ativo' : 'Estoque Inativo'}
+                          </button>
+
+                          <button 
                             onClick={() => toggleStatus(unit.id)}
                             className={`text-[9px] font-black uppercase px-4 py-2 rounded-full transition-all ${unit.isActive ? 'bg-emerald-100 text-emerald-600 hover:bg-red-100 hover:text-red-600' : 'bg-slate-200 text-slate-500 hover:bg-emerald-100 hover:text-emerald-600'}`}
                           >
-                             {unit.isActive ? 'Ativo' : 'Suspenso'}
+                             {unit.isActive ? 'Bar Ativo' : 'Bar Suspenso'}
                           </button>
                        </div>
                     </div>

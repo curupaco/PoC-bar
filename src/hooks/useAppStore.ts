@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise } from '../types';
 import { useSync } from './useSync';
 import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
@@ -28,6 +28,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [units, setUnits] = useState<Unit[]>([]);
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
 
@@ -99,7 +100,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
-    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setDbStatus,
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setDbStatus,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -326,6 +327,38 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     persistGlobal('franchises', newFranchises);
   }, [persistGlobal, saveLocalCache]);
 
+  const handleUpdateStock = useCallback(async (transaction: StockTransaction) => {
+    if (!validatedActiveUnitId) return;
+    try {
+      setStockTransactions(prev => {
+        const next = [transaction, ...prev].slice(0, 5000);
+        saveLocalCache('stockTransactions', next);
+        return next;
+      });
+      
+      await persist('stockTransactions', transaction, transaction.id);
+
+      // Se for uma entrada, atualiza o último preço de custo no produto de forma atômica
+      if (transaction.type === 'IN' && transaction.price) {
+        setProducts(prev => {
+          const product = prev.find(p => p.id === transaction.productId);
+          if (!product) return prev;
+          
+          const updatedProduct = { ...product, lastCostPrice: transaction.price };
+          const next = prev.map(p => p.id === transaction.productId ? updatedProduct : p);
+          
+          saveLocalCache('products', next);
+          // FIX: Persiste apenas o produto alterado, não a lista inteira
+          persist('products', updatedProduct, updatedProduct.id); 
+          
+          return next;
+        });
+      }
+    } catch (e) {
+      showToast("Falha ao registrar movimentação de estoque", "error");
+    }
+  }, [validatedActiveUnitId, persist, saveLocalCache, showToast]);
+
   const handleCompleteSale = useCallback(async (newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
       const next = [...prev, ...newSalesList];
@@ -345,7 +378,51 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
         addAuditLog('TAB_CLOSE', `TENTATIVA DUPLICADA: Mesa ID ${tabIdToClose} já fechada.`);
       }
     }
-  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog]);
+
+    // Baixa de estoque automática (Otimizada para processamento em lote)
+    const activeUnit = units.find(u => u.id === validatedActiveUnitId);
+    if (activeUnit?.useStock) {
+      const batchTransactions: StockTransaction[] = [];
+      const timestamp = Date.now();
+      const userId = currentUserRef.current?.id || 'system';
+
+      for (const s of newSalesList) {
+        if (!s.items) continue;
+        for (const item of s.items) {
+          if (item.productId === PRODUCT_ID_DEBT_SETTLEMENT) continue;
+          
+          // Verifica se o produto deve controlar estoque
+          const product = products.find(p => p.id === item.productId);
+          if (product && product.trackStock === false) continue;
+          
+          const transaction: StockTransaction = {
+            id: generateUniqueId('stk'),
+            productId: item.productId,
+            unitId: validatedActiveUnitId!,
+            quantity: -item.quantity,
+            type: 'OUT',
+            timestamp,
+            userId
+          };
+          batchTransactions.push(transaction);
+        }
+      }
+
+      if (batchTransactions.length > 0) {
+        // Atualiza estado local de uma vez só
+        setStockTransactions(prev => {
+           const next = [...batchTransactions, ...prev].slice(0, 5000);
+           saveLocalCache('stockTransactions', next);
+           return next;
+        });
+        
+        // Envia para a fila de sincronização (individualmente para auditoria atômica)
+        for (const t of batchTransactions) {
+          persist('stockTransactions', t, t.id);
+        }
+      }
+    }
+  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog, units, validatedActiveUnitId, currentUserRef, products]);
 
   const handleExportData = useCallback(() => {
     const backupData = {
@@ -390,6 +467,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     products, setProducts, modifierGroups, setModifierGroups, categories, setCategories,
     categoryModifiers, setCategoryModifiers, sales, setSales, openTabs, setOpenTabs,
     users, setUsers, shifts, setShifts, units, setUnits, franchises, setFranchises, auditLogs, setAuditLogs,
+    stockTransactions, setStockTransactions,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,
@@ -398,6 +476,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     handleSwitchUnit, handleSaveTab, handleUpdateTabItem, handleDeleteTab,
     handleUpdateProducts, handleUpdateCategoryModifiers, handleUpdateShifts,
     handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
+    handleUpdateStock,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };
