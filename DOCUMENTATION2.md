@@ -105,19 +105,20 @@ O cardápio do Botequista suporta:
 - **Grupos de adicionais** — Ponto da carne, tamanho do copo, ingredientes extras.
 - **Vínculos automáticos** — Toda categoria pode ter adicionais padrão, sem precisar configurar produto por produto.
 - **Venda por peso** — Para itens a granel, o sistema abre um modal para digitar o peso e calcula automaticamente.
+- **Controle de Estoque Seletivo** — Defina quais produtos devem ter estoque controlado e quais são apenas serviços (como taxa de entrega).
+- **Busca Global Instantânea** — Localize qualquer produto no cadastro em milissegundos.
 - **Itens favoritos** — O operador pode marcar os mais vendidos para acesso rápido no PDV.
 
 ---
 
-### 🏢 Suporte a Múltiplas Unidades (Rede de Bares)
-
-O Botequista foi pensado para crescer com você. A plataforma suporta **múltiplos pontos de venda** (unidades) com dados completamente isolados entre si.
+### 🏢 Suporte a Múltiplas Unidades e Franquias
+   
+O Botequista foi pensado para crescer com você. A plataforma suporta **múltiplos pontos de venda** (unidades) com dados completamente isolados entre si, e um novo **Dashboard de Franquia** para controle centralizado.
 
 - Um operador pode ter acesso à Unidade A e B — mas não à C.
-- O dono (admin) vê todas as unidades.
+- O dono ou franqueador (admin) vê todas as unidades em um painel consolidado.
 - Cada bar tem seu próprio banco de dados, cardápio e histórico de vendas.
-
-Ideal para redes, franquias ou donos com mais de um estabelecimento.
+- Ideal para redes, franquias ou donos com mais de um estabelecimento que buscam escala.
 
 ---
 
@@ -243,5 +244,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.1 | Março de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.2 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

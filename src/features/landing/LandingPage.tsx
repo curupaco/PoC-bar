@@ -105,7 +105,7 @@ export const LandingPage: React.FC = () => {
         <section className="pt-24 pb-32 px-4 text-center overflow-hidden">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs md:text-sm font-black uppercase tracking-[0.2em] mb-12 animate-bounce">
-              🍺 O Único Sistema que Trata a Internet como opcional
+              🍺 v4.2: Gestão de Estoque & Franquias Liberada
             </div>
             
             <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-10 bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent italic">
@@ -174,8 +174,8 @@ export const LandingPage: React.FC = () => {
 
             <div className="group p-10 bg-white/5 border border-white/5 rounded-[40px] hover:bg-white/[0.08] hover:border-emerald-500/30 transition-all duration-500">
               <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-8 shadow-xl shadow-emerald-500/20 group-hover:scale-110 transition-transform">📊</div>
-              <h3 className="text-2xl font-black mb-4 uppercase italic">Inteligência Financeira</h3>
-              <p className="text-slate-400 leading-relaxed font-medium">Relatórios de Curva ABC, Auditoria de Eventos e Gestão de Penduras. Saiba exatamente de onde vem e para onde vai seu dinheiro.</p>
+              <h3 className="text-2xl font-black mb-4 uppercase italic">Inteligência de Rede</h3>
+              <p className="text-slate-400 leading-relaxed font-medium">Controle de Estoque Seletivo, Auditoria de Eventos e Dashboard de Franquia. Saiba exatamente o que acontece em cada unidade, de onde você estiver.</p>
             </div>
           </div>
         </section>
@@ -187,10 +187,10 @@ export const LandingPage: React.FC = () => {
               <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight italic">FEITO PARA O MUNDO <span className="text-red-600">REAL.</span></h2>
               <div className="space-y-6">
                  {[
-                   { t: "Offline-First", d: "A internet caiu? O Botequista continua vendendo e sincroniza depois." },
-                   { t: "Multi-Dispositivo", d: "Use no celular do garçom, no tablet do caixa e no PC do dono." },
+                   { t: "Estoque Híbrido", d: "Controle o estoque do que é produto e ignore o que é serviço em um só clique." },
+                   { t: "Multi-Franquias", d: "Dashboard consolidado para donos de redes com isolamento total de dados." },
                    { t: "Gestão de Fiado", d: "Carteira de penduras integrada. Acabe com o caderninho de papel." },
-                   { t: "Acesso em Nuvem", d: "Veja o faturamento do bar de qualquer lugar do mundo." }
+                   { t: "Acesso Global", d: "Veja o faturamento de todas as suas unidades em tempo real, de qualquer lugar." }
                  ].map((item, i) => (
                    <div key={i} className="flex gap-4 items-start group">
                      <div className="mt-1 w-6 h-6 rounded-full bg-red-600/20 border border-red-600/40 flex items-center justify-center text-red-500 text-xs group-hover:bg-red-600 group-hover:text-white transition-all">✓</div>
@@ -320,9 +320,9 @@ export const LandingPage: React.FC = () => {
                 <ul className="space-y-2 border-l-2 border-slate-700 pl-6">
                   <li><span className="text-emerald-400">Core:</span> React 19 + TypeScript 5.8 (Strict Mode)</li>
                   <li><span className="text-emerald-400">Persistence:</span> Offline-First via IndexedDB (idb wrapper)</li>
-                  <li><span className="text-emerald-400">Synchronization:</span> Custom `useSync` hook + Firebase Realtime DB</li>
-                  <li><span className="text-emerald-400">Auth & Security:</span> Multi-unit RBAC (20+ permissions) + PBKDF2 Hashing</li>
-                  <li><span className="text-emerald-400">Reliability:</span> Idempotency Gateway + Audit Timeline + Tab-Close Guard</li>
+                  <li><span className="text-emerald-400">Architecture:</span> Multi-franchise Data Isolation (v4.2 API)</li>
+                  <li><span className="text-emerald-400">Inventory:</span> Hybrid Stock Tracking + FIFO Logic</li>
+                  <li><span className="text-emerald-400">Reliability:</span> Idempotency Gateway + Audit Timeline</li>
                 </ul>
               </div>
 
@@ -360,7 +360,7 @@ export const LandingPage: React.FC = () => {
                 <p className="text-emerald-500 font-bold">$ botequista --status</p>
                 <div className="flex items-center gap-4 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
                    <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                   <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">System Ready: Production Build v4.1.0 Stable</p>
+                    <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">System Ready: Production Build v4.2.0 Stable</p>
                 </div>
               </div>
 

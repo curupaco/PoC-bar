@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.1.0 (Reliability & Blind Mode Update)
+**Versão:** 4.2.0 (Franchise & Stock Control Update)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -14,6 +14,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Venda Expressa:** Fluxo otimizado para giro de balcão com auto-geração de comandas.
 *   **Registro de Auditoria:** Sistema de rastreabilidade de eventos críticos para resolução de conflitos de sincronia.
 *   **Segurança de Saída (Novo):** Guardas de navegação (`beforeunload`) que impedem o fechamento da aba se houver dados pendentes na fila de sincronização.
+*   **Arquitetura de Rede (Novo):** Suporte nativo a multi-unidades e franquias com isolamento estrito de dados via `franchiseId`.
+*   **Controle de Estoque Inteligente (Novo):** Sistema híbrido que permite definir quais produtos devem descontar estoque e quais são serviços puros.
 *   **Deduplicação de Categorias:** O frontend aplica normalização estrita (Trim + UpperCase) ao agregar categorias.
 
 ---
@@ -33,6 +35,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 2.  **Aba Adicionais:** Criação de grupos de modificadores.
 3.  **Aba Vínculos:** Ligação automática de categorias a grupos de adicionais.
 4.  **Aba Categorias:** Gestão de taxonomia profissional.
+5.  **Rastreio de Estoque (v4.2):** Botão "Controlar Estoque" por item, permitindo ignorar contagem para itens como Couvert ou Taxas.
+6.  **Busca e Filtros:** Busca global instantânea e filtragem por categoria na gestão de inventário.
 
 ### C. Tesouraria e Fluxo de Caixa
 *   **Conferência Cega (Blind Close):** O operador informa o valor contado sem ver os números do sistema (ocultos por padrão). Apenas usuários `admin` podem revelar os valores antes do fechamento.
@@ -62,8 +66,13 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Gerente:** Cancelamento de Vendas, Fechamento de Caixa (Modo Cego), Edição de Cardápio e **Visualização de Auditoria**.
 *   **Admin:** Gestão de Unidades, Backups, Permissões totais e **Revelação de Valores em Tempo Real** no fechamento.
 
+### Arquitetura de Franquia (Rede)
+*   **Isolamento:** Cada unidade possui seu próprio container de dados, impedindo vazamento de informações entre filiais.
+*   **Franchise Admin:** Visão consolidada para o franqueador, permitindo auditoria cruzada sem interferir na operação local.
+*   **Gestão de Unidades:** Criação e vinculação dinâmica de novos pontos de venda à estrutura central.
+
 ### Sincronização (Firebase Sync)
 Utiliza uma camada intermediária de `useSync` para garantir que mudanças feitos em um tablet reflitam instantaneamente no smartphone do dono. Em caso de conflito, a última alteração válida no banco de dados prevalece, com log de auditoria disparado em caso de deleções.
 
 ---
-*Documentação atualizada em Março de 2026. Botequista System v4.0.0*
+*Documentação atualizada em Abril de 2026. Botequista System v4.2.0*
