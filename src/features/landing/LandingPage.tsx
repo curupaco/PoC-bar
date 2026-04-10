@@ -3,23 +3,23 @@ import React, { useState } from 'react';
 const whatsAppLink = "https://wa.me/5511966989160?text=Olá!%20Vi%20a%20landing%20page%20Elite%20do%20Botequista%20e%20quero%20transformar%20meu%20bar.";
 
 const BrowserFrame: React.FC<{ src: string, alt: string, label?: string }> = ({ src, alt, label }) => (
-  <div className="relative group reveal">
+  <div className="relative group reveal w-full max-w-full mx-auto">
     {label && (
-      <div className="absolute -top-12 left-0 flex items-center gap-2 px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+      <div className="absolute -top-10 lg:-top-12 left-0 flex items-center gap-2 px-3 lg:px-4 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full z-20">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">{label}</span>
+        <span className="text-[8px] lg:text-[10px] font-black uppercase tracking-widest text-emerald-500">{label}</span>
       </div>
     )}
-    <div className="rounded-[32px] bg-slate-800 p-2 shadow-3xl border border-white/5 overflow-hidden">
-      <div className="bg-slate-900 h-10 flex items-center px-6 gap-2 rounded-t-[24px]">
-        <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/30"></div>
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/30"></div>
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/30"></div>
+    <div className="rounded-[24px] lg:rounded-[32px] bg-slate-800 p-1.5 lg:p-2 shadow-3xl border border-white/5 overflow-hidden w-full">
+      <div className="bg-slate-900 h-8 lg:h-10 flex items-center px-4 lg:px-6 gap-2 rounded-t-[18px] lg:rounded-t-[24px]">
+        <div className="flex gap-1">
+          <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-red-500/30"></div>
+          <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-amber-500/30"></div>
+          <div className="w-2 h-2 lg:w-2.5 lg:h-2.5 rounded-full bg-emerald-500/30"></div>
         </div>
-        <div className="flex-1 max-w-xs mx-auto bg-slate-950/50 h-5 rounded-full border border-white/5 flex items-center px-3">
-          <div className="w-2 h-2 rounded-full bg-emerald-500/40 mr-2"></div>
-          <span className="text-[8px] font-mono text-slate-600 truncate">botequista.app/elite/dashboard</span>
+        <div className="flex-1 max-w-[120px] lg:max-w-xs mx-auto bg-slate-950/50 h-4 lg:h-5 rounded-full border border-white/5 flex items-center px-2 lg:px-3">
+          <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 rounded-full bg-emerald-500/40 mr-2"></div>
+          <span className="text-[6px] lg:text-[8px] font-mono text-slate-600 truncate">botequista.app/elite</span>
         </div>
       </div>
       <div className="relative aspect-video overflow-hidden">
