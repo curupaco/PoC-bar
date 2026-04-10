@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* SCROLL AREA */}
-        <nav className="flex-1 overflow-y-auto px-4 pb-4 no-scrollbar space-y-1">
+        <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
           
           {/* 2. OPERAÇÃO */}
           <SectionTitle label="Operação" />

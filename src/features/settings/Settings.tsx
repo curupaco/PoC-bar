@@ -211,6 +211,7 @@ const Settings: React.FC<SettingsProps> = ({
             onUpdateUnits={onUpdateUnits} 
             onClose={() => setShowUnitModal(false)} 
             activeUnitId={unitId}
+            franchiseId={currentUser.franchiseId}
          />
       )}
     </div>

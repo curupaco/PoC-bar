@@ -6,9 +6,10 @@ interface UnitManagementProps {
   onUpdateUnits: (units: Unit[]) => void;
   onClose: () => void;
   activeUnitId?: string;
+  franchiseId?: string;
 }
 
-const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose, activeUnitId }) => {
+const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose, activeUnitId, franchiseId }) => {
   const [name, setName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -20,7 +21,13 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
       .replace(/[áàãâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i').replace(/[óòõôö]/g, 'o').replace(/[úùûü]/g, 'u').replace(/[ç]/g, 'c')
       .replace(/[^a-z0-9]/g, '_');
     if (units.some(u => u.id === slug)) { alert("Já existe uma unidade com nome similar."); return; }
-    const newUnit: Unit = { id: slug, name: name.trim(), isActive: true, createdAt: Date.now() };
+    const newUnit: Unit = { 
+      id: slug, 
+      name: name.trim(), 
+      isActive: true, 
+      createdAt: Date.now(),
+      franchiseId: franchiseId
+    };
     onUpdateUnits([...units, newUnit]);
     setName(''); setIsAdding(false);
   };
