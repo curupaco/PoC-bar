@@ -13,6 +13,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
    const activeShift = shifts.find(s => s.status === 'open');
    const [showConferral, setShowConferral] = useState(false);
    const [revealSystem, setRevealSystem] = useState(false);
+   const [showBackupPrompt, setShowBackupPrompt] = useState(false);
 
    const [valPrimary, setValPrimary] = useState('');
    const [valChange, setValChange] = useState('');
@@ -166,6 +167,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       await onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
       setShowConferral(false); setActualCountedInput('');
       setIsProcessing(false);
+      
+      // ITEM 9: PROMPT DE BACKUP AUTOMÁTICO
+      setTimeout(() => setShowBackupPrompt(true), 1000);
    };
 
    const getCompartmentIcon = (index: number) => {
@@ -397,6 +401,43 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                      </div>
                   </div>
 
+               </div>
+            </div>
+         )}
+
+         {/* ITEM 9: MODAL DE BACKUP AUTOMÁTICO */}
+         {showBackupPrompt && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+               <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowBackupPrompt(false)} />
+               <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-10 border border-emerald-500/30 animate-in zoom-in-95 text-center">
+                  <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                     <span className="text-4xl">🛡️</span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Turno Seguro!</h3>
+                  <p className="text-sm text-slate-500 mb-8 leading-relaxed">Turno finalizado com sucesso. Deseja gerar um backup dos dados agora para garantir a segurança?</p>
+                  <div className="flex flex-col gap-3">
+                     <button 
+                        onClick={() => {
+                           const data = {
+                              shifts,
+                              sales,
+                              timestamp: Date.now(),
+                              unit: currentUser.allowedUnits[0]
+                           };
+                           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                           const url = URL.createObjectURL(blob);
+                           const a = document.createElement('a');
+                           a.href = url;
+                           a.download = `botequista_backup_${new Date().toISOString().split('T')[0]}.json`;
+                           a.click();
+                           setShowBackupPrompt(false);
+                        }} 
+                        className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
+                     >
+                        Gerar Backup .JSON
+                     </button>
+                     <button onClick={() => setShowBackupPrompt(false)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Agora Não</button>
+                  </div>
                </div>
             </div>
          )}

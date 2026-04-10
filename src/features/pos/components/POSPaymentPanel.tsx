@@ -112,6 +112,20 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
    const handleFinishSale = async () => {
       if (isProcessing) return;
 
+      // ITEM 6: FORMATA COMPROVANTE WHATSAPP
+      const formatWhatsAppReceipt = () => {
+         const header = `*BOTEQUISTA - COMPROVANTE*%0A---------------------------%0A`;
+         const footer = `%0A---------------------------%0AObrigado pela preferência!`;
+         const totalStr = `%0ATOTAL: *${formatCurrency(tabTotal)}*`;
+         return `${header}${totalStr}${footer}`;
+      };
+
+      const handleShareWhatsApp = () => {
+         const text = formatWhatsAppReceipt();
+         const url = `https://wa.me/?text=${text}`;
+         window.open(url, '_blank');
+      };
+
       // Se for venda rápida ou apenas um pagamento sendo feito agora
       if (isQuickSale || currentPayments.length === 0) {
          const val = parseCurrencyValue(paymentAmountInput);
@@ -285,6 +299,20 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                   <span className="text-[9px] font-black uppercase tracking-widest opacity-80">Troco a devolver:</span>
                   <span className="text-3xl font-black tracking-tighter">{formatCurrency(liveChange)}</span>
                </div>
+            )}
+
+            {/* ITEM 6: BOTÃO WHATSAPP */}
+            {!isQuickSale && (
+               <button 
+                  onClick={() => {
+                     const text = `*BOTEQUISTA - COMPROVANTE*%0AValor: *${formatCurrency(tabTotal)}*%0AStatus: PAGO%0AData: ${new Date().toLocaleString()}`;
+                     window.open(`https://wa.me/?text=${text}`, '_blank');
+                  }}
+                  className="w-full py-3 bg-emerald-100 text-emerald-700 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 border border-emerald-200"
+               >
+                  <span>📱</span>
+                  <span>Enviar via WhatsApp</span>
+               </button>
             )}
 
             <button

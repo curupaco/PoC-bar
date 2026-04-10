@@ -87,6 +87,7 @@ export interface Tab {
   name: string;
   items: SaleItem[];
   openedAt: number;
+  lastItemAddedAt?: number;
   version?: number;
 }
 

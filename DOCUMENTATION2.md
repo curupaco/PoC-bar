@@ -1,6 +1,6 @@
-# 🍺 Botequista — O Sistema que Trabalha Enquanto o Bar Não Para
+# 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão para donos de bar, gerentes e investidores.*
+> *Material de apresentação comercial — versão v4.3 Elite Powerhouse.*
 
 ---
 
@@ -11,10 +11,32 @@ Todo dono de bar já passou por isso:
 - O garçom anotou o pedido, mas o cliente jura que pediu outro.
 - O caixa fechou errado. Falta dinheiro e ninguém sabe explicar.
 - O sistema travou exatamente na hora do rush da sexta.
-- O gerente precisava de um número, mas o sistema estava offline.
 - A internet caiu e as vendas pararam.
+- **Dúvida cruel:** Qual garçom realmente está trazendo lucro e quais produtos estão apenas ocupando espaço no estoque?
 
-O **Botequista** foi construído para resolver cada um desses problemas — com tecnologia de ponta, mas sem precisar de um técnico de TI na equipe.
+O **Botequista Elite (v4.3)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+
+---
+
+## Novidades da Versão 4.3 Elite 🚀
+
+Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
+
+### ⚡ Turbo-Operação (Velocidade Extrema)
+- **Atalhos Globais:** Opere o sistema sem tocar no mouse. `F1` para Venda Rápida, `Espaço` para fechar a conta. Velocidade de checkout 50% maior.
+- **Botão Saideira:** O cliente pediu "mais uma das mesmas"? Repita o último pedido com um único clique.
+- **Alertas de Mesa Ociosa:** O sistema monitora o tempo de cada mesa. Se uma mesa está sem consumir há muito tempo, ela muda de cor (Amarelo/Vermelho) para que sua equipe possa agir e aumentar o ticket médio.
+
+### 🧠 Inteligência Competitiva (Dashboards que Vendem)
+- **Ranking de Garçom:** Saiba quem são os seus "vendedores de elite" com gráficos de barras em tempo real. Incentive sua equipe com dados concretos.
+- **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
+- **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
+
+### 🛡️ Segurança e Comodidade
+- **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
+- **Recibo via WhatsApp:** Chega de papel. Envie o comprovante detalhado direto para o celular do cliente pelo WhatsApp com total profissionalismo.
+- **Quitação em Lote:** Selecione vários devedores do fiado e quite as dívidas de todos de uma única vez. Organização financeira sem esforço.
+- **Badges de Estoque:** Veja o nível de estoque de cada item direto no botão de venda. Nunca mais venda o que já acabou na geladeira.
 
 ---
 
@@ -50,6 +72,8 @@ Para o bar que vende rápido, cada segundo conta. Com um único toque, o sistema
 
 ---
 
+### 🕵️ Conferência Cega — O Caixa à Prova de Erros
+
 O fechamento de caixa no Botequista é **estritamente cego**.
  
  O operador informa o valor físico que contou na gaveta, enquanto os números do sistema ficam **ocultos** por padrão. Não há como "ajustar as contas" antes de enviar para o dono. O sistema registra a diferença real com hora e responsável.
@@ -58,19 +82,17 @@ O fechamento de caixa no Botequista é **estritamente cego**.
 
 ---
 
-### 📊 Relatórios que Falam a Língua do Bar
-
-O módulo de relatórios do Botequista tem **7 visões diferentes**:
+## Relatórios e Inteligência
 
 | Relatório | O que mostra |
 |---|---|
-| **Fechamento de Turno** | Faturamento, formas de pagamento, comprovante exportável em PNG |
-| **Financeiro** | Breakdown por método (Pix, Cartão, Dinheiro, Pendura) com totais e contagens |
-| **Penduras** | Todos os clientes no fiado com seus saldos, em tempo real, com botão para quitar |
-| **Equipe** | Ranking de vendas por operador — quem mais vende e quanto |
-| **Operacional** | Mapa de calor de horário de pico, ticket médio e total de transações |
-| **Produtos** | Quais itens mais vendem e mais faturam (Curva ABC) |
-| **Auditoria** | Linha do tempo de todas as ações críticas: abertura/fechamento de mesa, cancelamentos, turnos |
+| **Ranking de Equipe** | Performance de vendas por operador — quem traz mais faturamento |
+| **Heatmap de Fluxo** | Horários de pico e densidade de atendimento |
+| **Fechamento de Turno** | Faturamento, formas de pagamento, e **Backup Automático** |
+| **Financeiro** | Breakdown por Pix, Cartão, Dinheiro e Fiado |
+| **Penduras** | Gestão de dívidas com **Quitação em Massa** |
+| **Produtos** | Ranking por Faturamento ou Volume (**Curva ABC**) |
+| **Auditoria** | Linha do tempo de todas as ações críticas em tempo real |
 
 ---
 
@@ -226,11 +248,9 @@ Sim. Um único pagamento pode ser dividido entre múltiplas formas (ex.: parte e
 ## Tecnologia Que Você Não Precisa Entender, Mas Pode Confiar
 
 O Botequista é construído com tecnologia usada por grandes empresas globais:
-
-- **React 19** — Interface moderna e rápida
-- **Firebase** — Banco de dados em nuvem do Google, com 99,9% de disponibilidade
-- **IndexedDB** — Banco local no dispositivo (a mesma tecnologia usada pelo Chrome)
-- **Vercel** — Infraestrutura de deploy usada por startups e unicórnios
+- **Offline-First Nativo** — O Chrome vira seu banco de dados local.
+- **Sincronização Atômica** — Dados espelhados em todos os aparelhos em milissegundos.
+- **Interface Premium** — Design limpo e moderno, feito para ser usado no escuro do bar.
 
 Tudo isso significa que você tem, na prática, uma solução de nível enterprise — acessível para o bar da esquina.
 
@@ -238,7 +258,6 @@ Tudo isso significa que você tem, na prática, uma solução de nível enterpri
 
 ## Próximos Passos
 
-Quer ver o Botequista em ação no seu bar?
 
 Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um período de avaliação direto pelo sistema.
 

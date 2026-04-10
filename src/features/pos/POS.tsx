@@ -23,6 +23,7 @@ interface POSProps {
   dbStatus?: string;
   penduraThreshold?: number;
   longDurationThreshold?: number;
+  stockTransactions?: any[];
 }
 
 export const POS: React.FC<POSProps> = ({ 
@@ -37,7 +38,8 @@ export const POS: React.FC<POSProps> = ({
   shortcutCheckout,
   onClearShortcut,
   activeShift,
-  onViewChange
+  onViewChange,
+  stockTransactions = []
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -57,6 +59,22 @@ export const POS: React.FC<POSProps> = ({
       setShowMobileCart(true);
     }
   }, [shortcutCheckout]);
+
+  // ITEM 8: ATALHOS DE TECLADO
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement?.tagName === 'INPUT') return;
+      
+      switch (e.key) {
+        case 'F1': e.preventDefault(); handleQuickSale(); break;
+        case 'F2': e.preventDefault(); setIsAddingTab(true); break;
+        case 'Escape': e.preventDefault(); setActiveTabId(null); setIsAddingTab(false); break;
+        case ' ': if (activeTabId && !isClosingTab) { e.preventDefault(); setIsClosingTab(true); } break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTabId, isClosingTab]);
 
   useEffect(() => {
     if (toast) {
@@ -122,8 +140,24 @@ export const POS: React.FC<POSProps> = ({
         showFeedback(`+${quantity} ${product.name}`);
     }
 
+    // ITEM 7: ATUALIZA TIMESTAMP DE ATIVIDADE
+    if (activeTab && onSaveTab) {
+       onSaveTab({ ...activeTab, lastItemAddedAt: Date.now() });
+    }
+
     setModifierModalData(null);
-  }, [activeTabId, tabItems, onUpdateTabItem, showFeedback]);
+  }, [activeTabId, tabItems, onUpdateTabItem, showFeedback, activeTab, onSaveTab]);
+
+  // ITEM 4: BOTÃO SAIDEIRA
+  const handleSaideira = async () => {
+    if (!activeTabId || tabItems.length === 0) return;
+    const lastItem = tabItems[tabItems.length - 1];
+    const product = products.find(p => p.id === lastItem.productId);
+    if (product) {
+       await executeAddItem(product, lastItem.quantity, lastItem.modifier);
+       showFeedback("SAIDEIRA ADICIONADA! 🍻");
+    }
+  };
 
   const addToTab = useCallback(async (product: Product, quantity: number = 1) => {
     if (!activeTabId) { showFeedback("ABRA UMA COMANDA PRIMEIRO!"); return; }
@@ -309,14 +343,28 @@ export const POS: React.FC<POSProps> = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {openTabs.map(tab => {
                 const isExpress = tab.name.startsWith('EXPRESSA');
+                
+                // ITEM 7: SINALIZAÇÃO DE MESA OCIOSA
+                const idleLimit = (longDurationThreshold || 30) * 60 * 1000;
+                const lastActivity = tab.lastItemAddedAt || tab.openedAt;
+                const isIdle = Date.now() - lastActivity > idleLimit;
+                const isVeryIdle = Date.now() - lastActivity > idleLimit * 2;
+
                 return (
                   <div key={tab.id} className="relative group">
-                    <div onClick={() => setActiveTabId(tab.id)} className={`p-6 rounded-[35px] border-2 cursor-pointer transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl ${isExpress ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-500' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-500'}`}>
+                    <div onClick={() => setActiveTabId(tab.id)} className={`p-6 rounded-[35px] border-2 cursor-pointer transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl 
+                       ${isExpress ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800 hover:border-emerald-500' : 
+                         isVeryIdle ? 'bg-red-50 dark:bg-red-950/20 border-red-300 dark:border-red-900 animate-pulse' :
+                         isIdle ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900 border-dashed' :
+                         'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-500'}`}>
                       <div className="flex justify-between items-start">
-                        <h3 className="font-black uppercase text-sm truncate flex-1">{tab.name}</h3>
+                        <div className="flex flex-col">
+                           <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                           {isIdle && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest mt-0.5">{isVeryIdle ? 'MESA OCIOSA ++' : 'OCIOSA'}</span>}
+                        </div>
                         {isExpress && <span className="text-[8px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded ml-1">⚡</span>}
                       </div>
-                      <p className={`font-black text-xl italic ${isExpress ? 'text-emerald-600' : 'text-red-600'}`}>
+                      <p className={`font-black text-xl italic ${isExpress ? 'text-emerald-600' : isIdle ? 'text-amber-600' : 'text-red-600'}`}>
                         {formatCurrency(
                           (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
                             .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
@@ -369,7 +417,7 @@ export const POS: React.FC<POSProps> = ({
                     </div>
                  )}
               </div>
-              <POSProductGrid products={products} onAddProduct={addToTab} />
+              <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} />
            </div>
 
            <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full lg:w-[420px] flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300`}>
@@ -408,7 +456,11 @@ export const POS: React.FC<POSProps> = ({
                         <span className="text-[10px] font-black uppercase not-italic text-slate-400">Total</span>
                         <span>{formatCurrency(tabTotal)}</span>
                      </div>
-                     <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
+                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
+                      <button onClick={handleSaideira} disabled={tabItems.length === 0} className="w-full py-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-emerald-500 transition-all flex items-center justify-center gap-2">
+                        <span>🍻</span>
+                        <span>Repetir Saideira</span>
+                      </button>
                      <button onClick={() => setTabToDelete(activeTab!)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
                         Descartar Venda

@@ -8,12 +8,13 @@ import {
 interface DashboardProps {
   sales: Sale[];
   products: Product[];
+  users: User[];
   theme: Theme;
 }
 
 type Period = 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS' | 'ANO';
 
-const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme }) => {
+const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users = [], theme }) => {
   const isDark = theme === 'dark';
   const [activePeriod, setActivePeriod] = useState<Period>('HOJE');
 
@@ -72,6 +73,28 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
       .map(([name, count]) => ({ name, count: Number(count) }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
+  }, [filteredSales]);
+
+  const garcomData = useMemo(() => {
+    const revenueByUser = filteredSales.reduce((acc: Record<string, number>, s) => {
+      const user = users.find(u => u.id === s.userId);
+      const name = user?.displayName || s.userId || 'Sistema';
+      acc[name] = (acc[name] || 0) + (s.total || 0);
+      return acc;
+    }, {});
+
+    return Object.entries(revenueByUser)
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total);
+  }, [filteredSales, users]);
+
+  const heatmapData = useMemo(() => {
+    const hours = Array.from({ length: 24 }).map((_, i) => ({ hour: `${i}h`, v: 0 }));
+    filteredSales.forEach(s => {
+      const h = new Date(s.timestamp).getHours();
+      hours[h].v += 1;
+    });
+    return hours;
   }, [filteredSales]);
 
   const chartColor = '#ef4444';
@@ -136,6 +159,44 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], theme 
               <div className="h-full flex items-center justify-center italic text-slate-400 text-[10px] font-black uppercase">Faltam dados para o gráfico</div>
             )}
           </div>
+        </div>
+
+        <div className="p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+          <h3 className="font-black text-[10px] uppercase tracking-[0.2em] mb-8 text-slate-500">Ranking de Atendimento</h3>
+          <div className="h-[300px]">
+             {garcomData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={garcomData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 9, fontWeight: '900' }} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 9 }} />
+                    <Tooltip cursor={{ fill: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }} contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', borderRadius: '16px' }} />
+                    <Bar dataKey="total" fill="#6366f1" radius={[10, 10, 0, 0]} barSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+             ) : (
+                <div className="h-full flex items-center justify-center italic text-slate-400 text-[10px] font-black uppercase">Sem dados de equipe</div>
+             )}
+          </div>
+        </div>
+
+        <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+           <h3 className="font-black text-[10px] uppercase tracking-[0.2em] mb-8 text-slate-500">Mapa de Calor (Horário de Pico)</h3>
+           <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={heatmapData}>
+                  <defs>
+                    <linearGradient id="colorV" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Tooltip contentStyle={{ backgroundColor: isDark ? '#0f172a' : '#fff', border: isDark ? '1px solid #1e293b' : '1px solid #e2e8f0', borderRadius: '16px' }} />
+                  <Area type="monotone" dataKey="v" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorV)" />
+                  <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 9, fontWeight: '900' }} interval={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+           </div>
         </div>
       </div>
     </div>

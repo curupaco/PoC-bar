@@ -5,10 +5,11 @@ import { Product, formatCurrency } from '../../../types';
 interface POSProductGridProps {
   products: Product[];
   onAddProduct: (product: Product) => void;
+  stockTransactions?: any[];
 }
 
 // Sub-componente memoizado para evitar re-renders desnecessários
-const ProductCard = React.memo(({ product, onClick }: { product: Product, onClick: (p: Product) => void }) => {
+const ProductCard = React.memo(({ product, onClick, stock }: { product: Product, onClick: (p: Product) => void, stock?: number }) => {
   const [isAdded, setIsAdded] = useState(false);
 
   const handleClick = () => {
@@ -37,6 +38,14 @@ const ProductCard = React.memo(({ product, onClick }: { product: Product, onClic
            <span className="animate-in zoom-in fade-in duration-200 text-emerald-600 font-bold text-2xl drop-shadow-sm">+1</span>
         </div>
       )}
+      
+      {/* ITEM 2: ALERTA DE ESTOQUE CRÍTICO */}
+      {product.trackStock && stock !== undefined && (
+        <div className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[7px] font-black uppercase shadow-sm border 
+          ${stock <= 5 ? 'bg-red-600 text-white border-red-400 animate-pulse' : stock <= 15 ? 'bg-amber-500 text-white border-amber-300' : 'bg-emerald-100 text-emerald-700 border-emerald-200'}`}>
+          {stock <= 0 ? 'ZEIROU' : `${Math.floor(stock)} UN`}
+        </div>
+      )}
     </button>
   );
 });
@@ -45,7 +54,7 @@ const SkeletonCard = () => (
   <div className="h-20 md:h-24 bg-slate-100 dark:bg-slate-800 rounded-2xl md:rounded-[24px] animate-pulse"></div>
 );
 
-const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct }) => {
+const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct, stockTransactions = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedTerm, setDebouncedTerm] = useState('');
   const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
@@ -100,6 +109,15 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
       return newSet;
     });
   };
+
+  // ITEM 2: CÁLCULO DE ESTOQUE LOCAL
+  const stockMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    stockTransactions.forEach(t => {
+       map[t.productId] = (map[t.productId] || 0) + (t.type === 'in' ? t.quantity : -t.quantity);
+    });
+    return map;
+  }, [stockTransactions]);
 
   // Callback estável para o ProductCard
   const handleAddClick = useCallback((p: Product) => {
@@ -163,7 +181,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct 
                   <div className="animate-in slide-in-from-top-2">
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
                       {visibleProducts.map(p => (
-                        <ProductCard key={p.id} product={p} onClick={handleAddClick} />
+                        <ProductCard key={p.id} product={p} onClick={handleAddClick} stock={stockMap[p.id]} />
                       ))}
                     </div>
                     
