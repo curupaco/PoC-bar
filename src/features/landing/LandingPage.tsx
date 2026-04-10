@@ -167,7 +167,19 @@ export const LandingPage: React.FC = () => {
               <span className="mt-8 text-[10px] font-black uppercase text-emerald-500 tracking-widest">NOVO EM v4.3</span>
             </div>
 
-            {/* Elite 3: Keyboard Ninja */}
+            {/* Elite 3: ABC Curve */}
+            <div className="group p-12 bg-gradient-to-br from-slate-900 to-black border border-white/5 rounded-[60px] hover:border-emerald-500/30 transition-all duration-500 flex flex-col justify-between">
+              <div className="space-y-6">
+                 <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-3xl shadow-emerald-500/40 shadow-2xl">📈</div>
+                 <h3 className="text-3xl font-black uppercase italic tracking-tighter">Curva ABC de Lucro</h3>
+                 <p className="text-slate-400 text-lg leading-relaxed font-medium">
+                    Saiba exatamente qual item do menu paga as contas e qual gera volume. Troque o "acho" pela certeza de qual produto deve ser promovido.
+                 </p>
+              </div>
+              <span className="mt-8 text-[10px] font-black uppercase text-emerald-500 tracking-widest">NOVO EM v4.3</span>
+            </div>
+
+            {/* Elite 4: Keyboard Ninja */}
             <div className="group p-12 bg-gradient-to-br from-slate-900 to-black border border-white/5 rounded-[60px] hover:border-blue-500/30 transition-all duration-500 flex flex-col justify-between text-white">
               <div className="space-y-6">
                  <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-3xl shadow-blue-500/40 shadow-2xl">⌨️</div>
@@ -217,7 +229,8 @@ export const LandingPage: React.FC = () => {
                  <div className="text-center text-red-500">Botequista Elite</div>
                  <div className="text-center opacity-40">Outros Sistemas</div>
                </div>
-               <ComparisonRow feature="Ranking de Performance Garçom" bot={true} trad={false} isNew />
+               <ComparisonRow feature="Análise Mix de Saída (Curva ABC)" bot={true} trad={false} isNew />
+               <ComparisonRow feature="Estoque com Alerta Pró-ativo" bot={true} trad={true} isNew />
                <ComparisonRow feature="Mapa de Calor (Pico de Vendas)" bot={true} trad={false} isNew />
                <ComparisonRow feature="Atalhos Profissionais de Teclado" bot={true} trad={false} isNew />
                <ComparisonRow feature="Alertas de Mesa Ociosa" bot={true} trad={false} isNew />
@@ -303,9 +316,9 @@ export const LandingPage: React.FC = () => {
                   <p className="text-slate-400 text-lg leading-relaxed">Gere comprovantes profissionais em texto formatado e envie direto para o smartphone do cliente via Web Share.</p>
                 </div>
                 <div className="space-y-4">
-                   <div className="text-red-500 font-black text-xs uppercase tracking-widest">Segurança</div>
-                  <h4 className="text-2xl font-black uppercase italic">Backup Ativo Pós-Turno</h4>
-                  <p className="text-slate-400 text-lg leading-relaxed">Fluxo proativo: ao fechar o caixa, o sistema solicita a geração de um backup .json para sua garantia total de dados.</p>
+                   <div className="text-red-500 font-black text-xs uppercase tracking-widest">Gestão</div>
+                  <h4 className="text-2xl font-black uppercase italic">Alertas de Mesa Ociosa</h4>
+                  <p className="text-slate-400 text-lg leading-relaxed">Sistemática visual: o PDV sinaliza mesas que não consomem há tempo, permitindo ações proativas da equipe de salão.</p>
                 </div>
               </div>
               <div className="pt-10 border-t border-white/5 text-center">
