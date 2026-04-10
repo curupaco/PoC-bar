@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Sale, Product, Theme, formatCurrency, getBusinessDateStart, PaymentMethod } from '../../types';
+import { Sale, Product, User, Theme, formatCurrency, getBusinessDateStart, PaymentMethod } from '../../types';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area

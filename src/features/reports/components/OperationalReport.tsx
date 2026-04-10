@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart, Bar, XAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Theme } from '../../../types';
 
 interface OperationalReportProps {
@@ -9,8 +9,13 @@ interface OperationalReportProps {
 }
 
 const OperationalReport: React.FC<OperationalReportProps> = ({ reportData, theme }) => {
-  const peakHour = reportData.hourlyMap.reduce((prev: any, current: any) => (prev.count > current.count) ? prev : current);
   const isDark = theme === 'dark';
+  const gridColor = isDark ? '#1e293b' : '#f1f5f9';
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+
+  const peakHour = reportData.hourlyMap?.length > 0 
+    ? reportData.hourlyMap.reduce((prev: any, current: any) => (prev.count > current.count) ? prev : current)
+    : { hour: '-', count: 0 };
 
   return (
     <div className="space-y-10 animate-in fade-in">

@@ -233,7 +233,7 @@ export const useSync = (props: SyncProps) => {
       const now = Date.now();
       const cutoff24h = now - (24 * 60 * 60 * 1000);
 
-      if (serverMeta.deleted_tabs) {
+      if (serverMeta.deleted_tabs && typeof serverMeta.deleted_tabs === 'object' && !Array.isArray(serverMeta.deleted_tabs)) {
         const keysToDelete: string[] = [];
         Object.entries(serverMeta.deleted_tabs).forEach(([id, ts]: [string, any]) => {
           const timestamp = Number(ts);
