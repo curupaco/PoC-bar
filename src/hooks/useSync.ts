@@ -14,6 +14,7 @@ interface SyncProps {
   setUsers: (data: any) => void;
   setShifts: (data: any) => void;
   setUnits: (data: any) => void;
+  setFranchises: (data: any) => void;
   setCategories: (data: any) => void;
   setAuditLogs: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
@@ -34,7 +35,7 @@ export const useSync = (props: SyncProps) => {
 
   const {
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
-    setUsers, setShifts, setUnits, setCategories, setAuditLogs, setDbStatus, activeUnitId, config
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setDbStatus, activeUnitId, config
   } = props;
 
   const ensureArray = (data: any): any[] => {
@@ -300,14 +301,16 @@ export const useSync = (props: SyncProps) => {
     if (token) {
       processQueue(token);
       setPendingSyncCount(SyncQueue.getLength());
-      const [uRaw, unitsRaw] = await Promise.all([
+      const [uRaw, unitsRaw, franchisesRaw] = await Promise.all([
         loadFromFirebase(config.url, undefined, token, 'users'),
-        loadFromFirebase(config.url, undefined, token, 'units')
+        loadFromFirebase(config.url, undefined, token, 'units'),
+        loadFromFirebase(config.url, undefined, token, 'franchises')
       ]);
       if (uRaw !== null) setUsers(ensureArray(uRaw));
       if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
+      if (franchisesRaw !== null) setFranchises(ensureArray(franchisesRaw));
     }
-  }, [config, setUsers, setUnits, processQueue]);
+  }, [config, setUsers, setUnits, setFranchises, processQueue]);
 
   useEffect(() => {
     fetchGlobal();

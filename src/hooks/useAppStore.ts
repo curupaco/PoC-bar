@@ -26,6 +26,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [users, setUsers] = useState<User[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
+  const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
@@ -36,6 +37,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const visibleUnits = useMemo(() => {
     if (!currentUser) return [];
     if (currentUser.username === 'admin') return units;
+
+    // Lógica de Franquia: Se for admin de franquia, vê todas as unidades da mesma
+    if (currentUser.permissions.includes('franchise_admin') && currentUser.franchiseId) {
+      return units.filter(u => u.isActive && u.franchiseId === currentUser.franchiseId);
+    }
 
     let allowedStrings: string[] = [];
     const rawAllowed = currentUser.allowedUnits;
@@ -93,7 +99,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
-    setUsers, setShifts, setUnits, setCategories, setAuditLogs, setDbStatus,
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setDbStatus,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -314,6 +320,12 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     persistGlobal('units', newUnits);
   }, [persistGlobal, saveLocalCache]);
 
+  const handleUpdateFranchises = useCallback((newFranchises: Franchise[]) => {
+    setFranchises(newFranchises);
+    saveLocalCache('franchises', newFranchises);
+    persistGlobal('franchises', newFranchises);
+  }, [persistGlobal, saveLocalCache]);
+
   const handleCompleteSale = useCallback(async (newSalesList: Sale[], tabIdToClose?: string) => {
     setSales(prev => {
       const next = [...prev, ...newSalesList];
@@ -377,7 +389,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     // State
     products, setProducts, modifierGroups, setModifierGroups, categories, setCategories,
     categoryModifiers, setCategoryModifiers, sales, setSales, openTabs, setOpenTabs,
-    users, setUsers, shifts, setShifts, units, setUnits, auditLogs, setAuditLogs,
+    users, setUsers, shifts, setShifts, units, setUnits, franchises, setFranchises, auditLogs, setAuditLogs,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,
@@ -385,7 +397,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     // Handlers
     handleSwitchUnit, handleSaveTab, handleUpdateTabItem, handleDeleteTab,
     handleUpdateProducts, handleUpdateCategoryModifiers, handleUpdateShifts,
-    handleUpdateUsers, handleUpdateUnits, handleCompleteSale, handleDataManagement, handleExportData,
+    handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };

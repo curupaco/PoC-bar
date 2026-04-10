@@ -26,6 +26,7 @@ import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import { useAppStore } from './hooks/useAppStore';
 import { LandingPage } from './features/landing/LandingPage';
+import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
 
 export const App: React.FC = () => {
   // 1. App Hooks
@@ -104,6 +105,7 @@ export const App: React.FC = () => {
     return (
       <UnitSelector 
         visibleUnits={store.visibleUnits} 
+        franchises={store.franchises}
         onSelectUnit={(id) => { store.setRawActiveUnitId(id); store.setDbStatus('loading'); }} 
         requestLogout={requestLogout}
         confirmModal={confirmModal}
@@ -121,6 +123,7 @@ export const App: React.FC = () => {
       case 'shifts': return <ShiftControl shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} currentUser={currentUser} sales={store.sales} activeTabsCount={store.openTabs.length} />;
       case 'cash': return <CashManagement shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} sales={store.sales} currentUser={currentUser} onViewChange={setActiveView} />;
       case 'users': return <UserManagement users={store.users} units={store.units} onUpdateUsers={store.handleUpdateUsers} />;
+      case 'franchise_dashboard': return <FranchiseDashboard units={store.units} franchises={store.franchises} currentUser={currentUser} syncConfig={store.syncConfig} />;
       case 'dashboard': return <Dashboard sales={store.sales} products={store.products} theme={theme} />;
       case 'history': return <SalesHistory sales={store.sales} onDeleteSale={(id) => { const s = store.sales.find(x => x.id === id); if (s) { const ns = { ...s, deleted: true, deletedAt: Date.now(), deletedBy: currentUser.id }; store.persist('sales', ns, id); store.setSales(prev => { const next = prev.map(x => x.id === id ? ns : x); store.saveLocalCache('sales', next); return next; }); store.addAuditLog('SALE_DELETE', `Venda anulada ID: ${id}`); } }} users={store.users} currentUser={currentUser} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} />;
       case 'reports': return <Reports sales={store.sales} products={store.products} users={store.users} shifts={store.shifts} auditLogs={store.auditLogs} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={store.penduraThreshold} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} theme={theme} />;
