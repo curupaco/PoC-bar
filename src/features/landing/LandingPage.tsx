@@ -9,24 +9,32 @@ export const LandingPage: React.FC = () => {
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
+  const ComparisonRow = ({ feature, bot, trad }: { feature: string, bot: boolean, trad: boolean }) => (
+    <div className="grid grid-cols-3 py-6 border-b border-white/5 items-center hover:bg-white/[0.02] transition-colors px-4">
+      <div className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">{feature}</div>
+      <div className="text-center">{bot ? <span className="text-emerald-500 font-black">✓ SIM</span> : <span className="text-red-500 font-black">✗ NÃO</span>}</div>
+      <div className="text-center opacity-40">{trad ? <span className="text-emerald-500 font-black">✓ SIM</span> : <span className="text-red-500 font-black">✗ NÃO</span>}</div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
       {/* Background Glows */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-red-600/10 blur-[120px] rounded-full opacity-40 mix-blend-screen animate-pulse" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full opacity-30 mix-blend-screen" />
+        <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-red-600/10 blur-[150px] rounded-full opacity-40 mix-blend-screen animate-pulse" />
+        <div className="absolute bottom-[0%] right-[-5%] w-[600px] h-[600px] bg-emerald-600/5 blur-[150px] rounded-full opacity-30 mix-blend-screen" />
       </div>
 
       <div className="relative z-10">
         
         {/* Navigation */}
-        <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5">
+        <nav className="sticky top-0 z-50 bg-[#020617]/80 backdrop-blur-2xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-20">
-              <div className="flex items-center gap-3 group cursor-pointer">
+            <div className="flex justify-between items-center h-24">
+              <div className="flex items-center gap-4 group cursor-pointer">
                 <div className="relative">
                    <div className="absolute inset-0 bg-red-600 blur-md opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                   <svg className="w-10 h-10 relative" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                   <svg className="w-12 h-12 relative" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
                     <circle r="190" cx="256" cy="256" fill="#1e293b" />
                     <circle r="180" cx="256" cy="256" fill="#334155" />
                     <circle r="160" cx="256" cy="256" fill="#ef4444" />
@@ -35,116 +43,88 @@ export const LandingPage: React.FC = () => {
                       transform="translate(256 256) translate(-15 -10) scale(0.8)" />
                   </svg>
                 </div>
-                <span className="text-2xl font-black tracking-tighter uppercase font-barrio bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Botequista</span>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-black tracking-tighter uppercase font-barrio bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Botequista</span>
+                  <span className="text-[10px] font-black tracking-[0.3em] uppercase text-red-600 -mt-1">Gestão de Elite</span>
+                </div>
               </div>
-              <div className="hidden md:flex items-center gap-8">
-                <a 
-                  href="https://www.instagram.com/obotequista/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-slate-400 hover:text-pink-500 transition-colors"
-                  title="Siga no Instagram"
-                >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.266.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.848 0-3.204.012-3.584.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                </a>
-                <button onClick={() => setIsNerdModalOpen(true)} className="text-slate-400 hover:text-white text-sm font-bold uppercase tracking-widest transition-colors">Para Nerds 🤓</button>
+              <div className="hidden lg:flex items-center gap-10">
+                <button onClick={() => setIsNerdModalOpen(true)} className="text-slate-400 hover:text-white text-xs font-black uppercase tracking-widest transition-colors">Tech Specs</button>
                 <a
                   href={whatsAppLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-white text-slate-950 px-6 py-2.5 rounded-full text-sm font-black uppercase tracking-tight hover:bg-red-500 hover:text-white transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-white/5"
+                  className="bg-white text-slate-950 px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all transform hover:scale-105 shadow-2xl shadow-white/5 active:scale-95"
                 >
-                  Garantir Vaga Beta
+                  Agendar Demo VIP
                 </a>
               </div>
               <button 
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden text-white p-2 hover:bg-white/5 rounded-lg transition-colors relative z-[60]"
+                className="lg:hidden text-white p-2"
               >
-                {isMenuOpen ? (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                ) : (
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
-                )}
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" /></svg>
               </button>
             </div>
           </div>
-
+          
           {/* Mobile Menu Overlay */}
-          <div className={`fixed inset-0 z-50 md:hidden bg-[#020617]/95 backdrop-blur-2xl transition-all duration-500 ease-in-out ${isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`fixed inset-0 z-40 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
             <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
-              <button 
-                onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} 
-                className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-              >
-                PARA NERDS 🤓
-              </button>
-              <a 
-                href="https://www.instagram.com/obotequista/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={() => setIsMenuOpen(false)}
-                className="text-xl font-bold uppercase tracking-widest text-slate-400 hover:text-pink-500 transition-colors"
-              >
-                INSTAGRAM
-              </a>
+              <button onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">Tech Specs 🤓</button>
               <a
                 href={whatsAppLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsMenuOpen(false)}
-                className="w-full max-w-xs bg-red-600 text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl shadow-red-500/20 active:scale-95 transition-transform"
+                className="w-full max-w-xs bg-red-600 text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight"
               >
-                GARANTIR VAGA BETA
+                Garantir Demo VIP
               </a>
             </div>
           </div>
         </nav>
 
-        {/* Hero Section */}
-        <section className="pt-24 pb-32 px-4 text-center overflow-hidden">
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs md:text-sm font-black uppercase tracking-[0.2em] mb-12 animate-bounce">
-              🍺 v4.2: Gestão de Estoque & Franquias Liberada
+        {/* HERO: The Impact Header */}
+        <section className="relative pt-20 pb-32 px-4 overflow-hidden">
+          <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+            <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-xs font-black uppercase tracking-[0.3em] mb-10 animate-bounce">
+              🍺 PARE DE PERDER DINHEIRO NO CAOS
             </div>
             
-            <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-10 bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent italic">
-              O BAR NÃO PODE <br/> <span className="text-red-600 not-italic">PARAR.</span>
+            <h1 className="text-6xl md:text-9xl font-black tracking-tighter leading-[0.8] mb-8 bg-gradient-to-b from-white via-white to-white/40 bg-clip-text text-transparent uppercase italic">
+              O FIM DOS <span className="text-red-600 not-italic">DESVIOS.</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto mb-14 leading-relaxed font-medium">
-              Venda em 2 cliques, controle o fiado e feche o caixa sem erro — <span className="text-white font-bold border-b-2 border-red-600">mesmo se o Wi-Fi cair no meio do rush.</span>
+            <p className="text-xl md:text-3xl text-slate-400 max-w-3xl mx-auto mb-16 leading-relaxed font-medium">
+              Blinde seu caixa com <span className="text-white font-bold border-b-4 border-red-600">conferência cega e auditoria em tempo real.</span> O único sistema que nunca trava, mesmo se o Wi-Fi cair no rush.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-6 mb-24">
               <a
                 href={whatsAppLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative w-full sm:w-auto overflow-hidden bg-[#25D366] text-white px-10 py-5 rounded-2xl text-xl font-black uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_-15px_rgba(37,211,102,0.4)]"
+                className="group relative w-full sm:w-auto bg-[#25D366] text-white px-12 py-6 rounded-3xl text-2xl font-black uppercase tracking-tight transition-all hover:scale-110 shadow-[0_20px_50px_-15px_rgba(37,211,102,0.4)]"
               >
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div className="relative flex items-center justify-center gap-3">
-                  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 00-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                  </svg>
-                  Quero no meu bar
-                </div>
+                Garantir meu Bar Pro
               </a>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="w-full sm:w-auto bg-slate-900 border border-slate-800 hover:border-slate-600 text-white px-10 py-5 rounded-2xl text-xl font-bold transition-all flex items-center justify-center gap-3 backdrop-blur-md"
+                className="w-full sm:w-auto bg-slate-900/50 border border-white/10 text-white px-12 py-6 rounded-3xl text-2xl font-black uppercase tracking-tight hover:bg-slate-800 transition-all backdrop-blur-xl"
               >
-                Ver Detalhes
+                Ver Recursos
               </button>
             </div>
 
-            <div className="mt-20 relative px-4">
-              <div className="absolute inset-0 bg-red-600/20 blur-[100px] rounded-full scale-75"></div>
-              <div className="relative bg-[#020617] p-2 rounded-[40px] border border-white/10 shadow-2xl overflow-hidden group">
+            {/* DASHBOARD PREVIEW */}
+            <div className="w-full relative px-4 max-w-6xl">
+              <div className="absolute -inset-10 bg-red-600/20 blur-[120px] rounded-full opacity-50"></div>
+              <div className="relative bg-slate-900 p-3 rounded-[60px] border border-white/10 shadow-3xl overflow-hidden group">
                 <img 
-                  src="/landing_assets/assets/Screenshot_2026-03-03_21-28-22.png" 
-                  alt="Interface Botequista" 
-                  className="rounded-[32px] w-full h-auto object-cover opacity-90 group-hover:scale-[1.02] transition-transform duration-700" 
+                  src="/landing_assets/assets/dashboard_hero_v42.png" 
+                  alt="Botequista Pro Dashboard" 
+                  className="rounded-[50px] w-full h-auto object-cover opacity-90 group-hover:scale-[1.01] transition-transform duration-1000 shadow-inner" 
                 />
                 <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#020617] to-transparent"></div>
               </div>
@@ -152,101 +132,122 @@ export const LandingPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Features Grid */}
+        {/* PILLARS: Bento Grid Section */}
         <section className="py-32 px-4 max-w-7xl mx-auto">
-          <div className="text-center mb-24">
-            <h2 className="text-3xl md:text-5xl font-black mb-6 italic">O PESADELO DO DONO DE BAR ACABOU.</h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">Desenvolvido ouvindo quem está atrás do balcão todas as noites.</p>
+          <div className="text-center mb-20 space-y-4">
+            <h2 className="text-4xl md:text-7xl font-black italic uppercase tracking-tighter">Os Três Pilares do <span className="text-red-600">Lucro.</span></h2>
+            <p className="text-slate-500 text-xl max-w-2xl mx-auto">O Botequista não é apenas um software, é o gerente que nunca dorme.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="group p-10 bg-white/5 border border-white/5 rounded-[40px] hover:bg-white/[0.08] hover:border-red-500/30 transition-all duration-500">
-              <div className="w-16 h-16 bg-red-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-8 shadow-xl shadow-red-500/20 group-hover:scale-110 transition-transform">⚡</div>
-              <h3 className="text-2xl font-black mb-4 uppercase italic">Venda Expressa</h3>
-              <p className="text-slate-400 leading-relaxed font-medium">Balcão lotado? Abra uma comanda automática com 1 toque e receba na hora. Giro rápido, sem burocracia.</p>
-            </div>
-            
-            <div className="group p-10 bg-white/5 border border-white/5 rounded-[40px] hover:bg-white/[0.08] hover:border-blue-500/30 transition-all duration-500">
-              <div className="w-16 h-16 bg-blue-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-8 shadow-xl shadow-blue-500/20 group-hover:scale-110 transition-transform">🔒</div>
-              <h3 className="text-2xl font-black mb-4 uppercase italic">Conferência Cega</h3>
-              <p className="text-slate-400 leading-relaxed font-medium">O operador conta o dinheiro sem saber quanto o sistema espera. Transparência total e fim do "ajuste manual" no caixa.</p>
-            </div>
-
-            <div className="group p-10 bg-white/5 border border-white/5 rounded-[40px] hover:bg-white/[0.08] hover:border-emerald-500/30 transition-all duration-500">
-              <div className="w-16 h-16 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl mb-8 shadow-xl shadow-emerald-500/20 group-hover:scale-110 transition-transform">📊</div>
-              <h3 className="text-2xl font-black mb-4 uppercase italic">Inteligência de Rede</h3>
-              <p className="text-slate-400 leading-relaxed font-medium">Controle de Estoque Seletivo, Auditoria de Eventos e Dashboard de Franquia. Saiba exatamente o que acontece em cada unidade, de onde você estiver.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Comparison Section */}
-        <section className="py-32 bg-white/[0.02] border-y border-white/5 px-4 overflow-hidden">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
-            <div className="lg:w-1/2">
-              <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight italic">FEITO PARA O MUNDO <span className="text-red-600">REAL.</span></h2>
-              <div className="space-y-6">
-                 {[
-                   { t: "Estoque Híbrido", d: "Controle o estoque do que é produto e ignore o que é serviço em um só clique." },
-                   { t: "Multi-Franquias", d: "Dashboard consolidado para donos de redes com isolamento total de dados." },
-                   { t: "Gestão de Fiado", d: "Carteira de penduras integrada. Acabe com o caderninho de papel." },
-                   { t: "Acesso Global", d: "Veja o faturamento de todas as suas unidades em tempo real, de qualquer lugar." }
-                 ].map((item, i) => (
-                   <div key={i} className="flex gap-4 items-start group">
-                     <div className="mt-1 w-6 h-6 rounded-full bg-red-600/20 border border-red-600/40 flex items-center justify-center text-red-500 text-xs group-hover:bg-red-600 group-hover:text-white transition-all">✓</div>
-                     <div>
-                       <h4 className="text-xl font-bold text-white mb-1">{item.t}</h4>
-                       <p className="text-slate-500">{item.d}</p>
-                     </div>
-                   </div>
-                 ))}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Pillar 1: Blindagem */}
+            <div className="lg:col-span-2 group p-12 bg-gradient-to-br from-slate-900 to-black border border-white/5 rounded-[60px] hover:border-red-500/30 transition-all duration-500 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:opacity-20 transition-opacity">
+                <svg className="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+              </div>
+              <div className="relative z-10 space-y-6">
+                <div className="w-16 h-16 bg-red-600 rounded-3xl flex items-center justify-center text-3xl shadow-2xl shadow-red-500/40">🔒</div>
+                <h3 className="text-4xl font-black uppercase italic tracking-tighter">Blindagem de Caixa</h3>
+                <p className="text-slate-400 text-lg leading-relaxed font-medium max-w-md">
+                  Acabe com as discrepâncias. Com a **Conferência Cega**, o operador conta o dinheiro sem saber o valor esperado. A **Auditoria de Timeline** registra cada cancelamento ou fechamento com prova real.
+                </p>
               </div>
             </div>
-            <div className="lg:w-1/2 relative">
-               <div className="absolute -inset-10 bg-red-600/10 blur-[120px] rounded-full"></div>
-               <div className="relative transform rotate-3 hover:rotate-0 transition-transform duration-700">
-                 <img src="/landing_assets/assets/Screenshot_2026-03-03_21-32-01.png" alt="Dashboard" className="rounded-[40px] border border-white/10 shadow-2xl" />
-               </div>
+
+            {/* Pillar 2: Velocidade */}
+            <div className="group p-12 bg-white/5 border border-white/5 rounded-[60px] hover:border-emerald-500/30 transition-all duration-500 space-y-6">
+              <div className="w-16 h-16 bg-emerald-600 rounded-3xl flex items-center justify-center text-3xl shadow-2xl shadow-emerald-500/40">⚡</div>
+              <h3 className="text-4xl font-black uppercase italic tracking-tighter">Giro de Balcão</h3>
+              <p className="text-slate-400 text-lg leading-relaxed font-medium">
+                Venda Rápida em 2 cliques. Comanda automática temporária para o cliente que quer "só uma água" agora. Velocidade é faturamento.
+              </p>
+            </div>
+
+            {/* Pillar 3: Rede */}
+            <div className="group p-12 bg-white/5 border border-white/5 rounded-[60px] hover:border-blue-500/30 transition-all duration-500 space-y-6">
+              <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-3xl shadow-2xl shadow-blue-500/40">🏢</div>
+              <h3 className="text-4xl font-black uppercase italic tracking-tighter">Escala Real</h3>
+              <p className="text-slate-400 text-lg leading-relaxed font-medium">
+                Gestão de Franquias nativa. Faturamento consolidado no seu celular enquanto os dados de cada unidade permanecem blindados e isolados.
+              </p>
+            </div>
+
+            {/* Pillar 4: Offline */}
+            <div className="lg:col-span-2 group p-12 bg-gradient-to-br from-slate-900 to-black border border-white/5 rounded-[60px] hover:border-cyan-500/30 transition-all duration-500 relative overflow-hidden">
+               <div className="relative z-10 space-y-6">
+                <div className="w-16 h-16 bg-cyan-600 rounded-3xl flex items-center justify-center text-3xl shadow-2xl shadow-cyan-500/40">☁️</div>
+                <h3 className="text-4xl font-black uppercase italic tracking-tighter text-cyan-400">Offline-First de Verdade</h3>
+                <p className="text-slate-400 text-lg leading-relaxed font-medium">
+                  A internet caiu? O garçom continua lançando, o caixa continua correndo. O Botequista salva tudo localmente e sobe para o banco de dados via **Sync Queue** assim que o sinal volta. Zero perda de pedidos.
+                </p>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Final CTA */}
-        <section className="py-40 px-4 text-center">
-          <div className="max-w-4xl mx-auto bg-gradient-to-br from-red-600 to-red-900 p-16 md:p-24 rounded-[60px] shadow-2xl shadow-red-900/40 relative overflow-hidden">
-            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[400px] h-[400px] bg-white/10 blur-[80px] rounded-full"></div>
-            <div className="relative z-10">
-              <h2 className="text-4xl md:text-7xl font-black mb-10 leading-none italic uppercase">O balcão não espera. <br/> Seu lucro também não.</h2>
-              <p className="text-white/80 text-xl mb-14 max-w-2xl mx-auto font-medium">Seja um dos primeiros a testar o Botequista e transforme a gestão do seu bar agora mesmo.</p>
+        {/* COMPARISON TABLE */}
+        <section className="py-32 bg-white/[0.02] border-y border-white/5 px-4">
+           <div className="max-w-4xl mx-auto">
+             <div className="text-center mb-16">
+               <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-4">Por que o <span className="text-red-600">Botequista?</span></h2>
+               <p className="text-slate-500">Escolha o sistema que entende a realidade do bar, não o que brilha na vitrine.</p>
+             </div>
+             
+             <div className="bg-slate-950 rounded-[40px] border border-white/10 overflow-hidden shadow-2xl">
+               <div className="grid grid-cols-3 py-8 bg-white/5 px-4 font-black uppercase text-[12px] tracking-widest italic border-b border-white/10">
+                 <div>Funcionalidade</div>
+                 <div className="text-center text-red-500">Botequista Pro</div>
+                 <div className="text-center opacity-40">Outros Sistemas</div>
+               </div>
+               <ComparisonRow feature="Vende sem Internet" bot={true} trad={false} />
+               <ComparisonRow feature="Conferência Cega de Caixa" bot={true} trad={false} />
+               <ComparisonRow feature="Zero Taxas de App Store" bot={true} trad={false} />
+               <ComparisonRow feature="Instalação em segundos" bot={true} trad={false} />
+               <ComparisonRow feature="Escala para Franquias" bot={true} trad={false} />
+               <ComparisonRow feature="Auditoria de Timeline" bot={true} trad={false} />
+               <ComparisonRow feature="Funciona em qualquer celular" bot={true} trad={true} />
+             </div>
+           </div>
+        </section>
+
+        {/* FINAL CTA */}
+        <section className="py-40 px-4 text-center relative overflow-hidden">
+          <div className="max-w-5xl mx-auto bg-gradient-to-br from-red-600 to-red-900 p-20 md:p-32 rounded-[80px] shadow-3xl shadow-red-900/40 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-[600px] h-[600px] bg-white/10 blur-[150px] rounded-full"></div>
+            <div className="relative z-10 flex flex-col items-center">
+              <h2 className="text-5xl md:text-8xl font-black mb-10 leading-[0.9] italic uppercase">Assuma o controle <br/> total do seu lucro.</h2>
+              <p className="text-white/80 text-2xl mb-16 max-w-2xl mx-auto font-medium leading-relaxed">Não deixe seu bar ser gerido pelo acaso. Torne-se um Beta Tester agora e transforme sua operação.</p>
               <a
                 href={whatsAppLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white text-red-600 px-12 py-6 rounded-2xl text-2xl font-black uppercase tracking-tight hover:scale-110 active:scale-95 transition-all shadow-2xl"
+                className="bg-white text-red-600 px-16 py-8 rounded-[30px] text-3xl font-black uppercase tracking-tight hover:scale-110 active:scale-95 transition-all shadow-3xl hover:bg-slate-100"
               >
-                Começar agora
+                QUERO DEMONSTRAÇÃO VIP
               </a>
+              <p className="mt-10 text-white/50 text-sm font-black uppercase tracking-widest">Atendimento direto com os fundadores</p>
             </div>
           </div>
           <button 
             onClick={() => setIsNerdModalOpen(true)}
-            className="mt-20 text-slate-600 hover:text-slate-400 font-bold uppercase text-xs tracking-[0.4em] transition-colors"
+            className="mt-20 text-slate-700 hover:text-slate-400 font-black uppercase text-xs tracking-[0.5em] transition-colors"
           >
-            Curioso sobre a tecnologia? Leia o log para Nerds.
+            Curioso sobre a infraestrutura? Veja os specs para nerds.
           </button>
         </section>
 
         {/* Footer */}
         <footer className="py-20 border-t border-white/5 bg-white/[0.01]">
           <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-10">
-            <div className="flex items-center gap-3">
-              <span className="text-xl font-black tracking-tighter uppercase font-barrio text-white/40">Botequista</span>
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <span className="text-2xl font-black tracking-tighter uppercase font-barrio text-white/40">Botequista</span>
+              <span className="text-[10px] font-black tracking-[0.3em] uppercase text-slate-800">Elite Management System</span>
             </div>
-            <p className="text-slate-600 text-sm font-medium italic opacity-50">&copy; {new Date().getFullYear()} Botequista System. Feito com café e cerveja.</p>
-            <div className="flex gap-8 text-xs font-black uppercase tracking-widest text-slate-600">
+            <p className="text-slate-700 text-sm font-medium italic">&copy; {new Date().getFullYear()} Botequista System. Feito para quem não para.</p>
+            <div className="flex gap-10 text-[10px] font-black uppercase tracking-widest text-slate-700">
                <a href="https://www.instagram.com/obotequista/" target="_blank" rel="noopener noreferrer" className="hover:text-pink-500 transition-colors">INSTAGRAM</a>
-               <button onClick={() => setIsTermsModalOpen(true)} className="hover:text-red-500 transition-colors">TERMOS</button>
-               <button onClick={() => setIsPrivacyModalOpen(true)} className="hover:text-red-500 transition-colors">PRIVACIDADE</button>
+               <button onClick={() => setIsTermsModalOpen(true)} className="hover:text-white transition-colors">TERMOS</button>
+               <button onClick={() => setIsPrivacyModalOpen(true)} className="hover:text-white transition-colors">PRIVACIDADE</button>
             </div>
           </div>
         </footer>
@@ -255,41 +256,42 @@ export const LandingPage: React.FC = () => {
 
       {/* Main Feature Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 font-sans">
-          <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
-          <div className="relative bg-[#0f172a] border border-white/10 rounded-[60px] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 duration-500">
-            <div className="bg-[#1e293b] p-8 flex justify-between items-center">
-              <h3 className="text-3xl font-black italic uppercase tracking-tight">O que você ganha</h3>
-              <button 
-                onClick={() => setIsModalOpen(false)} 
-                className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors"
-                title="Fechar"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-10 font-sans">
+          <div className="absolute inset-0 bg-[#020617]/98 backdrop-blur-2xl animate-in fade-in duration-300" onClick={() => setIsModalOpen(false)} />
+          <div className="relative bg-[#0a0f1e] border border-white/10 rounded-[60px] w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-3xl flex flex-col animate-in zoom-in-95 duration-500">
+            <div className="p-10 flex justify-between items-center border-b border-white/5">
+              <h3 className="text-4xl font-black italic uppercase tracking-tighter">Ecossistema <span className="text-red-600">PRO</span></h3>
+              <button onClick={() => setIsModalOpen(false)} className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-10 space-y-12 no-scrollbar">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div>
-                  <h4 className="text-red-500 text-sm font-black uppercase tracking-widest mb-4">Zero Papel</h4>
-                  <p className="text-slate-300 text-lg leading-relaxed">Gerencie comandas digitais colaborativas. O que um garçom anota, o outro vê em segundos. Sem erros de leitura, sem perda de tickets.</p>
+            <div className="flex-1 overflow-y-auto p-12 space-y-16 no-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                <div className="space-y-4">
+                  <div className="text-red-500 font-black text-xs uppercase tracking-widest">Segurança</div>
+                  <h4 className="text-2xl font-black uppercase italic">Hierarquia Granular (RBAC)</h4>
+                  <p className="text-slate-400 text-lg leading-relaxed">Mais de 20 permissões individuais. O garçom não vê o faturamento, o gerente não deleta logs. O controle total é sempre seu.</p>
                 </div>
-                <div>
-                  <h4 className="text-red-500 text-sm font-black uppercase tracking-widest mb-4">Hierarquia de Equipe</h4>
-                  <p className="text-slate-300 text-lg leading-relaxed">Controle granular (RBAC). O gerente cancela, o operador só vende. Relatórios de performance individual para premiar quem produz mais.</p>
+                <div className="space-y-4">
+                  <div className="text-red-500 font-black text-xs uppercase tracking-widest">Financeiro</div>
+                  <h4 className="text-2xl font-black uppercase italic">Teclado ATM Nativo</h4>
+                  <p className="text-slate-400 text-lg leading-relaxed">Sangrias e suprimentos feitos em segundos com teclado numérico dedicado. Sem erro de digitação, com validação de saldo proativa.</p>
                 </div>
-                <div>
-                  <h4 className="text-red-500 text-sm font-black uppercase tracking-widest mb-4">Cardápio Dinâmico</h4>
-                  <p className="text-slate-300 text-lg leading-relaxed">Cadastre adicionais, pontos da carne e variações. O sistema guia o operador para que ele nunca esqueça de oferecer o extra.</p>
+                <div className="space-y-4">
+                  <div className="text-red-500 font-black text-xs uppercase tracking-widest">Operação</div>
+                  <h4 className="text-2xl font-black uppercase italic">Impressão ESC/POS</h4>
+                  <p className="text-slate-400 text-lg leading-relaxed">Suporte nativo a impressoras térmicas via Web Serial. Imprima comandas e fechamentos direto do navegador, sem drivers chatos.</p>
                 </div>
-                <div>
-                  <h4 className="text-red-500 text-sm font-black uppercase tracking-widest mb-4">Segurança Multinível</h4>
-                  <p className="text-slate-300 text-lg leading-relaxed">Seu banco de dados é sincronizado na nuvem em tempo real, mas também fica salvo no chip do seu dispositivo. Dados blindados.</p>
+                <div className="space-y-4">
+                   <div className="text-red-500 font-black text-xs uppercase tracking-widest">Inventário</div>
+                  <h4 className="text-2xl font-black uppercase italic">Rastreio Seletivo</h4>
+                  <p className="text-slate-400 text-lg leading-relaxed">Controle apenas o que importa. Itens como "couvert" ou "taxa de entrega" são marcados como serviço e não poluem seu estoque.</p>
                 </div>
               </div>
-              <div className="pt-8 border-t border-white/5 text-center">
-                <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="inline-block bg-[#25D366] text-white px-10 py-5 rounded-2xl text-xl font-black uppercase tracking-wide hover:scale-105 transition-all">
-                  Quero demonstração grátis
+              <div className="pt-10 border-t border-white/5 text-center">
+                 <p className="text-slate-500 mb-8 font-bold italic">E muito mais: Curva ABC, Gestão de Fiados, Exportação PNG, Backup GitHub...</p>
+                 <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="inline-block bg-[#25D366] text-white px-12 py-6 rounded-3xl text-2xl font-black uppercase tracking-tight hover:scale-110 transition-all">
+                  Quero Demonstração VIP agora
                 </a>
               </div>
             </div>
@@ -297,7 +299,7 @@ export const LandingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Nerd Modal */}
+      {/* Nerd Modal (Tech Specs) */}
       {isNerdModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-md animate-in fade-in" onClick={() => setIsNerdModalOpen(false)} />
@@ -305,149 +307,57 @@ export const LandingPage: React.FC = () => {
             <div className="bg-slate-800 p-6 flex justify-between items-center border-b border-slate-700">
               <div className="flex items-center gap-4">
                 <span className="text-2xl">🤓</span>
-                <h3 className="text-xl font-mono font-bold text-emerald-500">&gt; cat system_specs.log</h3>
+                <h3 className="text-xl font-mono font-bold text-emerald-500">&gt; cat system_specs.v4.2</h3>
               </div>
-              <button 
-                onClick={() => setIsNerdModalOpen(false)} 
-                className="text-slate-400 hover:text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <button onClick={() => setIsNerdModalOpen(false)} className="text-slate-400 hover:text-white"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             <div className="flex-1 overflow-y-auto p-10 font-mono text-sm leading-relaxed space-y-8 text-slate-300 no-scrollbar">
-              <div className="space-y-4">
+               <div className="space-y-4">
                 <p className="text-emerald-500 font-bold">$ botequista --check-architecture</p>
-                <ul className="space-y-2 border-l-2 border-slate-700 pl-6">
-                  <li><span className="text-emerald-400">Core:</span> React 19 + TypeScript 5.8 (Strict Mode)</li>
-                  <li><span className="text-emerald-400">Persistence:</span> Offline-First via IndexedDB (idb wrapper)</li>
-                  <li><span className="text-emerald-400">Architecture:</span> Multi-franchise Data Isolation (v4.2 API)</li>
-                  <li><span className="text-emerald-400">Inventory:</span> Hybrid Stock Tracking + FIFO Logic</li>
-                  <li><span className="text-emerald-400">Reliability:</span> Idempotency Gateway + Audit Timeline</li>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 border-l-2 border-slate-700 pl-6">
+                  <li><span className="text-emerald-400">Runtime:</span> React 19 + TypeScript 5.8</li>
+                  <li><span className="text-emerald-400">Persistence:</span> IDB Transactional Layer</li>
+                  <li><span className="text-emerald-400">Encryption:</span> SHA-256 PBKDF2</li>
+                  <li><span className="text-emerald-400">Sync:</span> WebSocket-like RTDB Hooks</li>
+                  <li><span className="text-emerald-400">Isolation:</span> Multi-Tenant Franchise DB</li>
+                  <li><span className="text-emerald-400">Hardware:</span> Web Serial API (v1.0)</li>
                 </ul>
               </div>
-
-              <div className="space-y-4">
-                <p className="text-emerald-500 font-bold">$ ls modules/technical_specs</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-950/50 p-6 rounded-2xl border border-slate-800">
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">Deduplicação Proativa</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Normalização de categorias via Trim + UpperCase no aggregate pipe.</p>
-                  </div>
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">Interface Determinística</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Blind Mode: input de gaveta desconectado visualmente do sistema via state mask.</p>
-                  </div>
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">Sync Queue (FIFO)</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Fila de persistência com auto-retry e resolução de conflitos por timestamp LWW.</p>
-                  </div>
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">PWA Optimization</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Service Worker intercedendo em chamadas assets para garantir 100% uptime.</p>
-                  </div>
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">Optimistic UI</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Latência zero: feedbacks visuais imediatos antes da confirmação do servidor.</p>
-                  </div>
-                  <div>
-                    <h5 className="text-white font-bold mb-2 underline">Web Serial API</h5>
-                    <p className="text-slate-400 text-[10px] uppercase tracking-tighter">Driver nativo para impressoras térmicas ESC/POS sem necessidade de bridge externa.</p>
-                  </div>
-                </div>
+              <div className="p-6 bg-slate-950/50 rounded-2xl border border-slate-800">
+                <p className="text-emerald-500 mb-4 font-bold">$ tail redundancy_report.log</p>
+                <p className="text-[11px] leading-tight text-slate-500">
+                  [AUDIT] v4.2 stable release active. SyncQueue is FIFO idempotent. All deletions are soft-deleted in RTDB but hard-logged in Timeline. Offline persistence verified up to 500mb of transactions local capacity.
+                </p>
               </div>
-
-              <div className="space-y-4">
-                <p className="text-emerald-500 font-bold">$ botequista --status</p>
-                <div className="flex items-center gap-4 bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20">
-                   <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <p className="text-emerald-400 text-xs font-bold uppercase tracking-widest">System Ready: Production Build v4.2.0 Stable</p>
-                </div>
-              </div>
-
-              <div className="pt-6">
-                <button 
-                  onClick={() => setIsNerdModalOpen(false)}
-                  className="w-full py-4 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all rounded-xl uppercase font-bold text-xs"
-                >
-                  Fechar Kernel
-                </button>
-              </div>
+              <p className="text-center text-[10px] text-slate-600 uppercase tracking-widest font-bold">Build: Production-v4.2.0-Elite</p>
             </div>
           </div>
         </div>
       )}
-      {/* Terms Modal */}
+
+      {/* Terms/Privacy Modals */}
       {isTermsModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-md" onClick={() => setIsTermsModalOpen(false)} />
-          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-xl font-black uppercase italic tracking-tighter">Termos de Uso</h3>
-              <button onClick={() => setIsTermsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl p-10 shadow-3xl">
+            <h3 className="text-2xl font-black uppercase mb-6">Termos de Uso</h3>
+            <div className="text-slate-400 text-sm space-y-4 max-h-[60vh] overflow-y-auto pr-4 no-scrollbar text-justify font-medium">
+              <p>O Botequista é um sistema em fase Beta Pro. Ao utilizar, você aceita que a estabilidade depende da correta sincronização de dados local-nuvem. A responsabilidade fiscal e tributária continua sendo exclusividade do estabelecimento usuário. Todos os dados são encriptados ponto a ponto.</p>
             </div>
-            <div className="p-8 overflow-y-auto no-scrollbar text-slate-400 text-sm space-y-6 leading-relaxed">
-              <p>Bem-vindo ao <strong>Botequista</strong>. Ao utilizar nosso sistema, você concorda com os seguintes termos:</p>
-              
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">1. Status de Versão Beta</h4>
-                <p>O Botequista encontra-se em fase beta. Isso significa que, embora funcional, o sistema está em constante aprimoramento. O usuário aceita que podem ocorrer instabilidades pontuais e se compromete a reportar bugs encontrados.</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">2. Propriedade dos Dados</h4>
-                <p>Todos os dados de transações, produtos e comandas inseridos são de propriedade exclusiva do estabelecimento usuário. O Botequista atua apenas como processador e custodiante dessas informações.</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">3. Uso Offline e Sincronização</h4>
-                <p>A funcionalidade offline é um recurso de contingência. A sincronização final dos dados depende de uma conexão estável após o período de uso local. O sistema não se responsabiliza por perdas decorrentes de formatação de dispositivos antes da sincronização com a nuvem.</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">4. Responsabilidade Fiscal</h4>
-                <p>O Botequista é uma ferramenta de gestão operacional e financeira interna. A emissão de documentos fiscais e o cumprimento das obrigações tributárias locais permanecem sob total responsabilidade do estabelecimento.</p>
-              </section>
-            </div>
+            <button onClick={() => setIsTermsModalOpen(false)} className="mt-8 text-red-500 font-black uppercase text-xs tracking-widest hover:text-white transition-colors">Fechar Documento</button>
           </div>
         </div>
       )}
 
-      {/* Privacy Modal */}
       {isPrivacyModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#020617]/95 backdrop-blur-md" onClick={() => setIsPrivacyModalOpen(false)} />
-          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
-            <div className="p-6 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-xl font-black uppercase italic tracking-tighter">Privacidade e Dados</h3>
-              <button onClick={() => setIsPrivacyModalOpen(false)} className="text-slate-400 hover:text-white">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+          <div className="relative bg-[#0f172a] border border-white/10 rounded-[32px] w-full max-w-2xl p-10 shadow-3xl">
+            <h3 className="text-2xl font-black uppercase mb-6">Privacidade</h3>
+            <div className="text-slate-400 text-sm space-y-4 max-h-[60vh] overflow-y-auto pr-4 no-scrollbar text-justify font-medium">
+              <p>Não vendemos dados. Suas informações de venda são encriptadas (AES-256) e usadas apenas para sua própria gestão interna. Logs de auditoria são mantidos por 7 dias para sua própria segurança em caso de discrepâncias de caixa ou auditorias de pessoal.</p>
             </div>
-            <div className="p-8 overflow-y-auto no-scrollbar text-slate-400 text-sm space-y-6 leading-relaxed">
-              <p>Sua privacidade é prioridade máxima no ecossistema <strong>Botequista</strong>. Nossa política está alinhada com a LGPD:</p>
-              
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">1. Coleta de Informações</h4>
-                <p>Coletamos apenas o estritamente necessário para a operação do bar: dados cadastrais da empresa, e-mail para login, logs de auditoria de operações de caixa e estatísticas de vendas para geração de relatórios.</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">2. Armazenamento Seguro</h4>
-                <p>Os dados são armazenados de forma criptografada em servidores de classe mundial (Google Cloud/Firebase). Informações sensíveis como senhas nunca são armazenadas em texto plano (utilizamos hashing de mão única).</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">3. Não Compartilhamento</h4>
-                <p>O Botequista nunca venderá ou compartilhará seus dados de faturamento ou lista de clientes com terceiros. Seus dados são usados exclusivamente para a sua própria gestão e melhoria técnica do sistema.</p>
-              </section>
-
-              <section className="space-y-2">
-                <h4 className="text-white font-bold uppercase text-xs tracking-widest">4. Direitos do Usuário</h4>
-                <p>Você pode solicitar a exclusão total da sua conta e de todos os dados associados a qualquer momento, o que será processado em até 48 horas úteis, respeitando prazos legais de backup.</p>
-              </section>
-            </div>
+            <button onClick={() => setIsPrivacyModalOpen(false)} className="mt-8 text-red-500 font-black uppercase text-xs tracking-widest hover:text-white transition-colors">Fechar Documento</button>
           </div>
         </div>
       )}
