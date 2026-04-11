@@ -395,8 +395,8 @@ Isso faz o dono sentir:
 o sistema pensa por mim
 
 ## 🐛 Correções (Bugs/Fixes)
-- [ ] 
-- [ ] 
+- Vínculo de novos bares e franquia não funciona
+- 
 
 ## 💡 Ideias e Debates
 - 
