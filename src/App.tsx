@@ -27,6 +27,7 @@ import { useTheme } from './hooks/useTheme';
 import { useAuth } from './hooks/useAuth';
 import { useAppStore } from './hooks/useAppStore';
 import { LandingPage } from './features/landing/LandingPage';
+import { LandingPage2 } from './features/landing/LandingPage2';
 import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
 
 export const App: React.FC = () => {
@@ -98,6 +99,7 @@ export const App: React.FC = () => {
   };
 
   // Guardas de Roteamento/Estado
+  if (window.location.pathname.startsWith('/landing2')) return <LandingPage2 />;
   if (window.location.pathname.startsWith('/landing')) return <LandingPage />;
   if (!import.meta.env.VITE_FIREBASE_API_KEY) return <FirebaseGuard />;
   if (!currentUser) return <Login onLogin={(u, p) => handleLogin(u, p, store.users)} isLoading={store.dbStatus === 'loading' && store.users.length === 0} error={loginError} />;
