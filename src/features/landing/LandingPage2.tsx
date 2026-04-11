@@ -140,6 +140,8 @@ export const LandingPage2: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
   const [isNerdModalOpen, setIsNerdModalOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
 
   useScrollReveal();
 
@@ -268,9 +270,9 @@ export const LandingPage2: React.FC = () => {
           {/* Hero Image */}
           <div className="max-w-5xl mx-auto scroll-reveal">
             <BrowserFrame
-              src="/landing_assets/assets/hero_mockup_v43.png"
-              alt="Botequista Dashboard Profissional"
-              label="Interface Real · Tablet + Celular"
+              src="/landing_assets/assets/dashboard_real.png"
+              alt="Painel de Vendas Real do Botequista"
+              label="Screenshot Real · Sistema em Produção"
             />
           </div>
         </div>
@@ -642,8 +644,8 @@ export const LandingPage2: React.FC = () => {
           </div>
           <p className="text-xs font-bold text-slate-700">&copy; {new Date().getFullYear()} Botequista Systems. Todos os direitos reservados.</p>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-700">
-            <a href="#" className="hover:text-red-500 transition-colors">Privacidade</a>
-            <a href="#" className="hover:text-red-500 transition-colors">Termos</a>
+            <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Privacidade</button>
+            <button onClick={() => setIsTermsOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Termos</button>
           </div>
         </div>
       </footer>
@@ -692,6 +694,98 @@ export const LandingPage2: React.FC = () => {
                   <div>Offline write: <span className="text-white">&lt; 5ms</span></div>
                   <div>Memory footprint: <span className="text-white">~45MB</span></div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── PRIVACY MODAL ─── */}
+      {isPrivacyOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" onClick={() => setIsPrivacyOpen(false)} />
+          <div className="relative bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="bg-slate-800 p-5 flex justify-between items-center border-b border-slate-700">
+              <h3 className="text-lg font-black uppercase tracking-wider">🔒 Política de Privacidade</h3>
+              <button onClick={() => setIsPrivacyOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
+              <p className="text-slate-500 text-xs">Última atualização: Abril de 2026</p>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Dados Coletados</h4>
+                <p>O Botequista coleta apenas os dados estritamente necessários para o funcionamento do sistema de gestão do seu estabelecimento: informações de produtos, vendas, operadores, mesas e movimentações financeiras. Não coletamos dados pessoais dos clientes finais do seu bar.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">2. Armazenamento e Segurança</h4>
+                <p>Seus dados são armazenados em três camadas: localmente no dispositivo via IndexedDB (com criptografia AES-256), na nuvem Firebase com conexão TLS, e opcionalmente em backups manuais em arquivo JSON. Todo o tráfego é criptografado em trânsito e em repouso.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">3. Compartilhamento</h4>
+                <p>Não vendemos, alugamos ou compartilhamos seus dados com terceiros. Os dados do seu bar são exclusivamente seus. O acesso à infraestrutura de nuvem é restrito à equipe técnica do Botequista mediante autenticação de dois fatores.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">4. Isolamento de Dados</h4>
+                <p>Cada unidade (bar) possui um banco de dados isolado com identificador único (unitId). Os dados de uma unidade são invisíveis para operadores de outra unidade, salvo quando o administrador possui acesso explícito a múltiplas unidades.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">5. Seus Direitos</h4>
+                <p>Você pode solicitar a exportação completa dos seus dados a qualquer momento via funcionalidade de Backup do sistema. Para solicitar a exclusão total dos seus dados dos nossos servidores, entre em contato pelo WhatsApp.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">6. Cookies e Rastreamento</h4>
+                <p>O Botequista não utiliza cookies de rastreamento ou ferramentas de analytics de terceiros. Não rastreamos o comportamento de navegação dos operadores fora do sistema.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TERMS MODAL ─── */}
+      {isTermsOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl" onClick={() => setIsTermsOpen(false)} />
+          <div className="relative bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="bg-slate-800 p-5 flex justify-between items-center border-b border-slate-700">
+              <h3 className="text-lg font-black uppercase tracking-wider">📜 Termos de Uso</h3>
+              <button onClick={() => setIsTermsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
+              <p className="text-slate-500 text-xs">Última atualização: Abril de 2026</p>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Aceitação dos Termos</h4>
+                <p>Ao utilizar o sistema Botequista, você concorda com estes termos de uso. O Botequista é um sistema de gestão para bares e restaurantes fornecido como SaaS (Software as a Service) pela Botequista Systems.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">2. Licença de Uso</h4>
+                <p>Concedemos a você uma licença limitada, não-exclusiva, intransferível e revogável para utilizar o sistema Botequista para fins de gestão do seu estabelecimento comercial. Esta licença não inclui o direito de revender, sublicenciar, modificar ou fazer engenharia reversa do software.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">3. Programa Early Adopter</h4>
+                <p>O acesso gratuito é concedido a parceiros fundadores durante a fase de expansão do Botequista. A empresa reserva o direito de introduzir planos pagos no futuro, garantindo aos participantes do programa Early Adopter condições especiais de transição com aviso prévio mínimo de 90 dias.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">4. Responsabilidades do Usuário</h4>
+                <p>O usuário é responsável por: manter a segurança das credenciais de acesso, garantir a veracidade dos dados inseridos, utilizar o sistema apenas para fins legais, e realizar backups periódicos dos seus dados como medida adicional de segurança.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">5. Disponibilidade do Serviço</h4>
+                <p>O Botequista é projetado com arquitetura Offline-First, garantindo funcionamento mesmo sem conexão à internet. A sincronização com a nuvem depende da disponibilidade da infraestrutura Firebase e Vercel. Não garantimos disponibilidade de 100% dos serviços em nuvem, embora nosso objetivo seja manter uptime superior a 99.5%.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">6. Limitação de Responsabilidade</h4>
+                <p>O Botequista não se responsabiliza por prejuízos financeiros decorrentes de falhas operacionais, perda de dados por mau uso do sistema, ou decisões de negócio baseadas nos relatórios gerados. O sistema é uma ferramenta de apoio à gestão, não substitui a responsabilidade gerencial do proprietário.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">7. Cancelamento</h4>
+                <p>Você pode cancelar o uso do sistema a qualquer momento, sem multas ou taxas. Após o cancelamento, seus dados podem ser exportados em até 30 dias. Após esse prazo, nos reservamos o direito de remover seus dados dos nossos servidores.</p>
+              </div>
+              <div>
+                <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">8. Contato</h4>
+                <p>Para dúvidas, sugestões ou solicitações referentes a estes termos, entre em contato pelo WhatsApp disponível na página principal do Botequista.</p>
               </div>
             </div>
           </div>
