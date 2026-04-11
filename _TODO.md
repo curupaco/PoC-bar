@@ -396,7 +396,8 @@ o sistema pensa por mim
 
 ## 🐛 Correções (Bugs/Fixes)
 - Vínculo de novos bares e franquia não funciona
-- 
+- Links de rodapé não funcionam na LP
+- LP feia com abordagem ELITE. Mudar isso usando outro modelo.
 
 ## 💡 Ideias e Debates
 - 
