@@ -250,9 +250,9 @@ export const LandingPage2: React.FC = () => {
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
-            <span className="text-gradient block">Sistema que</span>
+            <span className="text-gradient block">O sistema que</span>
             <span className="text-emerald-500 block italic">funciona</span>
-            <span className="text-gradient block">de verdade</span>
+            <span className="text-gradient block">no mundo real</span>
           </h1>
 
           <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
@@ -296,7 +296,7 @@ export const LandingPage2: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 scroll-reveal">
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] uppercase">
-              O sistema que <span className="text-red-500 italic">não trava</span>. O caixa que <span className="text-red-500 italic">bate</span>.
+              O sistema que não te deixa na mão e o caixa que finalmente <span className="text-red-500 italic">bate</span>.
             </h2>
           </div>
 
