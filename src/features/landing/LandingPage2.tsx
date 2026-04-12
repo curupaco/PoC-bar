@@ -77,15 +77,18 @@ const BrowserFrame: React.FC<{ src: string; alt: string; label?: string }> = ({ 
 );
 
 // ─── Feature Card ───
-const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?: string }> = ({ icon, title, desc, accent = 'red' }) => (
-  <div className={`scroll-reveal group p-8 rounded-3xl bg-slate-900/40 border border-white/5 hover:border-${accent === 'red' ? 'red' : 'emerald'}-500/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl hover:shadow-${accent === 'red' ? 'red' : 'emerald'}-900/10`}>
-    <div className={`w-14 h-14 rounded-2xl bg-${accent === 'red' ? 'red-600' : 'emerald-600'}/10 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform`}>
-      {icon}
+const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?: string }> = ({ icon, title, desc, accent = 'red' }) => {
+  const isRed = accent === 'red';
+  return (
+    <div className={`scroll-reveal group p-8 rounded-3xl bg-slate-900/40 border border-white/5 ${isRed ? 'hover:border-red-500/30 hover:shadow-red-900/10' : 'hover:border-emerald-500/30 hover:shadow-emerald-900/10'} transition-all duration-500 hover:-translate-y-1 hover:shadow-xl`}>
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform ${isRed ? 'bg-red-600/10' : 'bg-emerald-600/10'}`}>
+        {icon}
+      </div>
+      <h3 className="text-white font-black text-sm uppercase tracking-wide mb-3">{title}</h3>
+      <p className="text-slate-300 text-sm leading-relaxed">{desc}</p>
     </div>
-    <h3 className="text-white font-black text-sm uppercase tracking-wide mb-3">{title}</h3>
-    <p className="text-slate-300 text-sm leading-relaxed">{desc}</p>
-  </div>
-);
+  );
+};
 
 // ─── Screenshot Gallery with Tabs ───
 const screenshots = [
@@ -223,7 +226,7 @@ export const LandingPage2: React.FC = () => {
           </button>
         </div>
         {/* Mobile Menu */}
-        <div className={`fixed inset-0 z-40 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
+        <div className={`fixed inset-0 z-50 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
           <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
             <button onClick={() => scrollToSection('problema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">O Problema</button>
             <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
