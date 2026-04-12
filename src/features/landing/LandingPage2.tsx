@@ -92,14 +92,14 @@ const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?
 
 // ─── Screenshot Gallery with Tabs ───
 const screenshots = [
-  { src: '/landing_assets/assets/pos_real.png', label: 'PDV Terminal de Vendas', desc: 'Favoritos, busca instantânea e comanda em tempo real' },
-  { src: '/landing_assets/assets/dashboard_real.png', label: 'Mesas Gestão Visual', desc: 'Mesas coloridas por status: ociosa, ativa, em risco' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Checkout Fechamento', desc: 'Dinheiro, Pix, Cartão ou Pendura tudo em uma tela' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O operador informa o valor fisico sem ver o esperado' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Tesouraria Caixa', desc: 'Sangria, suprimento e cofre com teclado numérico' },
-  { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: '7 tipos de relatório com exportação PNG e por turno' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe RBAC', desc: '+20 permissões granulares por colaborador' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Todas as ações críticas registradas em tempo real' },
+  { src: '/landing_assets/assets/pos_real.png', label: 'Tela de Vendas', desc: 'Seus produtos favoritos no topo, busca instantânea e a comanda atualizada em tempo real' },
+  { src: '/landing_assets/assets/dashboard_real.png', label: 'Suas Mesas', desc: 'Cada mesa com sua cor: verde tá bebendo, amarelo tá demorando, vermelho cuidado' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Fechamento', desc: 'Dinheiro, Pix, Cartão ou fiado — tudo junto na mesma tela' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O garçom conta o dinheiro sem ver quanto deveria ter. Você descobre a verdade.' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Caixa', desc: 'Sangria, suprimento e controle do cofre. Como um caixa eletrônico, só digita e confirma.' },
+  { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: 'Sete tipos de relatório: financeiro, produtos, equipe, tudo organizado por turno' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe', desc: 'Cada funcinário com seu nível de acesso: quem pode cancelar, quem pode fechar o caixa' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Um log que mostra quem fez o quê, quando. Se algo estranho acontecer, você rastreia.' },
 ];
 
 const ScreenshotGallery: React.FC = () => {
@@ -250,13 +250,13 @@ export const LandingPage2: React.FC = () => {
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
-            <span className="text-gradient block">PDV que</span>
+            <span className="text-gradient block">Sistema que</span>
             <span className="text-emerald-500 block italic">funciona</span>
             <span className="text-gradient block">de verdade</span>
           </h1>
 
           <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
-            Funciona <span className="text-white font-bold">offline</span>. Caixa que <span className="text-emerald-400 font-bold">bate</span>. Controle <span className="text-white font-bold">total</span>. E é <span className="text-emerald-400 font-bold">grátis</span> — sem asterisco.
+            O bar continua vendendo <span className="text-white font-bold">mesmo offline</span>. O caixa <span className="text-emerald-400 font-bold">bate todo dia</span>. E você tem <span className="text-white font-bold">controle total</span> do seu negócio. Tudo <span className="text-emerald-400 font-bold">de graça</span> — sem pegadinha.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16 scroll-reveal">
@@ -308,10 +308,10 @@ export const LandingPage2: React.FC = () => {
 
           <div className="space-y-4">
             {[
-              { text: 'Caixa nunca fecha certo. Sempre falta ou sobra algo.' },
-              { text: 'Internet cai = bar para. Perde venda na sexta.' },
-              { text: 'Fiado vira divida. Cliente some sem pagar.' },
-              { text: 'Não sabe quem vendeu o que. Sem Controle.' },
+              { text: 'Caixa nunca fecha certo. Sempre falta ou sobra dinheiro.' },
+              { text: 'Internet cai = bar fecha. Perde venda na sexta-feira.' },
+              { text: 'Fiado vira债. Cliente some sem pagar.' },
+              { text: 'Não sabe quem vendeu o quê. Funcionário fazendo hora?' },
             ].map((p, i) => (
               <div key={i} className="scroll-reveal flex items-center gap-4 p-5 rounded-2xl bg-red-950/10 border border-red-900/20">
                 <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
@@ -341,12 +341,12 @@ export const LandingPage2: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Toda venda salva no aparelho na hora. Quando a internet volta, sincroniza sozinho. Seu bar nunca para." accent="emerald" />
-            <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Modo Expresso: comanda automática, favoritos no topo, atalhos de teclado. Checkout em menos de 2 segundos." accent="emerald" />
-            <FeatureCard icon="🕵️" title="Conferência Cega" desc="O operador conta o dinheiro sem ver o valor do sistema. Impossível 'ajustar' a contagem. Você vê a verdade." accent="emerald" />
-            <FeatureCard icon="📊" title="Curva ABC Inteligente" desc="Saiba exatamente quais produtos dão lucro e quais são prejuízo. Filtre por volume ou faturamento." accent="emerald" />
-            <FeatureCard icon="👥" title="Controle de Equipe" desc="+20 permissões granulares. Defina quem pode cancelar venda, fechar caixa, ver relatórios." accent="emerald" />
-            <FeatureCard icon="🏢" title="Multi-Unidades" desc="Gerencie várias lojas com dados isolados. Dashboard consolidado. Ideal para franquias." accent="emerald" />
+            <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Cada venda fica salva no celular na hora. Quando a internet voltar, o sistema sincroniza sozinho. Seu bar não para." accent="emerald" />
+            <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo, e você pode usar o teclado." accent="emerald" />
+            <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
+            <FeatureCard icon="📊" title="Curva ABC" desc="Saiba o que vende mais e o que dá mais lucro. Um clique para filtrar." accent="emerald" />
+            <FeatureCard icon="👥" title="Controle de Equipe" desc="Cada funcionário com seu nível de acesso. Quem pode cancelar venda, quem pode fechar caixa." accent="emerald" />
+            <FeatureCard icon="🏢" title="Várias Lojas" desc="Se você tem mais de um bar, gerencia todos de um lugar. Os dados de cada loja ficam isolados." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}
@@ -355,13 +355,13 @@ export const LandingPage2: React.FC = () => {
               <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-4">Exclusividade Botequista</div>
                 <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
-                  O único sistema <span className="text-emerald-500">onde a internet é opcional</span>.
+                  A internet pode<span className="text-emerald-500">ogar</span>.
                 </h3>
                 <p className="text-slate-200 text-lg leading-relaxed mb-8">
-                  O Botequista trata a nuvem como um "estado eventual". Seus dados são salvos <strong className="text-white">localmente no dispositivo</strong> antes de qualquer coisa. Acabou a internet da operadora? O bar continua faturando.
+                  O Botequista salva os dados primeiro no celular do garçom, e depois na nuvem. Se a internet cair, a venda continua. Quando voltar, tudo se sincroniza. Sem precisar de TI, sem dor de cabeça.
                 </p>
                 <div className="flex flex-wrap gap-3">
-                  {['IndexedDB Local', 'Sync Automática', 'Backup em 3 Camadas', 'Resgate de Emergência'].map(tag => (
+                  {['Funciona Offline', 'Sincroniza Sozinho', 'Dados Protegidos', 'Sem Servidor'].map(tag => (
                     <span key={tag} className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">{tag}</span>
                   ))}
                 </div>
@@ -371,7 +371,7 @@ export const LandingPage2: React.FC = () => {
                   <div className="text-6xl float-anim">📶</div>
                   <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Disponibilidade</div>
                   <div className="text-7xl font-black text-white"><AnimatedCounter target={99} suffix="%" /></div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Mesmo com queda de internet</div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Mesmo sem internet</div>
                 </div>
               </div>
             </div>
@@ -434,24 +434,24 @@ export const LandingPage2: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 scroll-reveal">
             {[
-              'PDV completo com Venda Expressa',
+              'Tela de vendas com modo rápido',
               'Gestão de mesas e comandas',
-              'Cardápio com adicionais e variações',
-              'Tesouraria com sangria e suprimento',
-              'Conferência Cega de caixa',
-              '7 tipos de relatório gerencial',
-              'Controle de equipe (+20 permissões)',
-              'Gestão de Penduras (Fiado)',
-              'Suporte a múltiplas unidades',
-              'Registro de auditoria completo',
-              'Backup automático nuvem + local',
-              'Dark Mode para ambientes noturnos',
-              'Recibos via WhatsApp',
+              'Cardápio com categorias e adicionais',
+              'Caixa: sangria e suprimento',
+              'Conferência cega de fechamento',
+              '7 tipos de relatório',
+              'Controle de acesso por funcionário',
+              'Gestão de fiado (pendura)',
+              'Suporte a várias lojas',
+              'Log de auditoria',
+              'Backup automático',
+              'Modo noturno (tela escura)',
+              'Recibo via WhatsApp',
               'Curva ABC de produtos',
-              'Heatmap de horário de pico',
-              'Ranking de performance da equipe',
-              'Funciona em tablet, celular e PC',
-              'Funciona 100% offline',
+              'Mapa de horário de pico',
+              'Ranking da equipe',
+              'Funciona no celular, tablet ou PC',
+              'Funciona sem internet',
             ].map((f, i) => (
               <div key={i} className="flex items-center gap-3 py-3 px-5 rounded-xl hover:bg-white/[0.02] transition-colors group">
                 <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
@@ -476,15 +476,15 @@ export const LandingPage2: React.FC = () => {
             </div>
             {[
               { f: 'Funciona Offline', b: true, t: false },
-              { f: 'Conferência Cega de Caixa', b: true, t: false },
-              { f: 'Sinalização de Mesa Ociosa', b: true, t: false },
-              { f: 'Curva ABC por Faturamento', b: true, t: false },
-              { f: 'Atalhos de Teclado (PDV Ninja)', b: true, t: false },
-              { f: 'Multi-Unidades com Isolamento', b: true, t: true },
-              { f: 'Gestão de Fiado (Pendura)', b: true, t: true },
-              { f: 'Registro de Auditoria', b: true, t: true },
-              { f: 'Funciona em Qualquer Dispositivo', b: true, t: false },
-              { f: 'Preço Acessível', b: true, t: false },
+              { f: 'Conferência Cega', b: true, t: false },
+              { f: 'Alerta de Mesa Parada', b: true, t: false },
+              { f: 'Curva ABC por Lucro', b: true, t: false },
+              { f: 'Atalhos de Teclado', b: true, t: false },
+              { f: 'Várias Lojas com Dados Isolados', b: true, t: true },
+              { f: 'Gestão de Fiado', b: true, t: true },
+              { f: 'Log de Auditoria', b: true, t: true },
+              { f: 'Funciona em Qualquer Aparelho', b: true, t: false },
+              { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">
                 <div className="text-slate-200 font-semibold text-xs">{row.f}</div>
