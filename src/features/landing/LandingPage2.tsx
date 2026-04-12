@@ -98,7 +98,7 @@ const screenshots = [
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O operador informa o valor fisico sem ver o esperado' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Tesouraria Caixa', desc: 'Sangria, suprimento e cofre com teclado numérico' },
   { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: '7 tipos de relatório com exportação PNG e por turno' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe RBAC', desc: '20+ permissões granulares por colaborador' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe RBAC', desc: '+20 permissões granulares por colaborador' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Todas as ações críticas registradas em tempo real' },
 ];
 
@@ -322,7 +322,7 @@ export const LandingPage2: React.FC = () => {
 
           <div className="text-center mt-10 scroll-reveal">
             <p className="text-lg md:text-xl font-medium text-slate-300 italic">
-              "Cada problema resolvido = <span className="text-emerald-400 font-bold">R$ 500+ economizados por mês</span>"
+              "Cada problema resolvido = <span className="text-emerald-400 font-bold">R$ +500 economizados por mês</span>"
             </p>
           </div>
         </div>
@@ -345,7 +345,7 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Modo Expresso: comanda automática, favoritos no topo, atalhos de teclado. Checkout em menos de 2 segundos." accent="emerald" />
             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O operador conta o dinheiro sem ver o valor do sistema. Impossível 'ajustar' a contagem. Você vê a verdade." accent="emerald" />
             <FeatureCard icon="📊" title="Curva ABC Inteligente" desc="Saiba exatamente quais produtos dão lucro e quais são prejuízo. Filtre por volume ou faturamento." accent="emerald" />
-            <FeatureCard icon="👥" title="Controle de Equipe" desc="20+ permissões granulares. Defina quem pode cancelar venda, fechar caixa, ver relatórios." accent="emerald" />
+            <FeatureCard icon="👥" title="Controle de Equipe" desc="+20 permissões granulares. Defina quem pode cancelar venda, fechar caixa, ver relatórios." accent="emerald" />
             <FeatureCard icon="🏢" title="Multi-Unidades" desc="Gerencie várias lojas com dados isolados. Dashboard consolidado. Ideal para franquias." accent="emerald" />
           </div>
 
@@ -440,7 +440,7 @@ export const LandingPage2: React.FC = () => {
               'Tesouraria com sangria e suprimento',
               'Conferência Cega de caixa',
               '7 tipos de relatório gerencial',
-              'Controle de equipe (20+ permissões)',
+              'Controle de equipe (+20 permissões)',
               'Gestão de Penduras (Fiado)',
               'Suporte a múltiplas unidades',
               'Registro de auditoria completo',
@@ -560,7 +560,7 @@ export const LandingPage2: React.FC = () => {
                 'PDV Completo + Venda Expressa',
                 'Conferência Cega + Auditoria',
                 'Relatórios + Curva ABC',
-                'Controle de Equipe (20+ perm.)',
+                'Controle de Equipe (+20 perm.)',
                 'Multi-Unidades',
                 'Funciona Offline',
                 'WhatsApp Recibos',
