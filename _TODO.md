@@ -3,6 +3,8 @@
 Este arquivo é destinado a anotações rápidas sobre próximas features, correções a serem feitas e ideias de melhorias. Ele não será exposto no sistema e nem na landing page.
 
 ## 🚀 Próximas Features
+- Criar um live demo para a landingpage.
+
 - 1️⃣ Alerta de Produto Acabando (Smart Stock Warning)
 Valor: enorme
 Exemplo:

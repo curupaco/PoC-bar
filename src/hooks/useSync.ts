@@ -20,7 +20,7 @@ interface SyncProps {
   setStockTransactions: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
   activeUnitId: string | null;
-  config: { url: string; key: string; email: string; pass: string; allPerms: any[]; }
+  config: { url: string; key: string; email: string; pass: string; allPerms: any[]; isDemo?: boolean; }
 }
 
 export const useSync = (props: SyncProps) => {
@@ -186,6 +186,7 @@ export const useSync = (props: SyncProps) => {
   }, [activeUnitId]);
 
   const fetchData = useCallback(async () => {
+    if (config.isDemo) return;
     if (isFetching.current || !activeUnitId) return;
     const fetchStartedForUnit = activeUnitId;
     isFetching.current = true;
@@ -300,6 +301,7 @@ export const useSync = (props: SyncProps) => {
   }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus]);
 
   const fetchGlobal = useCallback(async () => {
+    if (config.isDemo) return;
     const token = await getFirebaseToken(config.email, config.pass, config.key);
     if (token) {
       processQueue(token);

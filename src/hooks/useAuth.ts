@@ -54,6 +54,17 @@ export const useAuth = () => {
     setCurrentUser(null);
   }, []);
 
+  const enableDemoMode = useCallback(() => {
+    setCurrentUser({
+      id: 'admin-demo',
+      username: 'demo_user',
+      password: '',
+      displayName: 'Visitante (Demo)',
+      permissions: ALL_PERMISSIONS,
+      allowedUnits: ['unit-demo']
+    } as any);
+  }, []);
+
   return {
     currentUser,
     setCurrentUser,
@@ -62,6 +73,7 @@ export const useAuth = () => {
     setLoginError,
     handleLogin,
     syncCurrentUser,
-    logout
+    logout,
+    enableDemoMode
   };
 };

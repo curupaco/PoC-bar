@@ -65,7 +65,7 @@ const BrowserFrame: React.FC<{ src: string; alt: string; label?: string }> = ({ 
         </div>
         <div className="flex-1 max-w-[140px] mx-auto bg-slate-950/50 h-4 rounded-full border border-white/5 flex items-center px-3">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 mr-2"></div>
-          <span className="text-[7px] font-mono text-slate-600 truncate">botequista.app</span>
+          <span className="text-[7px] font-mono text-slate-400 truncate">botequista.app</span>
         </div>
       </div>
       <div className="relative aspect-video overflow-hidden">
@@ -83,20 +83,20 @@ const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?
       {icon}
     </div>
     <h3 className="text-white font-black text-sm uppercase tracking-wide mb-3">{title}</h3>
-    <p className="text-slate-500 text-sm leading-relaxed">{desc}</p>
+    <p className="text-slate-300 text-sm leading-relaxed">{desc}</p>
   </div>
 );
 
 // ─── Screenshot Gallery with Tabs ───
 const screenshots = [
-  { src: '/landing_assets/assets/pos_real.png', label: 'PDV · Terminal de Vendas', desc: 'Favoritos, busca instantânea e comanda em tempo real.' },
-  { src: '/landing_assets/assets/dashboard_real.png', label: 'Mesas · Gestão Visual', desc: 'Mesas coloridas por status: ociosa, ativa, em risco.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Checkout · Fechamento', desc: 'Dinheiro, Pix, Cartão ou Pendura — tudo em uma tela.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O operador informa o valor fisico sem ver o esperado.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Tesouraria · Caixa', desc: 'Sangria, suprimento e cofre com teclado numérico.' },
-  { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: '7 tipos de relatório com exportação PNG e por turno.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe · RBAC', desc: '20+ permissões granulares por colaborador.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Todas as ações críticas registradas em tempo real.' },
+  { src: '/landing_assets/assets/pos_real.png', label: 'PDV Terminal de Vendas', desc: 'Favoritos, busca instantânea e comanda em tempo real' },
+  { src: '/landing_assets/assets/dashboard_real.png', label: 'Mesas Gestão Visual', desc: 'Mesas coloridas por status: ociosa, ativa, em risco' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Checkout Fechamento', desc: 'Dinheiro, Pix, Cartão ou Pendura tudo em uma tela' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O operador informa o valor fisico sem ver o esperado' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Tesouraria Caixa', desc: 'Sangria, suprimento e cofre com teclado numérico' },
+  { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: '7 tipos de relatório com exportação PNG e por turno' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe RBAC', desc: '20+ permissões granulares por colaborador' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Todas as ações críticas registradas em tempo real' },
 ];
 
 const ScreenshotGallery: React.FC = () => {
@@ -113,7 +113,7 @@ const ScreenshotGallery: React.FC = () => {
     <div className="scroll-reveal">
       <div className="max-w-5xl mx-auto">
         <BrowserFrame src={screenshots[active].src} alt={screenshots[active].label} label={screenshots[active].label} />
-        <p className="text-center text-slate-500 text-sm mt-6 font-medium">{screenshots[active].desc}</p>
+        <p className="text-center text-slate-300 text-sm mt-6 font-medium">{screenshots[active].desc}</p>
         <div className="flex justify-center gap-2 mt-6 flex-wrap">
           {screenshots.map((s, i) => (
             <button
@@ -122,7 +122,7 @@ const ScreenshotGallery: React.FC = () => {
               className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
                 i === active
                   ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                  : 'bg-slate-900/80 text-slate-500 hover:text-white border border-white/5 hover:border-white/10'
+                  : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5 hover:border-white/10'
               }`}
             >
               {s.label.split('·')[0].trim()}
@@ -205,15 +205,15 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Elite v4.3</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.3</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
-            <button onClick={() => scrollToSection('problema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 hover:text-white transition-colors">O Problema</button>
-            <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 hover:text-white transition-colors">Solução</button>
-            <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 hover:text-white transition-colors">Sistema</button>
-            <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 hover:text-white transition-colors">Preço</button>
-            <button onClick={() => setIsNerdModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500 hover:text-white transition-colors">🤓 Tech</button>
+            <button onClick={() => scrollToSection('problema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">O Problema</button>
+            <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
+            <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
+            <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
+            <button onClick={() => setIsNerdModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#25D366] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
               Testar Grátis
             </a>
@@ -225,11 +225,11 @@ export const LandingPage2: React.FC = () => {
         {/* Mobile Menu */}
         <div className={`fixed inset-0 z-40 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
           <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
-            <button onClick={() => scrollToSection('problema')} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">O Problema</button>
-            <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">Solução</button>
-            <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">Sistema</button>
-            <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">Preço</button>
-            <button onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-400 hover:text-white">🤓 Tech</button>
+            <button onClick={() => scrollToSection('problema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">O Problema</button>
+            <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
+            <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
+            <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
+            <button onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#25D366] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
               Testar Grátis
             </a>
@@ -242,16 +242,16 @@ export const LandingPage2: React.FC = () => {
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-10 scroll-reveal">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-            100% Gratuito · Sem cartão de crédito
+            100% Gratuito Sem cartão de crédito
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
             <span className="text-gradient block">Seu bar perde</span>
             <span className="text-red-600 block italic">dinheiro</span>
-            <span className="text-gradient block">todo dia.</span>
+            <span className="text-gradient block">todo dia</span>
           </h1>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-400 mb-14 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
+          <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-14 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
             Caixa que não bate. Garçom que some. Fiado que ninguém cobra.
             <br className="hidden sm:block" />
             O <span className="text-white font-bold">Botequista</span> resolve tudo isso — e <span className="text-emerald-400 font-bold">é grátis</span>.
@@ -260,10 +260,10 @@ export const LandingPage2: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-20 scroll-reveal">
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow group bg-[#25D366] text-white px-12 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 flex items-center gap-3">
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Começar Agora — É Grátis
+              Começar Agora Grátis
             </a>
-            <a href={whatsAppLinkDemo} target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-white px-8 py-5 rounded-2xl text-sm font-black uppercase tracking-widest transition-colors border border-white/10 hover:border-white/20">
-              Agendar Demonstração
+            <a href="/?demo=true" className="text-emerald-400 hover:text-emerald-300 px-8 py-5 rounded-2xl text-sm font-black uppercase tracking-widest transition-colors border border-emerald-500/20 hover:border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 flex items-center gap-2">
+              <span className="text-xl">🕹️</span> Entrar no Sandbox
             </a>
           </div>
 
@@ -272,28 +272,13 @@ export const LandingPage2: React.FC = () => {
             <BrowserFrame
               src="/landing_assets/assets/dashboard_real.png"
               alt="Painel de Vendas Real do Botequista"
-              label="Screenshot Real · Sistema em Produção"
+              label="Screenshot Real Sistema em Produção"
             />
           </div>
         </div>
       </section>
 
-      {/* ─── SOCIAL PROOF BAR ─── */}
-      <section className="py-8 border-y border-white/5 bg-white/[0.01]">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { label: 'Bares Ativos', value: <AnimatedCounter target={47} suffix="+" /> },
-            { label: 'Vendas Processadas', value: <AnimatedCounter target={12400} suffix="+" /> },
-            { label: 'Disponibilidade', value: <AnimatedCounter target={99} suffix="%" /> },
-            { label: 'Satisfação', value: <AnimatedCounter target={98} suffix="%" /> },
-          ].map((s, i) => (
-            <div key={i} className="scroll-reveal">
-              <div className="text-3xl md:text-4xl font-black text-white tracking-tight">{s.value}</div>
-              <div className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 mt-1">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* ─── THE PROBLEM ─── */}
       <section id="problema" className="py-32 px-6">
@@ -323,7 +308,7 @@ export const LandingPage2: React.FC = () => {
           </div>
 
           <div className="text-center mt-16 scroll-reveal">
-            <p className="text-2xl md:text-3xl font-black text-slate-400 italic tracking-tight">
+            <p className="text-2xl md:text-3xl font-black text-slate-200 italic tracking-tight">
               "Se você se identificou com <span className="text-red-500">2 ou mais</span>, o Botequista é pra você."
             </p>
           </div>
@@ -339,7 +324,7 @@ export const LandingPage2: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
               O sistema que <span className="text-emerald-500 italic">nunca para</span>.
             </h2>
-            <p className="mt-6 text-slate-500 text-lg max-w-2xl mx-auto">Projetado para o bar da vida real — com internet instável, funcionário de passagem e sexta-feira lotada.</p>
+            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Projetado para o bar da vida real com internet instável, funcionário de passagem e sexta-feira lotada</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -359,7 +344,7 @@ export const LandingPage2: React.FC = () => {
                 <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
                   O único sistema <span className="text-emerald-500">onde a internet é opcional</span>.
                 </h3>
-                <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                <p className="text-slate-200 text-lg leading-relaxed mb-8">
                   O Botequista trata a nuvem como um "estado eventual". Seus dados são salvos <strong className="text-white">localmente no dispositivo</strong> antes de qualquer coisa. Acabou a internet da operadora? O bar continua faturando.
                 </p>
                 <div className="flex flex-wrap gap-3">
@@ -373,7 +358,7 @@ export const LandingPage2: React.FC = () => {
                   <div className="text-6xl float-anim">📶</div>
                   <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Disponibilidade</div>
                   <div className="text-7xl font-black text-white"><AnimatedCounter target={99} suffix="%" /></div>
-                  <div className="text-[9px] text-slate-600 font-bold uppercase tracking-widest">Mesmo com queda de internet</div>
+                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Mesmo com queda de internet</div>
                 </div>
               </div>
             </div>
@@ -385,11 +370,11 @@ export const LandingPage2: React.FC = () => {
       <section id="sistema" className="py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-4 block">Veja com seus olhos</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Veja com seus olhos</span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
               Zero mockup. <span className="text-red-600 italic">Tudo Real.</span>
             </h2>
-            <p className="mt-6 text-slate-500 text-lg max-w-2xl mx-auto">Capturas de tela reais do sistema em produção. O Botequista é exatamente assim — sem filtro, sem photoshop.</p>
+            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Capturas de tela reais do sistema em produção. O Botequista é exatamente assim — sem filtro, sem photoshop.</p>
           </div>
 
           <ScreenshotGallery />
@@ -400,8 +385,8 @@ export const LandingPage2: React.FC = () => {
       <section className="py-32 px-6 bg-white/[0.01]">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-4 block">3 passos simples</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Funciona em <span className="text-emerald-500">15 minutos</span>.</h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">3 passos simples</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Funciona em <span className="text-emerald-500">15 minutos</span></h2>
           </div>
 
           <div className="space-y-0">
@@ -419,7 +404,7 @@ export const LandingPage2: React.FC = () => {
                 <div>
                   <div className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2">Passo {s.step}</div>
                   <h3 className="text-xl font-black uppercase tracking-tight mb-2">{s.title}</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
+                  <p className="text-slate-300 text-sm leading-relaxed">{s.desc}</p>
                 </div>
               </div>
             ))}
@@ -431,8 +416,8 @@ export const LandingPage2: React.FC = () => {
       <section className="py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-4 block">Nada escondido</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Tudo isso <span className="text-red-600">incluído</span>.</h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Nada escondido</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Tudo isso <span className="text-red-600">incluído</span></h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 scroll-reveal">
             {[
@@ -472,9 +457,9 @@ export const LandingPage2: React.FC = () => {
           </div>
           <div className="scroll-reveal bg-slate-950/80 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
             <div className="grid grid-cols-3 py-5 bg-white/5 px-6 font-black uppercase text-[11px] tracking-wider border-b border-white/10">
-              <div className="text-slate-400">Funcionalidade</div>
+              <div className="text-slate-200">Funcionalidade</div>
               <div className="text-center text-emerald-500">Botequista</div>
-              <div className="text-center text-slate-600">Outros</div>
+              <div className="text-center text-slate-400">Outros</div>
             </div>
             {[
               { f: 'Funciona Offline', b: true, t: false },
@@ -489,7 +474,7 @@ export const LandingPage2: React.FC = () => {
               { f: 'Preço Acessível', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">
-                <div className="text-slate-400 font-semibold text-xs">{row.f}</div>
+                <div className="text-slate-200 font-semibold text-xs">{row.f}</div>
                 <div className="text-center">{row.b ? <span className="text-emerald-500 font-black">✓</span> : <span className="text-red-500">✗</span>}</div>
                 <div className="text-center opacity-40">{row.t ? <span className="text-emerald-500 font-black">✓</span> : <span className="text-red-500">✗</span>}</div>
               </div>
@@ -502,7 +487,7 @@ export const LandingPage2: React.FC = () => {
       <section className="py-32 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 mb-4 block">Quem já usa, aprova</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Quem já usa, aprova</span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Depoimentos <span className="text-red-600 italic">Reais</span></h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -522,7 +507,7 @@ export const LandingPage2: React.FC = () => {
                   <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 font-black text-sm">{t.name[0]}</div>
                   <div>
                     <div className="text-white font-bold text-sm">{t.name}</div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.role} · {t.bar}</div>
+                    <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{t.role} {t.bar}</div>
                   </div>
                 </div>
               </div>
@@ -537,22 +522,22 @@ export const LandingPage2: React.FC = () => {
           <div className="scroll-reveal">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Preço Transparente</span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
-              É <span className="text-emerald-500">Grátis</span>. De Verdade.
+              É <span className="text-emerald-500">Grátis</span> De Verdade
             </h2>
-            <p className="text-slate-500 text-lg max-w-xl mx-auto mb-16">Estamos construindo o melhor sistema de bar do Brasil. Nossos primeiros parceiros usam tudo — sem pagar nada.</p>
+            <p className="text-slate-300 text-lg max-w-xl mx-auto mb-16">Estamos construindo o melhor sistema de bar do Brasil. Nossos primeiros parceiros usam tudo — sem pagar nada.</p>
           </div>
 
           <div className="scroll-reveal p-10 md:p-14 rounded-[40px] bg-slate-900/50 border border-emerald-500/20 relative overflow-hidden shine">
-            <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-8 py-2 rounded-b-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/30">Acesso Total · Early Adopter</div>
+            <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-8 py-2 rounded-b-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/30">Acesso Total Early Adopter</div>
 
             <div className="pt-8 mb-10">
               <div className="flex items-baseline justify-center gap-2 mb-2">
-                <span className="text-slate-600 text-2xl font-bold line-through">R$ 197</span>
-                <span className="text-[10px] font-black uppercase text-slate-600 tracking-widest">/mês</span>
+                <span className="text-slate-400 text-2xl font-bold line-through">R$ 197</span>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">/mês</span>
               </div>
               <div className="flex items-baseline justify-center gap-2">
                 <span className="text-7xl md:text-8xl font-black text-white">R$ 0</span>
-                <span className="text-xl font-bold text-slate-500">/mês</span>
+                <span className="text-xl font-bold text-slate-300">/mês</span>
               </div>
               <p className="text-emerald-400 font-bold text-sm mt-3">100% gratuito para parceiros fundadores.</p>
             </div>
@@ -580,7 +565,7 @@ export const LandingPage2: React.FC = () => {
               Ativar Minha Conta Grátis
             </a>
 
-            <p className="mt-6 text-[10px] text-slate-600 font-bold uppercase tracking-widest">Sem cartão · Sem contrato · Cancele quando quiser</p>
+            <p className="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sem cartão Sem contrato Cancele quando quiser</p>
           </div>
         </div>
       </section>
@@ -605,42 +590,21 @@ export const LandingPage2: React.FC = () => {
                 <span className={`text-xl font-black flex-shrink-0 transition-transform duration-300 ${activeFAQ === i ? 'rotate-45' : ''}`}>+</span>
               </div>
               <div className={`overflow-hidden transition-all duration-500 ${activeFAQ === i ? 'max-h-40 pb-6' : 'max-h-0'}`}>
-                <p className="text-slate-500 text-sm leading-relaxed">{faq.a}</p>
+                <p className="text-slate-300 text-sm leading-relaxed">{faq.a}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ─── FINAL CTA ─── */}
-      <section className="py-32 px-6">
-        <div className="max-w-4xl mx-auto scroll-reveal">
-          <div className="p-12 md:p-20 bg-gradient-to-br from-red-600 to-red-900 rounded-[60px] shadow-2xl shadow-red-900/40 relative overflow-hidden text-center group">
-            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1500"></div>
 
-            <div className="relative z-10">
-              <h2 className="text-4xl sm:text-5xl md:text-7xl font-black leading-[0.85] italic uppercase text-white mb-8">
-                Pare de perder <br/> dinheiro <span className="not-italic">hoje</span>.
-              </h2>
-              <p className="text-white/60 text-lg mb-12 max-w-xl mx-auto">
-                Cada dia sem controle é dinheiro saindo pela porta. O Botequista é grátis, roda em 15 minutos e nunca trava. O que você tem a perder?
-              </p>
-              <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 bg-white text-red-600 px-14 py-6 rounded-2xl text-xl font-black uppercase tracking-tight hover:scale-105 active:scale-95 transition-all shadow-2xl">
-                <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                Começar Agora — É Grátis
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ─── FOOTER ─── */}
       <footer className="py-16 border-t border-white/5">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-barrio text-lg">B</div>
-            <span className="text-lg font-black uppercase font-barrio text-slate-500">Botequista</span>
+            <span className="text-lg font-black uppercase font-barrio text-slate-300">Botequista</span>
           </div>
           <p className="text-xs font-bold text-slate-700">&copy; {new Date().getFullYear()} Botequista Systems. Todos os direitos reservados.</p>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-700">
@@ -660,7 +624,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="text-xl">🛡️</span>
                 <h3 className="text-lg font-mono font-bold text-emerald-500">&gt; cat architecture.v4.3</h3>
               </div>
-              <button onClick={() => setIsNerdModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setIsNerdModalOpen(false)} className="text-slate-200 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -680,7 +644,7 @@ export const LandingPage2: React.FC = () => {
               </div>
               <div className="p-5 bg-slate-950/50 rounded-xl border border-slate-800">
                 <p className="text-emerald-500 mb-3 font-bold">$ sync --explain</p>
-                <p className="text-slate-500 text-xs leading-relaxed">
+                <p className="text-slate-300 text-xs leading-relaxed">
                   Arquitetura Offline-First com SyncQueue resiliente. Cada operação de escrita é primeiro persistida no IndexedDB local (latência ~1ms),
                   depois enfileirada para sincronização em background com Firebase RTDB. Estratégia de conflito: Last-Write-Wins com timestamp do cliente.
                   Exponential backoff para retry. Guardas beforeunload impedem perda de dados pendentes. Disponibilidade efetiva: 99.9% mesmo em redes instáveis.
@@ -688,7 +652,7 @@ export const LandingPage2: React.FC = () => {
               </div>
               <div className="p-5 bg-slate-950/50 rounded-xl border border-slate-800">
                 <p className="text-emerald-500 mb-3 font-bold">$ perf --benchmark</p>
-                <div className="grid grid-cols-2 gap-4 text-xs text-slate-500">
+                <div className="grid grid-cols-2 gap-4 text-xs text-slate-300">
                   <div>Checkout latency: <span className="text-white">&lt; 50ms</span></div>
                   <div>Cold start (PWA): <span className="text-white">&lt; 2s</span></div>
                   <div>Offline write: <span className="text-white">&lt; 5ms</span></div>
@@ -707,12 +671,12 @@ export const LandingPage2: React.FC = () => {
           <div className="relative bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
             <div className="bg-slate-800 p-5 flex justify-between items-center border-b border-slate-700">
               <h3 className="text-lg font-black uppercase tracking-wider">🔒 Política de Privacidade</h3>
-              <button onClick={() => setIsPrivacyOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setIsPrivacyOpen(false)} className="text-slate-200 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
-              <p className="text-slate-500 text-xs">Última atualização: Abril de 2026</p>
+              <p className="text-slate-300 text-xs">Última atualização: Abril de 2026</p>
               <div>
                 <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Dados Coletados</h4>
                 <p>O Botequista coleta apenas os dados estritamente necessários para o funcionamento do sistema de gestão do seu estabelecimento: informações de produtos, vendas, operadores, mesas e movimentações financeiras. Não coletamos dados pessoais dos clientes finais do seu bar.</p>
@@ -749,12 +713,12 @@ export const LandingPage2: React.FC = () => {
           <div className="relative bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col">
             <div className="bg-slate-800 p-5 flex justify-between items-center border-b border-slate-700">
               <h3 className="text-lg font-black uppercase tracking-wider">📜 Termos de Uso</h3>
-              <button onClick={() => setIsTermsOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+              <button onClick={() => setIsTermsOpen(false)} className="text-slate-200 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
-              <p className="text-slate-500 text-xs">Última atualização: Abril de 2026</p>
+              <p className="text-slate-300 text-xs">Última atualização: Abril de 2026</p>
               <div>
                 <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Aceitação dos Termos</h4>
                 <p>Ao utilizar o sistema Botequista, você concorda com estes termos de uso. O Botequista é um sistema de gestão para bares e restaurantes fornecido como SaaS (Software as a Service) pela Botequista Systems.</p>

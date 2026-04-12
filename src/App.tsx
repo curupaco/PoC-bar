@@ -55,8 +55,19 @@ export const App: React.FC = () => {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => { } });
 
   // 2. Data Store & Auth
-  const { currentUser, setCurrentUser, currentUserRef, loginError, handleLogin, logout, syncCurrentUser } = useAuth();
+  const { currentUser, setCurrentUser, currentUserRef, loginError, handleLogin, logout, syncCurrentUser, enableDemoMode } = useAuth();
   const store = useAppStore({ currentUser, currentUserRef, showToast });
+
+  const isDemo = window.location.search.includes('demo=true') || localStorage.getItem('_demo_mode') === 'true';
+
+  useEffect(() => {
+    if (window.location.search.includes('demo=true')) {
+      localStorage.setItem('_demo_mode', 'true');
+      enableDemoMode();
+    } else if (!isDemo && localStorage.getItem('_demo_mode')) {
+      localStorage.removeItem('_demo_mode');
+    }
+  }, [enableDemoMode, isDemo]);
 
   useEffect(() => {
     syncCurrentUser(store.users);
@@ -148,6 +159,12 @@ export const App: React.FC = () => {
       />
 
       <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+        {isDemo && (
+          <div className="bg-amber-500 text-slate-900 px-4 py-2 text-center text-xs font-black uppercase tracking-widest shadow-md z-50 flex justify-center items-center gap-4">
+            <span>⚠️ Você está testando o sistema. Nenhuma alteração será salva.</span>
+            <button onClick={() => { localStorage.removeItem('_demo_mode'); window.location.href = '/landing2'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
+          </div>
+        )}
         <AppHeader 
           setIsSidebarOpen={setIsSidebarOpen} activeUnitName={activeUnitName} visibleUnits={store.visibleUnits} 
           handleSwitchUnit={store.handleSwitchUnit} setStatusModalOpen={setStatusModalOpen} 

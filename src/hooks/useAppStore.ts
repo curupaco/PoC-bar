@@ -5,6 +5,7 @@ import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
 import { safeLocalStorage } from '../utils/storage';
 import { ALL_PERMISSIONS } from '../constants/permissions';
+import { mockProducts, mockCategories, mockUnits, mockUsers, mockShifts, mockOpenTabs } from '../utils/mockData';
 
 interface AppStoreProps {
   currentUser: User | null;
@@ -13,26 +14,31 @@ interface AppStoreProps {
 }
 
 export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStoreProps) => {
-  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'offline'>('idle');
+  const isDemo = useMemo(() => {
+    return window.location.search.includes('demo=true') || safeLocalStorage.getItem('_demo_mode') === 'true';
+  }, []);
+
+  const [dbStatus, setDbStatus] = useState<'idle' | 'loading' | 'success' | 'error' | 'offline'>(isDemo ? 'success' : 'idle');
   const [serverHealth, setServerHealth] = useState<'ok' | 'error'>('ok');
   const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>(isDemo ? mockProducts : []);
   const [modifierGroups, setModifierGroups] = useState<ModifierGroup[]>([]);
   const [categoryModifiers, setCategoryModifiers] = useState<Record<string, string>>({});
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(isDemo ? mockCategories : []);
   const [sales, setSales] = useState<Sale[]>([]);
-  const [openTabs, setOpenTabs] = useState<Tab[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [units, setUnits] = useState<Unit[]>([]);
+  const [openTabs, setOpenTabs] = useState<Tab[]>(isDemo ? mockOpenTabs : []);
+  const [users, setUsers] = useState<User[]>(isDemo ? mockUsers : []);
+  const [shifts, setShifts] = useState<Shift[]>(isDemo ? mockShifts : []);
+  const [units, setUnits] = useState<Unit[]>(isDemo ? mockUnits : []);
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
 
-  const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => safeLocalStorage.getItem('btq_active_unit'));
+  const [rawActiveUnitId, setRawActiveUnitId] = useState<string | null>(() => isDemo ? 'unit-demo' : safeLocalStorage.getItem('btq_active_unit'));
+
 
   // Logic for Unit selection and validation
   const visibleUnits = useMemo(() => {
@@ -86,8 +92,9 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     key: import.meta.env.VITE_FIREBASE_API_KEY,
     email: import.meta.env.VITE_FIREBASE_EMAIL,
     pass: import.meta.env.VITE_FIREBASE_PASSWORD,
-    allPerms: ALL_PERMISSIONS
-  }), []);
+    allPerms: ALL_PERMISSIONS,
+    isDemo
+  }), [isDemo]);
 
   const handleSetOpenTabs = useCallback((tabs: any) => {
     const sanitized = (!tabs) ? [] : (Array.isArray(tabs) ? tabs : Object.values(tabs)).filter(Boolean).map((t: any) => ({
@@ -137,6 +144,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
   // Persistence helpers
   const saveLocalCache = useCallback(async (key: string, data: any) => {
+    if (isDemo) return;
     if (!validatedActiveUnitId) return;
     const cacheKey = `btq_cache_${validatedActiveUnitId}`;
     try {
@@ -148,16 +156,18 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       console.warn('Cache write failed', err);
       throw err;
     }
-  }, [validatedActiveUnitId]);
+  }, [validatedActiveUnitId, isDemo]);
 
   const persist = useCallback(async (node: string, data: any, itemId?: string) => {
+    if (isDemo) return;
     if (!validatedActiveUnitId) return;
     await SyncQueue.enqueue({ node, data, itemId, unitId: validatedActiveUnitId, action: 'overwrite' });
-  }, [validatedActiveUnitId]);
+  }, [validatedActiveUnitId, isDemo]);
 
   const persistGlobal = useCallback(async (node: string, data: any, itemId?: string) => {
+    if (isDemo) return;
     await SyncQueue.enqueue({ node, data, itemId, unitId: 'GLOBAL', action: 'overwrite' });
-  }, []);
+  }, [isDemo]);
 
   const addAuditLog = useCallback(async (action: string, details: string) => {
     if (!validatedActiveUnitId || !currentUserRef.current) return;
