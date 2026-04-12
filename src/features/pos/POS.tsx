@@ -429,7 +429,7 @@ export const POS: React.FC<POSProps> = ({
 
               {!isClosingTab ? (
                 <>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3 no-scrollbar">
+                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {tabItems.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-slate-300 font-black uppercase text-[10px] italic opacity-50">Comanda Vazia</div>
                     ) : (
@@ -466,7 +466,7 @@ export const POS: React.FC<POSProps> = ({
                   </div>
                 </>
               ) : (
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 overflow-y-auto">
                   <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={activeTabId === 'shortcut-payment' ? shortcutCheckout : null} />
                 </div>
               )}
