@@ -94,7 +94,7 @@ const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?
 const screenshots = [
   { src: '/landing_assets/assets/pos_real.png', label: 'Tela de Vendas', desc: 'Seus produtos favoritos no topo, busca instantânea e a comanda atualizada em tempo real' },
   { src: '/landing_assets/assets/dashboard_real.png', label: 'Suas Mesas', desc: 'Cada mesa com sua cor: verde tá bebendo, amarelo tá demorando, vermelho cuidado' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Fechamento', desc: 'Dinheiro, Pix, Cartão ou fiado — tudo junto na mesma tela' },
+  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Fechamento', desc: 'Dinheiro, Pix, Cartão ou fiado tudo junto na mesma tela' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O garçom conta o dinheiro sem ver quanto deveria ter. Você descobre a verdade.' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Caixa', desc: 'Sangria, suprimento e controle do cofre. Como um caixa eletrônico, só digita e confirma.' },
   { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: 'Sete tipos de relatório: financeiro, produtos, equipe, tudo organizado por turno' },
@@ -246,7 +246,7 @@ export const LandingPage2: React.FC = () => {
         <div className="max-w-6xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-10 scroll-reveal animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-           Early Access: Primeiros 50 bares GRÁTIS
+                       Programa parceiro: Primeiros 10 bares GRÁTIS
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
@@ -256,7 +256,7 @@ export const LandingPage2: React.FC = () => {
           </h1>
 
           <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
-            O bar continua vendendo <span className="text-white font-bold">mesmo offline</span>. O caixa <span className="text-emerald-400 font-bold">bate todo dia</span>. E você tem <span className="text-white font-bold">controle total</span> do seu negócio. Tudo <span className="text-emerald-400 font-bold">de graça</span> — sem pegadinha.
+            O bar continua vendendo <span className="text-white font-bold">mesmo offline</span>. O caixa <span className="text-emerald-400 font-bold">bate todo dia</span>. E você tem <span className="text-white font-bold">controle total</span> do seu negócio. Tudo <span className="text-emerald-400 font-bold">de graça</span> sem pegadinha.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16 scroll-reveal">
@@ -270,7 +270,7 @@ export const LandingPage2: React.FC = () => {
           {/* Trust Badges */}
           <div className="flex flex-wrap justify-center gap-8 mb-16 scroll-reveal">
             <div className="flex items-center gap-2 text-slate-300">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 font-black text-xs">47</div>
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 font-black text-xs">3</div>
               <span className="text-xs">bares usando agora</span>
             </div>
             <div className="flex items-center gap-2 text-slate-300">
@@ -300,7 +300,6 @@ export const LandingPage2: React.FC = () => {
       <section id="problema" className="py-24 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500 mb-4 block">Provavelmente é o seu caso</span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] uppercase">
               O sistema que <span className="text-red-500 italic">não trava</span>. O caixa que <span className="text-red-500 italic">bate</span>.
             </h2>
@@ -310,20 +309,14 @@ export const LandingPage2: React.FC = () => {
             {[
               { text: 'Caixa nunca fecha certo. Sempre falta ou sobra dinheiro.' },
               { text: 'Internet cai = bar fecha. Perde venda na sexta-feira.' },
-              { text: 'Fiado vira债. Cliente some sem pagar.' },
-              { text: 'Não sabe quem vendeu o quê. Funcionário fazendo hora?' },
+              { text: 'Fiado vira dívida. Cliente some sem pagar.' },
+              { text: 'Não sabe quem vendeu o quê. Funcionários sem métricas?' },
             ].map((p, i) => (
               <div key={i} className="scroll-reveal flex items-center gap-4 p-5 rounded-2xl bg-red-950/10 border border-red-900/20">
                 <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
                 <span className="text-slate-200 text-sm">{p.text}</span>
               </div>
             ))}
-          </div>
-
-          <div className="text-center mt-10 scroll-reveal">
-            <p className="text-lg md:text-xl font-medium text-slate-300 italic">
-              "Cada problema resolvido = <span className="text-emerald-400 font-bold">R$ +500 economizados por mês</span>"
-            </p>
           </div>
         </div>
       </section>
@@ -337,7 +330,7 @@ export const LandingPage2: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
               O sistema que <span className="text-emerald-500 italic">nunca para</span>.
             </h2>
-            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Projetado para o bar da vida real com internet instável, funcionário de passagem e sexta-feira lotada</p>
+            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Projetado para o bar da vida real com internet instável, sexta-feira lotada e clientes exigentes e apressados</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -355,7 +348,7 @@ export const LandingPage2: React.FC = () => {
               <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-4">Exclusividade Botequista</div>
                 <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
-                  A internet pode<span className="text-emerald-500">ogar</span>.
+                  A internet pode<span className="text-emerald-500"> cair</span>.
                 </h3>
                 <p className="text-slate-200 text-lg leading-relaxed mb-8">
                   O Botequista salva os dados primeiro no celular do garçom, e depois na nuvem. Se a internet cair, a venda continua. Quando voltar, tudo se sincroniza. Sem precisar de TI, sem dor de cabeça.
@@ -385,9 +378,9 @@ export const LandingPage2: React.FC = () => {
           <div className="text-center mb-20 scroll-reveal">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Veja com seus olhos</span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-              Zero mockup. <span className="text-red-600 italic">Tudo Real.</span>
+              Zero Photoshop. <span className="text-red-600 italic">Tudo Real.</span>
             </h2>
-            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Capturas de tela reais do sistema em produção. O Botequista é exatamente assim — sem filtro, sem photoshop.</p>
+            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Capturas de tela reais do sistema em produção. O Botequista é exatamente assim sem filtro, sem photoshop.</p>
           </div>
 
           <ScreenshotGallery />
@@ -537,7 +530,7 @@ export const LandingPage2: React.FC = () => {
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
               É <span className="text-emerald-500">Grátis</span> De Verdade
             </h2>
-            <p className="text-slate-300 text-lg max-w-xl mx-auto mb-16">Estamos construindo o melhor sistema de bar do Brasil. Nossos primeiros parceiros usam tudo — sem pagar nada.</p>
+            <p className="text-slate-300 text-lg max-w-xl mx-auto mb-16">Estamos construindo o melhor sistema de bar do Brasil. Nossos primeiros parceiros usam tudo sem pagar nada.</p>
           </div>
 
           <div className="scroll-reveal p-10 md:p-14 rounded-[40px] bg-slate-900/50 border border-emerald-500/20 relative overflow-hidden shine">
@@ -634,7 +627,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-barrio text-lg">B</div>
             <span className="text-lg font-black uppercase font-barrio text-slate-300">Botequista</span>
           </div>
-          <p className="text-xs font-bold text-slate-400">&copy; {new Date().getFullYear()} Botequista Systems. Todos os direitos reservados.</p>
+          <p className="text-xs font-bold text-slate-400">&copy; {new Date().getFullYear()} Botequista. Todos os direitos reservados.</p>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
             <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Privacidade</button>
             <button onClick={() => setIsTermsOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Termos</button>
