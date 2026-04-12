@@ -110,8 +110,8 @@ export const App: React.FC = () => {
   };
 
   // Guardas de Roteamento/Estado
-  if (window.location.pathname.startsWith('/landing2')) return <LandingPage2 />;
-  if (window.location.pathname.startsWith('/landing')) return <LandingPage />;
+  if (window.location.pathname.startsWith('/landing2')) return <LandingPage />;
+  if (window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
   if (!import.meta.env.VITE_FIREBASE_API_KEY) return <FirebaseGuard />;
   if (!currentUser) return <Login onLogin={(u, p) => handleLogin(u, p, store.users)} isLoading={store.dbStatus === 'loading' && store.users.length === 0} error={loginError} />;
   
