@@ -242,30 +242,45 @@ export const LandingPage2: React.FC = () => {
 
       <main>
       {/* ─── HERO ─── */}
-      <section className="hero-gradient relative pt-16 pb-32 px-6">
+      <section className="hero-gradient relative pt-16 pb-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-10 scroll-reveal">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-            100% Gratuito Sem cartão de crédito
+          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-10 scroll-reveal animate-pulse">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+           Early Access: Primeiros 50 bares GRÁTIS
           </div>
 
-          <h1 className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
-            <span className="text-gradient block">Seu bar perde</span>
-            <span className="text-red-600 block italic">dinheiro</span>
-            <span className="text-gradient block">todo dia</span>
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
+            <span className="text-gradient block">PDV que</span>
+            <span className="text-emerald-500 block italic">funciona</span>
+            <span className="text-gradient block">de verdade</span>
           </h1>
 
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-14 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
-            Caixa que não bate. Garçom que some. Fiado que ninguém cobra.
-            <br className="hidden sm:block" />
-            O <span className="text-white font-bold">Botequista</span> resolve tudo isso — e <span className="text-emerald-400 font-bold">é grátis</span>.
+          <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
+            Funciona <span className="text-white font-bold">offline</span>. Caixa que <span className="text-emerald-400 font-bold">bate</span>. Controle <span className="text-white font-bold">total</span>. E é <span className="text-emerald-400 font-bold">grátis</span> — sem asterisco.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-20 scroll-reveal">
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow group bg-[#25D366] text-white px-12 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16 scroll-reveal">
+            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow group bg-[#25D366] text-white px-12 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 flex items-center gap-3 shadow-xl">
               <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Começar Agora Grátis
+              Criar Minha Conta Grátis
             </a>
+            <p className="text-xs text-slate-400 font-medium">Não precisa cartão • 2 min para configurar</p>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="flex flex-wrap justify-center gap-8 mb-16 scroll-reveal">
+            <div className="flex items-center gap-2 text-slate-300">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 font-black text-xs">47</div>
+              <span className="text-xs">bares usando agora</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              <span className="text-xs">Nota 4.9/5.0</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-300">
+              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+              <span className="text-xs">Funciona offline</span>
+            </div>
           </div>
 
           {/* Hero Image */}
@@ -273,7 +288,7 @@ export const LandingPage2: React.FC = () => {
             <BrowserFrame
               src="/landing_assets/assets/dashboard_real.png"
               alt="Painel de Vendas Real do Botequista"
-              label="Screenshot Real Sistema em Produção"
+              label="Sistema em Produção"
             />
           </div>
         </div>
@@ -282,35 +297,32 @@ export const LandingPage2: React.FC = () => {
 
 
       {/* ─── THE PROBLEM ─── */}
-      <section id="problema" className="py-32 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500 mb-4 block">O Elefante na sala</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-              Você sabe quanto <span className="text-red-600 italic">perde</span> por mês?
+      <section id="problema" className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500 mb-4 block">Provavelmente é o seu caso</span>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] uppercase">
+              O sistema que <span className="text-red-500 italic">não trava</span>. O caixa que <span className="text-red-500 italic">bate</span>.
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="space-y-4">
             {[
-              { icon: '💸', title: 'Caixa Furado', desc: 'O operador "ajusta" os números antes de fechar. Você não sabe o valor real da gaveta.' },
-              { icon: '📉', title: 'Fiado Sem Controle', desc: 'Clientes devem. Você anota num caderno. Metade some.' },
-              { icon: '🌐', title: 'Internet Caiu = Bar Parou', desc: 'Outros sistemas travam. Você perde vendas no horário de pico.' },
-              { icon: '🐢', title: 'Atendimento Lento', desc: 'Garçom abrindo menu, digitando, esperando carregamento. O cliente vai embora.' },
-              { icon: '🔒', title: 'Zero Auditoria', desc: 'Cancelaram uma venda? Quem? Quando? Você nunca vai saber.' },
-              { icon: '📊', title: 'Sem Dados, Sem Lucro', desc: 'Você não sabe quais produtos dão lucro e quais só ocupam geladeira.' },
+              { text: 'Caixa nunca fecha certo. Sempre falta ou sobra algo.' },
+              { text: 'Internet cai = bar para. Perde venda na sexta.' },
+              { text: 'Fiado vira divida. Cliente some sem pagar.' },
+              { text: 'Não sabe quem vendeu o que. Sem Controle.' },
             ].map((p, i) => (
-              <div key={i} className="scroll-reveal group p-8 rounded-3xl bg-red-950/20 border border-red-900/20 hover:border-red-600/30 transition-all">
-                <div className="text-3xl mb-5">{p.icon}</div>
-                <h3 className="text-white font-black uppercase text-sm tracking-wide mb-3">{p.title}</h3>
-                <p className="text-red-300/60 text-sm leading-relaxed">{p.desc}</p>
+              <div key={i} className="scroll-reveal flex items-center gap-4 p-5 rounded-2xl bg-red-950/10 border border-red-900/20">
+                <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
+                <span className="text-slate-200 text-sm">{p.text}</span>
               </div>
             ))}
           </div>
 
-          <div className="text-center mt-16 scroll-reveal">
-            <p className="text-2xl md:text-3xl font-black text-slate-200 italic tracking-tight">
-              "Se você se identificou com <span className="text-red-500">2 ou mais</span>, o Botequista é pra você."
+          <div className="text-center mt-10 scroll-reveal">
+            <p className="text-lg md:text-xl font-medium text-slate-300 italic">
+              "Cada problema resolvido = <span className="text-emerald-400 font-bold">R$ 500+ economizados por mês</span>"
             </p>
           </div>
         </div>
@@ -578,12 +590,9 @@ export const LandingPage2: React.FC = () => {
             <h2 className="text-3xl font-black uppercase tracking-tighter">Perguntas Frequentes</h2>
           </div>
           {[
-            { q: 'O sistema funciona de verdade sem internet?', a: 'Sim. Cada dispositivo tem seu próprio banco de dados local (IndexedDB). As vendas são salvas instantaneamente no aparelho e sincronizadas com a nuvem quando a conexão volta. Seu bar literalmente nunca para.' },
-            { q: 'Preciso de algum equipamento especial?', a: 'Não. Funciona em qualquer dispositivo com navegador moderno: tablet Android, iPad, notebook, PC. Recomendamos ter um teclado se quiser usar os atalhos do PDV Ninja para máxima velocidade.' },
-            { q: 'Quanto tempo leva para começar a usar?', a: 'Em menos de 15 minutos você cadastra seu cardápio e já pode lançar a primeira venda. A configuração é guiada — não precisa de equipe de TI.' },
-            { q: 'E se minha equipe não souber mexer em tecnologia?', a: 'A interface foi desenhada para operação noturna com botões grandes e fluxos simples. Nossos garçons de teste aprenderam em 10 minutos, sem manual.' },
-            { q: 'Por que é grátis? Qual é a pegadinha?', a: 'Estamos em fase de expansão e queremos parceiros que nos ajudem a refinar o produto. Não tem pegadinha, não tem cartão, não tem contrato. Quando o preço mudar, os fundadores mantêm condições especiais.' },
-            { q: 'Meus dados ficam seguros?', a: 'Seus dados são salvos em 3 camadas: nuvem Firebase, IndexedDB local e backup manual em arquivo. Temos criptografia AES-256, registro de auditoria e guardas contra perda acidental.' },
+            { q: 'É grátis mesmo?', a: 'Sim. Zero mensalidade. Zero contrato. Zero cartão. Enquanto você for parceiro fundador, é de graça pra sempre.' },
+            { q: 'Funciona offline?', a: 'Sim. Vende sem internet. Os dados ficam no dispositivo e sincronizam quando a conexão voltar.' },
+            { q: 'Quanto tempo pra começar?', a: '15 minutos. Você cadastra o cardápio e já pode vender. Sem ajuda técnica necessária.' },
           ].map((faq, i) => (
             <div key={i} className="scroll-reveal group border-b border-white/5 cursor-pointer" onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}>
               <div className="flex justify-between items-center py-6 group-hover:text-red-500 transition-colors">
@@ -595,6 +604,22 @@ export const LandingPage2: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ─── FINAL CTA ─── */}
+      <section className="py-20 px-6">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="scroll-reveal p-10 rounded-3xl bg-gradient-to-b from-emerald-900/20 to-transparent border border-emerald-500/20">
+            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-4">
+              Pronto pra <span className="text-emerald-400">tirar a prova</span>?
+            </h3>
+            <p className="text-slate-300 mb-8 text-sm">São 2 minutos. Sem compromisso. Sem cartão.</p>
+            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center gap-3 bg-[#25D366] text-white px-10 py-4 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Falar com Consultor
+            </a>
+          </div>
         </div>
       </section>
 
