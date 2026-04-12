@@ -143,11 +143,6 @@ export const POS: React.FC<POSProps> = ({
         showFeedback(`+${quantity} ${product.name}`);
     }
 
-    // ITEM 7: ATUALIZA TIMESTAMP DE ATIVIDADE
-    if (activeTab && onSaveTab) {
-       onSaveTab({ ...activeTab, lastItemAddedAt: Date.now() });
-    }
-
     setModifierModalData(null);
   }, [activeTabId, tabItems, onUpdateTabItem, showFeedback, activeTab, onSaveTab]);
 

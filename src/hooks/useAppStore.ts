@@ -232,7 +232,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
           } else if (item.quantity > 0) {
             currentItems.push(item);
           }
-          return { ...t, items: currentItems };
+          return { ...t, items: currentItems, lastItemAddedAt: Date.now() };
         }
         return t;
       });
@@ -241,6 +241,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     });
     updateLocalTimestamp('openTabs');
     await persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
+    await persist(`openTabs/${tabId}`, Date.now(), 'lastItemAddedAt');
   }, [persist, saveLocalCache, updateLocalTimestamp]);
 
   const handleDeleteTab = useCallback(async (tabId: string) => {
