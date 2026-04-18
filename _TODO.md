@@ -49,7 +49,7 @@ media vendas x dias
 
 Valor: gigantesco para donos desorganizados.
 
-3️⃣ Ticket Médio por Mesa
+~~3️⃣ Ticket Médio por Mesa~~ [FEITO]
 Muito simples.
 
 Você já tem:
@@ -125,7 +125,7 @@ segurança anti-fraude
 Complexidade:
 baixa (só análise de eventos).
 
-8️⃣ Tempo Médio de Mesa
+~~8️⃣ Tempo Médio de Mesa~~ [FEITO]
 Dados já existem.
 
 Resultado:
@@ -353,7 +353,7 @@ Preparar:
 
 Isso é gestão operacional inteligente.
 
-9. Detector de Mesa Travada
+~~9. Detector de Mesa Travada~~ [FEITO]
 Muito comum.
 Mesa fica aberta muito tempo sem consumir.
 

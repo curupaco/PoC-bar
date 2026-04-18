@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Elite Operational Protocol v4.3
+           Elite Intelligence Protocol v4.4
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -41,17 +41,18 @@ const Help: React.FC = () => {
           </div>
         </section>
 
-        {/* 2. Operação Saideira */}
+        {/* 2. Operação Saideira & Inteligência */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-100 dark:border-orange-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-orange-500/50 transition-all group">
           <div className="flex items-center gap-4 text-orange-600">
             <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <span className="text-2xl font-black">🍻</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight italic">Fluxo Saideira</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Fluxo de Giro</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-orange-600 font-black italic">ULTRA VELOCIDADE:</span> Use o botão <FakeButton color="orange">Repetir Saideira</FakeButton> para adicionar automaticamente o último item pedido na mesa.</p>
-            <p>• <span className="text-orange-600 font-black italic">MESA OCIOSA:</span> Fique atento à cor das mesas. Se piscar em <span className="text-red-600 font-black">vermelho</span>, a mesa está há muito tempo sem consumir.</p>
+            <p>• <span className="text-orange-600 font-black italic">SAIDEIRA:</span> Use <FakeButton color="orange">Repetir Saideira</FakeButton> para adicionar o último item pedido.</p>
+            <p>• <span className="text-red-600 font-black italic">MESA TRAVADA:</span> Se o card pulsar em <span className="text-red-600 font-black">vermelho</span> e sugerir a saideira, a mesa está há muito tempo sem consumo. Aja rápido!</p>
+            <p>• <span className="text-slate-400 font-black italic">CRONÔMETRO:</span> Cada mesa mostra há quanto tempo está aberta e há quanto tempo foi o último pedido.</p>
           </div>
         </section>
 
@@ -64,8 +65,8 @@ const Help: React.FC = () => {
             <h3 className="text-xl font-black uppercase tracking-tight italic">Painel Elite</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-emerald-600 font-black italic">RANKING:</span> No Dashboard, acompanhe quem é o garçom campeão do dia.</p>
-            <p>• <span className="text-emerald-600 font-black italic">HEATMAP:</span> Visualize as horas de pico em gráficos de densidade para planejar seu estoque.</p>
+            <p>• <span className="text-emerald-600 font-black italic">TICKET MÉDIO:</span> No Dashboard, acompanhe se o consumo está subindo ou descendo com as setas de tendência.</p>
+            <p>• <span className="text-emerald-600 font-black italic">HEATMAP:</span> Visualize as horas de pico para planejar sua escala de funcionários.</p>
           </div>
         </section>
 

@@ -41,8 +41,37 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
     });
   }, [sales, activePeriod]);
 
-  const realizedRevenue = useMemo(() => 
-    filteredSales.reduce((acc, s) => {
+  const previousFilteredSales = useMemo(() => {
+    const nowTs = Date.now();
+    const todayStart = getBusinessDateStart(nowTs);
+    
+    return (sales || []).filter(s => {
+      if (s.deleted) return false;
+      const saleStart = getBusinessDateStart(s.timestamp);
+      
+      switch (activePeriod) {
+        case 'HOJE': return saleStart === todayStart - 86400000;
+        case 'ONTEM': return saleStart === todayStart - (2 * 86400000);
+        case 'SEMANA': 
+          const weekAgo = todayStart - (6 * 86400000);
+          return s.timestamp >= weekAgo - (7 * 86400000) && s.timestamp < weekAgo;
+        case 'MÊS':
+          const dMonth = new Date(todayStart);
+          const firstThisMonth = new Date(dMonth.getFullYear(), dMonth.getMonth(), 1).getTime();
+          const firstLastMonth = new Date(dMonth.getFullYear(), dMonth.getMonth() - 1, 1).getTime();
+          return s.timestamp >= firstLastMonth && s.timestamp < firstThisMonth;
+        case 'ANO':
+          const yYear = new Date(todayStart);
+          const firstThisYear = new Date(yYear.getFullYear(), 0, 1).getTime();
+          const firstLastYear = new Date(yYear.getFullYear() - 1, 0, 1).getTime();
+          return s.timestamp >= firstLastYear && s.timestamp < firstThisYear;
+        default: return false;
+      }
+    });
+  }, [sales, activePeriod]);
+
+  const getStats = (salesList: Sale[]) => {
+    const revenue = salesList.reduce((acc, s) => {
        if (s.payments) {
           const paidAmount = s.payments
              .filter(p => p.method !== PaymentMethod.PENDURA)
@@ -51,14 +80,19 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
        } else {
           return acc + (s.paymentMethod !== PaymentMethod.PENDURA ? (s.total ?? 0) : 0);
        }
-    }, 0)
-  , [filteredSales]);
+    }, 0);
+    const orders = salesList.filter(s => !s.items?.some(i => i.productId === 'quitacao')).length;
+    const avg = orders > 0 ? revenue / orders : 0;
+    return { revenue, orders, avg };
+  };
 
-  const operationalOrders = useMemo(() => 
-    filteredSales.filter(s => !s.items?.some(i => i.productId === 'quitacao')).length
-  , [filteredSales]);
+  const currentStats = useMemo(() => getStats(filteredSales), [filteredSales]);
+  const previousStats = useMemo(() => getStats(previousFilteredSales), [previousFilteredSales]);
 
-  const avgOrder = operationalOrders > 0 ? realizedRevenue / operationalOrders : 0;
+  const avgOrderChange = useMemo(() => {
+    if (previousStats.avg === 0) return null;
+    return ((currentStats.avg - previousStats.avg) / previousStats.avg) * 100;
+  }, [currentStats.avg, previousStats.avg]);
 
   const barData = useMemo(() => {
     const counts = filteredSales
@@ -125,9 +159,16 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Faturamento Líquido', val: formatCurrency(realizedRevenue), sub: 'Liquidez Real', color: 'text-emerald-500' },
-          { label: 'Tickets Realizados', val: operationalOrders, sub: 'Volume de Atendimento', color: 'text-blue-500' },
-          { label: 'Ticket Médio', val: formatCurrency(avgOrder), sub: 'Consumo por Mesa', color: 'text-indigo-500' },
+          { label: 'Faturamento Líquido', val: formatCurrency(currentStats.revenue), sub: 'Liquidez Real', color: 'text-emerald-500' },
+          { label: 'Tickets Realizados', val: currentStats.orders, sub: 'Volume de Atendimento', color: 'text-blue-500' },
+          { 
+            label: 'Ticket Médio', 
+            val: formatCurrency(currentStats.avg), 
+            sub: avgOrderChange !== null 
+              ? `${avgOrderChange >= 0 ? '↑' : '↓'} ${Math.abs(avgOrderChange).toFixed(1)}% vs anterior`
+              : 'Consumo por Mesa', 
+            color: avgOrderChange !== null ? (avgOrderChange >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-indigo-500' 
+          },
           { label: 'Status Sistema', val: 'Estável', sub: 'Rede Operacional', color: 'text-emerald-500' }
         ].map((stat, i) => (
           <div key={i} className="p-6 border shadow-sm bg-white dark:bg-slate-900 rounded-3xl border-slate-200 dark:border-slate-800 hover:scale-[1.02] transition-transform cursor-default">

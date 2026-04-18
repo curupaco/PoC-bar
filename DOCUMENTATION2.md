@@ -25,10 +25,12 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 ### ⚡ Turbo-Operação (Velocidade Extrema)
 - **Atalhos Globais:** Opere o sistema sem tocar no mouse. `F1` para Venda Rápida, `Espaço` para fechar a conta. Velocidade de checkout 50% maior.
 - **Botão Saideira:** O cliente pediu "mais uma das mesmas"? Repita o último pedido com um único clique.
-- **Alertas de Mesa Ociosa:** O sistema monitora o tempo de cada mesa. Se uma mesa está sem consumir há muito tempo, ela muda de cor (Amarelo/Vermelho) para que sua equipe possa agir e aumentar o ticket médio.
+- **Detector de Mesa Travada (Premium):** O sistema agora não só monitora o tempo, mas avisa exatamente há quanto tempo foi o último pedido. Se a mesa "travar", um pulso vermelho e uma sugestão de "Sugerir Saideira 🍻" aparecem para a equipe.
+- **Tempo de Mesa em Tempo Real:** Cada comanda exibe seu cronômetro de abertura, permitindo controle absoluto do giro do salão.
 
 ### 🧠 Inteligência Competitiva (Dashboards que Vendem)
 - **Ranking de Garçom:** Saiba quem são os seus "vendedores de elite" com gráficos de barras em tempo real. Incentive sua equipe com dados concretos.
+- **Ticket Médio com Tendência:** Veja se o seu consumo médio está subindo ou descendo com comparativos automáticos em relação ao período anterior (ex: ↑ +12% vs ontem).
 - **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
 - **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
 
@@ -263,5 +265,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.2 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.4 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

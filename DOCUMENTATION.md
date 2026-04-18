@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.3.0 (Elite Powerhouse Update)
+**Versão:** 4.4.0 (Intelligence & Analytics Update)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -28,6 +28,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Atalhos de Teclado (v4.3):** Suporte nativo a `F1` (Venda Rápida), `F2` (Nova Mesa), `ESC` (Voltar) e `Espaço` (Checkout).
 *   **Botão Saideira (v4.3):** Permite repetir instantaneamente os últimos itens adicionados à mesa com um clique.
 *   **Sinalização de Mesa Ociosa (v4.3):** Alertas visuais cromáticos (Amarelo/Vermelho) para mesas sem consumo há mais de 30 minutos.
+*   **Detector de Mesa Travada (v4.4):** Monitoramento em tempo real do tempo desde o último pedido, com alertas de pulso vermelho e sugestões de "Saideira" automáticas.
+*   **Tempo de Mesa (v4.4):** Contador de tempo real exibido em cada comanda aberta para controle de giro do salão.
 *   **Alertas de Estoque Crítico (v4.3):** Badges visuais nos botões de produtos quando o estoque está abaixo do limite de segurança.
 
 ### B. Gestão de Inventário
@@ -41,8 +43,9 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Interface ATM:** Lançamento de Sangrias e Suprimentos.
 *   **Auto-Backup (v4.3):** O sistema solicita a geração de um backup `.json` automático imediatamente após o fechamento de cada turno.
 
-### D. Relatórios e Inteligência (v4.3 Elite)
+### D. Relatórios e Inteligência (v4.4 Intelli-Bar)
 *   **Ranking de Equipe:** Visualização em barras da performance de vendas por atendente.
+*   **Ticket Médio Inteligente (v4.4):** Comparação automática com períodos anteriores para identificação de tendências de consumo.
 *   **Heatmap de Fluxo:** Gráfico de densidade que identifica as horas de pico de movimento do estabelecimento.
 *   **Quitação em Lote:** Interface para selecionar múltiplos devedores e processar a quitação totalizada de uma só vez.
 *   **Comprovante Digital via WhatsApp:** Geração de recibos em texto formatado para envio direto via Web Share API para o smartphone do cliente.

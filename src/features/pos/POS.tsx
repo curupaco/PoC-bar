@@ -26,6 +26,15 @@ interface POSProps {
   stockTransactions?: any[];
 }
 
+const formatElapsedTime = (openedAt: number) => {
+  const diff = Date.now() - openedAt;
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h${remainingMinutes > 0 ? `${remainingMinutes}m` : ''}`;
+};
+
 export const POS: React.FC<POSProps> = ({ 
   products = [], 
   modifierGroups = [],
@@ -54,6 +63,13 @@ export const POS: React.FC<POSProps> = ({
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
+  const [, setTick] = useState(0);
+
+  // Update clocks every minute
+  useEffect(() => {
+    const timer = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (shortcutCheckout) {
@@ -356,18 +372,39 @@ export const POS: React.FC<POSProps> = ({
                          isIdle ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900 border-dashed' :
                          'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-500'}`}>
                       <div className="flex justify-between items-start">
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                            <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
-                           {isIdle && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest mt-0.5">{isVeryIdle ? 'MESA OCIOSA ++' : 'OCIOSA'}</span>}
+                           <div className="flex flex-col">
+                              <div className="flex items-center gap-1.5">
+                                 <span className="text-[9px] font-bold text-slate-400 opacity-70" title="Tempo total aberta">{formatElapsedTime(tab.openedAt)}</span>
+                                 {isIdle && (
+                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isVeryIdle ? 'text-red-600' : 'text-amber-600'}`}>
+                                       {isVeryIdle ? '⚠️ TRAVADA' : 'OCIOSA'}
+                                    </span>
+                                 )}
+                              </div>
+                              {isIdle && (
+                                 <span className="text-[7px] font-black text-slate-400 uppercase opacity-80">
+                                    Último pedido há {formatElapsedTime(lastActivity)}
+                                 </span>
+                              )}
+                           </div>
                         </div>
                         {isExpress && <span className="text-[8px] font-black bg-emerald-600 text-white px-1.5 py-0.5 rounded ml-1">⚡</span>}
                       </div>
-                      <p className={`font-black text-xl italic ${isExpress ? 'text-emerald-600' : isIdle ? 'text-amber-600' : 'text-red-600'}`}>
-                        {formatCurrency(
-                          (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
-                            .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
+                      <div className="flex flex-col gap-1">
+                        <p className={`font-black text-xl italic ${isExpress ? 'text-emerald-600' : isIdle ? (isVeryIdle ? 'text-red-600' : 'text-amber-600') : 'text-red-600'}`}>
+                          {formatCurrency(
+                            (Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]))
+                              .reduce((acc: number, item: SaleItem) => acc + (item.totalPrice || 0), 0)
+                          )}
+                        </p>
+                        {isVeryIdle && (
+                          <span className="text-[7px] font-black bg-red-600 text-white px-2 py-0.5 rounded-full w-fit animate-bounce mt-1">
+                             SUGERIR SAIDEIRA 🍻
+                          </span>
                         )}
-                      </p>
+                      </div>
                     </div>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setTabToDelete(tab); }}
