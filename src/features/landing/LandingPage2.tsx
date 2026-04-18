@@ -208,7 +208,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.3</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.4 Intelli-Bar</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -332,9 +332,9 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Cada venda fica salva no celular na hora. Quando a internet voltar, o sistema sincroniza sozinho. Seu bar não para." accent="emerald" />
             <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo, e você pode usar o teclado." accent="emerald" />
             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
-            <FeatureCard icon="📊" title="Curva ABC" desc="Saiba o que vende mais e o que dá mais lucro. Um clique para filtrar." accent="emerald" />
-            <FeatureCard icon="👥" title="Controle de Equipe" desc="Cada funcionário com seu nível de acesso. Quem pode cancelar venda, quem pode fechar caixa." accent="emerald" />
-            <FeatureCard icon="🏢" title="Várias Lojas" desc="Se você tem mais de um bar, gerencia todos de um lugar. Os dados de cada loja ficam isolados." accent="emerald" />
+            <FeatureCard icon="🚨" title="Detector de Mesa Travada" desc="O sistema pulsa e avisa quando uma mesa está parada há muito tempo sem consumir. Sugere saideiras proativamente." accent="emerald" />
+            <FeatureCard icon="📈" title="Ticket Médio Inteligente" desc="Acompanhe tendências de consumo com comparativos automáticos vs ontem/semana passada. Saiba se está crescendo." accent="emerald" />
+            <FeatureCard icon="📊" title="Curva ABC Avançada" desc="Saiba o que vende mais e o que dá mais lucro. Filtre seus produtos por faturamento ou volume em um segundo." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}
@@ -425,6 +425,9 @@ export const LandingPage2: React.FC = () => {
               'Tela de vendas com modo rápido',
               'Gestão de mesas e comandas',
               'Cardápio com categorias e adicionais',
+              'Detector de Mesa Travada (Premium)',
+              'Contador de Tempo de Mesa',
+              'Ticket Médio com Tendência',
               'Caixa: sangria e suprimento',
               'Conferência cega de fechamento',
               '7 tipos de relatório',
@@ -465,7 +468,8 @@ export const LandingPage2: React.FC = () => {
             {[
               { f: 'Funciona Offline', b: true, t: false },
               { f: 'Conferência Cega', b: true, t: false },
-              { f: 'Alerta de Mesa Parada', b: true, t: false },
+              { f: 'Detector de Mesa Travada', b: true, t: false },
+              { f: 'Ticket Médio com Tendência', b: true, t: false },
               { f: 'Curva ABC por Lucro', b: true, t: false },
               { f: 'Atalhos de Teclado', b: true, t: false },
               { f: 'Várias Lojas com Dados Isolados', b: true, t: true },
@@ -638,7 +642,7 @@ export const LandingPage2: React.FC = () => {
             <div className="bg-slate-800 p-5 flex justify-between items-center border-b border-slate-700">
               <div className="flex items-center gap-3">
                 <span className="text-xl">🛡️</span>
-                <h3 className="text-lg font-mono font-bold text-emerald-500">&gt; cat architecture.v4.3</h3>
+                <h3 className="text-lg font-mono font-bold text-emerald-500">&gt; cat architecture.v4.4</h3>
               </div>
               <button onClick={() => setIsNerdModalOpen(false)} className="text-slate-200 hover:text-white transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
