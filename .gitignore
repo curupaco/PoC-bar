@@ -1,3 +1,16 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Build & Cache
+dist
+dist-ssr
+*.local
+.vite
+coverage
+
 # Logs
 logs
 *.log
@@ -7,10 +20,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Node
 node_modules
-dist
-dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -23,7 +34,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Temp project files
+test_env.js
+migration_tmp.js
