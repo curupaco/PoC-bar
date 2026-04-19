@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Product, StockTransaction, User, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput } from '../../types';
+import { Product, StockTransaction, User, Sale, Unit, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput } from '../../types';
 
 interface InventoryProps {
   products: Product[];
@@ -8,11 +8,14 @@ interface InventoryProps {
   onUpdateStock: (transaction: StockTransaction) => Promise<void>;
   currentUser: User;
   activeUnitId: string;
+  sales: Sale[];
+  units: Unit[];
 }
 
-const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUpdateStock, currentUser, activeUnitId }) => {
+const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUpdateStock, currentUser, activeUnitId, sales, units }) => {
   const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY'>('STOCK');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showOnlyDeadProducts, setShowOnlyDeadProducts] = useState(false);
   const [showEntryModal, setShowEntryModal] = useState(false);
   const [showLossModal, setShowLossModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
@@ -35,13 +38,46 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
     return balances;
   }, [stockTransactions, activeUnitId]);
 
+  const unit = useMemo(() => units.find(u => u.id === activeUnitId), [units, activeUnitId]);
+  const isStockEnabled = unit?.useStock !== false;
+
+  // Identifica produtos que não tiveram venda nos últimos 15 dias
+  const deadProductIds = useMemo(() => {
+    const fifteenDaysAgo = Date.now() - (15 * 24 * 60 * 60 * 1000);
+    const recentSales = sales.filter(s => s.timestamp > fifteenDaysAgo && !s.deleted);
+    
+    const soldIds = new Set<string>();
+    recentSales.forEach(s => {
+      s.items?.forEach(item => soldIds.add(item.productId));
+    });
+
+    return new Set(
+      products
+        .filter(p => {
+          const balance = stockBalances[p.id] || 0;
+          const hasNoSales = !soldIds.has(p.id);
+          
+          if (isStockEnabled) {
+             return balance > 0 && hasNoSales;
+          } else {
+             return hasNoSales;
+          }
+        })
+        .map(p => p.id)
+    );
+  }, [products, sales, stockBalances, isStockEnabled]);
+
   const filteredProducts = useMemo(() => {
-    return products.filter(p => 
-      (p.trackStock !== false) && 
-      (p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-       p.category.toLowerCase().includes(searchTerm.toLowerCase()))
-    ).sort((a, b) => a.name.localeCompare(b.name));
-  }, [products, searchTerm]);
+    return products.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            p.category.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const isDead = deadProductIds.has(p.id);
+      if (showOnlyDeadProducts && !isDead) return false;
+
+      return (p.trackStock !== false) && matchesSearch;
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }, [products, searchTerm, deadProductIds, showOnlyDeadProducts]);
 
   const history = useMemo(() => {
     return [...stockTransactions]
@@ -123,15 +159,39 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
 
       {activeTab === 'STOCK' ? (
         <div className="space-y-6">
-           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm">
-             <input 
-                type="text" 
-                placeholder="BUSCAR PRODUTO OU CATEGORIA..." 
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full bg-transparent p-2 font-black uppercase text-xs outline-none text-slate-800 dark:text-white"
-             />
+           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4">
+             <div className="flex-1 flex items-center gap-3 w-full">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input 
+                    type="text" 
+                    placeholder="BUSCAR PRODUTO OU CATEGORIA..." 
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full bg-transparent p-2 font-black uppercase text-xs outline-none text-slate-800 dark:text-white"
+                />
+             </div>
+             
+             <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
+
+             <button 
+                onClick={() => setShowOnlyDeadProducts(!showOnlyDeadProducts)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all ${showOnlyDeadProducts ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 border border-orange-200 dark:border-orange-800/50' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+             >
+                <div className={`w-2 h-2 rounded-full ${deadProductIds.size > 0 ? 'bg-orange-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Itens Parados ({deadProductIds.size})</span>
+             </button>
            </div>
+
+           {deadProductIds.size > 0 && !showOnlyDeadProducts && (
+               <div className="bg-gradient-to-r from-orange-500/10 to-transparent p-4 rounded-2xl border border-orange-500/20 animate-in slide-in-from-top-2">
+                   <div className="flex items-center gap-3">
+                       <span className="text-xl">💡</span>
+                       <p className="text-[11px] font-bold text-orange-700 dark:text-orange-400 uppercase tracking-tight">
+                           Detectamos **{deadProductIds.size} itens** sem giro nos últimos 15 dias. Clique em "Itens Parados" para analisar.
+                       </p>
+                   </div>
+               </div>
+           )}
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProducts.map(p => {
@@ -140,8 +200,13 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                 return (
                   <div key={p.id} className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group">
                     <div className="flex justify-between items-start mb-4">
-                        <div>
-                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{p.category}</span>
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{p.category}</span>
+                                {deadProductIds.has(p.id) && (
+                                    <span className="text-[8px] font-black uppercase text-white bg-orange-500 px-2 py-0.5 rounded-md animate-pulse">🚨 Parado</span>
+                                )}
+                            </div>
                             <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm mt-1">{p.name}</h4>
                         </div>
                         <div className="text-right">

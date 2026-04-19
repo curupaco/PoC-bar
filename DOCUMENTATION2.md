@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.3 Elite Powerhouse.*
+> *Material de apresentação comercial — versão v4.4 Elite Powerhouse.*
 
 ---
 
@@ -18,7 +18,7 @@ O **Botequista Elite (v4.3)** foi construído para resolver cada um desses probl
 
 ---
 
-## Novidades da Versão 4.3 Elite 🚀
+## Novidades da Versão 4.4 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
 
@@ -33,6 +33,7 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Ticket Médio com Tendência:** Veja se o seu consumo médio está subindo ou descendo com comparativos automáticos em relação ao período anterior (ex: ↑ +12% vs ontem).
 - **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
 - **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
+- **Detector de Produto Morto (Novo):** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
 
 ### 🛡️ Segurança e Comodidade
 - **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
@@ -265,5 +266,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.4 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.4.1 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

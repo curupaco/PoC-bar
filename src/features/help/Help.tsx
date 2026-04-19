@@ -145,6 +145,12 @@ const Help: React.FC = () => {
                Envie o garçom até a mesa. Pergunte se "deseja mais uma rodada". Isso evita que o cliente ocupe lugar sem consumir e gera mais lucro.
              </p>
           </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-orange-600">O que é o alerta de "Produto Parado" no estoque?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               É a inteligência do Botequista avisando que aquele item não vende há mais de 15 dias. Ele ajuda você a identificar capital parado ou pratos que ninguém mais pede.
+             </p>
+          </div>
         </div>
       </div>
 
@@ -156,9 +162,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.3 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.4 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.3</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.4.1</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">
