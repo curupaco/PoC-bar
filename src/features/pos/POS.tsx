@@ -425,33 +425,34 @@ export const POS: React.FC<POSProps> = ({
           )}
         </div>
       ) : (
-        <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
-           <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
-              <div className="flex items-center gap-3 mb-6 bg-white dark:bg-slate-900 p-3 rounded-[20px] border border-slate-200 dark:border-slate-800">
-                  <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-                  </button>
-                  
-                  <div className="flex-1 flex items-center gap-2">
-                     <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600 font-bold text-xs italic">
-                        {activeTab?.name.substring(0, 2)}
+            {!isClosingTab && (
+              <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
+                 <div className="flex items-center gap-3 mb-6 bg-white dark:bg-slate-900 p-3 rounded-[20px] border border-slate-200 dark:border-slate-800">
+                     <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                     </button>
+                     
+                     <div className="flex-1 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600 font-bold text-xs italic">
+                           {activeTab?.name.substring(0, 2)}
+                        </div>
+                        <div className="flex flex-col">
+                           <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Mesa Selecionada</span>
+                           <h2 className={`text-sm font-black uppercase italic leading-none ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
+                              {activeTab?.name}
+                           </h2>
+                        </div>
                      </div>
-                     <div className="flex flex-col">
-                        <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Mesa Selecionada</span>
-                        <h2 className={`text-sm font-black uppercase italic leading-none ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
-                           {activeTab?.name}
-                        </h2>
-                     </div>
+
+                     <button onClick={() => setIsWideMode(!isWideMode)} className={`hidden lg:flex w-10 h-10 items-center justify-center rounded-xl transition-all ${isWideMode ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`} title="Alternar Largura">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                     </button>
                   </div>
+                 <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} insights={insights} />
+              </div>
+            )}
 
-                  <button onClick={() => setIsWideMode(!isWideMode)} className={`hidden lg:flex w-10 h-10 items-center justify-center rounded-xl transition-all ${isWideMode ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`} title="Alternar Largura">
-                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
-                  </button>
-               </div>
-              <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} insights={insights} />
-           </div>
-
-           <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full ${isClosingTab || isWideMode ? 'lg:w-[850px]' : 'lg:w-[420px]'} flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300 transition-all overflow-hidden`}>
+            <div className={`${!showMobileCart && !isClosingTab ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative ${isClosingTab ? 'flex-1' : (isWideMode ? 'lg:w-[850px]' : 'lg:w-[420px]')} flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300 transition-all overflow-hidden`}>
               <div className={`p-6 text-white flex justify-between items-center shrink-0 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-700' : 'bg-slate-900'}`}>
                  <div className="flex items-center gap-2">
                     <h3 className="font-black uppercase tracking-tighter italic">{isClosingTab ? `Fechamento: ${activeTab?.name}` : 'Itens na Comanda'}</h3>
