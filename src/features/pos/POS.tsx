@@ -515,42 +515,7 @@ export const POS: React.FC<POSProps> = ({
                    </div>
                 </>
               ) : (
-                <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-                  <div className="hidden lg:flex flex-col w-[350px] border-r border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
-                    <div className="p-6 border-b border-slate-100 dark:border-slate-800">
-                       <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Resumo do Consumo</p>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
-                       <table className="w-full">
-                          <thead>
-                             <tr className="text-[9px] font-black uppercase text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                                <th className="text-left pb-2">Item</th>
-                                <th className="text-center pb-2">Qtd</th>
-                                <th className="text-right pb-2">Total</th>
-                             </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                             {tabItems.map((item, idx) => (
-                                <tr key={idx} className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-300">
-                                   <td className="py-3 pr-2 leading-tight">
-                                      {item.productName}
-                                      {item.modifier && <span className="block text-[8px] font-bold text-slate-400 italic">({item.modifier.name})</span>}
-                                   </td>
-                                   <td className="py-3 text-center opacity-60">{item.quantity}</td>
-                                   <td className="py-3 text-right text-red-600 italic">{formatCurrency(item.totalPrice)}</td>
-                                </tr>
-                             ))}
-                          </tbody>
-                       </table>
-                    </div>
-                    <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
-                       <div className="flex justify-between items-center">
-                          <span className="text-[10px] font-black uppercase text-slate-400">Total Geral</span>
-                          <span className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white">{formatCurrency(tabTotal)}</span>
-                       </div>
-                    </div>
-                  </div>
-
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   <div className="flex-1 overflow-y-auto">
                     <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={shortcutCheckout} />
                   </div>
