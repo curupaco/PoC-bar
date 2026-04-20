@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Elite Intelligence Protocol v4.5
+           Elite Smart Stock Protocol v4.6
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -152,9 +152,15 @@ const Help: React.FC = () => {
              </p>
           </div>
           <div className="space-y-3">
-             <h4 className="text-lg font-black uppercase italic text-red-600">Onde vejo os Top Combos do meu bar?</h4>
+             <h4 className="text-lg font-black uppercase italic text-red-600">O que significa o tempo (H) ao lado do estoque?</h4>
              <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
-               No **Dashboard**, logo abaixo do mapa de calor. O sistema analisa quais produtos saem juntos na mesma mesa e te dá o ranking dos top 3. Use isso para criar promoções!
+               É o nosso **ETA (Estimated Time of Arrival)**. Baseado na velocidade de venda da última hora, o sistema calcula em quanto tempo o produto deve esgotar. Use isso para repor antes de acabar!
+             </p>
+          </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-orange-600">Como funciona a Reposição Inteligente?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Na aba de **Inventário / Reposição**, o sistema sugere a quantidade exata para comprar para cobrir os próximos 7 dias. Você pode mandar essa lista direto no WhatsApp do seu fornecedor.
              </p>
           </div>
         </div>
@@ -168,9 +174,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.5 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.6 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.5.0</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.6.0</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">
@@ -188,7 +194,7 @@ const Help: React.FC = () => {
           </div>
           <div className="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-red-500/30 transition-colors">
             <span className="text-red-500 text-2xl block mb-4">04</span>
-            Segurança em 1º lugar. Nunca pule o backup ao fechar o turno.
+            Inteligência é poder. Antecipe rupturas com o Radar de Reposição e nunca perca uma venda por falta de gelada.
           </div>
         </div>
       </div>

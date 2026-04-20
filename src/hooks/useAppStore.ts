@@ -85,6 +85,16 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       safeLocalStorage.removeItem('btq_active_unit');
     }
   }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
+  
+  // Memoized Stock Balances
+  const stockBalances = useMemo(() => {
+    const balances: Record<string, number> = {};
+    stockTransactions.forEach(tx => {
+      if (!balances[tx.productId]) balances[tx.productId] = 0;
+      balances[tx.productId] += tx.quantity;
+    });
+    return balances;
+  }, [stockTransactions]);
 
   // Sync Logic
   const syncConfig = useMemo(() => ({
@@ -478,7 +488,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     products, setProducts, modifierGroups, setModifierGroups, categories, setCategories,
     categoryModifiers, setCategoryModifiers, sales, setSales, openTabs, setOpenTabs,
     users, setUsers, shifts, setShifts, units, setUnits, franchises, setFranchises, auditLogs, setAuditLogs,
-    stockTransactions, setStockTransactions,
+    stockTransactions, setStockTransactions, stockBalances,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,

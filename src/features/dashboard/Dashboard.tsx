@@ -4,17 +4,19 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area
 } from 'recharts';
+import { useProductIntelligence } from '../../hooks/useProductIntelligence';
 
 interface DashboardProps {
   sales: Sale[];
   products: Product[];
   users: User[];
   theme: Theme;
+  stockBalances: Record<string, number>;
 }
 
 type Period = 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS' | 'ANO';
 
-const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users = [], theme }) => {
+const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users = [], theme, stockBalances = {} }) => {
   const isDark = theme === 'dark';
   const [activePeriod, setActivePeriod] = useState<Period>('HOJE');
 
@@ -159,6 +161,12 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
       .slice(0, 3);
   }, [filteredSales]);
 
+  const { insights } = useProductIntelligence(products, sales, stockBalances);
+
+  const criticalItems = useMemo(() => {
+    return Object.values(insights).filter(i => i.isCritical || i.isHighVolumeWarning);
+  }, [insights]);
+
   const chartColor = '#ef4444';
   const gridColor = isDark ? '#1e293b' : '#f1f5f9';
   const textColor = isDark ? '#94a3b8' : '#64748b';
@@ -265,6 +273,48 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
                   <XAxis dataKey="hour" axisLine={false} tickLine={false} tick={{ fill: textColor, fontSize: 9, fontWeight: '900' }} interval={2} />
                 </AreaChart>
               </ResponsiveContainer>
+           </div>
+        </div>
+
+        {/* Radar de Reposição */}
+        <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+              <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-500">📡 Radar de Reposição Inteligente</h3>
+              <p className="text-[9px] font-black text-red-500 uppercase italic tracking-widest animate-pulse">Monitoramento em Tempo Real</p>
+           </div>
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {criticalItems.length > 0 ? criticalItems.map((item, i) => {
+                const product = products.find(p => p.id === item.productId);
+                return (
+                  <div key={i} className={`p-5 rounded-3xl border flex items-center justify-between transition-all ${item.isCritical ? 'bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30' : 'bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-900/30'}`}>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-xl ${item.isCritical ? 'bg-red-100 dark:bg-red-900/40' : 'bg-orange-100 dark:bg-orange-900/40'}`}>
+                        {item.isCritical ? '🚨' : '🔥'}
+                      </div>
+                      <div>
+                        <p className="text-xs font-black uppercase text-slate-800 dark:text-white leading-none mb-1">{product?.name}</p>
+                        <p className={`text-[9px] font-black uppercase tracking-tighter italic ${item.isCritical ? 'text-red-600' : 'text-orange-600'}`}>
+                          {item.isCritical 
+                            ? `Acaba em aprox. ${item.estimatedHoursLeft?.toFixed(1)}h` 
+                            : 'Demanda 80% acima do normal'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Estoque</p>
+                      <p className={`text-lg font-black tracking-tighter ${item.isCritical ? 'text-red-600' : 'text-slate-800 dark:text-white'}`}>
+                        {item.currentStock} {product?.sellType === 'weight' ? 'kg' : 'un'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="md:col-span-2 py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+                   <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center text-sm mb-3">✓</div>
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center px-10">Tudo sob controle. Nenhum produto em risco de ruptura imediata.</p>
+                </div>
+              )}
            </div>
         </div>
 

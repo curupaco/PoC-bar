@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Product, StockTransaction, User, Sale, Unit, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput } from '../../types';
+import { useProductIntelligence } from '../../hooks/useProductIntelligence';
 
 interface InventoryProps {
   products: Product[];
@@ -13,7 +14,7 @@ interface InventoryProps {
 }
 
 const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUpdateStock, currentUser, activeUnitId, sales, units }) => {
-  const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY'>('STOCK');
+  const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY' | 'SUGGESTION'>('STOCK');
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyDeadProducts, setShowOnlyDeadProducts] = useState(false);
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -129,6 +130,14 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
 
   const isAdmin = currentUser.username === 'admin' || currentUser.permissions.includes('franchise_admin');
 
+  const { insights } = useProductIntelligence(products, sales, stockBalances);
+  
+  const suggestions = useMemo(() => {
+    return Object.values(insights)
+      .filter(i => i.recommendedRestock > 0)
+      .sort((a, b) => b.recommendedRestock - a.recommendedRestock);
+  }, [insights]);
+
   return (
     <div className="max-w-7xl mx-auto pb-32">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -154,6 +163,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
 
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
         <button onClick={() => setActiveTab('STOCK')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'STOCK' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Saldo Atual</button>
+        <button onClick={() => setActiveTab('SUGGESTION')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'SUGGESTION' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Reposição Inteligente</button>
         <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'HISTORY' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Movimentações</button>
       </div>
 
@@ -251,6 +261,49 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                   </div>
                 );
               })}
+           </div>
+        </div>
+      ) : activeTab === 'SUGGESTION' ? (
+        <div className="space-y-6 animate-in fade-in duration-500">
+           <div className="bg-gradient-to-r from-red-600 to-red-900 p-8 rounded-[40px] text-white shadow-xl shadow-red-900/20">
+              <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-2">Sugestão de Reposição Inteligente</h3>
+              <p className="text-xs font-bold opacity-80 uppercase tracking-widest max-w-2xl">Baseado na média de vendas dos últimos 7 dias com margem de segurança de 20% para cobrir a próxima semana.</p>
+           </div>
+
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {suggestions.length > 0 ? suggestions.map(item => {
+                const product = products.find(p => p.id === item.productId);
+                return (
+                  <div key={item.productId} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center group hover:border-red-500 transition-all">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">{product?.category}</p>
+                      <h4 className="text-lg font-black text-slate-800 dark:text-white uppercase leading-none italic">{product?.name}</h4>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">Média Semanal: {item.averageWeeklySales.toFixed(1)} {product?.sellType === 'weight' ? 'kg' : 'un'}</p>
+                    </div>
+                    <div className="text-right flex items-center gap-6">
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-slate-400 mb-1">Comprar</p>
+                        <p className="text-3xl font-black text-red-600 italic tracking-tighter">+{item.recommendedRestock}</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const text = `🛒 *LISTA DE COMPRAS - BOTEQUISTA*\n\nProduto: ${product?.name}\nSugestão: ${item.recommendedRestock} ${product?.sellType === 'weight' ? 'kg' : 'un'}\nEstoque Atual: ${item.currentStock}`;
+                          window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                        }}
+                        className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-500/20"
+                      >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12.012 2c-5.508 0-9.987 4.479-9.987 9.988 0 1.757.455 3.409 1.251 4.848l-1.276 4.656 4.75-1.246c1.408.766 3.013 1.206 4.717 1.206 5.508 0 9.988-4.479 9.988-9.988 0-5.509-4.48-9.988-9.988-9.988zm5.292 13.513c-.224.633-1.136 1.173-1.566 1.226-.419.051-.771.126-2.836-.693-2.496-.989-4.091-3.52-4.217-3.69-.127-.17-1.017-1.351-1.017-2.576 0-1.224.633-1.827.859-2.08.225-.253.493-.317.658-.317.164 0 .328.002.473.01.15.006.353-.058.552.423.2.483.684 1.666.743 1.786.059.12.098.26.019.414-.079.155-.118.252-.236.387-.118.136-.247.303-.35.408-.114.116-.233.243-.1.472.134.228.594.98 1.272 1.584.873.778 1.611 1.019 1.839 1.133.227.113.361.095.494-.059.134-.153.574-.668.728-.897.153-.228.307-.191.513-.113.205.077 1.309.617 1.533.729.224.112.373.168.429.262.056.094.056.546-.168 1.179z"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              }) : (
+                <div className="lg:col-span-2 py-24 flex flex-col items-center justify-center border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] opacity-50">
+                  <span className="text-6xl mb-6">📉</span>
+                  <p className="text-sm font-black uppercase tracking-widest text-slate-400">Sem recomendações no momento</p>
+                  <p className="text-[10px] font-bold text-slate-400 mt-2">Continue vendendo para alimentar a inteligência do bar.</p>
+                </div>
+              )}
            </div>
         </div>
       ) : (

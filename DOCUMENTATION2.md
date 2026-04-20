@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.5 Elite Powerhouse.*
+> *Material de apresentação comercial — versão v4.6 Elite Smart Stock.*
 
 ---
 
@@ -12,7 +12,7 @@ Todo dono de bar já passou por isso:
 - O caixa fechou errado. Falta dinheiro e ninguém sabe explicar.
 - O sistema travou exatamente na hora do rush da sexta.
 - A internet caiu e as vendas pararam.
-- **Dúvida cruel:** Qual garçom realmente está trazendo lucro e quais produtos estão apenas ocupando espaço no estoque?
+- **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
 O **Botequista Elite (v4.3)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
@@ -35,12 +35,14 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
 - **Detector de Produto Morto:** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
 - **Top Combos Automáticos (v4.5):** O sistema analisa quais produtos são vendidos juntos com mais frequência (ex: Cerveja + Porção). Crie promoções baseadas em dados reais, não em "achismo".
+- **Smart Stock Intelligence (v4.6):** Agora o Botequista prevê o futuro. O sistema calcula a velocidade de venda em tempo real e avisa: *"A Original acaba em 45 minutos"*. Chega de surpresas no meio do rush.
+- **Reposição Inteligente via WhatsApp:** O sistema gera sua lista de compras baseada na média de consumo e envia direto para o seu fornecedor pelo WhatsApp. Automação total do estoque.
 
 ### 🛡️ Segurança e Comodidade
 - **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
 - **Recibo via WhatsApp:** Chega de papel. Envie o comprovante detalhado direto para o celular do cliente pelo WhatsApp com total profissionalismo.
 - **Quitação em Lote:** Selecione vários devedores do fiado e quite as dívidas de todos de uma única vez. Organização financeira sem esforço.
-- **Badges de Estoque:** Veja o nível de estoque de cada item direto no botão de venda. Nunca mais venda o que já acabou na geladeira.
+- **Badges de Estoque & ETA:** Veja o nível de estoque e o tempo estimado para acabar direto no botão de venda. Inteligência pura no PDV.
 
 ---
 
@@ -268,5 +270,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.5.0 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.6.0 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

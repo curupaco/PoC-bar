@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.5.0 (Intelligence & Automatic Combos)
+**Versão:** 4.6.0 (Smart Stock & Intelligence)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -38,6 +38,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 3.  **Rastreio de Estoque (v4.2):** Botão "Controlar Estoque" por item.
 4.  **Curva ABC Avançada (v4.3):** Novo filtro que permite alternar o ranking de produtos entre **Volume de Saída** (popularidade) e **Faturamento Bruto** (lucratividade).
 5.  **Detector de Produto Morto (v4.4.1):** Algoritmo híbrido que identifica itens com estoque sem giro ou produtos de cardápio esquecidos (sem vendas nos últimos 15 dias).
+6.  **Smart Stock Intelligence (v4.6):** Módulo de predição de ruptura baseado em velocidade de venda em tempo real e sugestão de reposição automatizada com exportação para WhatsApp.
 
 ### C. Tesouraria e Fluxo de Caixa
 *   **Conferência Cega (Blind Close):** O operador informa o valor contado sem ver os números do sistema. 
@@ -74,4 +75,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
 
 ---
-*Documentação atualizada em Abril de 2026. Botequista System v4.5.0*
+*Documentação atualizada em Abril de 2026. Botequista System v4.6.0*

@@ -6,6 +6,7 @@ import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
 import POSProductGrid from './components/POSProductGrid';
 import POSPaymentPanel from './components/POSPaymentPanel';
+import { useProductIntelligence } from '../../hooks/useProductIntelligence';
 
 interface POSProps {
   products: Product[];
@@ -24,6 +25,8 @@ interface POSProps {
   penduraThreshold?: number;
   longDurationThreshold?: number;
   stockTransactions?: any[];
+  stockBalances?: Record<string, number>;
+  sales?: Sale[];
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -51,7 +54,9 @@ export const POS: React.FC<POSProps> = ({
   dbStatus,
   penduraThreshold = 500,
   longDurationThreshold = 4,
-  stockTransactions = []
+  stockTransactions = [],
+  stockBalances = {},
+  sales = []
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -103,13 +108,14 @@ export const POS: React.FC<POSProps> = ({
   }, [toast]);
 
   const showFeedback = useCallback((msg: string) => setToast(msg), []);
-
   const activeTab = useMemo(() => {
     if (activeTabId === 'shortcut-payment' && shortcutCheckout) {
        return { id: 'shortcut-payment', name: `Quitação: ${shortcutCheckout.name}`, items: [], openedAt: Date.now() };
     }
     return openTabs.find(t => t.id === activeTabId);
   }, [activeTabId, openTabs, shortcutCheckout]);
+
+  const { insights } = useProductIntelligence(products, sales, stockBalances);
     
   const tabItems: SaleItem[] = useMemo(() => {
     if (!activeTab?.items) return [];
@@ -452,7 +458,7 @@ export const POS: React.FC<POSProps> = ({
                     </div>
                  )}
               </div>
-              <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} />
+              <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} insights={insights} />
            </div>
 
            <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full lg:w-[420px] flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300`}>
