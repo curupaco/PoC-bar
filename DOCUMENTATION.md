@@ -65,4 +65,12 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Admin:** Gestão de Unidades, Backups e Revelação de Valores.
 
 ---
+
+## 4. Segurança de Banco de Dados (v4.5)
+*   **Regras de Segurança RTDB:** O banco de dados utiliza regras de acesso estritas no Firebase Realtime Database que bloqueiam a leitura e escrita global na raiz.
+*   **Restrição por Identidade:** Acesso restrito via tokens de autenticação. Apenas a conta administrativa principal (`curupaco@gmail.com`) tem permissão para operar nos nós vitais: `users`, `units`, `franchises` e `data/units/*`.
+*   **Proteção de Estrutura:** A raiz do banco (`/`) está protegida contra listagem, o que impede que o endereço do banco de dados seja usado por terceiros para mapear a estrutura de dados.
+*   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
+
+---
 *Documentação atualizada em Abril de 2026. Botequista System v4.4.1*

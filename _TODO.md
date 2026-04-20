@@ -2,6 +2,11 @@
 
 Este arquivo é destinado a anotações rápidas sobre próximas features, correções a serem feitas e ideias de melhorias. Ele não será exposto no sistema e nem na landing page.
 
+### Segurança de Banco de Dados (v4.5)
+*   **Regras de Segurança RTDB:** O banco de dados utiliza regras de acesso estritas que bloqueiam leitura/escrita global.
+*   **Restrição por Identidade:** Apenas a conta autenticada configurada no sistema (`curupaco@gmail.com`) possui permissão para ler e gravar nos nós `users`, `units`, `franchises` e no armazenamento de dados das unidades (`data/units/*`).
+*   **Proteção de Raiz:** A raiz do banco de dados (`/`) é protegida contra leitura, ocultando a estrutura do banco para usuários não autorizados.
+
 ## 🚀 Próximas Features
 - Criar um live demo para a landingpage.
 
@@ -397,6 +402,7 @@ Isso faz o dono sentir:
 o sistema pensa por mim
 
 ## 🐛 Correções (Bugs/Fixes)
+- [x] Corrigir regras de segurança do Firebase (Evitar leitura/escrita global) [FEITO]
 - Vínculo de novos bares e franquia não funciona
 - Links de rodapé não funcionam na LP
 - LP feia com abordagem ELITE. Mudar isso usando outro modelo.
