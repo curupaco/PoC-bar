@@ -425,6 +425,7 @@ export const POS: React.FC<POSProps> = ({
           )}
         </div>
       ) : (
+        <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
             {!isClosingTab && (
               <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
                  <div className="flex items-center gap-3 mb-6 bg-white dark:bg-slate-900 p-3 rounded-[20px] border border-slate-200 dark:border-slate-800">
