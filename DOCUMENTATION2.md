@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.4 Elite Powerhouse.*
+> *Material de apresentação comercial — versão v4.5 Elite Powerhouse.*
 
 ---
 
@@ -33,7 +33,8 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Ticket Médio com Tendência:** Veja se o seu consumo médio está subindo ou descendo com comparativos automáticos em relação ao período anterior (ex: ↑ +12% vs ontem).
 - **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
 - **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
-- **Detector de Produto Morto (Novo):** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
+- **Detector de Produto Morto:** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
+- **Top Combos Automáticos (v4.5):** O sistema analisa quais produtos são vendidos juntos com mais frequência (ex: Cerveja + Porção). Crie promoções baseadas em dados reais, não em "achismo".
 
 ### 🛡️ Segurança e Comodidade
 - **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
@@ -221,6 +222,7 @@ Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado
 ✅ Suporte a múltiplas unidades  
 ✅ Registro de auditoria completo  
 ✅ Backup automático em nuvem + local  
+✅ Top Combos Vendidos (Descoberta Automática)  
 ✅ Dark Mode nativo — importante para ambientes noturnos  
 ✅ Funciona em tablet, celular e computador  
 
@@ -266,5 +268,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.4.1 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.5.0 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

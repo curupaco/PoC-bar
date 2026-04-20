@@ -131,6 +131,34 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
     return hours;
   }, [filteredSales]);
 
+  const combosData = useMemo(() => {
+    const pairCounts: Record<string, number> = {};
+    
+    filteredSales.forEach(sale => {
+      if (sale.deleted || !sale.items || sale.items.length < 2) return;
+      
+      const productNames = Array.from(new Set(
+        sale.items
+          .filter(i => i.productId !== 'quitacao')
+          .map(i => i.productName)
+      )).sort();
+
+      if (productNames.length < 2) return;
+      
+      for (let i = 0; i < productNames.length; i++) {
+        for (let j = i + 1; j < productNames.length; j++) {
+          const pair = `${productNames[i]} + ${productNames[j]}`;
+          pairCounts[pair] = (pairCounts[pair] || 0) + 1;
+        }
+      }
+    });
+
+    return Object.entries(pairCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [filteredSales]);
+
   const chartColor = '#ef4444';
   const gridColor = isDark ? '#1e293b' : '#f1f5f9';
   const textColor = isDark ? '#94a3b8' : '#64748b';
@@ -239,7 +267,45 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
               </ResponsiveContainer>
            </div>
         </div>
+
+        <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+              <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-500">🔥 Insights de Venda: Combos Populares</h3>
+              <p className="text-[9px] font-black text-slate-400 uppercase italic tracking-widest">Baseado em itens vendidos juntos</p>
+           </div>
+           
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {combosData.length > 0 ? combosData.map((combo, i) => (
+                <div key={i} className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center relative overflow-hidden group hover:border-red-500/30 transition-colors">
+                  <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                    <span className="text-4xl">🎯</span>
+                  </div>
+                  <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center font-black text-xs mb-4">
+                    #{i + 1}
+                  </div>
+                  <p className="text-[11px] font-black text-slate-800 dark:text-white uppercase leading-tight mb-2">
+                    {combo.name.split(' + ').map((n, idx) => (
+                      <React.Fragment key={idx}>
+                        {n}
+                        {idx === 0 && <br />}
+                        {idx === 0 && <span className="text-[9px] text-slate-400 inline-block my-1">+</span>}
+                        {idx === 0 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </p>
+                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 w-full">
+                    {combo.count} {combo.count === 1 ? 'Ocorrência' : 'Ocorrências'}
+                  </p>
+                </div>
+              )) : (
+                <div className="md:col-span-3 py-12 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">Ainda não detectamos combos frequentes no período.</p>
+                </div>
+              )}
+           </div>
+        </div>
       </div>
+
     </div>
   );
 };

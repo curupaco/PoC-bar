@@ -249,7 +249,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.4 Intelli-Bar</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.5 Intelli-Bar</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -376,6 +376,7 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="🚨" title="Detector de Mesa Travada" desc="O sistema pulsa e avisa quando uma mesa está parada há muito tempo sem consumir. Sugere saideiras proativamente." accent="emerald" />
             <FeatureCard icon="📈" title="Ticket Médio Inteligente" desc="Acompanhe tendências de consumo com comparativos automáticos vs ontem/semana passada. Saiba se está crescendo." accent="emerald" />
             <FeatureCard icon="📊" title="Curva ABC Avançada" desc="Saiba o que vende mais e o que dá mais lucro. Filtre seus produtos por faturamento ou volume em um segundo." accent="emerald" />
+            <FeatureCard icon="🔥" title="Top Combos Inteligentes" desc="O sistema descobre sozinho quais produtos saem juntos (ex: Cerveja + Batata). Ideal para criar promoções que vendem." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}
@@ -480,6 +481,7 @@ export const LandingPage2: React.FC = () => {
               'Modo noturno (tela escura)',
               'Recibo via WhatsApp',
               'Curva ABC de produtos',
+              'Top Combos Vendidos (Novo)',
               'Mapa de horário de pico',
               'Ranking da equipe',
               'Funciona no celular, tablet ou PC',
@@ -512,6 +514,7 @@ export const LandingPage2: React.FC = () => {
               { f: 'Detector de Mesa Travada', b: true, t: false },
               { f: 'Ticket Médio com Tendência', b: true, t: false },
               { f: 'Curva ABC por Lucro', b: true, t: false },
+              { f: 'Top Combos Automáticos', b: true, t: false },
               { f: 'Atalhos de Teclado', b: true, t: false },
               { f: 'Várias Lojas com Dados Isolados', b: true, t: true },
               { f: 'Gestão de Fiado', b: true, t: true },

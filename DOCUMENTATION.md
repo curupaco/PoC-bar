@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.4.1 (Intelligence & Dead Product Detection)
+**Versão:** 4.5.0 (Intelligence & Automatic Combos)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -48,6 +48,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Ranking de Equipe:** Visualização em barras da performance de vendas por atendente.
 *   **Ticket Médio Inteligente (v4.4):** Comparação automática com períodos anteriores para identificação de tendências de consumo.
 *   **Heatmap de Fluxo:** Gráfico de densidade que identifica as horas de pico de movimento do estabelecimento.
+*   **Top Combos Vendidos (v4.5):** Algoritmo de descoberta automática que identifica pares de produtos vendidos juntos com maior frequência no período.
 *   **Quitação em Lote:** Interface para selecionar múltiplos devedores e processar a quitação totalizada de uma só vez.
 *   **Comprovante Digital via WhatsApp:** Geração de recibos em texto formatado para envio direto via Web Share API para o smartphone do cliente.
 
@@ -73,4 +74,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
 
 ---
-*Documentação atualizada em Abril de 2026. Botequista System v4.4.1*
+*Documentação atualizada em Abril de 2026. Botequista System v4.5.0*

@@ -69,7 +69,7 @@ R$ 84
 
 Dono adora.
 
-4️⃣ Top Combos Vendidos (Descoberta automática)
+~~4️⃣ Top Combos Vendidos (Descoberta automática)~~ [FEITO]
 Exemplo:
 
 Combos populares hoje:

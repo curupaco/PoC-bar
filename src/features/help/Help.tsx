@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Elite Intelligence Protocol v4.4
+           Elite Intelligence Protocol v4.5
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -151,6 +151,12 @@ const Help: React.FC = () => {
                É a inteligência do Botequista avisando que aquele item não vende há mais de 15 dias. Ele ajuda você a identificar capital parado ou pratos que ninguém mais pede.
              </p>
           </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-red-600">Onde vejo os Top Combos do meu bar?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               No **Dashboard**, logo abaixo do mapa de calor. O sistema analisa quais produtos saem juntos na mesma mesa e te dá o ranking dos top 3. Use isso para criar promoções!
+             </p>
+          </div>
         </div>
       </div>
 
@@ -162,9 +168,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.4 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.5 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.4.1</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.5.0</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">
