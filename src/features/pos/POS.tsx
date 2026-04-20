@@ -64,13 +64,13 @@ export const POS: React.FC<POSProps> = ({
   const [isRenamingTab, setIsRenamingTab] = useState(false);
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isClosingTab, setIsClosingTab] = useState(false);
+  const [isWideMode, setIsWideMode] = useState(false);
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
   const [, setTick] = useState(0);
 
-  // Update clocks every minute
   useEffect(() => {
     const timer = setInterval(() => setTick(t => t + 1), 60000);
     return () => clearInterval(timer);
@@ -84,7 +84,6 @@ export const POS: React.FC<POSProps> = ({
     }
   }, [shortcutCheckout]);
 
-  // ITEM 8: ATALHOS DE TECLADO
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === 'INPUT') return;
@@ -168,7 +167,6 @@ export const POS: React.FC<POSProps> = ({
     setModifierModalData(null);
   }, [activeTabId, tabItems, onUpdateTabItem, showFeedback, activeTab, onSaveTab]);
 
-  // ITEM 4: BOTÃO SAIDEIRA
   const handleSaideira = async () => {
     if (!activeTabId || tabItems.length === 0) return;
     const lastItem = tabItems[tabItems.length - 1];
@@ -194,6 +192,9 @@ export const POS: React.FC<POSProps> = ({
     if (!activeTabId || !activeTab) return;
     const item = tabItems[index];
     const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+       // Opcional: remover item se chegar a zero? Por enquanto mantemos como o original.
+    }
     const updatedItem: SaleItem = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
     if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
   }, [activeTabId, activeTab, tabItems, onUpdateTabItem]);
@@ -364,7 +365,6 @@ export const POS: React.FC<POSProps> = ({
               {openTabs.map(tab => {
                 const isExpress = tab.name.startsWith('EXPRESSA');
                 
-                // ITEM 7: SINALIZAÇÃO DE MESA OCIOSA
                 const idleLimit = (longDurationThreshold || 30) * 60 * 1000;
                 const lastActivity = tab.lastItemAddedAt || tab.openedAt;
                 const isIdle = Date.now() - lastActivity > idleLimit;
@@ -427,41 +427,31 @@ export const POS: React.FC<POSProps> = ({
       ) : (
         <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
            <div className={`${showMobileCart ? 'hidden lg:block' : 'block'} flex-1 overflow-y-auto no-scrollbar pb-24`}>
-              <div className="flex items-center gap-4 mb-6 bg-white dark:bg-slate-900 p-4 rounded-[25px] border border-slate-200 dark:border-slate-800">
-                 <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
-                 </button>
-                 
-                 {isRenamingTab ? (
-                    <div className="flex-1 flex gap-2">
-                       <input 
-                          autoFocus
-                          value={newTabName}
-                          onChange={e => setNewTabName(e.target.value)}
-                          placeholder="NOVO NOME..."
-                          className="flex-1 bg-slate-50 dark:bg-slate-950 px-4 py-2 rounded-xl font-black uppercase outline-none border-2 border-red-500"
-                          onKeyDown={e => e.key === 'Enter' && handleRenameTab()}
-                       />
-                       <button onClick={handleRenameTab} className="bg-red-600 text-white px-4 rounded-xl font-black text-[10px] uppercase">OK</button>
-                       <button onClick={() => setIsRenamingTab(false)} className="text-slate-400 font-black text-[10px] uppercase px-2">X</button>
-                    </div>
-                 ) : (
-                    <div className="flex-1 flex items-center gap-2">
-                       <h2 className={`text-xl font-black uppercase italic ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {activeTab?.name}
-                       </h2>
-                       {activeTabId !== 'shortcut-payment' && (
-                          <button onClick={() => { setNewTabName(activeTab?.name || ''); setIsRenamingTab(true); }} className="text-slate-300 hover:text-slate-600 transition-colors p-1">
-                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                          </button>
-                       )}
-                    </div>
-                 )}
-              </div>
+              <div className="flex items-center gap-3 mb-6 bg-white dark:bg-slate-900 p-3 rounded-[20px] border border-slate-200 dark:border-slate-800">
+                  <button onClick={() => { setActiveTabId(null); setIsClosingTab(false); if(activeTabId === 'shortcut-payment' && onClearShortcut) onClearShortcut(); }} className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  
+                  <div className="flex-1 flex items-center gap-2">
+                     <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600 font-bold text-xs italic">
+                        {activeTab?.name.substring(0, 2)}
+                     </div>
+                     <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Mesa Selecionada</span>
+                        <h2 className={`text-sm font-black uppercase italic leading-none ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
+                           {activeTab?.name}
+                        </h2>
+                     </div>
+                  </div>
+
+                  <button onClick={() => setIsWideMode(!isWideMode)} className={`hidden lg:flex w-10 h-10 items-center justify-center rounded-xl transition-all ${isWideMode ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`} title="Alternar Largura">
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" /></svg>
+                  </button>
+               </div>
               <POSProductGrid products={products} onAddProduct={addToTab} stockTransactions={stockTransactions} insights={insights} />
            </div>
 
-           <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full ${isClosingTab ? 'lg:w-[850px]' : 'lg:w-[420px]'} flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300 transition-all`}>
+           <div className={`${!showMobileCart ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative w-full ${isClosingTab || isWideMode ? 'lg:w-[850px]' : 'lg:w-[420px]'} flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300 transition-all overflow-hidden`}>
               <div className={`p-6 text-white flex justify-between items-center shrink-0 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-700' : 'bg-slate-900'}`}>
                  <div className="flex items-center gap-2">
                     <h3 className="font-black uppercase tracking-tighter italic">{isClosingTab ? `Fechamento: ${activeTab?.name}` : 'Itens na Comanda'}</h3>
@@ -472,41 +462,57 @@ export const POS: React.FC<POSProps> = ({
 
               {!isClosingTab ? (
                 <>
-                  <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                  <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-1.5 no-scrollbar min-h-0">
                     {tabItems.length === 0 ? (
                       <div className="h-full flex flex-col items-center justify-center text-slate-300 font-black uppercase text-[10px] italic opacity-50">Comanda Vazia</div>
                     ) : (
-                      tabItems.map((item, idx) => (
-                        <div key={idx} className="p-4 rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between items-center">
-                          <div className="flex-1">
-                            <p className="text-[10px] font-black uppercase leading-tight">{item.productName}</p>
-                            {item.modifier && <p className="text-[9px] font-bold text-slate-400">+ {item.modifier.name}</p>}
-                            <p className="text-[11px] font-black text-red-600 mt-1">{formatCurrency(item.totalPrice)}</p>
+                      <div className={`grid ${isWideMode && !isClosingTab ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5`}>
+                        {tabItems.map((item, idx) => (
+                          <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between items-center group transition-all hover:border-red-500/30">
+                            <div className="flex-1 min-w-0 pr-2">
+                              <p className="text-[10px] font-black uppercase leading-tight truncate text-slate-800 dark:text-slate-200">{item.productName}</p>
+                              {item.modifier && <p className="text-[8px] font-bold text-slate-400 truncate leading-none mt-0.5">({item.modifier.name})</p>}
+                              <p className="text-[9px] font-black text-red-600 mt-0.5">{formatCurrency(item.totalPrice)}</p>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
+                               <button onClick={() => updateItemQty(idx, -1)} className="w-5 h-5 flex items-center justify-center font-black text-slate-400 hover:text-red-600 transition-colors">
+                                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M20 12H4" /></svg>
+                               </button>
+                               <span className="text-[9px] font-black min-w-[10px] text-center">{item.quantity}</span>
+                               <button onClick={() => updateItemQty(idx, 1)} className="w-5 h-5 flex items-center justify-center font-black text-slate-400 hover:text-emerald-600 transition-colors">
+                                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={5} d="M12 4v16m8-8H4" /></svg>
+                               </button>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 p-1 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
-                             <button onClick={() => updateItemQty(idx, -1)} className="w-8 h-8 font-black text-slate-400 hover:text-red-600">-</button>
-                             <span className="text-xs font-black">{item.quantity}</span>
-                             <button onClick={() => updateItemQty(idx, 1)} className="w-8 h-8 font-black text-slate-400 hover:text-emerald-600">+</button>
-                          </div>
-                        </div>
-                      ))
+                        ))}
+                      </div>
                     )}
                   </div>
-                  <div className="p-8 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 space-y-3">
-                     <div className="flex justify-between items-center text-2xl font-black italic tracking-tighter mb-2">
-                        <span className="text-[10px] font-black uppercase not-italic text-slate-400">Total</span>
-                        <span>{formatCurrency(tabTotal)}</span>
-                     </div>
-                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-5 rounded-3xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
-                      <button onClick={handleSaideira} disabled={tabItems.length === 0} className="w-full py-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:border-emerald-500 transition-all flex items-center justify-center gap-2">
-                        <span>🍻</span>
-                        <span>Repetir Saideira</span>
-                      </button>
-                     <button onClick={() => setTabToDelete(activeTab!)} className="w-full py-4 text-slate-400 font-black uppercase text-[10px] tracking-widest hover:text-red-500 transition-colors flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
-                        Descartar Venda
-                     </button>
-                  </div>
+                  
+                  <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+                      <div className="flex justify-between items-end">
+                         <div className="flex flex-col">
+                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Total Consumido</span>
+                            <span className="text-2xl font-black italic tracking-tighter leading-none">{formatCurrency(tabTotal)}</span>
+                         </div>
+                         <div className="flex flex-col items-end">
+                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Itens</span>
+                            <span className="text-xl font-black italic text-red-600 leading-none">{tabItems.length}</span>
+                         </div>
+                      </div>
+                      
+                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                        <button onClick={handleSaideira} disabled={tabItems.length === 0} className="py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-black uppercase text-[7px] tracking-widest hover:border-emerald-500 transition-all flex items-center justify-center gap-1 opacity-70 hover:opacity-100">
+                           <span>🍻</span> <span>Saideira</span>
+                        </button>
+                        <button onClick={() => setTabToDelete(activeTab!)} className="py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-black uppercase text-[7px] tracking-widest hover:text-red-500 hover:border-red-500/30 transition-all flex items-center justify-center gap-1 opacity-70 hover:opacity-100">
+                           <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth={2.5}/></svg>
+                           Anular
+                        </button>
+                      </div>
+                   </div>
                 </>
               ) : (
                 <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
