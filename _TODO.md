@@ -215,6 +215,13 @@ Mas parece IA avançada.
 
 ---
 
+### Segurança & Acessibilidade (v4.7) [FEITO]
+- [x] **Acessibilidade A1/A2:** Implementação de aria-labels e associação de labels/inputs em todo o sistema.
+- [x] **Privacidade de Senhas:** Removida exibição de senhas e implementada edição segura no UserManagement.
+- [x] **Proteção Admin:** Bloqueada edição do login 'admin' para evitar lockouts.
+
+---
+
 1. Radar de Prejuízo (produto que parece vender mas dá pouco lucro)
 Donos de bar caem muito nisso.
 

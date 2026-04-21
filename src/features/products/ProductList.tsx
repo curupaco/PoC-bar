@@ -284,13 +284,14 @@ const ProductList: React.FC<ProductListProps> = ({
               <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
                 {editingId ? 'Editar Produto' : 'Novo Produto'}
               </h3>
-              <button onClick={closeModal} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold">✕</button>
+              <button onClick={closeModal} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold" aria-label="Fechar modal de produto">✕</button>
             </div>
 
             <div className="space-y-6 overflow-y-auto no-scrollbar p-1">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome do Produto</label>
+                <label htmlFor="product-name-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome do Produto</label>
                 <input 
+                  id="product-name-input"
                   autoFocus
                   type="text" 
                   value={name} 
@@ -302,10 +303,11 @@ const ProductList: React.FC<ProductListProps> = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço Venda</label>
+                  <label htmlFor="product-price-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço Venda</label>
                   <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
                     <input 
+                      id="product-price-input"
                       type="text" 
                       inputMode="decimal"
                       value={price} 
@@ -320,12 +322,12 @@ const ProductList: React.FC<ProductListProps> = ({
                   <div className="flex p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <button onClick={() => setSellType('unit')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>UN</button>
                     <button onClick={() => setSellType('weight')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>KG</button>
-                  </div>
                 </div>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria</label>
+            <div className="space-y-2">
+                <label htmlFor="product-category-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria</label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {allCategories.slice(0, 5).map(c => (
                     <button key={c} onClick={() => setCategory(c)} className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase border transition-all ${category === c ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-50 dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-400'}`}>
@@ -334,6 +336,7 @@ const ProductList: React.FC<ProductListProps> = ({
                   ))}
                 </div>
                 <input 
+                  id="product-category-input"
                   type="text" 
                   value={category} 
                   onChange={e => setCategory(e.target.value)} 
@@ -347,8 +350,9 @@ const ProductList: React.FC<ProductListProps> = ({
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Menu de Adicionais (Opcional)</label>
+                <label htmlFor="product-modifiers-select" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Menu de Adicionais (Opcional)</label>
                 <select 
+                  id="product-modifiers-select"
                   value={modGroupId} 
                   onChange={e => setModGroupId(e.target.value)} 
                   className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all"

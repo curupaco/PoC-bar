@@ -210,6 +210,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                   <button 
                     onClick={() => { setOperation('SANGRIA'); setKeypadValue(''); }}
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    aria-label="Realizar Sangria (Gaveta para Cofre)"
                   >
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
                      Realizar Sangria
@@ -236,6 +237,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                   <button 
                     onClick={() => { setOperation('SUPPLY'); setKeypadValue(''); }}
                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                    aria-label="Enviar Suprimento (Cofre para Gaveta)"
                   >
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
                      Enviar Suprimento
@@ -293,7 +295,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                      <h3 className={`text-xl font-black uppercase tracking-tighter italic ${getOperationColor(operation)}`}>{getOperationLabel(operation)}</h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Digite o valor da operação</p>
                   </div>
-                  <button onClick={() => { setOperation(null); setKeypadValue(''); }} className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors font-bold">✕</button>
+                  <button onClick={() => { setOperation(null); setKeypadValue(''); }} className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors font-bold" aria-label="Fechar terminal de tesouraria">✕</button>
                </div>
 
                {/* VISOR */}
@@ -311,13 +313,14 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                         key={num} 
                         onClick={() => handleKeypadPress(num.toString())}
                         className="h-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-2xl font-black text-slate-700 dark:text-white active:scale-95 active:bg-slate-100 dark:active:bg-slate-700 transition-all"
+                        aria-label={`Número ${num}`}
                      >
                         {num}
                      </button>
                   ))}
-                  <button onClick={() => handleKeypadPress('C')} className="h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-xs font-black text-red-600 uppercase tracking-widest active:scale-95 transition-all">Limpar</button>
-                  <button onClick={() => handleKeypadPress('0')} className="h-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-2xl font-black text-slate-700 dark:text-white active:scale-95 transition-all">0</button>
-                  <button onClick={() => handleKeypadPress('back')} className="h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 active:scale-95 transition-all flex items-center justify-center">
+                  <button onClick={() => handleKeypadPress('C')} className="h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-xs font-black text-red-600 uppercase tracking-widest active:scale-95 transition-all" aria-label="Limpar valor digitado">Limpar</button>
+                  <button onClick={() => handleKeypadPress('0')} className="h-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm text-2xl font-black text-slate-700 dark:text-white active:scale-95 transition-all" aria-label="Número 0">0</button>
+                  <button onClick={() => handleKeypadPress('back')} className="h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 active:scale-95 transition-all flex items-center justify-center" aria-label="Apagar último dígito">
                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" /></svg>
                   </button>
                </div>

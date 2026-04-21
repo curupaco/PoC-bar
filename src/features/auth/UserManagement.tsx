@@ -71,7 +71,6 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
   const [displayName, setDisplayName] = useState('');
   const [selectedPerms, setSelectedPerms] = useState<UserPermission[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
-  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
 
   const resetForm = () => {
@@ -98,9 +97,13 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
     const dError = validateItemName(displayName.toUpperCase());
     if (dError) { setError(`Nome exibição inválido: ${dError}`); return; }
     
-    const finalPassword = editingUser && editingUser.password === password 
-      ? password 
-      : hashPassword(password);
+    let finalPassword = editingUser?.password || '';
+    if (password) {
+      finalPassword = hashPassword(password);
+    } else if (!editingUser) {
+      setError("Senha é obrigatória para novos usuários.");
+      return;
+    }
     
     // GARANTIA: allowedUnits limpo de valores falsy e forçado para array
     const finalUnits = selectedUnits.filter(Boolean);
@@ -163,11 +166,24 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">ID de Login</label>
-                <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-red-500 outline-none font-black text-sm uppercase transition-all" placeholder="ex: pedro.caixa" />
+                <input 
+                  type="text" 
+                  value={username} 
+                  onChange={e => setUsername(e.target.value)} 
+                  disabled={editingUser?.username === 'admin'}
+                  className={`w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-red-500 outline-none font-black text-sm uppercase transition-all ${editingUser?.username === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}`} 
+                  placeholder="ex: pedro.caixa" 
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
-                <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-red-500 outline-none font-black transition-all" />
+                <input 
+                  type="password" 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)} 
+                  className="w-full px-5 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border-2 border-transparent focus:border-red-500 outline-none font-black transition-all" 
+                  placeholder={editingUser ? "Deixe em branco para manter" : "••••••••"}
+                />
               </div>
               <div className="space-y-1">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome no Cupom</label>
@@ -286,10 +302,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                  <button onClick={() => {
                     setEditingUser(user);
                     setUsername(user.username);
-                    setPassword(user.password);
+                    setPassword(''); // Não preencher a senha para segurança
                     setDisplayName(user.displayName);
                     setSelectedPerms(user.permissions);
-                    setSelectedUnits(userAllowed); // Usa a versão normalizada
+                    setSelectedUnits(userAllowed);
                     setIsAdding(true);
                     setTimeout(() => {
                       topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -308,8 +324,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
             <div className="space-y-3">
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-800">
                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Senha</span>
-                 <span className="text-[10px] font-mono text-slate-500 truncate flex-1">{visiblePasswords[user.id] ? user.password : '••••••••'}</span>
-                 <button onClick={() => setVisiblePasswords(p => ({...p, [user.id]: !p[user.id]}))} className="text-[8px] font-black text-blue-500 uppercase">{visiblePasswords[user.id] ? 'Ocultar' : 'Revelar'}</button>
+                 <span className="text-[10px] font-mono text-slate-500 truncate flex-1">••••••••</span>
               </div>
               <div className="flex flex-wrap gap-1">
                  {user.username === 'admin' ? (

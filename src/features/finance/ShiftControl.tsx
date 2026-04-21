@@ -193,7 +193,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Responsável: @{activeShift.openedBy} • Aberto às {new Date(activeShift.startTime).toLocaleTimeString()}</p>
                         </div>
                      </div>
-                     <button onClick={() => setShowConferral(true)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95">Fechar Turno</button>
+                     <button onClick={() => setShowConferral(true)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95" aria-label="Iniciar fechamento de turno">Fechar Turno</button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -250,12 +250,13 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                         >
                            <div className="flex justify-between items-start mb-4">
                               <span className="text-4xl drop-shadow-sm transform group-hover:scale-110 transition-transform duration-300">{getCompartmentIcon(idx)}</span>
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right leading-tight">{item.label}</label>
+                              <label htmlFor={`shift-open-input-${idx}`} className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-right leading-tight">{item.label}</label>
                            </div>
 
                            <div className="relative">
                               <span className="absolute left-0 top-1/2 -translate-y-1/2 font-black text-slate-300 text-sm">R$</span>
                               <input
+                                 id={`shift-open-input-${idx}`}
                                  type="text"
                                  inputMode="decimal"
                                  value={item.val}
@@ -280,6 +281,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                      onClick={handleOpenShift}
                      disabled={isProcessing}
                      className="w-full bg-red-600 hover:bg-red-700 text-white py-6 rounded-[24px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 hover:shadow-xl shadow-red-600/20"
+                     aria-label="Iniciar Operação do Bar"
                   >
                      {isProcessing ? (
                         'Processando...'
@@ -366,10 +368,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                   <div className="flex-1 flex flex-col justify-between border-l border-slate-100 dark:border-slate-800 md:pl-8 pt-6 md:pt-0">
                      <div className="space-y-6">
                         <div className="bg-slate-100 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Contado (Físico)</label>
+                           <label htmlFor="shift-close-counted-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Valor Contado (Físico)</label>
                            <div className="relative">
                               <span className="absolute left-6 top-1/2 -translate-y-1/2 text-2xl font-black text-slate-400">R$</span>
                               <input
+                                 id="shift-close-counted-input"
                                  autoFocus
                                  type="text"
                                  inputMode="decimal"
@@ -394,10 +397,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                            onClick={handleConfirmClose}
                            disabled={isProcessing}
                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-50"
+                           aria-label="Confirmar fechamento definitivo do turno"
                         >
                            {isProcessing ? 'PROCESSANDO...' : 'Confirmar Fechamento'}
                         </button>
-                        <button onClick={() => setShowConferral(false)} className="text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors py-3">Voltar</button>
+                        <button onClick={() => setShowConferral(false)} className="text-slate-400 hover:text-white font-bold uppercase text-[10px] tracking-widest transition-colors py-3" aria-label="Voltar para o monitor de turno">Voltar</button>
                      </div>
                   </div>
 

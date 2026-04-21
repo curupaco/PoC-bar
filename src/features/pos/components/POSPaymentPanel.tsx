@@ -170,7 +170,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                {/* LADO ESQUERDO: CONTROLES DE PAGAMENTO */}
                <div className="flex-1 space-y-6">
                   <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-4 rounded-3xl border border-slate-100 dark:border-slate-800">
-                     <button onClick={onBack} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors">
+                     <button onClick={onBack} className="text-[10px] font-black text-slate-400 uppercase flex items-center gap-2 hover:text-red-500 transition-colors" aria-label="Voltar para o pedido">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                         Voltar
                      </button>
@@ -194,6 +194,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                                  key={m}
                                  onClick={() => setPaymentMethodInput(m)}
                                  className={`py-4 rounded-2xl font-black text-[10px] uppercase border-2 transition-all ${paymentMethodInput === m ? 'bg-red-600 text-white border-red-600 shadow-xl shadow-red-600/20 scale-105 z-10' : 'bg-white dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-700 hover:border-red-200'}`}
+                                 aria-label={`Pagar com ${m}`}
                               >
                                  {m}
                               </button>
@@ -203,10 +204,11 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
 
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                           <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor Cobrado</label>
+                           <label htmlFor="payment-amount-input" className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-2">Valor Cobrado</label>
                            <div className="relative">
                               <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400 text-lg">R$</span>
                               <input
+                                 id="payment-amount-input"
                                  type="text"
                                  inputMode="decimal"
                                  value={paymentAmountInput}
@@ -218,25 +220,27 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
 
                         {paymentMethodInput === PaymentMethod.CASH && (
                            <div className="space-y-1.5 animate-in slide-in-from-right-4">
-                              <label className="text-[9px] font-black text-emerald-500 uppercase tracking-widest ml-2">Dinheiro Entregue</label>
-                              <div className="relative">
-                                 <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-emerald-400 text-lg">R$</span>
-                                 <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={cashReceivedInput}
-                                    onChange={e => setCashReceivedInput(sanitizeCurrencyInput(e.target.value))}
-                                    className="w-full pl-14 pr-5 py-4 rounded-[25px] bg-emerald-50 dark:bg-emerald-950/20 font-black text-2xl outline-none border-4 border-emerald-500/20 focus:border-emerald-500 transition-all shadow-inner"
-                                 />
-                              </div>
+                               <label htmlFor="cash-received-input" className="text-[9px] font-black text-emerald-500 uppercase tracking-widest ml-2">Dinheiro Entregue</label>
+                               <div className="relative">
+                                  <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-emerald-400 text-lg">R$</span>
+                                  <input
+                                     id="cash-received-input"
+                                     type="text"
+                                     inputMode="decimal"
+                                     value={cashReceivedInput}
+                                     onChange={e => setCashReceivedInput(sanitizeCurrencyInput(e.target.value))}
+                                     className="w-full pl-14 pr-5 py-4 rounded-[25px] bg-emerald-50 dark:bg-emerald-950/20 font-black text-2xl outline-none border-4 border-emerald-500/20 focus:border-emerald-500 transition-all shadow-inner"
+                                  />
+                               </div>
                            </div>
                         )}
                      </div>
 
                      {(paymentMethodInput === PaymentMethod.PENDURA || activeTabId === 'shortcut-payment') && (
                         <div className="space-y-1.5 animate-in slide-in-from-bottom-4">
-                           <label className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-2">Identificação do Cliente</label>
+                           <label htmlFor="customer-name-input" className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-2">Identificação do Cliente</label>
                            <input
+                              id="customer-name-input"
                               type="text"
                               value={customerNameInput}
                               onChange={e => activeTabId !== 'shortcut-payment' && setCustomerNameInput(e.target.value)}
@@ -274,9 +278,9 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                                     <p className="text-[9px] font-black uppercase text-slate-900 dark:text-white">{p.method}</p>
                                     <p className="text-[10px] font-black text-red-600 italic">{formatCurrency(p.amount)}</p>
                                  </div>
-                                 <button onClick={() => setCurrentPayments(prev => prev.filter((_, i) => i !== idx))} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                 </button>
+                                  <button onClick={() => setCurrentPayments(prev => prev.filter((_, i) => i !== idx))} className="p-1.5 text-slate-300 hover:text-red-500 transition-colors" aria-label="Remover este pagamento">
+                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  </button>
                               </div>
                            ))
                         )}

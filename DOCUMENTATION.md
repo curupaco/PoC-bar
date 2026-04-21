@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.6.0 (Smart Stock & Intelligence)
+**Versão:** 4.7.0 (Security & Accessibility)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -16,6 +16,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Segurança de Saída (Novo):** Guardas de navegação (`beforeunload`) que impedem o fechamento da aba se houver dados pendentes na fila de sincronização.
 *   **Arquitetura de Rede (Novo):** Suporte nativo a multi-unidades e franquias com isolamento estrito de dados via `franchiseId`.
 *   **Controle de Estoque Inteligente (Novo):** Sistema híbrido que permite definir quais produtos devem descontar estoque e quais são serviços puros.
+*   **Acessibilidade Nativa (v4.7):** Implementação de `aria-labels` descritivos e associação semântica de labels/inputs em todos os módulos críticos.
+*   **Segurança de Credenciais (v4.7):** Remoção de exibição de senhas em texto puro e proteção reforçada de contas administrativas.
 *   **Deduplicação de Categorias:** O frontend aplica normalização estrita (Trim + UpperCase) ao agregar categorias.
 
 ---
@@ -75,4 +77,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
 
 ---
-*Documentação atualizada em Abril de 2026. Botequista System v4.6.0*
+*Documentação atualizada em Abril de 2026. Botequista System v4.7.0*

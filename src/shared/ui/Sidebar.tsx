@@ -86,6 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
           }`}
         title={isCollapsed ? label : ''}
+        aria-label={label}
       >
         <div className={`w-6 h-6 flex items-center justify-center transition-transform ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
           {icon}
@@ -149,6 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   : 'top-1/2 right-6 -translate-y-1/2'
              }`}
              title={isCollapsed ? "Expandir Menu" : "Recolher Menu"}
+             aria-label={isCollapsed ? "Expandir Menu lateral" : "Recolher Menu lateral"}
            >
              {isCollapsed ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
@@ -269,6 +271,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button 
               onClick={onLogout}
               className={`group w-full flex items-center gap-3 p-3 rounded-2xl transition-all duration-200 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 ${isCollapsed ? 'justify-center' : ''}`}
+              aria-label="Sair do sistema"
             >
                <div className="w-6 h-6 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>

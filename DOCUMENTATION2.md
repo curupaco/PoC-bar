@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.6 Elite Smart Stock.*
+> *Material de apresentação comercial — versão v4.7 Security & Accessibility.*
 
 ---
 
@@ -38,11 +38,13 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Smart Stock Intelligence (v4.6):** Agora o Botequista prevê o futuro. O sistema calcula a velocidade de venda em tempo real e avisa: *"A Original acaba em 45 minutos"*. Chega de surpresas no meio do rush.
 - **Reposição Inteligente via WhatsApp:** O sistema gera sua lista de compras baseada na média de consumo e envia direto para o seu fornecedor pelo WhatsApp. Automação total do estoque.
 
-### 🛡️ Segurança e Comodidade
+### 🛡️ Segurança e Comodidade (v4.7 Enhanced)
 - **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
 - **Recibo via WhatsApp:** Chega de papel. Envie o comprovante detalhado direto para o celular do cliente pelo WhatsApp com total profissionalismo.
 - **Quitação em Lote:** Selecione vários devedores do fiado e quite as dívidas de todos de uma única vez. Organização financeira sem esforço.
 - **Badges de Estoque & ETA:** Veja o nível de estoque e o tempo estimado para acabar direto no botão de venda. Inteligência pura no PDV.
+- **Acessibilidade Universal:** Sistema 100% navegável via teclado e compatível com leitores de tela, garantindo inclusão e conformidade técnica.
+- **Privacidade de Credenciais:** Gestão de usuários com ocultação estrita de senhas e proteção de contas de sistema contra alterações acidentais.
 
 ---
 
@@ -270,5 +272,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.6.0 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.7.0 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

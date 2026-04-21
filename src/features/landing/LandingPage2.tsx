@@ -249,7 +249,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.6 Smart Stock</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7 Security & Accessibility</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -374,6 +374,7 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo, e você pode usar o teclado." accent="emerald" />
             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
             <FeatureCard icon="🚨" title="Smart Stock AI" desc="O sistema calcula a velocidade de venda e avisa em quanto tempo o estoque vai acabar. Antecipe a compra e nunca perca vendas." accent="emerald" />
+            <FeatureCard icon="🛡️" title="Acessibilidade & Segurança" desc="100% acessível via teclado e leitores de tela. Senhas protegidas e ocultas para máxima privacidade da sua equipe." accent="emerald" />
             <FeatureCard icon="📈" title="Ticket Médio Inteligente" desc="Acompanhe tendências de consumo com comparativos automáticos vs ontem/semana passada. Saiba se está crescendo." accent="emerald" />
             <FeatureCard icon="📊" title="Reposição Automática" desc="Gere sua lista de compras baseada no giro real e envie direto para o WhatsApp do fornecedor em um clique." accent="emerald" />
             <FeatureCard icon="🔥" title="Top Combos Inteligentes" desc="O sistema descobre sozinho quais produtos saem juntos (ex: Cerveja + Batata). Ideal para criar promoções que vendem." accent="emerald" />
