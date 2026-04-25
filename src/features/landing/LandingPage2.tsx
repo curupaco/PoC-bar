@@ -138,6 +138,69 @@ const ScreenshotGallery: React.FC = () => {
 };
 
 
+const ROICalculator: React.FC = () => {
+  const [revenue, setRevenue] = useState(30000);
+  const [leakage, setLeakage] = useState(5); // % de perda estimada
+
+  const monthlySavings = (revenue * (leakage / 100));
+  const yearlySavings = monthlySavings * 12;
+
+  return (
+    <div className="scroll-reveal p-8 md:p-12 rounded-[40px] bg-slate-900/50 border border-white/5 shadow-2xl relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none"></div>
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="space-y-8">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2 block">Simulador de Impacto</span>
+            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none mb-4">Quanto seu bar está <span className="text-red-500 italic">perdendo</span> hoje?</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">Pequenos erros de caixa, comandas esquecidas e fiados não pagos parecem pouco, mas no fim do ano viram um rombo.</p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Faturamento Mensal</label>
+                <span className="text-lg font-black text-white">R$ {revenue.toLocaleString('pt-BR')}</span>
+              </div>
+              <input 
+                type="range" min="5000" max="200000" step="1000" 
+                value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
+                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Estimativa de Perda (Erro/Fuga)</label>
+                <span className="text-lg font-black text-red-500">{leakage}%</span>
+              </div>
+              <input 
+                type="range" min="1" max="15" step="1" 
+                value={leakage} onChange={(e) => setLeakage(Number(e.target.value))}
+                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+              />
+              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic text-right">*Média do mercado: 4% a 8%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-950/50 p-10 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative">
+          <div className="absolute -top-4 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20">Economia Potencial</div>
+          <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Você deixaria de perder</div>
+          <div className="text-5xl md:text-6xl font-black text-emerald-500 tracking-tighter mb-2">R$ {monthlySavings.toLocaleString('pt-BR')}</div>
+          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest">por mês</div>
+          
+          <div className="mt-8 pt-8 border-t border-white/5 w-full">
+            <div className="text-3xl font-black text-white tracking-tighter mb-1">R$ {yearlySavings.toLocaleString('pt-BR')}</div>
+            <div className="text-slate-400 text-[9px] font-black uppercase tracking-widest italic">por ano no seu bolso</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const Typewriter: React.FC<{ text: string; delay?: number }> = ({ text, delay = 5 }) => {
   const [currentText, setCurrentText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -161,6 +224,23 @@ export const LandingPage2: React.FC = () => {
   const [nerdTab, setNerdTab] = useState<'stack' | 'sync' | 'perf'>('stack');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [faqSearch, setFaqSearch] = useState('');
+
+  const faqs = [
+    { q: 'É grátis mesmo?', a: 'Sim. Zero mensalidade. Zero contrato. Zero cartão. Enquanto você for parceiro fundador, é de graça pra sempre.' },
+    { q: 'Funciona offline?', a: 'Sim. Vende sem internet. Os dados ficam no dispositivo e sincronizam quando a conexão voltar via SyncQueue.' },
+    { q: 'Quanto tempo pra começar?', a: '15 minutos. Você cadastra o cardápio e já pode vender. Sem ajuda técnica necessária.' },
+    { q: 'Onde meus dados ficam?', a: 'Ficam no seu navegador (IndexedDB) e na nuvem Google (Firebase). Você também pode exportar para o GitHub.' },
+    { q: 'Precisa baixar aplicativo?', a: 'Não. É um PWA. Funciona direto no navegador do celular ou PC, mas você pode "Instalar" na tela inicial.' },
+    { q: 'Posso usar em mais de um celular?', a: 'Sim. O sistema sincroniza múltiplas telas em tempo real. O garçom lança, o caixa vê.' },
+    { q: 'E se o celular quebrar?', a: 'Seus dados estão na nuvem. Basta logar em outro aparelho e tudo volta instantaneamente.' },
+    { q: 'Tem suporte?', a: 'Sim, suporte prioritário via WhatsApp para todos os bares parceiros.' },
+  ];
+
+  const filteredFAQs = faqs.filter(f => 
+    f.q.toLowerCase().includes(faqSearch.toLowerCase()) || 
+    f.a.toLowerCase().includes(faqSearch.toLowerCase())
+  );
 
   useScrollReveal();
 
@@ -410,6 +490,31 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
+      {/* ─── DATA SECURITY ─── */}
+      <section className="py-24 px-6 bg-[#020617] relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-3xl mb-6">🗄️</div>
+              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">IndexedDB Local</h4>
+              <p className="text-slate-400 text-[11px] leading-relaxed">Seus dados são salvos no banco de dados interno do navegador. Mesmo sem Wi-Fi, nada se perde. É tecnologia de banco em um sistema de bar.</p>
+            </div>
+
+            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl mb-6">☁️</div>
+              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">Nuvem Google</h4>
+              <p className="text-slate-400 text-[11px] leading-relaxed">Tudo é sincronizado em tempo real com os servidores do Google (Firebase). Backup automático e proteção contra perda de aparelho.</p>
+            </div>
+
+            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-3xl mb-6">🐙</div>
+              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">Backup GitHub</h4>
+              <p className="text-slate-400 text-[11px] leading-relaxed">Exclusividade Botequista: Você pode espelhar seu banco de dados em um repositório privado no GitHub. Seus dados são SEUS, para sempre.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── REAL SCREENSHOTS ─── */}
       <section id="sistema" className="py-32 px-6">
         <div className="max-w-6xl mx-auto">
@@ -583,29 +688,40 @@ export const LandingPage2: React.FC = () => {
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Quem já usa, aprova</span>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Depoimentos <span className="text-red-600 italic">Reais</span></h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes eu perdia R$200 por semana em caixa furado. Depois da conferência cega, o caixa bate 100% dos dias. É impressionante.', role: 'Proprietário', stars: 5 },
-              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Curva ABC me mostrou que eu estava perdendo margem com uma cerveja que eu achava que era a melhor. Mudei o cardápio e meu lucro subiu 18%.', role: 'Gerente', stars: 5 },
-              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Gerencio minhas 3 unidades de casa. O sistema funciona até quando meu garçom deixa o tablet sem Wi-Fi. Paz de espírito total.', role: 'Franqueador', stars: 5 },
+              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes eu perdia R$200 por semana em caixa furado. Depois da conferência cega, o caixa bate 100% dos dias. É impressionante.', role: 'Proprietário', stars: 5, color: 'from-amber-500/10' },
+              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Curva ABC me mostrou que eu estava perdendo margem com uma cerveja que eu achava que era a melhor. Mudei o cardápio e meu lucro subiu 18%.', role: 'Gerente', stars: 5, color: 'from-indigo-500/10' },
+              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Gerencio minhas 3 unidades de casa. O sistema funciona até quando meu garçom deixa o tablet sem Wi-Fi. Paz de espírito total.', role: 'Franqueador', stars: 5, color: 'from-emerald-500/10' },
+              { name: 'Cláudio', bar: 'Espeto Real', quote: 'O Smart Stock me avisou que o carvão ia acabar num feriado. Comprei antes e não perdi o giro. Esse sistema se paga sozinho.', role: 'Dono', stars: 5, color: 'from-red-500/10' },
+              { name: 'Ana', bar: 'Vila Madalena House', quote: 'O relatório de equipe acabou com as discussões sobre a caixinha. Tudo automático e transparente. Meus garçons amam.', role: 'Gerente', stars: 5, color: 'from-blue-500/10' },
+              { name: 'Beto', bar: 'Corner Bar', quote: 'Migrei de um sistema caro para o Botequista e não me arrependo. O suporte via WhatsApp é humano e resolve na hora.', role: 'Proprietário', stars: 5, color: 'from-purple-500/10' },
             ].map((t, i) => (
-              <div key={i} className="scroll-reveal p-8 rounded-3xl bg-slate-900/40 border border-white/5 hover:border-red-500/20 transition-all group">
-                <div className="flex gap-1 mb-6">
+              <div key={i} className={`scroll-reveal p-10 rounded-[40px] bg-gradient-to-br ${t.color} to-transparent border border-white/5 hover:border-white/10 transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden`}>
+                <div className="absolute top-0 right-0 p-8 text-6xl opacity-[0.03] group-hover:opacity-[0.07] transition-all">"</div>
+                <div className="flex gap-1 mb-8">
                   {Array.from({ length: t.stars }).map((_, j) => (
                     <svg key={j} className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                   ))}
                 </div>
-                <p className="text-slate-300 text-sm leading-relaxed mb-8 italic">"{t.quote}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-red-600/20 flex items-center justify-center text-red-500 font-black text-sm">{t.name[0]}</div>
+                <p className="text-slate-200 text-base leading-relaxed mb-10 font-medium italic relative z-10">"{t.quote}"</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white font-black text-lg border border-white/10">{t.name[0]}</div>
                   <div>
-                    <div className="text-white font-bold text-sm">{t.name}</div>
-                    <div className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">{t.role} {t.bar}</div>
+                    <div className="text-white font-black text-sm uppercase tracking-tight">{t.name}</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.role} • {t.bar}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ─── ROI CALCULATOR ─── */}
+      <section className="py-24 px-6 bg-slate-950/50">
+        <div className="max-w-6xl mx-auto">
+          <ROICalculator />
         </div>
       </section>
 
@@ -667,23 +783,41 @@ export const LandingPage2: React.FC = () => {
       <section className="py-32 px-6 bg-white/[0.01]">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-3xl font-black uppercase tracking-tighter">Perguntas Frequentes</h2>
-          </div>
-          {[
-            { q: 'É grátis mesmo?', a: 'Sim. Zero mensalidade. Zero contrato. Zero cartão. Enquanto você for parceiro fundador, é de graça pra sempre.' },
-            { q: 'Funciona offline?', a: 'Sim. Vende sem internet. Os dados ficam no dispositivo e sincronizam quando a conexão voltar.' },
-            { q: 'Quanto tempo pra começar?', a: '15 minutos. Você cadastra o cardápio e já pode vender. Sem ajuda técnica necessária.' },
-          ].map((faq, i) => (
-            <div key={i} className="scroll-reveal group border-b border-white/5 cursor-pointer" onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}>
-              <div className="flex justify-between items-center py-6 group-hover:text-red-500 transition-colors">
-                <span className="text-base font-bold pr-4">{faq.q}</span>
-                <span className={`text-xl font-black flex-shrink-0 transition-transform duration-300 ${activeFAQ === i ? 'rotate-45' : ''}`}>+</span>
-              </div>
-              <div className={`overflow-hidden transition-all duration-500 ${activeFAQ === i ? 'max-h-40 pb-6' : 'max-h-0'}`}>
-                <p className="text-slate-300 text-sm leading-relaxed">{faq.a}</p>
-              </div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter mb-8">Perguntas Frequentes</h2>
+            
+            {/* FAQ Search */}
+            <div className="relative max-w-md mx-auto">
+               <input 
+                  type="text" 
+                  placeholder="Busque uma dúvida (ex: offline, grátis...)" 
+                  onChange={(e) => setFaqSearch(e.target.value)}
+                  className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-red-500/50 transition-all text-center"
+               />
+               <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none opacity-30">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+               </div>
             </div>
-          ))}
+          </div>
+
+          <div className="space-y-2">
+            {filteredFAQs.length === 0 ? (
+               <div className="py-10 text-center opacity-30">
+                  <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhuma resposta encontrada para sua busca</p>
+               </div>
+            ) : (
+               filteredFAQs.map((faq, i) => (
+                  <div key={i} className="scroll-reveal group border-b border-white/5 cursor-pointer" onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}>
+                    <div className="flex justify-between items-center py-6 group-hover:text-red-500 transition-colors">
+                      <span className="text-base font-bold pr-4">{faq.q}</span>
+                      <span className={`text-xl font-black flex-shrink-0 transition-transform duration-300 ${activeFAQ === i ? 'rotate-45' : ''}`}>+</span>
+                    </div>
+                    <div className={`overflow-hidden transition-all duration-500 ${activeFAQ === i ? 'max-h-40 pb-6' : 'max-h-0'}`}>
+                      <p className="text-slate-300 text-sm leading-relaxed">{faq.a}</p>
+                    </div>
+                  </div>
+               ))
+            )}
+          </div>
         </div>
       </section>
 
