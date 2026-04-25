@@ -19,6 +19,7 @@ interface SettingsProps {
   setPenduraThreshold: (val: number) => void;
   longDurationThreshold: number;
   setLongDurationThreshold: (val: number) => void;
+  activeUnitId: string | null;
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -35,7 +36,8 @@ const Settings: React.FC<SettingsProps> = ({
   penduraThreshold,
   setPenduraThreshold,
   longDurationThreshold,
-  setLongDurationThreshold
+  setLongDurationThreshold,
+  activeUnitId
 }) => {
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'UNITS' | 'BACKUP' | 'DOCS'>('GENERAL');
   const [isRescuing, setIsRescuing] = useState(false);
@@ -44,7 +46,7 @@ const Settings: React.FC<SettingsProps> = ({
   const [isSyncingGithub, setIsSyncingGithub] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
 
-  const unitId = localStorage.getItem('btq_active_unit') || '';
+  const unitId = activeUnitId || '';
 
   const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
     setToast({ msg, type });

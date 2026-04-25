@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
     // @ts-ignore
     test: {
       globals: true,
-      environment: 'node',
+      environment: 'happy-dom',
       setupFiles: './tests/setup.ts',
     },
   };
