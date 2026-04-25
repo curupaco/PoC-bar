@@ -176,7 +176,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
     
     const map: Record<string, Product[]> = {};
     filtered.forEach(p => {
-      const cat = p.category || 'DIVERSOS';
+      const cat = (p.category || 'DIVERSOS').trim().toUpperCase();
       if (!map[cat]) map[cat] = [];
       map[cat].push(p);
     });
@@ -184,7 +184,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   }, [products, searchQuery, activeCategory, sortBy]);
 
   const categories = useMemo(() => {
-    const cats = new Set(products.map(p => p.category?.toUpperCase() || 'DIVERSOS'));
+    const cats = new Set(products.map(p => (p.category?.trim() || 'DIVERSOS').toUpperCase()));
     return Array.from(cats).sort();
   }, [products]);
 
