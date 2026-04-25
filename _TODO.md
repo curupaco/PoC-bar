@@ -96,7 +96,7 @@ Normal: 12
 Happy Hour: 9
 
 Diferencial:
-ativa sozinho
+ativa sozinho!
 
 Complexidade: baixa
 
