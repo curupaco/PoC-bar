@@ -30,7 +30,7 @@ const CATEGORY_ICONS: Record<string, string> = {
   'PORÇÕES': '🍟', 'PORCAO': '🍟', 'PORCAOES': '🍟',
   'SOBREMESAS': '🍰', 'SOBREMESA': '🍰', 'DOCES': '🍰',
   'DIVERSOS': '📋', 'DIVERSO': '📋', 'OUTROS': '📋', 'GERAL': '📋',
-  'CACHETA': 'QKA', 'CACHETAS': 'QKA',
+  'CACHETA': '🃏', 'CACHETAS': '🃏',
 };
 
 const getCategoryIcon = (cat: string) => {
