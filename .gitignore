@@ -37,3 +37,5 @@ node_modules
 # Temp project files
 test_env.js
 migration_tmp.js
+.vercel
+.env*.local
