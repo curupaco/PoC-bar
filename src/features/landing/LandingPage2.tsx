@@ -490,27 +490,15 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── DATA SECURITY ─── */}
+      {/* ─── HIGHLIGHT: RELIABILITY ─── */}
       <section className="py-24 px-6 bg-[#020617] relative">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-3xl mb-6">🗄️</div>
-              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">IndexedDB Local</h4>
-              <p className="text-slate-400 text-[11px] leading-relaxed">Seus dados são salvos no banco de dados interno do navegador. Mesmo sem Wi-Fi, nada se perde. É tecnologia de banco em um sistema de bar.</p>
-            </div>
-
-            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl mb-6">☁️</div>
-              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">Nuvem Google</h4>
-              <p className="text-slate-400 text-[11px] leading-relaxed">Tudo é sincronizado em tempo real com os servidores do Google (Firebase). Backup automático e proteção contra perda de aparelho.</p>
-            </div>
-
-            <div className="scroll-reveal p-8 rounded-3xl bg-slate-900/30 border border-white/5 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-3xl mb-6">🐙</div>
-              <h4 className="text-white font-black text-xs uppercase tracking-widest mb-4">Backup GitHub</h4>
-              <p className="text-slate-400 text-[11px] leading-relaxed">Exclusividade Botequista: Você pode espelhar seu banco de dados em um repositório privado no GitHub. Seus dados são SEUS, para sempre.</p>
-            </div>
+          <div className="p-12 rounded-[40px] bg-slate-900/30 border border-white/5 flex flex-col items-center text-center scroll-reveal">
+            <div className="w-20 h-20 rounded-3xl bg-red-600/10 flex items-center justify-center text-4xl mb-8 animate-pulse">🎯</div>
+            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-6">Foco total no <span className="text-red-500 italic">Caderninho</span></h3>
+            <p className="text-slate-300 text-lg max-w-2xl leading-relaxed">
+              O Botequista não foi feito para competir com sistemas gigantes e caros. Foi feito para você que hoje usa o papel, a caneta ou a memória e precisa de organização sem burocracia.
+            </p>
           </div>
         </div>
       </section>
@@ -690,12 +678,11 @@ export const LandingPage2: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
-              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes eu perdia R$200 por semana em caixa furado. Depois da conferência cega, o caixa bate 100% dos dias. É impressionante.', role: 'Proprietário', stars: 5, color: 'from-amber-500/10' },
-              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Curva ABC me mostrou que eu estava perdendo margem com uma cerveja que eu achava que era a melhor. Mudei o cardápio e meu lucro subiu 18%.', role: 'Gerente', stars: 5, color: 'from-indigo-500/10' },
-              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Gerencio minhas 3 unidades de casa. O sistema funciona até quando meu garçom deixa o tablet sem Wi-Fi. Paz de espírito total.', role: 'Franqueador', stars: 5, color: 'from-emerald-500/10' },
-              { name: 'Cláudio', bar: 'Espeto Real', quote: 'O Smart Stock me avisou que o carvão ia acabar num feriado. Comprei antes e não perdi o giro. Esse sistema se paga sozinho.', role: 'Dono', stars: 5, color: 'from-red-500/10' },
-              { name: 'Ana', bar: 'Vila Madalena House', quote: 'O relatório de equipe acabou com as discussões sobre a caixinha. Tudo automático e transparente. Meus garçons amam.', role: 'Gerente', stars: 5, color: 'from-blue-500/10' },
-              { name: 'Beto', bar: 'Corner Bar', quote: 'Migrei de um sistema caro para o Botequista e não me arrependo. O suporte via WhatsApp é humano e resolve na hora.', role: 'Proprietário', stars: 5, color: 'from-purple-500/10' },
+              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes eu perdia R$200 por semana em caixa furado. Depois da conferência cega, o caixa bate 100% dos dias. É impressionante.', role: 'Proprietário', stars: 5, color: 'from-amber-500/10', img: '/landing_assets/testimonials/ricardo.png' },
+              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Curva ABC me mostrou que eu estava perdendo margem com uma cerveja que eu achava que era a melhor. Mudei o cardápio e meu lucro subiu 18%.', role: 'Gerente', stars: 5, color: 'from-indigo-500/10', img: '/landing_assets/testimonials/mariana.png' },
+              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Gerencio minhas 3 unidades de casa. O sistema funciona até quando meu garçom deixa o tablet sem Wi-Fi. Paz de espírito total.', role: 'Franqueador', stars: 5, color: 'from-emerald-500/10', img: '/landing_assets/testimonials/ozzy.png' },
+              { name: 'Cláudio', bar: 'Espeto Real', quote: 'O Smart Stock me avisou que o carvão ia acabar num feriado. Comprei antes e não perdi o giro. Esse sistema se paga sozinho.', role: 'Dono', stars: 5, color: 'from-red-500/10', img: '/landing_assets/testimonials/claudio.png' },
+              { name: 'Ana', bar: 'Vila Madalena House', quote: 'O relatório de equipe acabou com as discussões sobre a caixinha. Tudo automático e transparente. Meus garçons amam.', role: 'Gerente', stars: 5, color: 'from-blue-500/10', img: '/landing_assets/testimonials/ana.png' },
             ].map((t, i) => (
               <div key={i} className={`scroll-reveal p-10 rounded-[40px] bg-gradient-to-br ${t.color} to-transparent border border-white/5 hover:border-white/10 transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden`}>
                 <div className="absolute top-0 right-0 p-8 text-6xl opacity-[0.03] group-hover:opacity-[0.07] transition-all">"</div>
@@ -706,7 +693,9 @@ export const LandingPage2: React.FC = () => {
                 </div>
                 <p className="text-slate-200 text-base leading-relaxed mb-10 font-medium italic relative z-10">"{t.quote}"</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white font-black text-lg border border-white/10">{t.name[0]}</div>
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all">
+                    <img src={t.img} alt={t.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                  </div>
                   <div>
                     <div className="text-white font-black text-sm uppercase tracking-tight">{t.name}</div>
                     <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.role} • {t.bar}</div>
@@ -910,7 +899,7 @@ export const LandingPage2: React.FC = () => {
                       { label: 'CORE', val: 'React 19 + TS', color: 'text-blue-400' },
                       { label: 'DB', val: 'Firebase NoSQL', color: 'text-amber-400' },
                       { label: 'LOCAL', val: 'IndexedDB', color: 'text-emerald-400' },
-                      { label: 'EDGE', val: 'Vercel Runtime', color: 'text-white' },
+                      { label: 'GIT', val: 'GitHub Backup', color: 'text-purple-400' },
                     ].map((item, i) => (
                       <div key={i} className="bg-slate-900/50 p-4 rounded-2xl border border-white/5 group hover:border-emerald-500/30 transition-all">
                         <div className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">{item.label}</div>
@@ -924,7 +913,7 @@ export const LandingPage2: React.FC = () => {
                       <span className="text-white">$</span> botequista --analyze-stack
                     </p>
                     <div className="bg-slate-950/50 p-6 rounded-2xl border border-white/5 text-slate-400 text-xs leading-relaxed font-mono">
-                      <Typewriter text="A arquitetura do Botequista foi desenhada para resiliência extrema. Utilizamos um modelo de 'Single Source of Truth' distribuído: o estado da aplicação vive no IndexedDB (local) para latência zero, enquanto a sincronização atômica garante que múltiplos aparelhos operem na mesma mesa sem conflitos de dados. Todo o CSS é renderizado via Vanilla CSS para performance máxima sem overhead de bibliotecas externas." />
+                      <Typewriter text="A arquitetura do Botequista foi desenhada para resiliência extrema. Utilizamos um modelo de 'Single Source of Truth' distribuído: o estado da aplicação vive no IndexedDB (local) para latência zero, enquanto a sincronização atômica garante que múltiplos aparelhos operem na mesma mesa sem conflitos de dados. O sistema também oferece integração exclusiva com o GitHub para backup privado e versionado do seu banco de dados." />
                       <span className="terminal-cursor"></span>
                     </div>
                   </div>
