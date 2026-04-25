@@ -504,6 +504,36 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
+      {/* ─── ELITE v4.7.3 FEATURES (NEW) ─── */}
+      <section className="py-32 px-6 bg-red-600/5 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-20 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500 mb-4 block">Novidades Versão 4.7.3</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">Inteligência <span className="text-white italic">Financeira & Operacional</span></h2>
+            <p className="mt-6 text-slate-400 text-lg max-w-2xl mx-auto">Novos módulos premium para quem não quer apenas vender, mas sim ter lucro real.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { title: 'Lucro Real & Markup', desc: 'Saiba exatamente quanto ganha em cada item. O sistema calcula o markup sugerido baseado no seu custo (CMV).', icon: '💰', tag: 'FINANCEIRO' },
+              { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente.', icon: '🤝', tag: 'EQUIPE' },
+              { title: 'Cardápio QR Code', desc: 'Cardápio digital minimalista e elegante para seus clientes, sincronizado com o seu estoque real.', icon: '📱', tag: 'ATENDIMENTO' },
+              { title: 'Pool de Gorjetas', desc: 'Relatório automatizado de rateio de serviço. Chega de briga entre garçons e cozinha no fim do dia.', icon: '💸', tag: 'GESTÃO' },
+              { title: 'Blindagem de Admin', desc: 'Proteção visual e funcional da conta mestre. Impossível deslogar ou alterar por erro humano.', icon: '🛡️', tag: 'SEGURANÇA' },
+              { title: 'Disponibilidade Real', desc: 'O produto acabou no PDV? Ele some instantaneamente do QR Code do cliente. Zero frustração.', icon: '🔄', tag: 'ESTOQUE' },
+            ].map((f, i) => (
+              <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-red-500/20 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
+                <div className="text-[8px] font-black text-red-500 mb-4 tracking-[0.3em] uppercase">{f.tag}</div>
+                <h3 className="text-xl font-black uppercase tracking-tight mb-4">{f.title}</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── COMPARISON ─── */}
       <section className="py-32 px-6 bg-white/[0.01]">
         <div className="max-w-4xl mx-auto">
@@ -531,6 +561,9 @@ export const LandingPage2: React.FC = () => {
               { f: 'Log de Auditoria', b: true, t: true },
               { f: 'Funciona em Qualquer Aparelho', b: true, t: false },
               { f: 'Validação de Cardápio Atômica', b: true, t: false },
+              { f: 'Engenharia de Lucro Real (CMV)', b: true, t: false },
+              { f: 'Taxa de Serviço Automática', b: true, t: false },
+              { f: 'Cardápio Digital QR Sync', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">

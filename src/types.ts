@@ -80,6 +80,7 @@ export interface Sale {
   deleted?: boolean;
   deletedAt?: number;
   deletedBy?: string;
+  serviceTax?: number;
 }
 
 export interface Tab {
@@ -158,6 +159,8 @@ export interface Unit {
   createdAt?: number;
   franchiseId?: string;
   useStock?: boolean;
+  serviceTaxEnabled?: boolean;
+  serviceTaxPercentage?: number;
 }
 
 export interface Category {

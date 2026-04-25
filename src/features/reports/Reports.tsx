@@ -291,9 +291,21 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       .map(([name, amount]) => ({ name, amount }))
       .sort((a, b) => b.amount - a.amount);
 
+    const totalCost = filteredSales.reduce((acc, sale) => {
+      if (sale.deleted) return acc;
+      return acc + (sale.items || []).reduce((itemAcc, item) => {
+        const product = products.find(p => p.id === item.productId);
+        const cost = product?.lastCostPrice || 0;
+        return itemAcc + (cost * item.quantity);
+      }, 0);
+    }, 0);
+
+    const totalProfit = grandTotal - totalCost;
+    const totalServiceTax = filteredSales.reduce((acc, s) => acc + (s.serviceTax || 0), 0);
+
     return {
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftTotalsByMethod, shiftTotalRevenue,
-      teamStats, topProducts, hourlyMap, operationalCount, activeDataSource
+      teamStats, topProducts, hourlyMap, operationalCount, activeDataSource, totalProfit, totalCost, totalServiceTax
     };
   }, [filteredSales, activeDataSource, shifts, selectedShiftId, users, products]);
 

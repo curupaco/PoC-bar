@@ -49,6 +49,14 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **WhatsApp Intelligence (v4.7.2):** Envio de resumo de faturamento diretamente para o celular do proprietário no fechamento.
 - **Interface Responsiva PDV:** Grid de produtos que se adapta a qualquer tamanho de tela, garantindo agilidade mesmo em dispositivos móveis antigos.
 
+### 💰 Inteligência Financeira Elite (v4.7.3 Novo) 💎
+- **Engenharia de Lucro Real (CMV):** Saiba exatamente o custo de mercadoria de cada item. O sistema calcula seu lucro líquido real, não apenas o faturamento.
+- **Markup Sugerido:** Ferramenta de apoio à decisão de preços baseada na margem desejada vs custo real.
+- **Taxa de Serviço Inteligente:** Módulo de gratificação (10%) que pode ser ligado/desligado por unidade. Cálculo automático e transparente no fechamento.
+- **Cardápio Digital QR Code Sync:** Gere um menu elegante para seus clientes escanearem. O que acaba no estoque do PDV, some instantaneamente do cardápio digital. Zero frustração de "pedir o que não tem".
+- **Relatório de Pool de Gorjetas:** Saiba exatamente quanto cada membro da equipe deve receber de gratificação no final do dia ou semana.
+- **Blindagem de Conta Admin:** Proteção visual e funcional para a conta mestre, impedindo edições de login ou logouts acidentais que possam comprometer a gestão.
+
 ---
 
 ## O que é o Botequista?
@@ -219,6 +227,10 @@ Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado
 
 ## O Que Vem Incluído
 
+✅ Cardápio Digital QR Code sincronizado com estoque (v4.7.3)  
+✅ Engenharia de Lucro Real (Custo CMV) (v4.7.3)  
+✅ Módulo de Gratificação / Taxa 10% (v4.7.3)  
+✅ Relatório de Pool de Gorjetas (v4.7.3)  
 ✅ PDV (Ponto de Venda) completo com Venda Expressa  
 ✅ Gestão de mesas e comandas em tempo real  
 ✅ Cardápio com categorias, adicionais e variações  

@@ -92,3 +92,12 @@ Priorização recomendada:
 2. Altos Impacto (Fluxos): C1, C2, C4, G3 - afetam operações diárias do bar
 3. Médios (Consistência): F1, F2, F3 - manutenção de longo prazo
 4. Baixos (Polimento): E*, B*, D* - melhorias incrementais
+---
+CATEGORIA H: NOVAS KILLER FEATURES (v4.7.3) [FEITOS]
+#	Funcionalidade	Impacto	Status
+H1	Engenharia de Cardápio (CMV & Markup)	Dashboard de Lucro Real permite gestão financeira profissional.	[CONCLUÍDO]
+H2	Taxa de Serviço Inteligente (10%)	Módulo de gratificação automatizado com relatório de pool.	[CONCLUÍDO]
+H3	Cardápio Digital QR Code Sync	Menu minimalista sincronizado com estoque (Real-time).	[CONCLUÍDO]
+H4	Blindagem de Conta Admin	Proteção visual e funcional contra erros de acesso.	[CONCLUÍDO]
+H5	Logout Guard (Confirmação)	Prevenção de saídas acidentais no PDV.	[CONCLUÍDO]
+H6	Lucro Real Estimado em Relatórios	Métrica de rentabilidade líquida baseada em custos.	[CONCLUÍDO]

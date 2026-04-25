@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Elite Smart Stock Protocol v4.7
+           Elite Smart Stock & Financial Protocol v4.7.3
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -97,17 +97,45 @@ const Help: React.FC = () => {
           </div>
         </section>
 
-        {/* 6. Segurança de Turno & Acesso */}
+        {/* 6. Segurança de Conta Admin (v4.7.3) */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm space-y-6 flex flex-col h-full hover:border-slate-500 transition-all group">
           <div className="flex items-center gap-4 text-slate-600 dark:text-slate-400">
             <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <span className="text-2xl font-black">🛡️</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight italic">Segurança & Acesso</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Segurança Admin</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-slate-900 dark:text-white font-black italic">SENHAS:</span> Por segurança, senhas não são mais exibidas em texto puro. Ao editar um usuário, preencha o campo apenas se desejar alterá-la.</p>
-            <p>• <span className="text-slate-900 dark:text-white font-black italic">ACESSIBILIDADE:</span> O sistema é 100% compatível com leitores de tela e navegação por teclado (A1/A2 compliance).</p>
+            <p>• <span className="text-slate-900 dark:text-white font-black italic">CONTA MASTER:</span> A conta `admin` é protegida visualmente e funcionalmente. O login não pode ser alterado para evitar perda de acesso.</p>
+            <p>• <span className="text-slate-900 dark:text-white font-black italic">LOGOUT GUARD:</span> Adicionamos uma confirmação obrigatória para sair, evitando fechamentos acidentais durante a operação.</p>
+          </div>
+        </section>
+
+        {/* 7. Engenharia de Lucro (v4.7.3) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-emerald-100 dark:border-emerald-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-emerald-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-emerald-600">
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">💰</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Lucro Real</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-emerald-600 font-black italic">CMV:</span> Cadastre o custo de cada item para o sistema calcular o seu **Lucro Real** automaticamente nos relatórios.</p>
+            <p>• <span className="text-emerald-600 font-black italic">MARKUP:</span> Use os dados de lucro para ajustar preços de forma inteligente, garantindo que nenhum item dê prejuízo.</p>
+          </div>
+        </section>
+
+        {/* 8. Taxa de Serviço & QR (v4.7.3) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-100 dark:border-indigo-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-indigo-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-indigo-600">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🤝</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Serviço & Digital</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-indigo-600 font-black italic">TAXA 10%:</span> Ative em <FakeButton color="indigo">Ajustes</FakeButton> para adicionar automaticamente a gratificação da equipe no PDV.</p>
+            <p>• <span className="text-indigo-600 font-black italic">QR MENU:</span> Acesse `/menu` para ver o cardápio digital minimalista, pronto para ser escaneado pelos clientes.</p>
           </div>
         </section>
 
@@ -180,9 +208,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.7 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.7.3 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.7.0</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.7.3</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">

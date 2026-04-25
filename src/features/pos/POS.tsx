@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
 import { validateItemName } from '../../utils/wordValidator';
 import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
@@ -27,6 +27,7 @@ interface POSProps {
   stockTransactions?: any[];
   stockBalances?: Record<string, number>;
   sales?: Sale[];
+  activeUnit?: Unit;
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -56,7 +57,8 @@ export const POS: React.FC<POSProps> = ({
   longDurationThreshold = 4,
   stockTransactions = [],
   stockBalances = {},
-  sales = []
+  sales = [],
+  activeUnit
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -126,6 +128,15 @@ export const POS: React.FC<POSProps> = ({
     if (activeTabId === 'shortcut-payment' && shortcutCheckout) return shortcutCheckout.amount;
     return tabItems.reduce((acc, i) => acc + (i.totalPrice ?? 0), 0);
   }, [activeTabId, shortcutCheckout, tabItems]);
+  
+  const serviceTaxAmount = useMemo(() => {
+    if (activeUnit?.serviceTaxEnabled && activeUnit.serviceTaxPercentage && activeTabId !== 'shortcut-payment') {
+        return safeFloat(tabTotal * (activeUnit.serviceTaxPercentage / 100));
+    }
+    return 0;
+  }, [tabTotal, activeUnit, activeTabId]);
+
+  const grandTotal = safeFloat(tabTotal + serviceTaxAmount);
 
   const executeAddItem = useCallback(async (product: Product, quantity: number, modifier?: ModifierOption) => {
     if (!activeTabId) return;
@@ -248,7 +259,8 @@ export const POS: React.FC<POSProps> = ({
        tabName: isShortcut ? undefined : activeTab?.name, 
        customerName: isShortcut ? shortcutCheckout?.name : payments[0]?.customerName,
        userId: '', 
-       shiftId: activeShift?.id || ''
+       shiftId: activeShift?.id || '',
+       serviceTax: serviceTaxAmount > 0 ? serviceTaxAmount : undefined
     };
     
     await onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
@@ -519,7 +531,7 @@ export const POS: React.FC<POSProps> = ({
               ) : (
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   <div className="flex-1 overflow-y-auto">
-                    <POSPaymentPanel activeTabId={activeTabId} tabTotal={tabTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={shortcutCheckout} />
+                    <POSPaymentPanel activeTabId={activeTabId} tabTotal={grandTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={shortcutCheckout} />
                   </div>
                 </div>
               )}

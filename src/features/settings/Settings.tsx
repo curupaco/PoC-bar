@@ -151,6 +151,56 @@ const Settings: React.FC<SettingsProps> = ({
                 <p className="text-[9px] text-slate-400 font-medium ml-1">Tempo de inatividade até o alerta de mesa parada no salão.</p>
               </div>
             </div>
+
+            {/* MÓDULO DE SERVIÇO (NOVO) */}
+            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Taxa de Serviço Inteligente</h4>
+                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Ative e configure a gratificação da equipe</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <button 
+                     onClick={() => {
+                        const activeUnit = units.find(u => u.id === unitId);
+                        if (!activeUnit) return;
+                        const next = !activeUnit.serviceTaxEnabled;
+                        onUpdateUnits(units.map(u => u.id === unitId ? { ...u, serviceTaxEnabled: next, serviceTaxPercentage: u.serviceTaxPercentage || 10 } : u));
+                        showToast(next ? "TAXA DE SERVIÇO ATIVADA" : "TAXA DE SERVIÇO DESATIVADA");
+                     }}
+                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'bg-indigo-50 border-indigo-600 dark:bg-indigo-900/20' : 'bg-slate-50 border-transparent dark:bg-slate-950 opacity-60'}`}
+                  >
+                     <div className="text-left">
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'text-indigo-600' : 'text-slate-500'}`}>Status do Módulo</p>
+                        <p className="text-[12px] font-black text-slate-800 dark:text-white uppercase">{units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'Módulo Ativo' : 'Módulo Inativo'}</p>
+                     </div>
+                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                     </div>
+                  </button>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.serviceTaxEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Percentual da Taxa (%)</label>
+                     <div className="relative">
+                        <span className="absolute right-5 top-1/2 -translate-y-1/2 font-black text-slate-400 uppercase text-[10px] tracking-widest">%</span>
+                        <input 
+                           type="number" 
+                           value={units.find(u => u.id === unitId)?.serviceTaxPercentage || 10} 
+                           onChange={e => {
+                              const val = Math.max(0, Math.min(100, Number(e.target.value)));
+                              onUpdateUnits(units.map(u => u.id === unitId ? { ...u, serviceTaxPercentage: val } : u));
+                           }}
+                           className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all" 
+                        />
+                     </div>
+                  </div>
+               </div>
+            </div>
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden group">

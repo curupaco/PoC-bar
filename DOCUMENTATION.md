@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.7.1 (UX Polishing & Operational Safety)
+**Versão:** 4.7.3 (Financial Intelligence & Elite Safety)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -20,9 +20,9 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Segurança de Credenciais (v4.7):** Remoção de exibição de senhas em texto puro e proteção reforçada de contas administrativas.
 *   **Segurança de Acesso (v4.7.3):** Bloqueio de edição de login admin e confirmação de logout para evitar erros operacionais.
 *   **Legibilidade Aprimorada (v4.7.3):** Reajuste de contraste e tamanhos de fonte em todo o Dashboard e PDV.
-*   **Gestão de Turno Aprimorada (v4.7.2):** Botão de compartilhamento de resumo via WhatsApp e exibição de timestamp do último turno encerrado.
-*   **Confirmação Segura (v4.7.2):** Substituição de `window.confirm` por modais customizados na Gestão de Usuários, eliminando interrupções nativas do navegador.
-*   **Acessibilidade PDV (v4.7.2):** Tooltips explicativos nos indicadores de mesas "OCIOSA" e "TRAVADA".
+*   **Engenharia de Cardápio (v4.7.3):** Suporte a cadastro de CMV (Custo de Mercadoria Vendida) e cálculo automático de Lucro Real por item e por período.
+*   **Módulo de Gratificação (v4.7.3):** Implementação de taxa de serviço configurável por unidade (padrão 10%) com cálculo automático no fechamento da conta.
+*   **Cardápio Digital QR (v4.7.3):** Nova rota `/menu` que gera um cardápio digital minimalista sincronizado em tempo real com o estoque do PDV.
 *   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
 *   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 
@@ -61,6 +61,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Top Combos Vendidos (v4.5):** Algoritmo de descoberta automática que identifica pares de produtos vendidos juntos com maior frequência no período.
 *   **Quitação em Lote:** Interface para selecionar múltiplos devedores e processar a quitação totalizada de uma só vez.
 *   **Comprovante Digital via WhatsApp:** Geração de recibos em texto formatado para envio direto via Web Share API para o smartphone do cliente.
+*   **Relatório de Lucro Real (v4.7.3):** Nova métrica de rentabilidade líquida que subtrai os custos cadastrados do faturamento bruto.
+*   **Pool de Gorjetas (v4.7.3):** Relatório consolidado da taxa de serviço arrecadada para rateio transparente entre a equipe.
 
 ---
 

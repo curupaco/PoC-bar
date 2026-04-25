@@ -58,6 +58,7 @@ const ProductList: React.FC<ProductListProps> = ({
   const [sellType, setSellType] = useState<SellType>('unit');
   const [modGroupId, setModGroupId] = useState<string>('');
   const [trackStock, setTrackStock] = useState(true);
+  const [cost, setCost] = useState('');
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
@@ -102,7 +103,8 @@ const ProductList: React.FC<ProductListProps> = ({
         category: finalCategory,
         sellType,
         modifierGroupId: modGroupId || undefined,
-        trackStock
+        trackStock,
+        lastCostPrice: parseCurrencyValue(cost) || undefined
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -114,7 +116,8 @@ const ProductList: React.FC<ProductListProps> = ({
         sellType,
         isFavorite: false,
         modifierGroupId: modGroupId || undefined,
-        trackStock
+        trackStock,
+        lastCostPrice: parseCurrencyValue(cost) || undefined
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -155,6 +158,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setSellType(p.sellType);
     setModGroupId(p.modifierGroupId || '');
     setTrackStock(p.trackStock ?? true);
+    setCost(p.lastCostPrice ? p.lastCostPrice.toFixed(2).replace('.', ',') : '');
     setShowModal(true);
   };
 
@@ -167,6 +171,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setSellType('unit');
     setModGroupId('');
     setTrackStock(true);
+    setCost('');
     setError(null);
   };
 
@@ -325,13 +330,29 @@ const ProductList: React.FC<ProductListProps> = ({
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Unidade</label>
-                  <div className="flex p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button onClick={() => setSellType('unit')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>UN</button>
-                    <button onClick={() => setSellType('weight')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>KG</button>
+                  <label htmlFor="product-cost-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Custo (CMV)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                    <input 
+                      id="product-cost-input"
+                      type="text" 
+                      inputMode="decimal"
+                      value={cost} 
+                      onChange={e => setCost(sanitizeCurrencyInput(e.target.value))} 
+                      className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                      placeholder="0,00" 
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+
+              <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Unidade de Medida</label>
+                  <div className="flex p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <button onClick={() => setSellType('unit')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>UN (Unidade)</button>
+                    <button onClick={() => setSellType('weight')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>KG (Peso/Volume)</button>
+                </div>
+              </div>
 
             <div className="space-y-2">
                 <label htmlFor="product-category-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria</label>

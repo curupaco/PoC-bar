@@ -29,6 +29,7 @@ import { useAppStore } from './hooks/useAppStore';
 import { LandingPage } from './features/landing/LandingPage';
 import { LandingPage2 } from './features/landing/LandingPage2';
 import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
+import { MinimalistMenu } from './features/landing/MinimalistMenu';
 
 export const App: React.FC = () => {
   // 1. App Hooks
@@ -112,6 +113,7 @@ export const App: React.FC = () => {
   // Guardas de Roteamento/Estado
   if (window.location.pathname.startsWith('/landing2')) return <LandingPage />;
   if (window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
+  if (window.location.pathname.startsWith('/menu')) return <MinimalistMenu products={store.products} unitName={activeUnitName} />;
   if (!import.meta.env.VITE_FIREBASE_API_KEY) return <FirebaseGuard />;
   if (!currentUser) return <Login onLogin={(u, p) => handleLogin(u, p, store.users)} isLoading={store.dbStatus === 'loading' && store.users.length === 0} error={loginError} />;
   
@@ -132,7 +134,7 @@ export const App: React.FC = () => {
 
   const renderActiveView = () => {
     switch (activeView) {
-      case 'pos': return <POS products={store.products} modifierGroups={store.modifierGroups} categoryModifiers={store.categoryModifiers} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} onUpdateTabItem={store.handleUpdateTabItem} onDeleteTab={store.handleDeleteTab} onCompleteSale={store.handleCompleteSale} activeShift={store.shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={store.penduraThreshold} longDurationThreshold={store.longDurationThreshold} dbStatus={store.dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} stockTransactions={store.stockTransactions} />;
+      case 'pos': return <POS products={store.products} modifierGroups={store.modifierGroups} categoryModifiers={store.categoryModifiers} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} onUpdateTabItem={store.handleUpdateTabItem} onDeleteTab={store.handleDeleteTab} onCompleteSale={store.handleCompleteSale} activeShift={store.shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={store.penduraThreshold} longDurationThreshold={store.longDurationThreshold} dbStatus={store.dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} stockTransactions={store.stockTransactions} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} />;
       case 'products': return <ProductList products={store.products} setProducts={store.handleUpdateProducts} modifierGroups={store.modifierGroups} setModifierGroups={store.setModifierGroups} categoryModifiers={store.categoryModifiers} setCategoryModifiers={store.handleUpdateCategoryModifiers} categories={store.categories} setCategories={store.setCategories} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} currentUser={currentUser} />;
       case 'shifts': return <ShiftControl shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} currentUser={currentUser} sales={store.sales} activeTabsCount={store.openTabs.length} />;
       case 'cash': return <CashManagement shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} sales={store.sales} currentUser={currentUser} onViewChange={setActiveView} />;

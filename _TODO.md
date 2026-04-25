@@ -100,7 +100,7 @@ ativa sozinho
 
 Complexidade: baixa
 
-6️⃣ Ranking de Produtos por Lucro (não só venda)
+~~6️⃣ Ranking de Produtos por Lucro (não só venda)~~ [FEITO v4.7.3]
 Você já tem Curva ABC por faturamento.
 
 Adicione:
@@ -143,7 +143,7 @@ Mesa 12
 
 Ajuda giro.
 
-9️⃣ QR Code da Mesa
+~~9️⃣ QR Code da Mesa~~ [FEITO v4.7.3]
 Muito poderoso.
 
 Mesa tem QR.
@@ -219,6 +219,9 @@ Mas parece IA avançada.
 - [x] **Acessibilidade A1/A2:** Implementação de aria-labels e associação de labels/inputs em todo o sistema.
 - [x] **Privacidade de Senhas:** Removida exibição de senhas e implementada edição segura no UserManagement.
 - [x] **Proteção Admin:** Bloqueada edição do login 'admin' para evitar lockouts.
+- [x] **Engenharia de Cardápio (CMV):** Cadastro de custo e cálculo de lucro real (v4.7.3).
+- [x] **Módulo de Gratificação:** Taxa de serviço configurável (10%) no PDV (v4.7.3).
+- [x] **Cardápio Digital QR:** Rota `/menu` para menu minimalista sincronizado (v4.7.3).
 
 ---
 
