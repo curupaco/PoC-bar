@@ -169,6 +169,7 @@ export const POS: React.FC<POSProps> = ({
           quantity, 
           unitPrice: effectiveUnitPrice, 
           totalPrice: safeFloat(quantity * effectiveUnitPrice), 
+          costPrice: product.lastCostPrice,
           modifier 
         };
         if (onUpdateTabItem) await onUpdateTabItem(activeTabId, newItem);
@@ -531,7 +532,7 @@ export const POS: React.FC<POSProps> = ({
               ) : (
                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                   <div className="flex-1 overflow-y-auto">
-                    <POSPaymentPanel activeTabId={activeTabId} tabTotal={grandTotal} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={shortcutCheckout} />
+                    <POSPaymentPanel activeTabId={activeTabId} tabTotal={grandTotal} serviceTax={serviceTaxAmount} onBack={() => setIsClosingTab(false)} onComplete={processCompletion} shortcutCheckout={shortcutCheckout} />
                   </div>
                 </div>
               )}

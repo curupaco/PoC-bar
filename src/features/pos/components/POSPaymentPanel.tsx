@@ -16,6 +16,7 @@ interface POSPaymentPanelProps {
    onComplete: (payments: PaymentEntry[]) => void;
    shortcutCheckout?: { name: string; amount: number } | null;
    activeDebtors?: Set<string>;
+   serviceTax?: number; // v4.7.3: Detalhamento da taxa de serviço
 }
 
 const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
@@ -24,7 +25,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
    onBack,
    onComplete,
    shortcutCheckout,
-   activeDebtors = new Set()
+   activeDebtors = new Set(),
+   serviceTax = 0
 }) => {
    const [currentPayments, setCurrentPayments] = useState<PaymentEntry[]>([]);
    const [paymentAmountInput, setPaymentAmountInput] = useState('');
@@ -174,10 +176,16 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" /></svg>
                         Voltar
                      </button>
-                     <div className="text-right">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total da Venda</p>
-                        <p className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white leading-none">{formatCurrency(tabTotal)}</p>
-                     </div>
+                      <div className="text-right">
+                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total a Pagar</p>
+                         <p className="text-xl font-black italic tracking-tighter text-slate-900 dark:text-white leading-none">{formatCurrency(tabTotal)}</p>
+                         {serviceTax > 0 && (
+                            <div className="mt-1.5 flex flex-col items-end opacity-60">
+                               <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">Consumo: {formatCurrency(tabTotal - serviceTax)}</p>
+                               <p className="text-[7px] font-bold text-indigo-500 uppercase tracking-widest">Serviço (10%): {formatCurrency(serviceTax)}</p>
+                            </div>
+                         )}
+                      </div>
                   </div>
 
                   <div className={`p-6 rounded-[35px] border text-center transition-all ${isQuickSale ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800'}`}>

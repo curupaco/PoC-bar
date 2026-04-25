@@ -295,13 +295,14 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       if (sale.deleted) return acc;
       return acc + (sale.items || []).reduce((itemAcc, item) => {
         const product = products.find(p => p.id === item.productId);
-        const cost = product?.lastCostPrice || 0;
+        // Prioriza o custo gravado no item (histórico), senão usa o atual do produto
+        const cost = item.costPrice !== undefined ? item.costPrice : (product?.lastCostPrice || 0);
         return itemAcc + (cost * item.quantity);
       }, 0);
     }, 0);
 
-    const totalProfit = grandTotal - totalCost;
     const totalServiceTax = filteredSales.reduce((acc, s) => acc + (s.serviceTax || 0), 0);
+    const totalProfit = (grandTotal - totalServiceTax) - totalCost;
 
     return {
       totalsByMethod, grandTotal, avgTicket, activePenduras, selectedShift, shiftTotalsByMethod, shiftTotalRevenue,

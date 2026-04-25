@@ -109,9 +109,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
     // GARANTIA: allowedUnits limpo de valores falsy e forçado para array
     const finalUnits = selectedUnits.filter(Boolean);
 
+    // HARD LOCK v4.7.3: Garante que o login 'admin' nunca seja alterado
+    const finalUsername = editingUser?.username === 'admin' ? 'admin' : username.toLowerCase().trim();
+
     const newUser: User = {
       id: editingUser?.id || `user-${Date.now()}`,
-      username: username.toLowerCase().trim(),
+      username: finalUsername,
       password: finalPassword,
       displayName: displayName.trim(),
       permissions: selectedPerms,

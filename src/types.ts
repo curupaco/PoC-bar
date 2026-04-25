@@ -56,6 +56,7 @@ export interface SaleItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  costPrice?: number; // v4.7.3: Preço de custo no momento da venda
   modifier?: ModifierOption;
 }
 

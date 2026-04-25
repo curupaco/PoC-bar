@@ -113,7 +113,11 @@ export const App: React.FC = () => {
   // Guardas de Roteamento/Estado
   if (window.location.pathname.startsWith('/landing2')) return <LandingPage />;
   if (window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
-  if (window.location.pathname.startsWith('/menu')) return <MinimalistMenu products={store.products} unitName={activeUnitName} />;
+  if (window.location.pathname.startsWith('/menu')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlUnitId = urlParams.get('u');
+    return <MinimalistMenu products={store.products} unitName={activeUnitName} unitId={urlUnitId || store.validatedActiveUnitId} syncConfig={store.syncConfig} />;
+  }
   if (!import.meta.env.VITE_FIREBASE_API_KEY) return <FirebaseGuard />;
   if (!currentUser) return <Login onLogin={(u, p) => handleLogin(u, p, store.users)} isLoading={store.dbStatus === 'loading' && store.users.length === 0} error={loginError} />;
   
