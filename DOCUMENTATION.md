@@ -18,6 +18,11 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Controle de Estoque Inteligente (Novo):** Sistema híbrido que permite definir quais produtos devem descontar estoque e quais são serviços puros.
 *   **Acessibilidade Nativa (v4.7):** Implementação de `aria-labels` descritivos e associação semântica de labels/inputs em todos os módulos críticos.
 *   **Segurança de Credenciais (v4.7):** Remoção de exibição de senhas em texto puro e proteção reforçada de contas administrativas.
+*   **Segurança de Acesso (v4.7.3):** Bloqueio de edição de login admin e confirmação de logout para evitar erros operacionais.
+*   **Legibilidade Aprimorada (v4.7.3):** Reajuste de contraste e tamanhos de fonte em todo o Dashboard e PDV.
+*   **Gestão de Turno Aprimorada (v4.7.2):** Botão de compartilhamento de resumo via WhatsApp e exibição de timestamp do último turno encerrado.
+*   **Confirmação Segura (v4.7.2):** Substituição de `window.confirm` por modais customizados na Gestão de Usuários, eliminando interrupções nativas do navegador.
+*   **Acessibilidade PDV (v4.7.2):** Tooltips explicativos nos indicadores de mesas "OCIOSA" e "TRAVADA".
 *   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
 *   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 

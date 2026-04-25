@@ -72,6 +72,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
   const [selectedPerms, setSelectedPerms] = useState<UserPermission[]>([]);
   const [selectedUnits, setSelectedUnits] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const resetForm = () => {
     setUsername('');
@@ -156,9 +157,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
       {isAdding && (
         <div className="bg-white dark:bg-slate-900 rounded-[40px] border-4 border-red-500 shadow-2xl overflow-hidden animate-in slide-in-from-top-6 duration-500">
           <div className="p-8 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-            <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 dark:text-white">
-              {editingUser ? 'Ajustar Privilégios' : 'Novo Perfil Operacional'}
-            </h3>
+            <div className="flex items-center gap-4">
+               <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 dark:text-white">
+                 {editingUser ? 'Ajustar Privilégios' : 'Novo Perfil Operacional'}
+               </h3>
+               {editingUser?.username === 'admin' && (
+                 <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest animate-pulse">Conta de Sistema</span>
+               )}
+            </div>
             <button onClick={resetForm} className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center font-bold hover:bg-red-500 hover:text-white transition-all">✕</button>
           </div>
 
@@ -294,7 +300,12 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                    {user.username.slice(0, 2).toUpperCase()}
                  </div>
                  <div>
-                    <h4 className="font-black text-slate-800 dark:text-white uppercase text-base tracking-tighter italic">{user.displayName}</h4>
+                    <div className="flex items-center gap-2">
+                       <h4 className="font-black text-slate-800 dark:text-white uppercase text-base tracking-tighter italic">{user.displayName}</h4>
+                       {user.username === 'admin' && (
+                          <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30">Master</span>
+                       )}
+                    </div>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username}</p>
                  </div>
               </div>
@@ -314,7 +325,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                  </button>
                  {user.username !== 'admin' && (
-                   <button onClick={() => confirm(`EXCLUIR ${user.displayName.toUpperCase()}?`) && onUpdateUsers(users.filter(u => u.id !== user.id))} className="p-3 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
+                   <button onClick={() => setUserToDelete(user)} className="p-3 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                    </button>
                  )}
@@ -344,6 +355,28 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
           </div>
         );})}
       </div>
+
+      {userToDelete && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setUserToDelete(null)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Remover da Equipe?</h3>
+             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a revogar o acesso de <strong className="text-slate-800 dark:text-white">"{userToDelete.displayName}"</strong> permanentemente.</p>
+             <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    onUpdateUsers(users.filter(u => u.id !== userToDelete.id));
+                    setUserToDelete(null);
+                  }} 
+                  className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
+                >
+                  Sim, Confirmar
+                </button>
+                <button onClick={() => setUserToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

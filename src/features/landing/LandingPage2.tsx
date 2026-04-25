@@ -249,7 +249,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7.1 UX & Operational Safety</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7.3 UX & Operational Safety</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -487,7 +487,10 @@ export const LandingPage2: React.FC = () => {
               'Reposição Inteligente (WhatsApp)',
               'Mapa de horário de pico',
               'Ranking da equipe',
-              'Validação Anti-Erro (v4.7.1)',
+              'Validação Anti-Erro (v4.7.3)',
+              'WhatsApp Summary (v4.7.2)',
+              'Confirmação Segura (v4.7.2)',
+              'Admin & Logout Guard (v4.7.3)',
               'Interface Mobile XS (v4.7.1)',
               'Funciona no celular, tablet ou PC',
               'Funciona sem internet',

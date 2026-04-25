@@ -342,7 +342,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       {toast && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">{toast}</div>}
 
       <div className="flex flex-col items-center gap-6">
-        <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar">
+        <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar max-w-full">
           {(['HOJE', 'ONTEM', 'SEMANA', 'MÊS'] as const).map(type => (
             <button key={type} onClick={() => setPreset(type)} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${periodLabel === type ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{type}</button>
           ))}
@@ -354,7 +354,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       </div>
 
       <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
-        <div className="flex flex-wrap justify-center bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1">
+        <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
           {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'] as ReportCategory[]).map(cat => {
             const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
             return (

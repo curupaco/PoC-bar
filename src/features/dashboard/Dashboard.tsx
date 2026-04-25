@@ -212,7 +212,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
             <p className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white">{stat.val}</p>
             <div className="flex items-center gap-1 mt-2">
                <span className={`w-1.5 h-1.5 rounded-full ${stat.color.replace('text', 'bg')}`}></span>
-               <p className={`text-[9px] font-black uppercase tracking-widest italic ${stat.color}`}>{stat.sub}</p>
+               <p className={`text-[10px] font-black uppercase tracking-widest italic ${stat.color}`}>{stat.sub}</p>
             </div>
           </div>
         ))}
@@ -280,7 +280,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
         <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-500">📡 Radar de Reposição Inteligente</h3>
-              <p className="text-[9px] font-black text-red-500 uppercase italic tracking-widest animate-pulse">Monitoramento em Tempo Real</p>
+              <p className="text-[10px] font-black text-red-500 uppercase italic tracking-widest animate-pulse">Monitoramento em Tempo Real</p>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -312,7 +312,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
               }) : (
                 <div className="md:col-span-2 py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl">
                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 rounded-full flex items-center justify-center text-sm mb-3">✓</div>
-                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center px-10">Tudo sob controle. Nenhum produto em risco de ruptura imediata.</p>
+                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic text-center px-10">Tudo sob controle. Nenhum produto em risco de ruptura imediata.</p>
                 </div>
               )}
            </div>
@@ -321,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
         <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-500">🔥 Insights de Venda: Combos Populares</h3>
-              <p className="text-[9px] font-black text-slate-400 uppercase italic tracking-widest">Baseado em itens vendidos juntos</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">Baseado em itens vendidos juntos</p>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -343,7 +343,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
                       </React.Fragment>
                     ))}
                   </p>
-                  <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 w-full">
+                  <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 w-full">
                     {combo.count} {combo.count === 1 ? 'Ocorrência' : 'Ocorrências'}
                   </p>
                 </div>

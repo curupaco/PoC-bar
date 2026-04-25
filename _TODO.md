@@ -183,7 +183,7 @@ evento
 
 Muito simples de implementar.
 
-1️⃣2️⃣ Resumo Diário Automático (WhatsApp)
+1️⃣2️⃣ ~~Resumo Diário Automático (WhatsApp)~~ [FEITO]
 No fim do turno:
 Sistema gera:
 Resumo do dia

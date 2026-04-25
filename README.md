@@ -110,7 +110,16 @@ O fechamento de caixa é "cego". O operador insere a contagem física do dinheir
 ### 3. Gestão de Inventário & Curva ABC
 Engenharia de cardápio integrada. Identifique automaticamente quais produtos são seus "Carro-Chefe" (Alta Venda / Alta Margem) e quais são "Abacaxis" (Baixa Venda / Baixa Margem).
 
-### 4. Inteligência e Segurança Operacional (v4.7.1)
+### 4. Inteligência e Segurança Operacional (v4.7.3)
+- **Admin Lock:** Proteção visual e funcional para a conta mestre do sistema.
+- **Logout Guard:** Prevenção de saídas acidentais via modal de confirmação.
+- **Visual Polish:** Legibilidade aprimorada em indicadores críticos (Dashboard/PDV).
+- **WhatsApp Summary:** Envio instantâneo de faturamento e métricas ao dono após o fechamento.
+- **WhatsApp Summary:** Envio instantâneo de faturamento e métricas ao dono após o fechamento.
+- **Timestamp de Turno:** Registro visual do horário exato de encerramento da operação.
+- **Custom Modals:** Gestão de equipe com confirmações seguras e estéticas.
+- **Tooltips Contextuais:** Alertas de ociosidade no PDV com explicação de impacto.
+- **Responsive Tabs:** Navegação fluida em telas pequenas com scroll lateral.
 Validações avançadas no cadastro (preço zero, duplicidade), notificações visuais dinâmicas (Toasts persistentes e coloridos) e interface PDV totalmente responsiva para qualquer hardware.
 
 ---

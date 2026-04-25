@@ -382,9 +382,9 @@ export const POS: React.FC<POSProps> = ({
                            <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
                            <div className="flex flex-col">
                               <div className="flex items-center gap-1.5">
-                                 <span className="text-[9px] font-bold text-slate-400 opacity-70" title="Tempo total aberta">{formatElapsedTime(tab.openedAt)}</span>
+                                 <span className="text-[10px] font-bold text-slate-500 opacity-70" title="Tempo total aberta">{formatElapsedTime(tab.openedAt)}</span>
                                  {isIdle && (
-                                    <span className={`text-[8px] font-black uppercase tracking-widest ${isVeryIdle ? 'text-red-600' : 'text-amber-600'}`}>
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isVeryIdle ? 'text-red-600' : 'text-amber-600'}`} title={isVeryIdle ? "Mesa sem atividade prolongada (crítico)" : "Mesa sem pedidos recentes"}>
                                        {isVeryIdle ? '⚠️ TRAVADA' : 'OCIOSA'}
                                     </span>
                                  )}
@@ -438,7 +438,7 @@ export const POS: React.FC<POSProps> = ({
                            {activeTab?.name.substring(0, 2)}
                         </div>
                         <div className="flex flex-col">
-                           <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Mesa Selecionada</span>
+                           <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Mesa Selecionada</span>
                            <h2 className={`text-sm font-black uppercase italic leading-none ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
                               {activeTab?.name}
                            </h2>
@@ -494,11 +494,11 @@ export const POS: React.FC<POSProps> = ({
                   <div className="p-4 sm:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 shrink-0 space-y-3 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
                       <div className="flex justify-between items-end">
                          <div className="flex flex-col">
-                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Total Consumido</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Total Consumido</span>
                             <span className="text-2xl font-black italic tracking-tighter leading-none">{formatCurrency(tabTotal)}</span>
                          </div>
                          <div className="flex flex-col items-end">
-                            <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none mb-1">Itens</span>
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Itens</span>
                             <span className="text-xl font-black italic text-red-600 leading-none">{tabItems.length}</span>
                          </div>
                       </div>

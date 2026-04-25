@@ -14,6 +14,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
    const [showConferral, setShowConferral] = useState(false);
    const [revealSystem, setRevealSystem] = useState(false);
    const [showBackupPrompt, setShowBackupPrompt] = useState(false);
+   const [lastClosedShiftId, setLastClosedShiftId] = useState<string | null>(null);
 
    const [valPrimary, setValPrimary] = useState('');
    const [valChange, setValChange] = useState('');
@@ -165,11 +166,36 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       console.log(`[TURNO_FECHAMENTO] ID: ${closedShift.id} | Usuário: ${closedShift.closedBy} | Total Vendas: ${formatCurrency(totalSoldInShift)} | Diferença: ${formatCurrency(difference)}`);
 
       await onUpdateShifts(shifts.map(s => s.id === activeShift.id ? closedShift : s), closedShift);
+      setLastClosedShiftId(activeShift.id);
       setShowConferral(false); setActualCountedInput('');
       setIsProcessing(false);
       
       // ITEM 9: PROMPT DE BACKUP AUTOMÁTICO
       setTimeout(() => setShowBackupPrompt(true), 1000);
+   };
+
+   const handleWhatsAppShare = (shift: Shift) => {
+      const isCurrent = shift.status === 'open';
+      const stats = isCurrent ? shiftStats : {
+         totalSold: (sales || []).filter(s => s.shiftId === shift.id && !s.deleted).reduce((acc, s) => acc + (s.total || 0), 0),
+         ticketCount: (sales || []).filter(s => s.shiftId === shift.id && !s.deleted).length
+      };
+
+      const totalSold = isCurrent ? totalSoldInShift : stats.totalSold;
+      const ticketCount = isCurrent ? shiftStats.ticketCount : stats.ticketCount;
+      const avgTicket = ticketCount > 0 ? totalSold / ticketCount : 0;
+
+      const message = `*📊 RESUMO DE TURNO - BOTEQUISTA*\n\n` +
+         `📅 *Data:* ${new Date(shift.endTime || shift.startTime).toLocaleDateString()}\n` +
+         `👤 *Operador:* ${shift.closedBy || shift.openedBy}\n` +
+         `⏰ *Fechamento:* ${shift.endTime ? new Date(shift.endTime).toLocaleTimeString() : 'Em aberto'}\n\n` +
+         `💰 *Faturamento:* ${formatCurrency(totalSold)}\n` +
+         `🎫 *Tickets:* ${ticketCount}\n` +
+         `📈 *Ticket Médio:* ${formatCurrency(avgTicket)}\n\n` +
+         `_Gerado via Botequista System_`;
+
+      const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(url, '_blank');
    };
 
    const getCompartmentIcon = (index: number) => {
@@ -228,6 +254,11 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                   <div className="text-center mb-10">
                      <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mb-3">Abertura de Turno</h2>
                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em]">Configure o capital inicial do dia</p>
+                     {shifts.find(s => s.status === 'closed') && (
+                        <p className="text-[9px] font-bold text-slate-500 uppercase mt-2 italic">
+                           Último turno encerrado às {new Date(shifts.find(s => s.status === 'closed')!.endTime!).toLocaleTimeString()}
+                        </p>
+                     )}
                   </div>
 
                   {/* Item 3: Totalizador Automático */}
@@ -439,6 +470,15 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                         className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
                      >
                         Gerar Backup .JSON
+                     </button>
+                      <button 
+                        onClick={() => {
+                           const shiftToShare = shifts.find(s => s.id === lastClosedShiftId) || shifts.find(s => s.status === 'closed');
+                           if (shiftToShare) handleWhatsAppShare(shiftToShare);
+                        }}
+                        className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                     >
+                        <span>📲 Resumo no WhatsApp</span>
                      </button>
                      <button onClick={() => setShowBackupPrompt(false)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Agora Não</button>
                   </div>
