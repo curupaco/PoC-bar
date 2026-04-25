@@ -286,7 +286,6 @@ const Settings: React.FC<SettingsProps> = ({
                   </div>
                </div>
             </div>
-          </div>
 
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden group">
             <div className={`absolute inset-0 opacity-[0.03] pointer-events-none transition-all duration-700 group-hover:scale-110 ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
@@ -311,6 +310,7 @@ const Settings: React.FC<SettingsProps> = ({
             </button>
           </div>
         </div>
+      </div>
       )}
 
       {activeTab === 'UNITS' && canManageUnits && (
@@ -319,6 +319,7 @@ const Settings: React.FC<SettingsProps> = ({
               <div>
                  <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Minhas Unidades</h3>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gerencie os pontos de venda da rede</p>
+              </div>
               <button onClick={() => setShowUnitModal(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">Gerenciar</button>
            </div>
            
