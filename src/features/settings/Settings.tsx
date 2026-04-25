@@ -216,7 +216,6 @@ const Settings: React.FC<SettingsProps> = ({
                   </div>
                </div>
             </div>
-          </div>
 
             {/* MÓDULO DE MENU DIGITAL (NOVO) */}
             <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
@@ -310,7 +309,6 @@ const Settings: React.FC<SettingsProps> = ({
             </button>
           </div>
         </div>
-      </div>
       )}
 
       {activeTab === 'UNITS' && canManageUnits && (
