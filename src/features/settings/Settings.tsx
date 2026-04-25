@@ -20,6 +20,8 @@ interface SettingsProps {
   longDurationThreshold: number;
   setLongDurationThreshold: (val: number) => void;
   activeUnitId: string | null;
+  auditLogs: any[];
+  pendingSyncCount: number;
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -37,7 +39,9 @@ const Settings: React.FC<SettingsProps> = ({
   setPenduraThreshold,
   longDurationThreshold,
   setLongDurationThreshold,
-  activeUnitId
+  activeUnitId,
+  auditLogs,
+  pendingSyncCount
 }) => {
   const [activeTab, setActiveTab] = useState<'GENERAL' | 'UNITS' | 'BACKUP' | 'DOCS'>('GENERAL');
   const [isRescuing, setIsRescuing] = useState(false);
@@ -45,6 +49,7 @@ const Settings: React.FC<SettingsProps> = ({
   const [githubToken, setGithubToken] = useState('');
   const [isSyncingGithub, setIsSyncingGithub] = useState(false);
   const [showUnitModal, setShowUnitModal] = useState(false);
+  const [showSyncLogs, setShowSyncLogs] = useState(false);
 
   const unitId = activeUnitId || '';
 
@@ -219,7 +224,10 @@ const Settings: React.FC<SettingsProps> = ({
             <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 px-4 py-1.5 rounded-full ${dbStatus === 'success' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
               {dbStatus === 'success' ? 'Sincronizado' : 'Conexão Instável'}
             </p>
-            <button className="mt-8 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-2">
+            <button 
+               onClick={() => setShowSyncLogs(true)}
+               className="mt-8 text-[9px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors flex items-center gap-2"
+            >
                <span className="w-1.5 h-1.5 rounded-full bg-slate-300 animate-pulse"></span>
                Ver logs de sincronização
             </button>
@@ -302,6 +310,60 @@ const Settings: React.FC<SettingsProps> = ({
             activeUnitId={unitId}
             franchiseId={currentUser.franchiseId}
          />
+      )}
+
+      {showSyncLogs && (
+         <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowSyncLogs(false)} />
+            <div className="bg-white dark:bg-slate-900 w-full max-w-2xl h-[80vh] rounded-[40px] shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col overflow-hidden">
+               <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
+                  <div>
+                     <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Logs de Sincronização</h3>
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Status em Tempo Real • {pendingSyncCount} itens na fila</p>
+                  </div>
+                  <button onClick={() => setShowSyncLogs(false)} className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center font-bold hover:bg-red-500 hover:text-white transition-all">✕</button>
+               </div>
+               
+               <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+                  {pendingSyncCount > 0 && (
+                     <div className="bg-amber-50 dark:bg-amber-900/20 p-6 rounded-3xl border border-amber-200 dark:border-amber-900/30 mb-8 animate-pulse">
+                        <div className="flex items-center gap-3 mb-2">
+                           <span className="text-xl">⏳</span>
+                           <h4 className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-widest">Sincronização Pendente</h4>
+                        </div>
+                        <p className="text-[10px] text-amber-600 dark:text-amber-500 font-bold uppercase leading-relaxed">
+                           Existem {pendingSyncCount} operações aguardando envio para o servidor. O sistema tentará sincronizar automaticamente assim que houver conexão estável.
+                        </p>
+                     </div>
+                  )}
+
+                  <div className="space-y-3">
+                     {auditLogs.length === 0 ? (
+                        <div className="py-20 text-center opacity-30">
+                           <p className="text-[10px] font-black uppercase tracking-[0.3em]">Nenhum log registrado</p>
+                        </div>
+                     ) : (
+                        auditLogs.slice(0, 100).map((log, idx) => (
+                           <div key={log.id || idx} className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 flex flex-col gap-2 group hover:border-indigo-500/30 transition-all">
+                              <div className="flex justify-between items-start">
+                                 <span className="text-[8px] font-black bg-white dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 uppercase tracking-widest">
+                                    {new Date(log.timestamp).toLocaleTimeString('pt-BR')}
+                                 </span>
+                                 <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-tighter">@{log.username}</span>
+                              </div>
+                              <p className="text-[10px] font-black text-slate-800 dark:text-slate-200 uppercase leading-tight">{log.action}</p>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase leading-relaxed line-clamp-2">{log.details}</p>
+                           </div>
+                        ))
+                     )}
+                  </div>
+               </div>
+               
+               <div className="p-6 bg-slate-50 dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 text-center">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-[0.4em]">Mostrando os últimos 100 eventos do bar</p>
+               </div>
+            </div>
+         </div>
       )}
     </div>
   );
