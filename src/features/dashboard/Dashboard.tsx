@@ -4,7 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   AreaChart, Area
 } from 'recharts';
-import { useProductIntelligence } from '../../hooks/useProductIntelligence';
+import { useProductIntelligence, ProductInsight } from '../../hooks/useProductIntelligence';
 
 interface DashboardProps {
   sales: Sale[];
@@ -164,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
   const { insights } = useProductIntelligence(products, sales, stockBalances);
 
   const criticalItems = useMemo(() => {
-    return Object.values(insights).filter(i => i.isCritical || i.isHighVolumeWarning);
+    return Object.values(insights as Record<string, ProductInsight>).filter(i => i.isCritical || i.isHighVolumeWarning);
   }, [insights]);
 
   const chartColor = '#ef4444';

@@ -20,6 +20,22 @@ const slugify = (str: string) =>
      .replace(/[\s_-]+/g, "-")
      .replace(/^-+|-+$/g, "");
 
+const CATEGORY_ICONS: Record<string, string> = {
+  'BEBIDAS': '🍺', 'BEBIDA': '🍺', 'DRINKS': '🍸', 'DRINK': '🍸',
+  'COMIDAS': '🍔', 'COMIDA': '🍔', 'LANCHES': '🍔', 'LANCHE': '🍔',
+  'PORÇÕES': '🍟', 'PORCAO': '🍟', 'PORCAOES': '🍟',
+  'SOBREMESAS': '🍰', 'SOBREMESA': '🍰', 'DOCES': '🍰',
+  'DIVERSOS': '✨', 'DIVERSO': '✨', 'OUTROS': '✨',
+};
+
+const getCategoryIcon = (cat: string) => {
+  const key = cat.toUpperCase();
+  for (const [k, v] of Object.entries(CATEGORY_ICONS)) {
+    if (key.includes(k)) return v;
+  }
+  return '🍽️';
+};
+
 export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({ 
     products: initialProducts = [], 
     unitName: initialUnitName = 'Botequista',
@@ -32,6 +48,9 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   const [unitId, setUnitId] = useState(initialUnitId);
   const [loading, setLoading] = useState(initialProducts.length === 0 && (!!initialUnitId || !!barName));
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('btq_menu_theme') as 'light' | 'dark') || 'dark');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name');
 
   useEffect(() => {
     localStorage.setItem('btq_menu_theme', theme);
@@ -119,13 +138,36 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   }, [unitId, barName, syncConfig]);
 
   const categorizedProducts = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    let filtered = query 
+      ? products.filter(p => 
+          p.name.toLowerCase().includes(query) || 
+          (p.description && p.description.toLowerCase().includes(query))
+        )
+      : products;
+    
+    if (activeCategory) {
+      filtered = filtered.filter(p => (p.category || 'DIVERSOS').toUpperCase() === activeCategory);
+    }
+
+    filtered = [...filtered].sort((a, b) => {
+      if (sortBy === 'price-asc') return a.price - b.price;
+      if (sortBy === 'price-desc') return b.price - a.price;
+      return a.name.localeCompare(b.name);
+    });
+    
     const map: Record<string, Product[]> = {};
-    products.forEach(p => {
+    filtered.forEach(p => {
       const cat = p.category || 'DIVERSOS';
       if (!map[cat]) map[cat] = [];
       map[cat].push(p);
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
+  }, [products, searchQuery, activeCategory, sortBy]);
+
+  const categories = useMemo(() => {
+    const cats = new Set(products.map(p => p.category?.toUpperCase() || 'DIVERSOS'));
+    return Array.from(cats).sort();
   }, [products]);
 
   if (loading) {
@@ -164,6 +206,84 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             </div>
         </header>
 
+        {/* Search */}
+        <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className={`relative flex items-center gap-3 px-6 py-4 rounded-2xl transition-all ${theme === 'dark' ? 'bg-slate-900/80 border border-slate-800' : 'bg-slate-50 border border-slate-200'} ${searchQuery ? 'ring-2 ring-indigo-500/50' : ''}`}>
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                    type="text"
+                    placeholder="Buscar no cardápio..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={`flex-1 bg-transparent outline-none text-base font-medium placeholder:text-slate-400 ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}
+                />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="p-1 hover:bg-slate-700 rounded-lg transition-colors">
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                )}
+            </div>
+        </div>
+
+        {/* Category Filters */}
+        <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-500" style={{ animationDelay: '100ms' }}>
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button
+                    onClick={() => setActiveCategory(null)}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all ${
+                        activeCategory === null
+                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                        : theme === 'dark' ? 'bg-slate-900 text-slate-400 border border-slate-800' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                    }`}
+                >
+                    Todas
+                </button>
+                {categories.map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat === activeCategory ? null : cat)}
+                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-2 ${
+                            activeCategory === cat
+                            ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30'
+                            : theme === 'dark' ? 'bg-slate-900 text-slate-400 border border-slate-800' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                        }`}
+                    >
+                        <span>{getCategoryIcon(cat)}</span>
+                        <span>{cat}</span>
+                    </button>
+                ))}
+            </div>
+        </div>
+
+        {/* Sort */}
+        <div className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center justify-between">
+                <div className="flex gap-2">
+                    {[
+                        { key: 'name', label: 'A-Z' },
+                        { key: 'price-asc', label: 'Menor' },
+                        { key: 'price-desc', label: 'Maior' },
+                    ].map(opt => (
+                        <button
+                            key={opt.key}
+                            onClick={() => setSortBy(opt.key as any)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                sortBy === opt.key
+                                ? 'bg-indigo-500/20 text-indigo-500 border border-indigo-500/30'
+                                : theme === 'dark' ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </div>
+
         {products.length === 0 ? (
             <div className="text-center py-32 space-y-6 opacity-40">
                 <div className="text-6xl">🍹</div>
@@ -174,11 +294,15 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             <div className="space-y-20">
                 {categorizedProducts.map(([category, items], idx) => (
                 <section key={category} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 150}ms` }}>
-                    <div className="flex items-center gap-4 mb-10">
-                        <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-indigo-500 whitespace-nowrap">{category}</h2>
-                        <div className={`h-1 flex-1 rounded-full ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-                            <div className="h-full bg-indigo-500/30 rounded-full w-1/3"></div>
+                    <div className="flex items-center justify-between mb-10">
+                        <div className="flex items-center gap-4">
+                            <span className="text-2xl">{getCategoryIcon(category)}</span>
+                            <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-indigo-500 whitespace-nowrap">{category}</h2>
+                            <div className={`h-1 flex-1 rounded-full min-w-[60px] ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
+                                <div className="h-full bg-indigo-500/30 rounded-full w-1/3"></div>
+                            </div>
                         </div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">{items.length} itens</span>
                     </div>
                     <div className="grid gap-10">
                     {items.map(item => (

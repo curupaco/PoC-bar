@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { Product, StockTransaction, User, Sale, Unit, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput } from '../../types';
-import { useProductIntelligence } from '../../hooks/useProductIntelligence';
+import { useProductIntelligence, ProductInsight } from '../../hooks/useProductIntelligence';
 
 interface InventoryProps {
   products: Product[];
@@ -133,7 +133,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
   const { insights } = useProductIntelligence(products, sales, stockBalances);
   
   const suggestions = useMemo(() => {
-    return Object.values(insights)
+    return Object.values(insights as Record<string, ProductInsight>)
       .filter(i => i.recommendedRestock > 0)
       .sort((a, b) => b.recommendedRestock - a.recommendedRestock);
   }, [insights]);

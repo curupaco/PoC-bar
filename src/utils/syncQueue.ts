@@ -14,16 +14,21 @@ export interface QueueItem {
 
 const QUEUE_STORAGE_KEY = 'btq_sync_outbox_v3';
 
-// Cache em memória
-let memoryQueue: QueueItem[] = [];
-let isLoaded = false;
+// Cache em memória - exposto para testes
+export let memoryQueue: QueueItem[] = [];
+export let isLoaded = false;
 // Promessa singleton para evitar múltiplas inicializações simultâneas
 let initPromise: Promise<void> | null = null;
 
 export const SyncQueue = {
-  async init() {
-    if (isLoaded) return;
-    if (initPromise) return initPromise;
+  async init(force = false) {
+    if (isLoaded && !force) return;
+    if (initPromise && !force) return initPromise;
+
+    if (force) {
+      isLoaded = false;
+      initPromise = null;
+    }
 
     initPromise = (async () => {
       try {
@@ -33,7 +38,6 @@ export const SyncQueue = {
       } catch (e) {
         console.error("Failed to load queue from IDB", e);
         memoryQueue = [];
-        // Mesmo com erro, marcamos como loaded para não travar o app, começando com fila vazia
         isLoaded = true; 
       }
     })();

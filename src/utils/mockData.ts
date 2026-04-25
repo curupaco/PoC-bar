@@ -7,32 +7,32 @@ export const mockCategories: Category[] = [
 ];
 
 export const mockProducts: Product[] = [
-  { id: 'p-1', name: 'Heineken 600ml', price: 18, category: 'CERVEJAS', isVisible: true, trackStock: true, stockQuantity: 50, alertThreshold: 10, printerIP: '', lastCostPrice: 10 },
-  { id: 'p-2', name: 'Original 600ml', price: 16, category: 'CERVEJAS', isVisible: true, trackStock: true, stockQuantity: 100, alertThreshold: 20, printerIP: '', lastCostPrice: 8 },
-  { id: 'p-3', name: 'Porção de Fritas', price: 35, category: 'PORÇÕES', isVisible: true, trackStock: false, printerIP: '' },
-  { id: 'p-4', name: 'Frango a Passarinho', price: 45, category: 'PORÇÕES', isVisible: true, trackStock: false, printerIP: '' },
-  { id: 'p-5', name: 'Caipirinha de Limão', price: 25, category: 'DRINKS', isVisible: true, trackStock: false, printerIP: '' },
-  { id: 'p-6', name: 'Gin Tônica', price: 32, category: 'DRINKS', isVisible: true, trackStock: false, printerIP: '' },
+  { id: 'p-1', name: 'Heineken 600ml', price: 18, category: 'CERVEJAS', sellType: 'unit', isFavorite: true, trackStock: true, lastCostPrice: 10 },
+  { id: 'p-2', name: 'Original 600ml', price: 16, category: 'CERVEJAS', sellType: 'unit', isFavorite: false, trackStock: true, lastCostPrice: 8 },
+  { id: 'p-3', name: 'Porção de Fritas', price: 35, category: 'PORÇÕES', sellType: 'unit', isFavorite: false, trackStock: false },
+  { id: 'p-4', name: 'Frango a Passarinho', price: 45, category: 'PORÇÕES', sellType: 'unit', isFavorite: false, trackStock: false },
+  { id: 'p-5', name: 'Caipirinha de Limão', price: 25, category: 'DRINKS', sellType: 'unit', isFavorite: true, trackStock: false },
+  { id: 'p-6', name: 'Gin Tônica', price: 32, category: 'DRINKS', sellType: 'unit', isFavorite: false, trackStock: false },
 ];
 
 export const mockUnits: Unit[] = [
-  { id: 'unit-demo', name: 'Bar Demonstrativo (Sandbox)', isActive: true, createdAt: Date.now(), address: 'Demo', city: 'Sandbox', phone: '000000', useStock: true }
+  { id: 'unit-demo', name: 'Bar Demonstrativo (Sandbox)', isActive: true, createdAt: Date.now(), useStock: true }
 ];
 
 export const mockUsers: User[] = [
-  { id: 'admin-demo', username: 'demo_user', password: '123', displayName: 'Visitante (Demo)', permissions: ['pos_access', 'products_manage', 'reports_view', 'settings_manage', 'inventory_manage', 'users_manage', 'shift_manage'], allowedUnits: ['unit-demo'] }
+  { id: 'admin-demo', username: 'demo_user', password: '123', displayName: 'Visitante (Demo)', permissions: ['pos', 'products', 'reports', 'settings', 'users_admin', 'shifts_admin', 'open_shift', 'close_shift'], allowedUnits: ['unit-demo'] }
 ];
 
 export const mockShifts: Shift[] = [
   {
     id: 'shift-demo',
-    unitId: 'unit-demo',
-    openedAt: Date.now() - 3600000, // 1 hour ago
+    startTime: Date.now() - 3600000,
     openedBy: 'admin-demo',
-    openerName: 'Visitante (Demo)',
-    initialBalance: 150,
     status: 'open',
-    expectedBalance: 150
+    cashPrimary: 150,
+    cashChange: 0,
+    openingCashPrimary: 150,
+    openingCashChange: 0,
   }
 ];
 
