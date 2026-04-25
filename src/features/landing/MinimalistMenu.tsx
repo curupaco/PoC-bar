@@ -59,25 +59,24 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
                 if (fetchedToken) token = fetchedToken;
             }
 
-            // 1. Se temos ID, buscamos as configurações da unidade primeiro
-            if (currentUnitId) {
-                const unitSettings = await loadFromFirebase(syncConfig.url, undefined, token, `units/${currentUnitId}`);
-                if (unitSettings) {
-                    currentUnitName = unitSettings.name || currentUnitName;
-                    currentUnitUseStock = unitSettings.useStock !== false; // Padrão é true se não definido
-                    setUnitName(currentUnitName);
-                }
-            } 
-            // 2. Se não temos ID mas temos nome, buscamos a unidade na lista global
-            else if (barName) {
+            // 1. Buscamos as configurações da unidade na lista global
+            if (currentUnitId || barName) {
                 const unitsData = await loadFromFirebase(syncConfig.url, undefined, token, 'units');
                 if (unitsData) {
                     const unitsArray = Array.isArray(unitsData) ? unitsData : Object.values(unitsData);
-                    const found = unitsArray.find((u: any) => slugify(u.name) === slugify(barName));
+                    let found = null;
+                    
+                    if (currentUnitId) {
+                        found = unitsArray.find((u: any) => u.id === currentUnitId);
+                    } 
+                    if (!found && barName) {
+                        found = unitsArray.find((u: any) => slugify(u.name) === slugify(barName));
+                    }
+
                     if (found) {
                         currentUnitId = found.id;
                         currentUnitName = found.name;
-                        currentUnitUseStock = found.useStock !== false;
+                        currentUnitUseStock = found.useStock !== false; // Padrão é true se não definido
                         setUnitId(found.id);
                         setUnitName(found.name);
                     }
