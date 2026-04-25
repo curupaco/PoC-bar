@@ -56,6 +56,19 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name');
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (cat: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(cat)) {
+        next.delete(cat);
+      } else {
+        next.add(cat);
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     localStorage.setItem('btq_menu_theme', theme);
@@ -201,13 +214,15 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             </button>
         </div>
 
-        <header className="text-center mb-20 animate-in fade-in slide-in-from-top-6 duration-1000">
-            <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center mx-auto mb-8 text-3xl font-black italic transform -rotate-6 shadow-2xl transition-all ${theme === 'dark' ? 'bg-white text-slate-950' : 'bg-slate-900 text-white'}`}>B</div>
-            <h1 className="text-5xl font-black uppercase tracking-tighter italic mb-4 leading-none">{unitName}</h1>
-            <div className="flex items-center justify-center gap-4">
-                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[40px]"></div>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500">Cardápio Digital Premium</p>
-                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[40px]"></div>
+        <header className="text-center mb-12 animate-in fade-in slide-in-from-top-6 duration-1000">
+            <div className="w-16 h-16 rounded-2xl mx-auto mb-6 shadow-xl overflow-hidden">
+                <img src="/logo.svg" alt="Botequista" className="w-full h-full object-cover" />
+            </div>
+            <h1 className="text-xl font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">{unitName}</h1>
+            <div className="flex items-center justify-center gap-2">
+                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[20px]"></div>
+                <p className="text-[8px] font-bold uppercase tracking-[0.3em] text-slate-400">Cardápio</p>
+                <div className="h-px bg-slate-200 dark:bg-slate-800 flex-1 max-w-[20px]"></div>
             </div>
         </header>
 
@@ -299,17 +314,22 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             <div className="space-y-20">
                 {categorizedProducts.map(([category, items], idx) => (
                 <section key={category} className="animate-in fade-in slide-in-from-bottom-8 duration-700" style={{ animationDelay: `${idx * 150}ms` }}>
-                    <div className="flex items-center justify-between mb-10">
+                    <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
                             <span className="text-2xl">{getCategoryIcon(category)}</span>
                             <h2 className="text-[12px] font-black uppercase tracking-[0.3em] text-indigo-500 whitespace-nowrap">{category}</h2>
-                            <div className={`h-1 flex-1 rounded-full min-w-[60px] ${theme === 'dark' ? 'bg-slate-900' : 'bg-slate-50'}`}>
-                                <div className="h-full bg-indigo-500/30 rounded-full w-1/3"></div>
-                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">({items.length})</span>
                         </div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase">{items.length} itens</span>
+                        <button 
+                            onClick={() => toggleCategory(category)}
+                            className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-slate-800' : 'hover:bg-slate-100'}`}
+                        >
+                            <svg className={`w-4 h-4 text-slate-400 transition-transform ${collapsedCategories.has(category) ? '' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
                     </div>
-                    <div className="grid gap-10">
+                    <div className={`grid gap-10 ${collapsedCategories.has(category) ? 'hidden' : ''}`}>
                     {items.map(item => (
                         <div key={item.id} className="flex justify-between items-start group">
                             <div className="flex-1 pr-6">
