@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { Product, formatCurrency } from '../../types';
-import { loadFromFirebase } from '../../services/firebaseService';
+import { loadFromFirebase, getFirebaseToken } from '../../services/firebaseService';
 
 
 interface MinimalistMenuProps {
@@ -52,9 +52,16 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             let currentUnitName = unitName;
             let currentUnitUseStock = true;
 
+            // 0. Autenticação para acesso público (usa credenciais de leitura do .env)
+            let token = '';
+            if (syncConfig.email && syncConfig.pass && syncConfig.key) {
+                const fetchedToken = await getFirebaseToken(syncConfig.email, syncConfig.pass, syncConfig.key);
+                if (fetchedToken) token = fetchedToken;
+            }
+
             // 1. Se temos ID, buscamos as configurações da unidade primeiro
             if (currentUnitId) {
-                const unitSettings = await loadFromFirebase(syncConfig.url, undefined, '', `units/${currentUnitId}`);
+                const unitSettings = await loadFromFirebase(syncConfig.url, undefined, token, `units/${currentUnitId}`);
                 if (unitSettings) {
                     currentUnitName = unitSettings.name || currentUnitName;
                     currentUnitUseStock = unitSettings.useStock !== false; // Padrão é true se não definido
@@ -63,7 +70,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             } 
             // 2. Se não temos ID mas temos nome, buscamos a unidade na lista global
             else if (barName) {
-                const unitsData = await loadFromFirebase(syncConfig.url, undefined, '', 'units');
+                const unitsData = await loadFromFirebase(syncConfig.url, undefined, token, 'units');
                 if (unitsData) {
                     const unitsArray = Array.isArray(unitsData) ? unitsData : Object.values(unitsData);
                     const found = unitsArray.find((u: any) => slugify(u.name) === slugify(barName));
@@ -80,7 +87,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
             // 3. Se temos ID (ou encontramos um), buscamos os produtos
             if (currentUnitId) {
                 const path = `data/units/${currentUnitId}/products`;
-                const data = await loadFromFirebase(syncConfig.url, undefined, '', path);
+                const data = await loadFromFirebase(syncConfig.url, undefined, token, path);
                 
                 if (data) {
                     const productsArray = Array.isArray(data) ? data : Object.values(data);
