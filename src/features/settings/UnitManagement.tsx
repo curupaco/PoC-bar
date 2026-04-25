@@ -9,6 +9,14 @@ interface UnitManagementProps {
   franchiseId?: string;
 }
 
+const slugify = (str: string) => 
+  str.toLowerCase()
+     .normalize("NFD")
+     .replace(/[\u0300-\u036f]/g, "")
+     .replace(/[^\w\s-]/g, "")
+     .replace(/[\s_-]+/g, "-")
+     .replace(/^-+|-+$/g, "");
+
 const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, onClose, activeUnitId, franchiseId }) => {
   const [name, setName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
@@ -17,9 +25,7 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    const slug = name.toLowerCase().trim()
-      .replace(/[áàãâä]/g, 'a').replace(/[éèêë]/g, 'e').replace(/[íìîï]/g, 'i').replace(/[óòõôö]/g, 'o').replace(/[úùûü]/g, 'u').replace(/[ç]/g, 'c')
-      .replace(/[^a-z0-9]/g, '_');
+    const slug = slugify(name);
     if (units.some(u => u.id === slug)) { alert("Já existe uma unidade com nome similar."); return; }
     const newUnit: Unit = { 
       id: slug, 
@@ -94,39 +100,48 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
 
                  return (
                     <div key={unit.id} className={`p-6 rounded-3xl border flex flex-col sm:flex-row justify-between items-center gap-4 transition-all ${unit.isActive ? 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 shadow-sm' : 'bg-slate-100 dark:bg-slate-900 opacity-60 border-transparent'} ${isCurrent ? 'ring-2 ring-red-500 shadow-xl' : ''}`}>
-                       <div className="flex-1 w-full sm:w-auto">
-                          <div className="flex items-center gap-2">
-                             {isEditing ? (
-                                <div className="flex items-center gap-2 w-full">
-                                   <input
-                                      autoFocus
-                                      value={editName}
-                                      onChange={e => setEditName(e.target.value)}
-                                      className="flex-1 px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-red-500 font-black uppercase text-sm outline-none"
-                                      onKeyDown={e => {
-                                         if (e.key === 'Enter') saveEdit();
-                                         if (e.key === 'Escape') cancelEdit();
-                                      }}
-                                   />
-                                   <button onClick={saveEdit} className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                                   </button>
-                                   <button onClick={cancelEdit} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
-                                   </button>
-                                </div>
-                             ) : (
-                                <>
-                                   <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm sm:text-base">{unit.name}</h4>
-                                   <button onClick={() => startEdit(unit)} className="text-slate-300 hover:text-blue-500 transition-colors p-1">
-                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                   </button>
-                                   {isCurrent && <span className="bg-red-600 text-white text-[8px] sm:text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">Atual</span>}
-                                </>
-                             )}
-                          </div>
-                          <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {unit.id}</p>
-                       </div>
+                        <div className="flex-1 w-full sm:w-auto">
+                           <div className="flex items-center gap-2">
+                              {isEditing ? (
+                                 <div className="flex items-center gap-2 w-full">
+                                    <input
+                                       autoFocus
+                                       value={editName}
+                                       onChange={e => setEditName(e.target.value)}
+                                       className="flex-1 px-3 py-1 rounded-xl bg-slate-50 dark:bg-slate-900 border border-red-500 font-black uppercase text-sm outline-none"
+                                       onKeyDown={e => {
+                                          if (e.key === 'Enter') saveEdit();
+                                          if (e.key === 'Escape') cancelEdit();
+                                       }}
+                                    />
+                                    <button onClick={saveEdit} className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-all">
+                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                                    </button>
+                                    <button onClick={cancelEdit} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all">
+                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                 </div>
+                              ) : (
+                                 <>
+                                    <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm sm:text-base">{unit.name}</h4>
+                                    <button onClick={() => startEdit(unit)} className="text-slate-300 hover:text-blue-500 transition-colors p-1" title="Editar nome">
+                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    </button>
+                                    <a 
+                                       href={`/menu/${slugify(unit.name)}?u=${unit.id}`} 
+                                       target="_blank" 
+                                       rel="noreferrer" 
+                                       className="text-slate-300 hover:text-indigo-500 transition-colors p-1"
+                                       title="Ver Cardápio Digital"
+                                    >
+                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                    {isCurrent && <span className="bg-red-600 text-white text-[8px] sm:text-[9px] font-black uppercase px-2 py-0.5 rounded-full shrink-0">Atual</span>}
+                                 </>
+                              )}
+                           </div>
+                           <p className="text-[10px] font-mono text-slate-400 mt-1">ID: {unit.id}</p>
+                        </div>
                        <div className="flex items-center gap-4 w-full sm:w-auto justify-end">
                           <button 
                             onClick={() => toggleStock(unit.id)}

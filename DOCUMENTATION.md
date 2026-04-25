@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.7.3 (Financial Intelligence & Elite Safety)
+**Versão:** 4.8.0 (Digital Menu Elite & Dynamic SEO)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -22,7 +22,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Legibilidade Aprimorada (v4.7.3):** Reajuste de contraste e tamanhos de fonte em todo o Dashboard e PDV.
 *   **Engenharia de Cardápio (v4.7.3):** Suporte a cadastro de CMV (Custo de Mercadoria Vendida) e cálculo automático de Lucro Real por item e por período.
 *   **Módulo de Gratificação (v4.7.3):** Implementação de taxa de serviço configurável por unidade (padrão 10%) com cálculo automático no fechamento da conta.
-*   **Cardápio Digital QR (v4.7.3):** Nova rota `/menu` que gera um cardápio digital minimalista sincronizado em tempo real com o estoque do PDV.
+*   **Cardápio Digital QR Elite (v4.8.0):** Nova rota dinâmica `/menu/BAR_NAME` com busca inteligente por slug. Suporte nativo a temas Claro/Escuro (Escuro como padrão).
+*   **Acesso Rápido ao Menu (v4.8.0):** Atalhos visuais no cadastro de bares e no dashboard para acesso imediato ao link público do cardápio.
 *   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
 *   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 

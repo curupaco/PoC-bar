@@ -113,7 +113,8 @@ Engenharia de cardápio integrada. Identifique automaticamente quais produtos s�
 ### 4. Inteligência e Segurança Operacional (v4.7.3)
 - **Engenharia de Cardápio:** Controle de custo (CMV) e cálculo de lucro real por item.
 - **Taxa de Serviço:** Módulo de gratificação inteligente com relatório de pool para equipe.
-- **Cardápio Digital QR:** Menu minimalista sincronizado com estoque.
+- **Cardápio Digital QR Elite (v4.8.0):** Rotas dinâmicas `/menu/NOME-DO-BAR`, suporte a temas (Dark/Light) e SEO amigável.
+- **Acesso Rápido (v4.8.0):** Ícones de atalho para o cardápio no cadastro de unidades e dashboard.
 - **Admin Lock & Logout Guard:** Proteção da conta mestre e prevenção de saídas acidentais.
 - **WhatsApp Summary:** Envio instantâneo de faturamento e métricas ao dono.
 - **UX Polish:** Legibilidade aumentada, tooltips contextuais e tabs responsivas.

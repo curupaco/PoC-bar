@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Elite Smart Stock & Financial Protocol v4.7.3
+           Digital Menu Elite & Dynamic SEO Protocol v4.8.0
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -125,17 +125,17 @@ const Help: React.FC = () => {
           </div>
         </section>
 
-        {/* 8. Taxa de Serviço & QR (v4.7.3) */}
+        {/* 8. Cardápio Digital Elite (v4.8.0) */}
         <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-100 dark:border-indigo-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-indigo-500/50 transition-all group">
           <div className="flex items-center gap-4 text-indigo-600">
             <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-2xl font-black">🤝</span>
+              <span className="text-2xl font-black">📱</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight italic">Serviço & Digital</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Menu Digital</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-indigo-600 font-black italic">TAXA 10%:</span> Ative em <FakeButton color="indigo">Ajustes</FakeButton> para adicionar automaticamente a gratificação da equipe no PDV.</p>
-            <p>• <span className="text-indigo-600 font-black italic">QR MENU:</span> Acesse `/menu` para ver o cardápio digital minimalista, pronto para ser escaneado pelos clientes.</p>
+            <p>• <span className="text-indigo-600 font-black italic">URL DINÂMICA:</span> Use `/menu/NOME-DO-BAR` para um link amigável e profissional para seus clientes.</p>
+            <p>• <span className="text-indigo-600 font-black italic">QR CODE & TEMAS:</span> Gere QR Codes em <FakeButton color="indigo">Ajustes</FakeButton> e deixe seus clientes escolherem entre os temas **Claro ou Escuro**.</p>
           </div>
         </section>
 
@@ -197,6 +197,12 @@ const Help: React.FC = () => {
                Implementamos um protocolo de segurança (v4.7) que impede a exibição de senhas em texto puro. Isso protege as contas contra curiosos e garante a privacidade da equipe.
              </p>
           </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-indigo-600">Como funciona o link amigável do cardápio?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Agora você pode usar `/menu/meu-bar` em vez de IDs complicados. O sistema busca automaticamente o nome da sua unidade e apresenta o cardápio correto com suporte a temas.
+             </p>
+          </div>
         </div>
       </div>
 
@@ -208,9 +214,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.7.3 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.8.0 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.7.3</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.8.0</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">

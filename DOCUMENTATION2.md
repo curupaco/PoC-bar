@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.7.3 UX & Operational Safety.*
+> *Material de apresentação comercial — versão v4.8.0 Digital Menu & Dynamic UX.*
 
 ---
 
@@ -14,13 +14,19 @@ Todo dono de bar já passou por isso:
 - A internet caiu e as vendas pararam.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v4.3)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v4.8.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
 
 ## Novidades da Versão 4.4 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
+
+### 📱 Cardápio Digital Dinâmico (Novo v4.8)
+- **URL Personalizada:** Chega de links complicados. Seu cliente acessa `/menu/Nome-Do-Seu-Bar` — simples, fácil e profissional.
+- **Temas Premium:** Cardápio com visual "Elite", suportando modo claro e escuro ( Dark Mode como padrão). Uma experiência visual que valoriza seu bar.
+- **Sincronização Atômica:** O que acaba no PDV some na hora do cardápio digital do cliente. Zero frustração.
+- **Acesso Rápido:** Atalhos direto no cadastro de bares para você visualizar seu menu com um clique.
 
 ### ⚡ Turbo-Operação (Velocidade Extrema)
 - **Atalhos Globais:** Opere o sistema sem tocar no mouse. `F1` para Venda Rápida, `Espaço` para fechar a conta. Velocidade de checkout 50% maior.
@@ -49,7 +55,7 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **WhatsApp Intelligence (v4.7.2):** Envio de resumo de faturamento diretamente para o celular do proprietário no fechamento.
 - **Interface Responsiva PDV:** Grid de produtos que se adapta a qualquer tamanho de tela, garantindo agilidade mesmo em dispositivos móveis antigos.
 
-### 💰 Inteligência Financeira Elite (v4.7.3 Novo) 💎
+### 💰 Inteligência Financeira Elite (v4.8.0) 💎
 - **Engenharia de Lucro Real (CMV):** Saiba exatamente o custo de mercadoria de cada item. O sistema calcula seu lucro líquido real, não apenas o faturamento.
 - **Markup Sugerido:** Ferramenta de apoio à decisão de preços baseada na margem desejada vs custo real.
 - **Taxa de Serviço Inteligente:** Módulo de gratificação (10%) que pode ser ligado/desligado por unidade. Cálculo automático e transparente no fechamento.

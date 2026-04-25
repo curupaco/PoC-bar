@@ -4,6 +4,14 @@ import SystemDocs from './components/SystemDocs';
 import UnitManagement from './UnitManagement';
 import { syncToGitHub } from '../../services/cloudService';
 
+const slugify = (str: string) => 
+  str.toLowerCase()
+     .normalize("NFD")
+     .replace(/[\u0300-\u036f]/g, "")
+     .replace(/[^\w\s-]/g, "")
+     .replace(/[\s_-]+/g, "-")
+     .replace(/^-+|-+$/g, "");
+
 interface SettingsProps {
   products: Product[];
   sales: Sale[];
@@ -210,6 +218,76 @@ const Settings: React.FC<SettingsProps> = ({
             </div>
           </div>
 
+            {/* MÓDULO DE MENU DIGITAL (NOVO) */}
+            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/20 text-amber-600 flex items-center justify-center">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Cardápio Digital & QR Code</h4>
+                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gere o código para suas mesas</p>
+                  </div>
+               </div>
+
+               <div className="bg-slate-50 dark:bg-slate-950 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+                  <div className="space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Link Público do Cardápio</label>
+                        <div className="flex gap-2">
+                           <input 
+                              type="text" 
+                              readOnly 
+                              value={`${window.location.origin}/menu/${slugify(units.find(u => u.id === unitId)?.name || '')}?u=${unitId}`}
+                              className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-4 font-black text-[10px] text-indigo-500 outline-none"
+                           />
+                           <button 
+                              onClick={() => {
+                                 const url = `${window.location.origin}/menu/${slugify(units.find(u => u.id === unitId)?.name || '')}?u=${unitId}`;
+                                 navigator.clipboard.writeText(url);
+                                 showToast("LINK COPIADO!");
+                              }}
+                              className="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                           >
+                              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                           </button>
+                        </div>
+                     </div>
+                     <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
+                        Este é o link que seus clientes usarão. Ele já contém a identificação da sua unidade e o nome amigável para SEO.
+                     </p>
+                     <div className="pt-4">
+                        <a 
+                           href={`/menu/${slugify(units.find(u => u.id === unitId)?.name || '')}?u=${unitId}`} 
+                           target="_blank" 
+                           rel="noreferrer"
+                           className="inline-flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-105 active:scale-95 transition-all"
+                        >
+                           Visualizar Menu
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                     </div>
+                  </div>
+
+                  <div className="flex flex-col items-center justify-center space-y-6 p-6 bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-inner">
+                     <div className="p-4 bg-white rounded-3xl shadow-2xl border-8 border-slate-50">
+                        <img 
+                           src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/menu/${slugify(units.find(u => u.id === unitId)?.name || '')}?u=${unitId}`)}`} 
+                           alt="QR Code do Menu" 
+                           className="w-40 h-40"
+                        />
+                     </div>
+                     <button 
+                        onClick={() => window.print()}
+                        className="text-[9px] font-black text-indigo-500 uppercase tracking-widest hover:underline"
+                     >
+                        Imprimir para as Mesas
+                     </button>
+                  </div>
+               </div>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden group">
             <div className={`absolute inset-0 opacity-[0.03] pointer-events-none transition-all duration-700 group-hover:scale-110 ${dbStatus === 'success' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             
@@ -241,18 +319,29 @@ const Settings: React.FC<SettingsProps> = ({
               <div>
                  <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Minhas Unidades</h3>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gerencie os pontos de venda da rede</p>
-              </div>
               <button onClick={() => setShowUnitModal(true)} className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all">Gerenciar</button>
            </div>
            
            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {units.map(u => (
-                 <div key={u.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm opacity-80 hover:opacity-100 transition-opacity">
-                    <h4 className="font-black uppercase text-slate-800 dark:text-white">{u.name}</h4>
-                    <p className="text-[10px] font-mono text-slate-400 mt-1">{u.id}</p>
-                    <span className={`inline-block mt-3 px-3 py-1 rounded-full text-[8px] font-black uppercase ${u.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                 <div key={u.id} className="group bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm opacity-80 hover:opacity-100 transition-all hover:shadow-lg relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-1">
+                       <h4 className="font-black uppercase text-slate-800 dark:text-white">{u.name}</h4>
+                       <a 
+                          href={`/menu/${slugify(u.name)}?u=${u.id}`} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all active:scale-90"
+                          title="Acessar Cardápio Digital"
+                       >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                       </a>
+                    </div>
+                    <p className="text-[10px] font-mono text-slate-400">ID: {u.id}</p>
+                    <span className={`inline-block mt-4 px-3 py-1 rounded-full text-[8px] font-black uppercase ${u.isActive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
                        {u.isActive ? 'Ativo' : 'Inativo'}
                     </span>
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 blur-2xl rounded-full -mr-12 -mt-12 opacity-0 group-hover:opacity-100 transition-opacity" />
                  </div>
               ))}
            </div>
