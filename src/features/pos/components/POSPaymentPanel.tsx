@@ -215,6 +215,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                                  onChange={e => setPaymentAmountInput(sanitizeCurrencyInput(e.target.value))}
                                  className="w-full pl-14 pr-5 py-4 rounded-[25px] bg-slate-50 dark:bg-slate-800 font-black text-2xl outline-none border-4 border-transparent focus:border-red-500 transition-all shadow-inner"
                               />
+                              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1 ml-4">Mínimo: R$ 0,05</p>
                            </div>
                         </div>
 
@@ -237,16 +238,20 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                      </div>
 
                      {(paymentMethodInput === PaymentMethod.PENDURA || activeTabId === 'shortcut-payment') && (
-                        <div className="space-y-1.5 animate-in slide-in-from-bottom-4">
-                           <label htmlFor="customer-name-input" className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-2">Identificação do Cliente</label>
+                        <div className="space-y-1.5 animate-in slide-in-from-bottom-4 ring-4 ring-red-500/10 rounded-[30px] p-2">
+                           <label htmlFor="customer-name-input" className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-2 flex items-center gap-2">
+                              <span>Identificação do Cliente</span>
+                              <span className="bg-red-500 text-white text-[7px] px-1.5 py-0.5 rounded-full">OBRIGATÓRIO</span>
+                           </label>
                            <input
-                              id="customer-name-input"
-                              type="text"
-                              value={customerNameInput}
-                              onChange={e => activeTabId !== 'shortcut-payment' && setCustomerNameInput(e.target.value)}
-                              readOnly={activeTabId === 'shortcut-payment'}
-                              className={`w-full px-6 py-4 rounded-[25px] bg-slate-50 dark:bg-slate-800 font-black uppercase text-lg outline-none border-4 ${activeTabId === 'shortcut-payment' ? 'border-slate-100 text-slate-400' : 'border-red-100 focus:border-red-500'}`}
-                              placeholder="NOME DO FIADO..."
+                               id="customer-name-input"
+                               type="text"
+                               autoFocus={paymentMethodInput === PaymentMethod.PENDURA}
+                               value={customerNameInput}
+                               onChange={e => activeTabId !== 'shortcut-payment' && setCustomerNameInput(e.target.value)}
+                               readOnly={activeTabId === 'shortcut-payment'}
+                               className={`w-full px-6 py-4 rounded-[25px] bg-slate-50 dark:bg-slate-800 font-black uppercase text-lg outline-none border-4 ${activeTabId === 'shortcut-payment' ? 'border-slate-100 text-slate-400' : 'border-red-100 focus:border-red-500 shadow-lg shadow-red-500/5'}`}
+                               placeholder="NOME DO FIADO..."
                            />
                         </div>
                      )}

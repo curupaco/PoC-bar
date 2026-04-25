@@ -158,7 +158,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct,
           {favorites.length > 0 && (
             <div className="space-y-3 md:space-y-4">
               <h3 className="text-[9px] md:text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] pl-2">⭐ FAVORITOS</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
                 {favorites.map(p => (
                   <ProductCard key={p.id} product={p} onClick={handleAddClick} stock={stockMap[p.id]} insight={insights[p.id]} />
                 ))}
@@ -189,7 +189,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct,
                 
                 {!collapsedCats.has(cat) && (
                   <div className="animate-in slide-in-from-top-2">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
                       {visibleProducts.map(p => (
                         <ProductCard key={p.id} product={p} onClick={handleAddClick} stock={stockMap[p.id]} insight={insights[p.id]} />
                       ))}

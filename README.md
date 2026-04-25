@@ -110,6 +110,9 @@ O fechamento de caixa é "cego". O operador insere a contagem física do dinheir
 ### 3. Gestão de Inventário & Curva ABC
 Engenharia de cardápio integrada. Identifique automaticamente quais produtos são seus "Carro-Chefe" (Alta Venda / Alta Margem) e quais são "Abacaxis" (Baixa Venda / Baixa Margem).
 
+### 4. Inteligência e Segurança Operacional (v4.7.1)
+Validações avançadas no cadastro (preço zero, duplicidade), notificações visuais dinâmicas (Toasts persistentes e coloridos) e interface PDV totalmente responsiva para qualquer hardware.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento

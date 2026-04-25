@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.7 Security & Accessibility.*
+> *Material de apresentação comercial — versão v4.7.1 UX & Operational Safety.*
 
 ---
 
@@ -45,6 +45,8 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Badges de Estoque & ETA:** Veja o nível de estoque e o tempo estimado para acabar direto no botão de venda. Inteligência pura no PDV.
 - **Acessibilidade Universal:** Sistema 100% navegável via teclado e compatível com leitores de tela, garantindo inclusão e conformidade técnica.
 - **Privacidade de Credenciais:** Gestão de usuários com ocultação estrita de senhas e proteção de contas de sistema contra alterações acidentais.
+- **Segurança Operacional (v4.7.1):** Validações inteligentes que impedem o cadastro de produtos com preço zero ou nomes duplicados, protegendo a integridade do seu cardápio.
+- **Interface Responsiva PDV:** Grid de produtos que se adapta a qualquer tamanho de tela, garantindo agilidade mesmo em dispositivos móveis antigos.
 
 ---
 
@@ -272,5 +274,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.7.0 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.7.1 | Abril de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

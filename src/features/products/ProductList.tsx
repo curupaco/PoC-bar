@@ -65,7 +65,7 @@ const ProductList: React.FC<ProductListProps> = ({
   // Limpa o toast automaticamente
   useEffect(() => {
     if (toast) {
-      const t = setTimeout(() => setToast(null), 3000);
+      const t = setTimeout(() => setToast(null), 6000); // B1: Aumentado para 6s
       return () => clearTimeout(t);
     }
   }, [toast]);
@@ -86,6 +86,13 @@ const ProductList: React.FC<ProductListProps> = ({
 
     if (!finalName) { setError("Nome é obrigatório."); return; }
     if (isNaN(numericPrice) || numericPrice < 0) { setError("Preço inválido."); return; }
+    
+    // D1: Impedir preço zero
+    if (numericPrice === 0) { setError("O preço deve ser maior que zero."); return; }
+
+    // D3: Verificação de duplicidade de nome
+    const isDuplicate = products.some(p => p.id !== editingId && p.name.toUpperCase().trim() === finalName);
+    if (isDuplicate) { setError("Já existe um produto com este nome."); return; }
 
     if (editingId) {
       setProducts(prev => prev.map(p => p.id === editingId ? {

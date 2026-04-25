@@ -38,7 +38,7 @@ export const App: React.FC = () => {
   const [toast, setToast] = useState<{ msg: string; type: 'info' | 'error' } | null>(null);
   const showToast = useCallback((msg: string, type: 'info' | 'error' = 'info') => {
     setToast({ msg, type });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 6000); // B1: Aumentado para 6s
   }, []);
 
   const [activeView, setActiveView] = useState<View>('pos');
@@ -205,8 +205,8 @@ export const App: React.FC = () => {
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} currentUser={currentUser?.username || ''} activeView={activeView} />
 
       {toast && (
-        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-full font-black uppercase text-[10px] shadow-2xl animate-in slide-in-from-top-4 ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`}>
-          {toast.type === 'error' && <span className="mr-2">⚠️</span>}
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-full font-black uppercase text-[10px] shadow-2xl animate-in slide-in-from-top-4 border ${toast.type === 'error' ? 'bg-red-600 text-white border-red-400' : 'bg-emerald-600 text-white border-emerald-400'}`}>
+          {toast.type === 'error' ? <span className="mr-2">⚠️</span> : <span className="mr-2">✓</span>}
           {toast.msg}
         </div>
       )}

@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.7.0 (Security & Accessibility)
+**Versão:** 4.7.1 (UX Polishing & Operational Safety)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB + SyncQueue)
@@ -18,7 +18,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Controle de Estoque Inteligente (Novo):** Sistema híbrido que permite definir quais produtos devem descontar estoque e quais são serviços puros.
 *   **Acessibilidade Nativa (v4.7):** Implementação de `aria-labels` descritivos e associação semântica de labels/inputs em todos os módulos críticos.
 *   **Segurança de Credenciais (v4.7):** Remoção de exibição de senhas em texto puro e proteção reforçada de contas administrativas.
-*   **Deduplicação de Categorias:** O frontend aplica normalização estrita (Trim + UpperCase) ao agregar categorias.
+*   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
+*   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 
 ---
 
@@ -41,6 +42,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 4.  **Curva ABC Avançada (v4.3):** Novo filtro que permite alternar o ranking de produtos entre **Volume de Saída** (popularidade) e **Faturamento Bruto** (lucratividade).
 5.  **Detector de Produto Morto (v4.4.1):** Algoritmo híbrido que identifica itens com estoque sem giro ou produtos de cardápio esquecidos (sem vendas nos últimos 15 dias).
 6.  **Smart Stock Intelligence (v4.6):** Módulo de predição de ruptura baseado em velocidade de venda em tempo real e sugestão de reposição automatizada com exportação para WhatsApp.
+7.  **UX de Cadastro (v4.7.1):** Bloqueio de preço zero e nomes duplicados para garantir integridade do cardápio.
 
 ### C. Tesouraria e Fluxo de Caixa
 *   **Conferência Cega (Blind Close):** O operador informa o valor contado sem ver os números do sistema. 
@@ -77,4 +79,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
 
 ---
-*Documentação atualizada em Abril de 2026. Botequista System v4.7.0*
+*Documentação atualizada em Abril de 2026. Botequista System v4.7.1*
