@@ -21,11 +21,16 @@ const slugify = (str: string) =>
      .replace(/^-+|-+$/g, "");
 
 const CATEGORY_ICONS: Record<string, string> = {
-  'BEBIDAS': '🍺', 'BEBIDA': '🍺', 'DRINKS': '🍸', 'DRINK': '🍸',
+  'BEBIDAS': '🍺', 'BEBIDA': '🍺', 'CERVEJA': '🍻', 'CERVEJAS': '🍻',
+  'DOSES': '🥃', 'DOSE': '🥃', 'DOSEIS': '🥃',
+  'TABACARIA': '🚬', 'TABACARIAS': '🚬', 'CIGARROS': '🚬', 'CIGARRO': '🚬',
+  'MERCEARIA': '🛒', 'MERCEARIAS': '🛒', 'MERCADINHO': '🛒',
+  'DRINKS': '🍸', 'DRINK': '🍸',
   'COMIDAS': '🍔', 'COMIDA': '🍔', 'LANCHES': '🍔', 'LANCHE': '🍔',
   'PORÇÕES': '🍟', 'PORCAO': '🍟', 'PORCAOES': '🍟',
   'SOBREMESAS': '🍰', 'SOBREMESA': '🍰', 'DOCES': '🍰',
-  'DIVERSOS': '✨', 'DIVERSO': '✨', 'OUTROS': '✨',
+  'DIVERSOS': '📋', 'DIVERSO': '📋', 'OUTROS': '📋', 'GERAL': '📋',
+  'CACHETA': 'QKA', 'CACHETAS': 'QKA',
 };
 
 const getCategoryIcon = (cat: string) => {
