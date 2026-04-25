@@ -45,15 +45,24 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   useEffect(() => {
     const fetchMenuData = async () => {
         if (!syncConfig) return;
-        if (initialProducts.length > 0 && unitId) return;
 
         setLoading(true);
         try {
             let currentUnitId = unitId;
             let currentUnitName = unitName;
+            let currentUnitUseStock = true;
 
-            // 1. Se não temos ID mas temos nome, buscamos a unidade
-            if (!currentUnitId && barName) {
+            // 1. Se temos ID, buscamos as configurações da unidade primeiro
+            if (currentUnitId) {
+                const unitSettings = await loadFromFirebase(syncConfig.url, undefined, '', `units/${currentUnitId}`);
+                if (unitSettings) {
+                    currentUnitName = unitSettings.name || currentUnitName;
+                    currentUnitUseStock = unitSettings.useStock !== false; // Padrão é true se não definido
+                    setUnitName(currentUnitName);
+                }
+            } 
+            // 2. Se não temos ID mas temos nome, buscamos a unidade na lista global
+            else if (barName) {
                 const unitsData = await loadFromFirebase(syncConfig.url, undefined, '', 'units');
                 if (unitsData) {
                     const unitsArray = Array.isArray(unitsData) ? unitsData : Object.values(unitsData);
@@ -61,26 +70,36 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
                     if (found) {
                         currentUnitId = found.id;
                         currentUnitName = found.name;
+                        currentUnitUseStock = found.useStock !== false;
                         setUnitId(found.id);
                         setUnitName(found.name);
                     }
                 }
             }
 
-            // 2. Se temos ID (ou encontramos um), buscamos os produtos
+            // 3. Se temos ID (ou encontramos um), buscamos os produtos
             if (currentUnitId) {
                 const path = `data/units/${currentUnitId}/products`;
                 const data = await loadFromFirebase(syncConfig.url, undefined, '', path);
                 
                 if (data) {
                     const productsArray = Array.isArray(data) ? data : Object.values(data);
-                    setProducts(productsArray.filter((p: any) => !p.deleted));
                     
-                    // Atualiza nome da unidade se não tivermos
-                    if (currentUnitName === 'Botequista' || !barName) {
-                        const nameData = await loadFromFirebase(syncConfig.url, undefined, '', `data/units/${currentUnitId}/name`);
-                        if (typeof nameData === 'string') setUnitName(nameData);
-                    }
+                    // Filtragem Inteligente:
+                    // 1. Remove excluídos
+                    // 2. Se a UNIDADE controla estoque:
+                    //    - Mostra se trackStock for false (item de serviço/preparo)
+                    //    - Mostra se stock > 0
+                    // 3. Se a UNIDADE NÃO controla estoque:
+                    //    - Mostra tudo
+                    const filtered = productsArray.filter((p: any) => {
+                        if (p.deleted) return false;
+                        if (!currentUnitUseStock) return true;
+                        if (p.trackStock === false) return true;
+                        return (p.stock || 0) > 0;
+                    });
+
+                    setProducts(filtered);
                 }
             }
         } catch (e) {
@@ -91,7 +110,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
     };
 
     fetchMenuData();
-  }, [unitId, barName, syncConfig, initialProducts]);
+  }, [unitId, barName, syncConfig]);
 
   const categorizedProducts = useMemo(() => {
     const map: Record<string, Product[]> = {};
