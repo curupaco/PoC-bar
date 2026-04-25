@@ -2,7 +2,7 @@
 **Versão:** 4.7.3 (Financial Intelligence & Elite Safety)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
-**Arquitetura:** Offline-First (IndexedDB + SyncQueue)
+**Arquitetura:** Offline-First (IndexedDB+SyncQueue)
 
 ---
 
