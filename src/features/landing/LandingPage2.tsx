@@ -249,7 +249,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7 Security & Accessibility</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7.1 UX & Operational Safety</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -372,10 +372,10 @@ export const LandingPage2: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Cada venda fica salva no celular na hora. Quando a internet voltar, o sistema sincroniza sozinho. Seu bar não para." accent="emerald" />
             <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo, e você pode usar o teclado." accent="emerald" />
-            <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
+             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
+            <FeatureCard icon="🛡️" title="Segurança Operacional" desc="Validações inteligentes que impedem produtos com preço zero ou nomes duplicados. Seu cardápio sempre íntegro." accent="emerald" />
+            <FeatureCard icon="📱" title="Interface Adaptativa" desc="Grid de produtos ultra-responsivo que funciona perfeitamente até em celulares antigos com telas pequenas." accent="emerald" />
             <FeatureCard icon="🚨" title="Smart Stock AI" desc="O sistema calcula a velocidade de venda e avisa em quanto tempo o estoque vai acabar. Antecipe a compra e nunca perca vendas." accent="emerald" />
-            <FeatureCard icon="🛡️" title="Acessibilidade & Segurança" desc="100% acessível via teclado e leitores de tela. Senhas protegidas e ocultas para máxima privacidade da sua equipe." accent="emerald" />
-            <FeatureCard icon="📈" title="Ticket Médio Inteligente" desc="Acompanhe tendências de consumo com comparativos automáticos vs ontem/semana passada. Saiba se está crescendo." accent="emerald" />
             <FeatureCard icon="📊" title="Reposição Automática" desc="Gere sua lista de compras baseada no giro real e envie direto para o WhatsApp do fornecedor em um clique." accent="emerald" />
             <FeatureCard icon="🔥" title="Top Combos Inteligentes" desc="O sistema descobre sozinho quais produtos saem juntos (ex: Cerveja + Batata). Ideal para criar promoções que vendem." accent="emerald" />
           </div>
@@ -487,6 +487,8 @@ export const LandingPage2: React.FC = () => {
               'Reposição Inteligente (WhatsApp)',
               'Mapa de horário de pico',
               'Ranking da equipe',
+              'Validação Anti-Erro (v4.7.1)',
+              'Interface Mobile XS (v4.7.1)',
               'Funciona no celular, tablet ou PC',
               'Funciona sem internet',
             ].map((f, i) => (
@@ -525,6 +527,7 @@ export const LandingPage2: React.FC = () => {
               { f: 'Gestão de Fiado', b: true, t: true },
               { f: 'Log de Auditoria', b: true, t: true },
               { f: 'Funciona em Qualquer Aparelho', b: true, t: false },
+              { f: 'Validação de Cardápio Atômica', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">
@@ -831,7 +834,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SYNC_READY</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> DB_CONNECTED</span>
               </div>
-              <div>BOTEQUISTA_SYSTEM_V4.4_STABLE</div>
+              <div>BOTEQUISTA_SYSTEM_V4.7.1_STABLE</div>
             </div>
           </div>
         </div>
