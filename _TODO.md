@@ -156,8 +156,28 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 ## 🐛 Correções & Bugs (A Fazer)
 
 - Vínculo de novos bares e fracking não funciona
-- [x] Links de rodapé não funcionam na LP (Resolvido na LandingPage2)
+- Links de rodapé não funcionam na LP
 - LP feia com abordagem ELITE. Mudar usando outro modelo.
+
+### Bugs Identificados na Revisão de Código (Maio/2026)
+
+- **[CRÍTICO] useAppStore.ts:91** - Typo em stockBalances
+  ```tsx
+  const balances: Record<string, number> = {};  // ERRO:Record<string
+  ```
+  Deveria ser: `Record<string, number> = {};` (sem vírgula após string)
+
+- **[CRÍTICO] ShiftControl.tsx:100** - Variável currentDifference usada sem valor inicial
+  - Verificar se `openingBalance` e `expectedCashInDrawer` estão sendo passados corretamente para o modal de conferência
+  - O cálculo parece existir mas precisa validar se não há referência a variável não inicializada
+
+- **[ERRO] Reports.tsx:4** - Importação não utilizada
+  ```tsx
+  import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService';
+  ```
+  - Parece estar em uso (linha 53, 62) mas precisa verificar se o serviço existe
+
+- **Fluxo de Fechamento de Turno** - Verificar se a lógica de "diferença visível" está funcionando em tempo real (C4)
 
 ---
 
