@@ -59,6 +59,11 @@ const ProductList: React.FC<ProductListProps> = ({
   const [modGroupId, setModGroupId] = useState<string>('');
   const [trackStock, setTrackStock] = useState(true);
   const [cost, setCost] = useState('');
+  
+  // Happy Hour
+  const [hhPrice, setHhPrice] = useState('');
+  const [hhStart, setHhStart] = useState('');
+  const [hhEnd, setHhEnd] = useState('');
 
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
@@ -76,6 +81,7 @@ const ProductList: React.FC<ProductListProps> = ({
   const handleSaveProduct = () => {
     setError(null);
     const numericPrice = parseCurrencyValue(price);
+    const numericHhPrice = parseCurrencyValue(hhPrice);
     const finalName = name.toUpperCase().trim();
     const finalCategory = category.toUpperCase().trim() || 'GERAL';
 
@@ -104,7 +110,10 @@ const ProductList: React.FC<ProductListProps> = ({
         sellType,
         modifierGroupId: modGroupId || undefined,
         trackStock,
-        lastCostPrice: parseCurrencyValue(cost) || undefined
+        lastCostPrice: parseCurrencyValue(cost) || undefined,
+        happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
+        happyHourStart: hhStart || undefined,
+        happyHourEnd: hhEnd || undefined
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -117,7 +126,10 @@ const ProductList: React.FC<ProductListProps> = ({
         isFavorite: false,
         modifierGroupId: modGroupId || undefined,
         trackStock,
-        lastCostPrice: parseCurrencyValue(cost) || undefined
+        lastCostPrice: parseCurrencyValue(cost) || undefined,
+        happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
+        happyHourStart: hhStart || undefined,
+        happyHourEnd: hhEnd || undefined
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -159,6 +171,9 @@ const ProductList: React.FC<ProductListProps> = ({
     setModGroupId(p.modifierGroupId || '');
     setTrackStock(p.trackStock ?? true);
     setCost(p.lastCostPrice ? p.lastCostPrice.toFixed(2).replace('.', ',') : '');
+    setHhPrice(p.happyHourPrice ? p.happyHourPrice.toFixed(2).replace('.', ',') : '');
+    setHhStart(p.happyHourStart || '');
+    setHhEnd(p.happyHourEnd || '');
     setShowModal(true);
   };
 
@@ -172,6 +187,9 @@ const ProductList: React.FC<ProductListProps> = ({
     setModGroupId('');
     setTrackStock(true);
     setCost('');
+    setHhPrice('');
+    setHhStart('');
+    setHhEnd('');
     setError(null);
   };
 
@@ -344,6 +362,26 @@ const ProductList: React.FC<ProductListProps> = ({
                     />
                   </div>
                 </div>
+              </div>
+
+              <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-2xl space-y-4">
+                 <h4 className="text-[10px] font-black uppercase text-amber-600 tracking-widest flex items-center gap-2">
+                   <span>🔥</span> Happy Hour Automático (Opcional)
+                 </h4>
+                 <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Preço Promocional</label>
+                      <input type="text" value={hhPrice} onChange={e => setHhPrice(sanitizeCurrencyInput(e.target.value))} className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-amber-500" placeholder="0,00" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Início (Ex: 18:00)</label>
+                      <input type="time" value={hhStart} onChange={e => setHhStart(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-amber-500" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Fim (Ex: 20:00)</label>
+                      <input type="time" value={hhEnd} onChange={e => setHhEnd(e.target.value)} className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-amber-500" />
+                    </div>
+                 </div>
               </div>
 
               <div className="space-y-2">

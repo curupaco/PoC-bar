@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT } from '../../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT, isHappyHourActive } from '../../types';
 import { validateItemName } from '../../utils/wordValidator';
 import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
@@ -67,6 +67,8 @@ export const POS: React.FC<POSProps> = ({
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [isWideMode, setIsWideMode] = useState(false);
+  const [isEventMode, setIsEventMode] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -100,6 +102,12 @@ export const POS: React.FC<POSProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTabId, isClosingTab]);
+
+  useEffect(() => {
+    if (isEventMode && !activeTabId) {
+      handleQuickSale();
+    }
+  }, [isEventMode, activeTabId]);
 
   useEffect(() => {
     if (toast) {
@@ -159,8 +167,10 @@ export const POS: React.FC<POSProps> = ({
         if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
         showFeedback(`+${quantity} ${product.name}`);
     } else {
+        const isHH = isHappyHourActive(product);
+        const basePrice = isHH && product.happyHourPrice ? product.happyHourPrice : product.price;
         const modPrice = modifier ? modifier.price : 0;
-        const effectiveUnitPrice = safeFloat(product.price + modPrice);
+        const effectiveUnitPrice = safeFloat(basePrice + modPrice);
         const newItem: SaleItem = { 
           id: generateUniqueId('it'), 
           productId: product.id, 
@@ -314,10 +324,23 @@ export const POS: React.FC<POSProps> = ({
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-6 animate-in fade-in p-1">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
             <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Vendas</h2>
-            <div className="flex w-full sm:w-auto gap-3">
+            <div className="flex w-full sm:w-auto gap-3 items-center flex-wrap sm:flex-nowrap">
+              <button onClick={() => setShowShortcutsModal(true)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[10px] tracking-widest transition-colors mr-2">
+                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">?</span>
+                <span className="hidden md:inline">Atalhos</span>
+              </button>
+              
+              <button 
+                onClick={() => setIsEventMode(!isEventMode)}
+                className={`flex items-center gap-2 px-4 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 ${isEventMode ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
+              >
+                <span>🎉</span>
+                <span className="hidden md:inline">Modo Evento</span>
+              </button>
+
               <button onClick={handleQuickSale} className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all flex items-center justify-center gap-2">
                 <span>⚡</span>
-                <span>Venda Rápida</span>
+                <span className="hidden sm:inline">Venda Rápida</span>
               </button>
               <button onClick={() => setIsAddingTab(true)} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">Abrir Mesa</button>
             </div>
@@ -569,6 +592,35 @@ export const POS: React.FC<POSProps> = ({
 
       <WeightModal product={weightModalProduct} onConfirm={(w) => { executeAddItem(weightModalProduct!, w); setWeightModalProduct(null); }} onClose={() => setWeightModalProduct(null)} showFeedback={showFeedback} />
       <UpsellModal data={modifierModalData} onConfirm={(opt) => modifierModalData && executeAddItem(modifierModalData.product, modifierModalData.quantity, opt)} onClose={() => setModifierModalData(null)} />
+      
+      {/* Modal de Atalhos */}
+      {showShortcutsModal && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in" onClick={() => setShowShortcutsModal(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+             <div className="flex justify-between items-center mb-8">
+               <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">⌨️ Atalhos do PDV</h3>
+               <button onClick={() => setShowShortcutsModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-colors font-bold">✕</button>
+             </div>
+             
+             <div className="space-y-4">
+               {[
+                 { key: 'F1', desc: 'Iniciar Venda Rápida' },
+                 { key: 'F2', desc: 'Abrir Mesa' },
+                 { key: 'ESPAÇO', desc: 'Fechar Conta (Tela de Pagamento)' },
+                 { key: 'ESC', desc: 'Cancelar / Voltar' },
+               ].map((shortcut, idx) => (
+                 <div key={idx} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">
+                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{shortcut.desc}</span>
+                    <span className="px-3 py-1 bg-white dark:bg-slate-950 text-slate-800 dark:text-emerald-400 font-black rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 tracking-widest text-[10px]">{shortcut.key}</span>
+                 </div>
+               ))}
+             </div>
+             
+             <button onClick={() => setShowShortcutsModal(false)} className="w-full mt-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Entendi</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

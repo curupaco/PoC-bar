@@ -34,6 +34,9 @@ export interface Product {
   modifierGroupId?: string;
   lastCostPrice?: number;
   trackStock?: boolean;
+  happyHourPrice?: number;
+  happyHourStart?: string;
+  happyHourEnd?: string;
 }
 
 export interface StockTransaction {
@@ -213,4 +216,28 @@ export const formatDateToISO = (date: Date): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+export const isHappyHourActive = (product: Product): boolean => {
+  if (!product.happyHourPrice || !product.happyHourStart || !product.happyHourEnd) return false;
+  const now = new Date();
+  const currentTotalMins = now.getHours() * 60 + now.getMinutes();
+  
+  const parseTime = (timeStr: string) => {
+    const parts = timeStr.split(':');
+    if (parts.length !== 2) return 0;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    return (isNaN(h) ? 0 : h) * 60 + (isNaN(m) ? 0 : m);
+  };
+  
+  const startMins = parseTime(product.happyHourStart);
+  const endMins = parseTime(product.happyHourEnd);
+  
+  if (endMins < startMins) {
+    // Passa da meia-noite
+    return currentTotalMins >= startMins || currentTotalMins <= endMins;
+  }
+  
+  return currentTotalMins >= startMins && currentTotalMins <= endMins;
 };

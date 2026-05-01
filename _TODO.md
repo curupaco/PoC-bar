@@ -69,7 +69,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### Experiência do Cliente & Operações
 
-8. **Modo Happy Hour Automático**
+8. [x] **Modo Happy Hour Automático**
    - Ativa em horário configurado (ex: 18:00)
    - Produtos mudam preço automaticamente
    - Diferencial: ativa sozinho, sem intervenção
@@ -80,7 +80,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Ajuda novos funcionários a identificar itens rapidamente
    - Complexidade: quase zero
 
-10. **Modo Evento / Festa**
+10. [x] **Modo Evento / Festa**
     - Ativa modo que ignora mesas, tudo vira venda expressa
     - Perfeito para festivais, open bar, eventos
     - Muito simples de implementar
@@ -156,7 +156,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 ## 🐛 Correções & Bugs (A Fazer)
 
 - Vínculo de novos bares e fracking não funciona
-- Links de rodapé não funcionam na LP
+- [x] Links de rodapé não funcionam na LP (Resolvido na LandingPage2)
 - LP feia com abordagem ELITE. Mudar usando outro modelo.
 
 ---
@@ -165,8 +165,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### A - Acessibilidade BÁSICA
 
-- A4: Foco de teclado não visível em elementos interativos
-  - Adicionar `focus:ring-2 focus:ring-red-500 focus:ring-offset-2`
+- [x] A4: Foco de teclado não visível em elementos interativos
+  - Adicionado focus visível globalmente via index.css
 - A5: Modais sem foco inicial garantido
   - Usar useEffect com ref.current?.focus()
 - A6: Erros em campos sem aria-invalid e aria-describedby
@@ -174,16 +174,16 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### B - Feedback ao Usuário
 
-- B2: Mensagens de erro não descritivas
-  - Reformular: "O valor informado (R$ X) é maior que o saldo restante (R$ Y). Reduza e tente novamente."
-- B3: Loading sem mensagem contextual
-  - Adicionar spinner ou mensagem específica: "Carregando produtos..." vs "Sincronizando dados..."
+- [x] B2: Mensagens de erro não descritivas
+  - Mensagens no POSPaymentPanel foram reformuladas para serem mais claras e contextuais.
+- [x] B3: Loading sem mensagem contextual
+  - Mensagem de loading no App.tsx detalhada para "Sincronizando dados e produtos...".
 - B4: Falha silenciosa em operações async
   - Adicionar try-catch com showFeedback
 
 ### C - Fluxos de Usuário e Interação
 
-- C1: Fluxo de pagamento confuso para vendas múltiplas
+- [x] C1: Fluxo de pagamento confuso para vendas múltiplas
   - Adicionar indicador "PAGAMENTO COMPLETO ✓"
 - C3: Atalho de teclado "Espaço" conflitante
   - Considerar F4 ou Ctrl+Enter
@@ -195,7 +195,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Destacar período com badge maior
 - C7: Edição de senha sem saber a atual
   - Toggle "Alterar senha" só exibe campo quando marcado
-- C9: Atalhos de teclado não indicados
+- [x] C9: Atalhos de teclado não indicados
   - Adicionar painel de "Atalhos Disponíveis" acessível via ícone ?
 - C10: Fluxo de quitação de pendura automático
   - Mostrar resumo antes de abrir tela de pagamento
@@ -209,8 +209,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### E - Responsividade e Layout
 
-- E1: Sidebar não colapsa corretamente em tablets
-  - Adicionar transição suave de 300ms
+- [x] E1: Sidebar não colapsa corretamente em tablets
+  - Adicionada transição suave de 300ms no overlay e container principal.
 - E3: Modal de payment panel em mobile sem back button
   - Adicionar header com "X" e "Voltar" claros
 - E4: Header não mostra nome da unidade em mobile
@@ -239,8 +239,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Implementar paginação ou "carregar mais"
 - G4: Seleção de data em Reports reset ao trocar de aba
   - Manter estados no nível do componente
-- G5: Produtos sem estoque aparecem no POS
-  - Adicionar visual indication (opacidade, badge "ESGOTADO")
+- [x] G5: Produtos sem estoque aparecem no POS
+  - Adicionada opacidade e badge "ESGOTADO" apenas se controle de estoque estiver ativo.
 - G7: Navegação entre tabs perde scroll position
   - Armazenar scroll position em ref
 - G10: Botão "Ver logs de sincronização" não funcional

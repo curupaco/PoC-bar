@@ -110,14 +110,17 @@ O fechamento de caixa é "cego". O operador insere a contagem física do dinheir
 ### 3. Gestão de Inventário & Curva ABC
 Engenharia de cardápio integrada. Identifique automaticamente quais produtos são seus "Carro-Chefe" (Alta Venda / Alta Margem) e quais são "Abacaxis" (Baixa Venda / Baixa Margem).
 
-### 4. Inteligência e Segurança Operacional (v4.7.3)
+### 4. Inteligência e Segurança Operacional (v4.8.1)
+- **Modo Evento / Balada (v4.8.1):** Trava o PDV em fluxo de Venda Expressa contínua.
+- **Happy Hour Inteligente (v4.8.1):** Transição de preços automatizada com base no horário configurado.
+- **Pagamento Seguro (v4.8.1):** Confirmação visual quando o saldo devedor é integralmente quitado.
 - **Engenharia de Cardápio:** Controle de custo (CMV) e cálculo de lucro real por item.
 - **Taxa de Serviço:** Módulo de gratificação inteligente com relatório de pool para equipe.
 - **Cardápio Digital QR Elite (v4.8.0):** Rotas dinâmicas `/menu/NOME-DO-BAR`, suporte a temas (Dark/Light) e SEO amigável.
 - **Acesso Rápido (v4.8.0):** Ícones de atalho para o cardápio no cadastro de unidades e dashboard.
 - **Admin Lock & Logout Guard:** Proteção da conta mestre e prevenção de saídas acidentais.
 - **WhatsApp Summary:** Envio instantâneo de faturamento e métricas ao dono.
-- **UX Polish:** Legibilidade aumentada, tooltips contextuais e tabs responsivas.
+- **UX Polish:** Legibilidade aumentada, tooltips contextuais e atalhos documentados.
 Validações avançadas no cadastro (preço zero, duplicidade), notificações visuais dinâmicas (Toasts persistentes e coloridos) e interface PDV totalmente responsiva para qualquer hardware.
 
 ---
@@ -148,4 +151,4 @@ Distribuído sob licença proprietária para uso comercial restrito.
 *Designed with Offline-First Architecture, Performance and Business-Critical Reliability in mind.*
 
 ---
-*Automatic Deployment Test: 2026-04-24*
+*Automatic Deployment Test: 2026-05-01*

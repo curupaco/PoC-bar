@@ -85,8 +85,8 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
       if (isQuickSale) return;
       const amountToPay = parseCurrencyValue(paymentAmountInput);
       if (amountToPay <= 0) { setToast("VALOR INVÁLIDO"); return; }
-      if (amountToPay > remainingBalance + 0.05) { setToast("VALOR MAIOR QUE O RESTANTE"); return; }
-      if (paymentMethodInput === PaymentMethod.PENDURA && !customerNameInput.trim()) { setValidationError("NOME DO CLIENTE OBRIGATÓRIO PARA PENDURA!"); return; }
+      if (amountToPay > remainingBalance + 0.05) { setToast(`O valor informado (${formatCurrency(amountToPay)}) é maior que o saldo restante (${formatCurrency(remainingBalance)}). Reduza e tente novamente.`); return; }
+      if (paymentMethodInput === PaymentMethod.PENDURA && !customerNameInput.trim()) { setValidationError("Para pendurar a conta, o nome do cliente é obrigatório!"); return; }
 
       let change = 0;
       if (paymentMethodInput === PaymentMethod.CASH) {
@@ -120,7 +120,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
          }
 
          if (finalAmount < remainingBalance - 0.05) {
-            setValidationError("VALOR INSUFICIENTE PARA FINALIZAR.");
+            setValidationError(`O valor pago (${formatCurrency(finalAmount)}) é insuficiente. Faltam ${formatCurrency(remainingBalance - finalAmount)} para finalizar.`);
             return;
          }
 
@@ -142,7 +142,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
       }
 
       if (remainingBalance > 0.05) {
-         setValidationError(`FALTAM ${formatCurrency(remainingBalance)}! ADICIONE O PAGAMENTO.`);
+         setValidationError(`Faltam ${formatCurrency(remainingBalance)} para quitar a conta. Por favor, adicione mais um recebimento.`);
          return;
       }
 
@@ -303,6 +303,16 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         <div className="bg-emerald-600 text-white p-4 rounded-2xl text-center shadow-lg animate-in zoom-in-95 mb-4 border-2 border-emerald-400">
                            <p className="text-[8px] font-black uppercase tracking-widest opacity-80 leading-none mb-1">TROCO</p>
                            <p className="text-2xl font-black tracking-tighter leading-none">{formatCurrency(liveChange)}</p>
+                        </div>
+                     )}
+
+                     {!isQuickSale && remainingBalance <= 0.05 && currentPayments.length > 0 && (
+                        <div className="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400 p-4 rounded-2xl flex items-center justify-center gap-3 border border-emerald-300 dark:border-emerald-700 animate-in zoom-in-95 mb-4 shadow-sm text-center">
+                           <span className="text-2xl animate-pulse">✅</span>
+                           <div className="flex flex-col text-left">
+                               <span className="font-black uppercase tracking-tight text-sm">Pagamento Completo</span>
+                               <span className="text-[9px] uppercase tracking-widest font-bold opacity-80">Pode finalizar a conta em segurança</span>
+                           </div>
                         </div>
                      )}
 

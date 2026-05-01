@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.8.0 Digital Menu & Dynamic UX.*
+> *Material de apresentação comercial — versão v4.8.1 Digital Menu & Dynamic UX.*
 
 ---
 
@@ -21,6 +21,11 @@ O **Botequista Elite (v4.8.0)** foi construído para resolver cada um desses pro
 ## Novidades da Versão 4.4 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
+
+### 🎉 Dinâmica de Eventos e Happy Hour (Novo v4.8.1)
+- **Happy Hour Automático:** Defina horários e preços promocionais. O PDV muda tudo sozinho, risca o preço antigo e adiciona alertas visuais sem o caixa precisar apertar um botão.
+- **Modo Evento (Balada):** Trava o PDV no fluxo de Venda Expressa contínua. Fechou uma venda, a próxima abre na mesma hora. Ideal para picos de movimento intensos onde não se usam mesas.
+- **Segurança de Pagamento:** Confirmação visual em verde "PAGAMENTO COMPLETO" quando o saldo zera, cortando erros de troco e fechamento prematuro pela raiz.
 
 ### 📱 Cardápio Digital Dinâmico (Novo v4.8)
 - **URL Personalizada:** Chega de links complicados. Seu cliente acessa `/menu/Nome-Do-Seu-Bar` — simples, fácil e profissional.
@@ -236,6 +241,8 @@ Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado
 ✅ Cardápio Digital QR Code sincronizado com estoque (v4.7.3)  
 ✅ Engenharia de Lucro Real (Custo CMV) (v4.7.3)  
 ✅ Módulo de Gratificação / Taxa 10% (v4.7.3)  
+✅ Happy Hour Automático (v4.8.1)
+✅ Modo Evento / Venda Expressa Contínua (v4.8.1)
 ✅ Relatório de Pool de Gorjetas (v4.7.3)  
 ✅ PDV (Ponto de Venda) completo com Venda Expressa  
 ✅ Gestão de mesas e comandas em tempo real  
@@ -293,5 +300,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.7.3 | Abril de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.8.1 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

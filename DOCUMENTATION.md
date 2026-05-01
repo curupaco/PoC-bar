@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.8.0 (Digital Menu Elite & Dynamic SEO)
+**Versão:** 4.8.1 (Event Flow & Intelligent HH)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -24,6 +24,9 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Módulo de Gratificação (v4.7.3):** Implementação de taxa de serviço configurável por unidade (padrão 10%) com cálculo automático no fechamento da conta.
 *   **Cardápio Digital QR Elite (v4.8.0):** Nova rota dinâmica `/menu/BAR_NAME` com busca inteligente por slug. Suporte nativo a temas Claro/Escuro (Escuro como padrão).
 *   **Acesso Rápido ao Menu (v4.8.0):** Atalhos visuais no cadastro de bares e no dashboard para acesso imediato ao link público do cardápio.
+*   **Modo Evento (v4.8.1):** Trava o PDV em fluxo de vendas expressas contínuas, ideal para baladas e dias de pico.
+*   **Happy Hour Automático (v4.8.1):** Transição de preços automatizada baseada no relógio do sistema, com badges visuais.
+*   **Confirmação Visual de Pagamento (v4.8.1):** Indicador de "Pagamento Completo" para garantir o fechamento seguro de contas e zerar o saldo devedor de forma óbvia.
 *   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
 *   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 
@@ -87,4 +90,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 *   **Segurança no Cliente:** O sistema utiliza `auth.token.email` para validação no lado do servidor (Firebase Rules), garantindo que mesmo que a URL do banco seja conhecida, apenas o usuário autorizado consiga transacionar dados.
 
 ---
-*Documentação atualizada em Abril de 2026. Botequista System v4.7.1*
+*Documentação atualizada em Maio de 2026. Botequista System v4.8.1*

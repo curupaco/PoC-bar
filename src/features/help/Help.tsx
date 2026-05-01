@@ -139,6 +139,32 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* 9. Modo Evento / Festa */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-pink-100 dark:border-pink-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-pink-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-pink-600">
+            <div className="w-12 h-12 bg-pink-50 dark:bg-pink-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🎉</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Modo Evento</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-pink-600 font-black italic">FLUXO CONTÍNUO:</span> Ative o <FakeButton color="pink">Modo Evento</FakeButton> no PDV para forçar a Venda Rápida contínua. Ideal para dias cheios e baladas onde não há uso de mesas.</p>
+          </div>
+        </section>
+
+        {/* 10. Happy Hour Automático */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-amber-100 dark:border-amber-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-amber-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-amber-600">
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🔥</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Happy Hour Inteligente</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-amber-600 font-black italic">AUTOMAÇÃO:</span> No cadastro do produto, defina um preço de Happy Hour, hora de início e fim. O PDV assume o desconto sozinho e exibe um selo promocional piscante. Sem margem de erro pro caixa.</p>
+          </div>
+        </section>
+
       </div>
 
       {/* Seção FAQ */}

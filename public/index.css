@@ -68,3 +68,21 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* UX - A4: Acessibilidade de Foco Global */
+button:focus-visible, 
+input:focus-visible, 
+select:focus-visible, 
+textarea:focus-visible, 
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #ef4444;
+}
+
+.dark button:focus-visible, 
+.dark input:focus-visible, 
+.dark select:focus-visible, 
+.dark textarea:focus-visible, 
+.dark a:focus-visible {
+  box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #ef4444;
+}

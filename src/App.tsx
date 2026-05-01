@@ -136,7 +136,7 @@ export const App: React.FC = () => {
     );
   }
 
-  if (store.dbStatus === 'loading' && store.products.length === 0) return <LoadingScreen message="Conectando ao Bar..." />;
+  if (store.dbStatus === 'loading' && store.products.length === 0) return <LoadingScreen message="Sincronizando dados e produtos..." />;
 
   const renderActiveView = () => {
     switch (activeView) {

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, formatCurrency } from '../../../types';
+import { Product, formatCurrency, isHappyHourActive } from '../../../types';
 import { ProductInsight } from '../../../hooks/useProductIntelligence';
 
 interface POSProductGridProps {
@@ -13,6 +13,10 @@ interface POSProductGridProps {
 // Sub-componente memoizado para evitar re-renders desnecessários
 const ProductCard = React.memo(({ product, onClick, stock, insight }: { product: Product, onClick: (p: Product) => void, stock?: number, insight?: ProductInsight }) => {
   const [isAdded, setIsAdded] = useState(false);
+  
+  // Happy Hour
+  const isHH = useMemo(() => isHappyHourActive(product), [product]);
+  const displayPrice = isHH && product.happyHourPrice ? product.happyHourPrice : product.price;
 
   const handleClick = () => {
     setIsAdded(true);
@@ -24,6 +28,7 @@ const ProductCard = React.memo(({ product, onClick, stock, insight }: { product:
     <button 
       onClick={handleClick} 
       className={`relative bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[24px] border transition-all h-20 md:h-24 flex flex-col items-center justify-center text-center touch-manipulation
+        ${product.trackStock && stock !== undefined && stock <= 0 ? 'opacity-50 grayscale' : ''}
         ${isAdded 
           ? 'scale-90 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 shadow-none' 
           : 'border-slate-200 dark:border-slate-800 hover:border-red-500 shadow-sm active:scale-90'}
@@ -32,20 +37,35 @@ const ProductCard = React.memo(({ product, onClick, stock, insight }: { product:
       <p className={`text-[9px] md:text-[10px] font-black uppercase px-1 line-clamp-2 leading-none mb-1 transition-colors ${isAdded ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-800 dark:text-white'}`}>
         {product.name}
       </p>
-      <p className={`text-lg md:text-xl font-black transition-colors ${isAdded ? 'text-emerald-600' : 'text-red-600'}`}>
-        {product.price.toFixed(2).replace('.', ',')}
-      </p>
+      
+      <div className="flex flex-col items-center">
+        {isHH && (
+          <span className="text-[7px] font-black text-amber-500 line-through opacity-60 leading-none mb-0.5">
+            {formatCurrency(product.price)}
+          </span>
+        )}
+        <p className={`text-lg md:text-xl font-black transition-colors leading-none ${isAdded ? 'text-emerald-600' : isHH ? 'text-amber-500' : 'text-red-600'}`}>
+          {displayPrice.toFixed(2).replace('.', ',')}
+        </p>
+      </div>
+
       {isAdded && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
            <span className="animate-in zoom-in fade-in duration-200 text-emerald-600 font-bold text-2xl drop-shadow-sm">+1</span>
         </div>
       )}
       
+      {isHH && !isAdded && (
+         <div className="absolute -top-2 -left-2 px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded shadow-lg text-[6px] font-black uppercase tracking-widest rotate-[-10deg]">
+           🔥 HH
+         </div>
+      )}
+      
       {/* ITEM 2: ALERTA DE ESTOQUE CRÍTICO & INTELIGÊNCIA */}
       {product.trackStock && stock !== undefined && (
         <div className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[7px] font-black uppercase shadow-sm border 
           ${insight?.isCritical ? 'bg-red-600 text-white border-red-400 animate-pulse' : stock <= 5 ? 'bg-red-600 text-white border-red-400 animate-pulse' : stock <= 15 ? 'bg-amber-500 text-white border-amber-300' : 'bg-emerald-100 text-emerald-700 border-emerald-200'}`}>
-          {stock <= 0 ? 'ZEIROU' : `${Math.floor(stock)} UN`}
+          {stock <= 0 ? 'ESGOTADO' : `${Math.floor(stock)} UN`}
           {insight?.isCritical && ` • ~${insight.estimatedHoursLeft?.toFixed(1)}H`}
         </div>
       )}
