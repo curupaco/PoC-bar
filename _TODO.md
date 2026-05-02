@@ -321,5 +321,27 @@ Dica de "Copy" para o topo da página:
 
 
 ---
+
+## 🔒 Segurança & Auditoria (Melhorias Futuras)
+
+### Firebase Rules
+- Exportar regras para versionamento:
+  ```
+  firebase database:get /.settings/rules.json > database/rules.json
+  ```
+- Adicionar ao repo para controle de versão
+- Criar pipeline de validação no CI/CD
+
+### Hardening Recomendado
+- **Centralizar verificação de admin:** Criar hook `useIsAdmin()` para evitar checagem `username === 'admin'` dispersa no código
+- **Rate limiting:** Adicionar controle de frequência nos endpoints de API (`/api/reports`, `/api/debtors`)
+- **Content Security Policy:** Adicionar no vite.config.ts para prevenir XSS
+- **Sanitização de localStorage:** Usar prefixo consistente (ex: `btq_`) para todas as chaves
+
+### Auditoria
+- Adicionar logs de auditoria para mudanças críticas
+- Configurar alertas no Firebase para operações suspectas
+
+---
 *Nota: Ao concluir um item, marque como `[x]`*
 *Ao concluir todos os itens de uma categoria, sinalize a categoria como [FEITO].*
