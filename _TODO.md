@@ -299,5 +299,27 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ---
 
-*Nota: Ao concluir um item, marque como `[x]` ou remova da lista.*
+## LandigPage
+🚀 Funcionalidades que o seu Boteco precisa (e o Botequista entrega)
+1. Adeus ao Caderninho: Módulo "Pendura" Profissional
+Gerencie o famoso "fiado" com segurança. Tenha o histórico de consumo de cada cliente da casa e saiba exatamente quem deve o quê, sem o risco de perder a folha do caderno ou esquecer de anotar aquela última dose.
+
+2. Divisão de Conta sem Estresse
+Acabe com a calculadora na hora de fechar a mesa. O Botequista divide a conta por pessoa ou por itens específicos com apenas dois cliques. Mais agilidade para o seu caixa e menos fila para os seus clientes.
+
+3. Lançamento em "Tempo de Gole"
+Velocidade é tudo no balcão. Nossa interface foi desenhada para ser mais rápida que a caneta: registre pedidos, rodadas duplas e favoritos de forma instantânea, sem travar o atendimento.
+
+4. Fechamento de Caixa "Papo Reto"
+Saiba exatamente quanto entrou em dinheiro, Pix e cartão. Relatórios simples e diretos para você fechar o dia em minutos, com a conferência exata do que foi vendido versus o que está na gaveta.
+
+5. Gestão de Mesas e Comandas em Tempo Real
+Tenha o controle total do seu salão em uma única tela. Saiba quais mesas estão há muito tempo sem pedir nada e quais já estão prontas para o fechamento, otimizando o giro do seu boteco.
+
+Dica de "Copy" para o topo da página:
+"O Botequista: Tão simples quanto o seu caderninho, mas com a inteligência que o seu negócio precisa."
+
+
+---
+*Nota: Ao concluir um item, marque como `[x]`*
 *Ao concluir todos os itens de uma categoria, sinalize a categoria como [FEITO].*
