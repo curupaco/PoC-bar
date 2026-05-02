@@ -43,6 +43,10 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Detector de Mesa Travada (v4.4):** Monitoramento em tempo real do tempo desde o último pedido, com alertas de pulso vermelho e sugestões de "Saideira" automáticas.
 *   **Tempo de Mesa (v4.4):** Contador de tempo real exibido em cada comanda aberta para controle de giro do salão.
 *   **Alertas de Estoque Crítico (v4.3):** Badges visuais nos botões de produtos quando o estoque está abaixo do limite de segurança.
+*   **QR Code da Mesa (v4.7.3):** Gera QR code para cada mesa que o cliente pode escanear e visualizar a conta ou realizar pagamento.
+*   **Modo Happy Hour Automático (v4.8.1):** Sistema altera automaticamente os preços dos produtos conforme configuração de horário, com badges visuais indicando promoção ativa.
+*   **Modo Evento (v4.8.1):** Trava o PDV em modo de venda expressa contínua, ignorando mesas. Ideal para eventos, baladas e dias de pico intenso.
+*   **Confirmação Visual de Pagamento (v4.8.1):** Indicador "PAGAMENTO COMPLETO ✓" exibido quando o saldo da conta é zerado, evitando fechamentos prematuros.
 
 ### B. Gestão de Inventário
 1.  **Aba Produtos:** Listagem com busca global e edição rápida.
@@ -52,6 +56,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 5.  **Detector de Produto Morto (v4.4.1):** Algoritmo híbrido que identifica itens com estoque sem giro ou produtos de cardápio esquecidos (sem vendas nos últimos 15 dias).
 6.  **Smart Stock Intelligence (v4.6):** Módulo de predição de ruptura baseado em velocidade de venda em tempo real e sugestão de reposição automatizada com exportação para WhatsApp.
 7.  **UX de Cadastro (v4.7.1):** Bloqueio de preço zero e nomes duplicados para garantir integridade do cardápio.
+8.  **Produtos Esgotados no PDV (v4.7.1):** Itens sem estoque aparecem com opacidade reduzida e badge "ESGOTADO" visível, apenas se o controle de estoque estiver ativo.
 
 ### C. Tesouraria e Fluxo de Caixa
 *   **Conferência Cega (Blind Close):** O operador informa o valor contado sem ver os números do sistema. 
@@ -61,12 +66,20 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 ### D. Relatórios e Inteligência (v4.4 Intelli-Bar)
 *   **Ranking de Equipe:** Visualização em barras da performance de vendas por atendente.
 *   **Ticket Médio Inteligente (v4.4):** Comparação automática com períodos anteriores para identificação de tendências de consumo.
+*   **Ticket Médio por Mesa (v4.7.3):** Métrica individual por mesa com comparativo percentual (ex: "+12% vs ontem").
 *   **Heatmap de Fluxo:** Gráfico de densidade que identifica as horas de pico de movimento do estabelecimento.
 *   **Top Combos Vendidos (v4.5):** Algoritmo de descoberta automática que identifica pares de produtos vendidos juntos com maior frequência no período.
+*   **Ranking de Produtos por Lucro (v4.7.3):** Curva ABC que considera CMV para ordenação por lucro real, não apenas faturamento.
 *   **Quitação em Lote:** Interface para selecionar múltiplos devedores e processar a quitação totalizada de uma só vez.
 *   **Comprovante Digital via WhatsApp:** Geração de recibos em texto formatado para envio direto via Web Share API para o smartphone do cliente.
+*   **Resumo Diário Automático (v4.7.3):** Gera relatório consolidado ao fechar turno e envia automaticamente para o WhatsApp do proprietário, contendo: faturamento total, ticket médio, mesas atendidas, produto mais vendido e garçom destaque.
 *   **Relatório de Lucro Real (v4.7.3):** Nova métrica de rentabilidade líquida que subtrai os custos cadastrados do faturamento bruto.
 *   **Pool de Gorjetas (v4.7.3):** Relatório consolidado da taxa de serviço arrecadada para rateio transparente entre a equipe.
+
+### E. Operações & Cliente
+*   **QR Code da Mesa (v4.7.3):** Gera QR code para cada mesa que o cliente pode escanear e visualizar a conta ou realizar pagamento.
+*   **Resumo Diário Automático via WhatsApp (v4.7.3):** Ao fechar o turno, o sistema envia automaticamente um resumo para o WhatsApp do proprietário com: faturamento total, ticket médio, total de mesas, produto mais vendido e garçom destaque.
+*   **Cardápio Digital com Sincronização (v4.7.3):** Rota `/menu/UNIDADE` que exibe o cardápio em tempo real. Itens sem estoque não aparecem automaticamente.
 
 ---
 

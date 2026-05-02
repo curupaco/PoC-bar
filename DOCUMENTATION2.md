@@ -14,11 +14,11 @@ Todo dono de bar já passou por isso:
 - A internet caiu e as vendas pararam.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v4.8.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v4.8.1)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
 
-## Novidades da Versão 4.4 Elite 🚀
+## Novidades da Versão 4.8.1 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
 
@@ -38,12 +38,15 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Botão Saideira:** O cliente pediu "mais uma das mesmas"? Repita o último pedido com um único clique.
 - **Detector de Mesa Travada (Premium):** O sistema agora não só monitora o tempo, mas avisa exatamente há quanto tempo foi o último pedido. Se a mesa "travar", um pulso vermelho e uma sugestão de "Sugerir Saideira 🍻" aparecem para a equipe.
 - **Tempo de Mesa em Tempo Real:** Cada comanda exibe seu cronômetro de abertura, permitindo controle absoluto do giro do salão.
+- **QR Code da Mesa:** Cada mesa tem seu próprio QR code. O cliente escaneia e vê a conta ou efetua o pagamento direto pelo celular. O garçom ganha tempo e o cliente não precisa chamar ninguém.
 
 ### 🧠 Inteligência Competitiva (Dashboards que Vendem)
 - **Ranking de Garçom:** Saiba quem são os seus "vendedores de elite" com gráficos de barras em tempo real. Incentive sua equipe com dados concretos.
 - **Ticket Médio com Tendência:** Veja se o seu consumo médio está subindo ou descendo com comparativos automáticos em relação ao período anterior (ex: ↑ +12% vs ontem).
+- **Ticket Médio por Mesa:** Cada mesa tem seu próprio ticket. Identifique mesas de alto valor e otimize seu giro.
 - **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
-- **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento ou volume de vendas em um segundo.
+- **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento, volume de vendas ou lucro real em um segundo.
+- **Ranking de Produtos por Lucro:** Além do faturamento, veja quais produtos geram mais lucro após descontar os custos.
 - **Detector de Produto Morto:** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
 - **Top Combos Automáticos (v4.5):** O sistema analisa quais produtos são vendidos juntos com mais frequência (ex: Cerveja + Porção). Crie promoções baseadas em dados reais, não em "achismo".
 - **Smart Stock Intelligence (v4.6):** Agora o Botequista prevê o futuro. O sistema calcula a velocidade de venda em tempo real e avisa: *"A Original acaba em 45 minutos"*. Chega de surpresas no meio do rush.
@@ -52,12 +55,12 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 ### 🛡️ Segurança e Comodidade (v4.7 Enhanced)
 - **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
 - **Recibo via WhatsApp:** Chega de papel. Envie o comprovante detalhado direto para o celular do cliente pelo WhatsApp com total profissionalismo.
+- **Resumo Diário Automático via WhatsApp:** Ao fechar o turno, o sistema envia automaticamente para o seu WhatsApp: faturamento total, ticket médio, total de mesas atendidas, produto mais vendido e garçom destaque.
 - **Quitação em Lote:** Selecione vários devedores do fiado e quite as dívidas de todos de uma única vez. Organização financeira sem esforço.
 - **Badges de Estoque & ETA:** Veja o nível de estoque e o tempo estimado para acabar direto no botão de venda. Inteligência pura no PDV.
 - **Acessibilidade Universal:** Sistema 100% navegável via teclado e compatível com leitores de tela, garantindo inclusão e conformidade técnica.
 - **Privacidade de Credenciais:** Gestão de usuários com ocultação estrita de senhas e proteção de contas de sistema contra alterações acidentais.
 - **Segurança Operacional (v4.7.3):** Proteção de contas mestre e prevenção de logout acidental.
-- **WhatsApp Intelligence (v4.7.2):** Envio de resumo de faturamento diretamente para o celular do proprietário no fechamento.
 - **Interface Responsiva PDV:** Grid de produtos que se adapta a qualquer tamanho de tela, garantindo agilidade mesmo em dispositivos móveis antigos.
 
 ### 💰 Inteligência Financeira Elite (v4.8.0) 💎
@@ -117,11 +120,14 @@ O fechamento de caixa no Botequista é **estritamente cego**.
 | Relatório | O que mostra |
 |---|---|
 | **Ranking de Equipe** | Performance de vendas por operador — quem traz mais faturamento |
+| **Ticket Médio** | Evolução diária e por mesa com comparativo vs período anterior |
 | **Heatmap de Fluxo** | Horários de pico e densidade de atendimento |
 | **Fechamento de Turno** | Faturamento, formas de pagamento, e **Backup Automático** |
 | **Financeiro** | Breakdown por Pix, Cartão, Dinheiro e Fiado |
 | **Penduras** | Gestão de dívidas com **Quitação em Massa** |
-| **Produtos** | Ranking por Faturamento ou Volume (**Curva ABC**) |
+| **Produtos** | Ranking por Faturamento, Volume ou Lucro Real (**Curva ABC**) |
+| **Lucro Real** | Faturamento menos custo de mercadoria (CMV) |
+| **Pool de Gorjetas** | Total de gratificação para rateio da equipe |
 | **Auditoria** | Linha do tempo de todas as ações críticas em tempo real |
 
 ---
@@ -243,7 +249,11 @@ Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado
 ✅ Módulo de Gratificação / Taxa 10% (v4.7.3)  
 ✅ Happy Hour Automático (v4.8.1)
 ✅ Modo Evento / Venda Expressa Contínua (v4.8.1)
+✅ QR Code da Mesa (v4.7.3)
+✅ Resumo Diário via WhatsApp (v4.7.3)
 ✅ Relatório de Pool de Gorjetas (v4.7.3)  
+✅ Ranking de Produtos por Lucro (v4.7.3)
+✅ Tempo Médio de Mesa (v4.4)
 ✅ PDV (Ponto de Venda) completo com Venda Expressa  
 ✅ Gestão de mesas e comandas em tempo real  
 ✅ Cardápio com categorias, adicionais e variações  
