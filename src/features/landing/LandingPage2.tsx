@@ -209,7 +209,9 @@ const WhatsAppSimulation: React.FC = () => (
     </div>
 
     <div className="mt-8 text-center">
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Relatório Real do Sistema</span>
+    <div className="mt-8 text-center">
+      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Exemplo de Compartilhamento via WhatsApp</span>
+    </div>
     </div>
   </div>
 );
@@ -425,19 +427,19 @@ export const LandingPage2: React.FC = () => {
               <WhatsAppSimulation />
             </div>
             <div className="order-1 lg:order-2 space-y-8 scroll-reveal">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Gestão Transparente</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Gestão Prática</span>
               <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-                Seu bar na <span className="text-emerald-500 italic">palma</span> da mão.
+                Relatórios Prontos para <span className="text-emerald-500 italic">Compartilhar</span>.
               </h2>
               <p className="text-slate-300 text-lg leading-relaxed">
-                Ao fechar o turno, o Botequista gera um relatório completo e envia direto para o seu WhatsApp. Faturamento, ticket médio e performance do dia, tudo organizado para você acompanhar de onde estiver.
+                Ao fechar o turno, o Botequista gera um resumo formatado que você pode compartilhar com sócios ou gerentes via WhatsApp com um clique. Tenha os números do dia sempre à mão, sem complicação.
               </p>
               <div className="space-y-4">
                 {[
-                  'Resumo de fechamento instantâneo',
-                  'Total de vendas por período',
+                  'Resumo de turno formatado',
+                  'Compartilhamento via link WhatsApp',
                   'Conferência de caixa simplificada',
-                  'Fácil compartilhamento com sócios'
+                  'Sem necessidade de integrações pagas'
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -491,13 +493,13 @@ export const LandingPage2: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Cada venda fica salva no celular na hora. Quando a internet voltar, o sistema sincroniza sozinho. Seu bar não para." accent="emerald" />
-            <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo, e você pode usar o teclado." accent="emerald" />
-             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como falsificar o fechamento." accent="emerald" />
-            <FeatureCard icon="🛡️" title="Segurança Operacional" desc="Validações inteligentes que impedem produtos com preço zero ou nomes duplicados. Seu cardápio sempre íntegro." accent="emerald" />
-            <FeatureCard icon="📱" title="Interface Adaptativa" desc="Grid de produtos ultra-responsivo que funciona perfeitamente até em celulares antigos com telas pequenas." accent="emerald" />
-            <FeatureCard icon="🚨" title="Smart Stock AI" desc="O sistema calcula a velocidade de venda e avisa em quanto tempo o estoque vai acabar. Antecipe a compra e nunca perca vendas." accent="emerald" />
-            <FeatureCard icon="📊" title="Reposição Automática" desc="Gere sua lista de compras baseada no giro real e envie direto para o WhatsApp do fornecedor em um clique." accent="emerald" />
-            <FeatureCard icon="🔥" title="Top Combos Inteligentes" desc="O sistema descobre sozinho quais produtos saem juntos (ex: Cerveja + Batata). Ideal para criar promoções que vendem." accent="emerald" />
+            <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo e a interface é otimizada para velocidade." accent="emerald" />
+             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como 'bater o caixa' na sorte ou na má fé." accent="emerald" />
+            <FeatureCard icon="🛡️" title="Segurança de Dados" desc="Backup fácil e regras de segurança que garantem que seus dados de faturamento e estoque estejam sempre protegidos." accent="emerald" />
+            <FeatureCard icon="📱" title="Interface Adaptativa" desc="Funciona perfeitamente em celulares, tablets ou computadores. Layout otimizado para telas pequenas no balcão." accent="emerald" />
+            <FeatureCard icon="🚨" title="Velocidade de Estoque" desc="O sistema calcula a velocidade de venda e avisa se um produto corre risco de acabar nas próximas horas." accent="emerald" />
+            <FeatureCard icon="📊" title="Lista de Compras" desc="Gere sua lista de reposição baseada no giro real dos últimos 7 dias e compartilhe pelo WhatsApp em um clique." accent="emerald" />
+            <FeatureCard icon="⏰" title="Detector de Mesa Travada" desc="O sistema identifica mesas ociosas e alerta o garçom para oferecer uma nova rodada, otimizando o giro do seu bar." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}
@@ -615,11 +617,9 @@ export const LandingPage2: React.FC = () => {
               'Modo noturno (tela escura)',
               'Recibo via WhatsApp',
               'Curva ABC de produtos',
-              'Top Combos Vendidos',
-              'Smart Stock AI (v4.6 Novo)',
+              'Análise de Giro de Estoque',
               'Reposição Inteligente (WhatsApp)',
               'Mapa de horário de pico',
-              'Ranking da equipe',
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
               'Validação Anti-Erro (v4.7.3)',
@@ -650,12 +650,12 @@ export const LandingPage2: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: 'Radar de Prejuízo', desc: 'Identifique na hora quais produtos vendem muito mas dão pouco lucro. Receba sugestões de ajuste de preço ou troca de fornecedor.', icon: '📉', tag: 'FINANCEIRO' },
-              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consumir. Sugestão automática de oferecer nova rodada para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
-              { title: 'Lucro Real & CMV', desc: 'Esqueça o chute. Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria.', icon: '💰', tag: 'FINANCEIRO' },
+              { title: 'Lucro Real & CMV', desc: 'Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria cadastrado por você.', icon: '💰', tag: 'FINANCEIRO' },
               { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente para evitar confusão no fim do turno.', icon: '🤝', tag: 'EQUIPE' },
-              { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que rastreia cada cancelamento ou alteração suspeita.', icon: '🛡️', tag: 'SEGURANÇA' },
-              { title: 'Gestão de Fiado (Pendura)', desc: 'Tenha o histórico de consumo de cada cliente da casa. Saiba exatamente quem deve o quê, com segurança total.', icon: '📋', tag: 'GESTÃO' },
+              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consumir. Sugestão visual de saideira para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
+              { title: 'Cardápio Digital QR', desc: 'Gere um link para os clientes visualizarem seu menu atualizado direto no celular, sem baixar nada.', icon: '📱', tag: 'ATENDIMENTO' },
+              { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que registra cada fechamento de caixa.', icon: '🛡️', tag: 'SEGURANÇA' },
+              { title: 'Gestão de Fiado (Pendura)', desc: 'Tenha o histórico de consumo de cada cliente da casa. Saiba exatamente quem deve o quê, com organização total.', icon: '📋', tag: 'GESTÃO' },
             ].map((f, i) => (
               <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
@@ -725,24 +725,19 @@ export const LandingPage2: React.FC = () => {
               <div className="text-center text-slate-400">Outros</div>
             </div>
             {[
-              { f: 'Smart Stock (Predição AI)', b: true, t: false },
-              { f: 'Reposição via WhatsApp', b: true, t: false },
-              { f: 'Conferência Cega', b: true, t: false },
+              { f: 'Venda Offline (PWA)', b: true, t: false },
+              { f: 'Conferência Cega de Caixa', b: true, t: false },
               { f: 'Detector de Mesa Travada', b: true, t: false },
+              { f: 'Relatório via WhatsApp', b: true, t: true },
+              { f: 'Gestão de Fiado Integrada', b: true, t: true },
+              { f: 'Análise de Giro de Estoque', b: true, t: false },
               { f: 'Ticket Médio com Tendência', b: true, t: false },
               { f: 'Curva ABC por Lucro', b: true, t: false },
-              { f: 'Top Combos Automáticos', b: true, t: false },
-              { f: 'Funciona Offline', b: true, t: false },
-              { f: 'Atalhos de Teclado', b: true, t: false },
-              { f: 'Várias Lojas com Dados Isolados', b: true, t: true },
-              { f: 'Gestão de Fiado', b: true, t: true },
-              { f: 'Log de Auditoria', b: true, t: true },
               { f: 'Funciona em Qualquer Aparelho', b: true, t: false },
-              { f: 'Validação de Cardápio Atômica', b: true, t: false },
               { f: 'Engenharia de Lucro Real (CMV)', b: true, t: false },
               { f: 'Taxa de Serviço Automática', b: true, t: false },
               { f: 'Happy Hour Automático', b: true, t: false },
-              { f: 'Modo Evento (Venda Expressa Contínua)', b: true, t: false },
+              { f: 'Modo Evento (Venda Expressa)', b: true, t: false },
               { f: 'Cardápio Digital QR Sync', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
