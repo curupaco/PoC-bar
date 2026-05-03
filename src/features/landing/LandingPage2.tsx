@@ -145,59 +145,7 @@ const ROICalculator: React.FC = () => {
   const monthlySavings = (revenue * (leakage / 100));
   const yearlySavings = monthlySavings * 12;
 
-  return (
-    <div className="scroll-reveal p-8 md:p-12 rounded-[40px] bg-slate-900/50 border border-white/5 shadow-2xl relative overflow-hidden group">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none"></div>
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="space-y-8">
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2 block">Simulador de Impacto</span>
-            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none mb-4">Quanto seu bar está <span className="text-red-500 italic">perdendo</span> hoje?</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">Pequenos erros de caixa, comandas esquecidas e fiados não pagos parecem pouco, mas no fim do ano viram um rombo.</p>
-          </div>
 
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Faturamento Mensal</label>
-                <span className="text-lg font-black text-white">R$ {revenue.toLocaleString('pt-BR')}</span>
-              </div>
-              <input 
-                type="range" min="5000" max="200000" step="1000" 
-                value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Estimativa de Perda (Erro/Fuga)</label>
-                <span className="text-lg font-black text-red-500">{leakage}%</span>
-              </div>
-              <input 
-                type="range" min="1" max="15" step="1" 
-                value={leakage} onChange={(e) => setLeakage(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
-              />
-              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic text-right">*Média do mercado: 4% a 8%</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-slate-950/50 p-10 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative">
-          <div className="absolute -top-4 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20">Economia Potencial</div>
-          <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Você deixaria de perder</div>
-          <div className="text-5xl md:text-6xl font-black text-emerald-500 tracking-tighter mb-2">R$ {monthlySavings.toLocaleString('pt-BR')}</div>
-          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest">por mês</div>
-          
-          <div className="mt-8 pt-8 border-t border-white/5 w-full">
-            <div className="text-3xl font-black text-white tracking-tighter mb-1">R$ {yearlySavings.toLocaleString('pt-BR')}</div>
-            <div className="text-slate-400 text-[9px] font-black uppercase tracking-widest italic">por ano no seu bolso</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 
@@ -215,6 +163,51 @@ const Typewriter: React.FC<{ text: string; delay?: number }> = ({ text, delay = 
   }, [currentIndex, delay, text]);
   return <>{currentText}</>;
 };
+
+const WhatsAppSimulation: React.FC = () => (
+  <div className="scroll-reveal max-w-md mx-auto bg-[#075e54]/5 rounded-[40px] p-8 border border-white/5 shadow-2xl relative overflow-hidden group">
+    <div className="absolute inset-0 bg-gradient-to-b from-[#25d366]/5 to-transparent pointer-events-none"></div>
+    
+    {/* WhatsApp Header Mockup */}
+    <div className="flex items-center gap-3 mb-8 border-b border-white/10 pb-4">
+      <div className="w-12 h-12 rounded-full bg-[#25d366] flex items-center justify-center text-white text-xl shadow-lg shadow-[#25d366]/20">
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </div>
+      <div>
+        <div className="text-xs font-black uppercase text-white tracking-widest">Botequista AI</div>
+        <div className="text-[9px] text-[#25d366] font-bold uppercase tracking-widest flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#25d366] animate-pulse"></span> Online
+        </div>
+      </div>
+    </div>
+
+    {/* Messages */}
+    <div className="space-y-6">
+      <div className="bg-[#1f2c34] p-5 rounded-2xl rounded-tl-none border border-white/5 max-w-[90%] shadow-xl relative group-hover:scale-[1.02] transition-transform">
+        <p className="text-sm text-slate-200 leading-relaxed">
+          Boa noite, Galego! 🍻 <br/><br/>
+          O movimento hoje foi <span className="text-[#25d366] font-bold">15% acima da média</span>. <br/><br/>
+          Sua **Heineken** está acabando (restam ~12). A **Mesa 7** foi sua melhor mesa hoje (R$ 342,00).
+        </p>
+        <span className="text-[9px] text-slate-500 block mt-2 text-right">22:45</span>
+      </div>
+
+      <div className="bg-[#054740] p-5 rounded-2xl rounded-tr-none border border-[#25d366]/20 max-w-[90%] ml-auto shadow-xl relative group-hover:scale-[1.02] transition-transform">
+        <p className="text-sm text-white leading-relaxed font-bold italic">
+          "Obrigado! Já vou pedir mais uma caixa pro fornecedor aqui agora."
+        </p>
+        <div className="flex justify-end items-center gap-1 mt-2">
+          <span className="text-[9px] text-slate-400">22:47</span>
+          <span className="text-[#34b7f1]">✓✓</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-8 text-center">
+      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Relatório Automático via WhatsApp</span>
+    </div>
+  </div>
+);
 
 // ─── MAIN COMPONENT ───
 export const LandingPage2: React.FC = () => {
@@ -329,7 +322,7 @@ export const LandingPage2: React.FC = () => {
             <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
             <div className="flex flex-col">
               <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Versão 4.7.3 UX & Operational Safety</span>
+              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Simplicidade & Inteligência de Balcão</span>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-10">
@@ -338,8 +331,9 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
             <button onClick={() => setIsNerdModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
+            <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
-              Testar Grátis
+              WhatsApp
             </a>
           </div>
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden text-white p-2">
@@ -354,8 +348,9 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
             <button onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
+            <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
-              Testar Grátis
+              Falar no WhatsApp
             </a>
           </div>
         </div>
@@ -371,16 +366,23 @@ export const LandingPage2: React.FC = () => {
           </div>
 
           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
-            <span className="text-gradient block">O sistema que</span>
-            <span className="text-emerald-500 block italic">funciona</span>
-            <span className="text-gradient block">no mundo real</span>
+            <span className="text-gradient block">Tão simples quanto seu</span>
+            <span className="text-emerald-500 block italic">caderninho</span>
+            <span className="text-gradient block">tão inteligente quanto você precisa</span>
           </h1>
 
           <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
-            O bar continua vendendo <span className="text-white font-bold">mesmo offline</span>. O caixa <span className="text-emerald-400 font-bold">bate todo dia</span>. E você tem <span className="text-white font-bold">controle total</span> do seu negócio. Tudo <span className="text-emerald-400 font-bold">de graça</span> sem pegadinha.
+            Abandone a calculadora e o papel. O Botequista traz a <span className="text-white font-bold">clareza total</span> do seu lucro e a <span className="text-emerald-400 font-bold">paz de espírito</span> no fechamento do caixa. Tudo <span className="text-white font-bold">grátis</span>, offline e direto no seu celular.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16 scroll-reveal">
+            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow flex items-center gap-3 bg-[#16a34a] text-white px-10 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 shadow-2xl">
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Falar no WhatsApp
+            </a>
+            <a href="/?demo=true" className="px-10 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all bg-slate-900 border border-white/10 hover:border-white/20 hover:bg-slate-800 text-white shadow-xl">
+              Testar Demo Agora
+            </a>
           </div>
 
           {/* Trust Badges */}
@@ -406,6 +408,39 @@ export const LandingPage2: React.FC = () => {
               alt="Painel de Vendas Real do Botequista"
               label="Sistema em Produção"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* ─── WHATSAPP INTELLIGENCE ─── */}
+      <section className="py-24 px-6 bg-[#020617] relative">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="order-2 lg:order-1">
+              <WhatsAppSimulation />
+            </div>
+            <div className="order-1 lg:order-2 space-y-8 scroll-reveal">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Inteligência de Bolso</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+                O sistema que <span className="text-emerald-500 italic">pensa</span> por você.
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Não é apenas registrar venda. O Botequista analisa seu movimento e te avisa o que importa, direto no seu WhatsApp. Saiba qual produto está acabando e qual mesa está rendendo mais, sem precisar abrir um único relatório.
+              </p>
+              <div className="space-y-4">
+                {[
+                  'Resumo diário automático',
+                  'Alerta de estoque crítico',
+                  'Insights de lucro por mesa',
+                  'Ranking de garçons no seu celular'
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                    <span className="text-sm font-bold uppercase tracking-widest text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -598,32 +633,76 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── ELITE v4.7.3 FEATURES (NEW) ─── */}
-      <section className="py-32 px-6 bg-red-600/5 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
+      {/* ─── BUSINESS INTELLIGENCE SECTION ─── */}
+      <section className="py-32 px-6 bg-emerald-600/5 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-500 mb-4 block">Novidades Versão 4.7.3</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">Inteligência <span className="text-white italic">Financeira & Operacional</span></h2>
-            <p className="mt-6 text-slate-400 text-lg max-w-2xl mx-auto">Novos módulos premium para quem não quer apenas vender, mas sim ter lucro real.</p>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Gestão Ativa</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">Sua <span className="text-white italic">Consultoria de Bolso</span></h2>
+            <p className="mt-6 text-slate-400 text-lg max-w-2xl mx-auto">Módulos inteligentes que não apenas registram vendas, mas mostram como aumentar seu lucro real todo dia.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { title: 'Lucro Real & Markup', desc: 'Saiba exatamente quanto ganha em cada item. O sistema calcula o markup sugerido baseado no seu custo (CMV).', icon: '💰', tag: 'FINANCEIRO' },
-              { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente.', icon: '🤝', tag: 'EQUIPE' },
-              { title: 'Cardápio QR Code', desc: 'Cardápio digital minimalista e elegante para seus clientes, sincronizado com o seu estoque real.', icon: '📱', tag: 'ATENDIMENTO' },
-              { title: 'Pool de Gorjetas', desc: 'Relatório automatizado de rateio de serviço. Chega de briga entre garçons e cozinha no fim do dia.', icon: '💸', tag: 'GESTÃO' },
-              { title: 'Blindagem de Admin', desc: 'Proteção visual e funcional da conta mestre. Impossível deslogar ou alterar por erro humano.', icon: '🛡️', tag: 'SEGURANÇA' },
-              { title: 'Disponibilidade Real', desc: 'O produto acabou no PDV? Ele some instantaneamente do QR Code do cliente. Zero frustração.', icon: '🔄', tag: 'ESTOQUE' },
+              { title: 'Radar de Prejuízo', desc: 'Identifique na hora quais produtos vendem muito mas dão pouco lucro. Receba sugestões de ajuste de preço ou troca de fornecedor.', icon: '📉', tag: 'FINANCEIRO' },
+              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consumir. Sugestão automática de oferecer nova rodada para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
+              { title: 'Lucro Real & CMV', desc: 'Esqueça o chute. Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria.', icon: '💰', tag: 'FINANCEIRO' },
+              { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente para evitar confusão no fim do turno.', icon: '🤝', tag: 'EQUIPE' },
+              { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que rastreia cada cancelamento ou alteração suspeita.', icon: '🛡️', tag: 'SEGURANÇA' },
+              { title: 'Gestão de Fiado (Pendura)', desc: 'Tenha o histórico de consumo de cada cliente da casa. Saiba exatamente quem deve o quê, com segurança total.', icon: '📋', tag: 'GESTÃO' },
             ].map((f, i) => (
-              <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-red-500/20 transition-all group relative overflow-hidden">
+              <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
-                <div className="text-[8px] font-black text-red-500 mb-4 tracking-[0.3em] uppercase">{f.tag}</div>
+                <div className="text-[8px] font-black text-emerald-500 mb-4 tracking-[0.3em] uppercase">{f.tag}</div>
                 <h3 className="text-xl font-black uppercase tracking-tight mb-4">{f.title}</h3>
                 <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── QR CODE MENU SECTION ─── */}
+      <section className="py-32 px-6 relative overflow-hidden bg-slate-950/20">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div className="space-y-8 scroll-reveal">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Experiência do Cliente</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+                Cardápio Digital <span className="text-emerald-500 italic">Sincronizado</span>
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Chega de cliente pedindo o que não tem. Com o Sincronismo Atômico do Botequista, se o estoque acaba no seu PDV, o item some do celular do cliente na mesma hora.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all">
+                  <h4 className="font-black uppercase text-[10px] text-emerald-500 mb-2">Zero Frustração</h4>
+                  <p className="text-slate-500 text-xs leading-relaxed">O cardápio reflete a realidade do balcão em milissegundos. Evite o "Ih, acabou" na frente do cliente.</p>
+                </div>
+                <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all">
+                  <h4 className="font-black uppercase text-[10px] text-emerald-500 mb-2">Auto-Gerenciável</h4>
+                  <p className="text-slate-500 text-xs leading-relaxed">Atualize preços e fotos no sistema e veja mudar na mesa do cliente instantaneamente.</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative group scroll-reveal">
+              <div className="absolute -inset-10 bg-emerald-500/5 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+              <div className="relative bg-slate-900 p-4 rounded-[60px] border border-white/10 shadow-2xl max-w-[280px] mx-auto transform -rotate-2 group-hover:rotate-0 transition-transform duration-700">
+                <div className="bg-slate-950 rounded-[50px] aspect-[9/19] overflow-hidden border border-white/10 relative">
+                  <img src="/landing_assets/assets/Screenshot_2026-03-03_21-32-14.png" alt="Cardápio Digital" className="w-full h-full object-cover opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+                  <div className="absolute bottom-10 left-0 right-0 text-center">
+                    <div className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Menu Digital</div>
+                    <div className="text-[8px] text-emerald-500 font-bold uppercase tracking-[0.3em]">Live Sync</div>
+                  </div>
+                </div>
+                <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500 rounded-full flex flex-col items-center justify-center text-white text-center shadow-2xl shadow-emerald-500/20 rotate-12 group-hover:rotate-0 transition-all duration-700">
+                  <div className="text-2xl mb-1">📱</div>
+                  <div className="text-[8px] font-black uppercase leading-tight">Teste no<br/>Celular</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -822,8 +901,10 @@ export const LandingPage2: React.FC = () => {
             </h3>
             <p className="text-slate-300 mb-8 text-sm">São 2 minutos. Sem compromisso. Sem cartão.</p>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center gap-3 bg-[#16a34a] text-white px-10 py-4 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Quero
+              WhatsApp
+            </a>
+            <a href="/?demo=true" className="inline-flex items-center gap-3 bg-slate-900 border border-white/10 text-white px-10 py-4 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 ml-4">
+              Testar Demo
             </a>
           </div>
         </div>

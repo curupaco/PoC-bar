@@ -156,8 +156,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 ## 🐛 Correções & Bugs (A Fazer)
 
 - Vínculo de novos bares e fracking não funciona
-- Links de rodapé não funcionam na LP
-- LP feia com abordagem ELITE. Mudar usando outro modelo.
+- [x] Links de rodapé não funcionam na LP [FEITO]
+- [x] LP feia com abordagem ELITE. Mudar para "Simplicidade + Inteligência". [FEITO]
 
 ### Bugs Identificados na Revisão de Código (Maio/2026)
 
@@ -272,7 +272,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ## 💡 Ideias e Debates
 
-- Criar live demo para a landing page
+- [x] Criar live demo para a landing page [FEITO]
 - Assinatura premium: Assistente do Dono com insights diários
 
 ---
