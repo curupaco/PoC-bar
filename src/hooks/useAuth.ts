@@ -32,16 +32,6 @@ export const useAuth = () => {
 
   const handleLogin = useCallback((u: string, p: string, users: User[]) => {
     setLoginError(null);
-    if (u === 'admin' && p === 'admin') {
-      setCurrentUser({
-        id: 'admin',
-        username: 'admin',
-        password: 'admin',
-        displayName: 'Administrador',
-        permissions: ALL_PERMISSIONS // Note: need to import this correctly
-      } as any);
-      return;
-    }
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
     if (found) {
       setCurrentUser(JSON.parse(JSON.stringify(found)));
