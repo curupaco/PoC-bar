@@ -34,7 +34,11 @@ export const useAuth = () => {
     setLoginError(null);
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
     if (found) {
-      setCurrentUser(JSON.parse(JSON.stringify(found)));
+      const userToLogin = {
+        ...found,
+        permissions: found.username === 'admin' ? ALL_PERMISSIONS : (found.permissions || [])
+      };
+      setCurrentUser(JSON.parse(JSON.stringify(userToLogin)));
     } else {
       setLoginError("Credenciais inválidas.");
     }
