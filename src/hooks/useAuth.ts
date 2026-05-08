@@ -32,16 +32,6 @@ export const useAuth = () => {
 
   const handleLogin = useCallback((u: string, p: string, users: User[]) => {
     setLoginError(null);
-    // ACESSO DE EMERGÊNCIA TEMPORÁRIO
-    if (u === 'admin' && p === 'BOTEQUISTA2026') {
-      setCurrentUser({
-        id: 'admin-emergency',
-        username: 'admin',
-        displayName: 'Resgate de Emergência',
-        permissions: ALL_PERMISSIONS
-      } as any);
-      return;
-    }
     const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
     if (found) {
       const userToLogin = {

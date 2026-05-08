@@ -309,7 +309,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                           <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30">Master</span>
                        )}
                     </div>
-                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username} <span className="opacity-50 ml-2">ID: {user.id}</span></p>
+                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username}</p>
                  </div>
               </div>
               <div className="flex gap-2">
@@ -327,11 +327,10 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                  }} className="p-3 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                  </button>
-                 {(users.filter(u => u.username === 'admin').length > 1 || user.username !== 'admin') && (
+                 {user.username !== 'admin' && (
                     <button 
                       onClick={() => setUserToDelete(user)} 
-                      className={`p-3 rounded-xl border transition-all ${user.username === 'admin' ? 'text-white bg-red-600 border-red-400 hover:bg-red-700 animate-bounce' : 'text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 border-slate-100 dark:border-slate-800'}`}
-                      title={user.username === 'admin' ? "REMOVER DUPLICADO" : "Excluir usuário"}
+                      className="p-3 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
@@ -341,11 +340,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
             
             <div className="space-y-3">
               <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950 px-4 py-2 rounded-xl border border-slate-100 dark:border-slate-800">
-                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Hash Chave</span>
-                 <span className="text-[10px] font-mono text-slate-500 truncate flex-1">{user.password.slice(0, 15)}...</span>
-                 {user.username === 'admin' && (user.password === 'admin' || user.password === '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918') && (
-                    <span className="text-[7px] font-black text-white uppercase tracking-tighter bg-red-600 px-2 py-1 rounded animate-pulse shadow-lg shadow-red-500/50">⚠️ REMOVER ESTE (ANTIGO)</span>
-                 )}
+                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Senha</span>
+                 <span className="text-[10px] font-mono text-slate-500 truncate flex-1">••••••••</span>
               </div>
               <div className="flex flex-wrap gap-1">
                  {user.username === 'admin' ? (
