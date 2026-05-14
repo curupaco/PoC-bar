@@ -122,12 +122,25 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
 
             // 3. Se temos ID (ou encontramos um), buscamos os produtos
             if (currentUnitId) {
-                const path = `data/units/${currentUnitId}/products`;
-                const data = await loadFromFirebase(syncConfig.url, undefined, token, path);
+                const productsPath = `data/units/${currentUnitId}/products`;
+                const transactionsPath = `data/units/${currentUnitId}/stockTransactions`;
                 
-                if (data) {
-                    const productsArray = Array.isArray(data) ? data : Object.values(data);
+                const [productsData, transactionsData] = await Promise.all([
+                    loadFromFirebase(syncConfig.url, undefined, token, productsPath),
+                    currentUnitUseStock ? loadFromFirebase(syncConfig.url, undefined, token, transactionsPath) : Promise.resolve(null)
+                ]);
+                
+                if (productsData) {
+                    const productsArray = Array.isArray(productsData) ? productsData : Object.values(productsData);
+                    const transactionsArray = transactionsData ? (Array.isArray(transactionsData) ? transactionsData : Object.values(transactionsData)) : [];
                     
+                    // Calcula balanço de estoque para cada produto
+                    const stockMap: Record<string, number> = {};
+                    transactionsArray.forEach((tx: any) => {
+                        if (!stockMap[tx.productId]) stockMap[tx.productId] = 0;
+                        stockMap[tx.productId] += tx.quantity;
+                    });
+
                     // Filtragem Inteligente:
                     // 1. Remove excluídos
                     // 2. Se a UNIDADE controla estoque:
@@ -139,7 +152,9 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
                         if (p.deleted) return false;
                         if (!currentUnitUseStock) return true;
                         if (p.trackStock === false) return true;
-                        return (p.stock || 0) > 0;
+                        
+                        const currentStock = stockMap[p.id] || 0;
+                        return currentStock > 0;
                     });
 
                     setProducts(filtered);
