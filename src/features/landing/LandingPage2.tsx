@@ -145,7 +145,59 @@ const ROICalculator: React.FC = () => {
   const monthlySavings = (revenue * (leakage / 100));
   const yearlySavings = monthlySavings * 12;
 
+  return (
+    <div className="scroll-reveal p-8 md:p-12 rounded-[40px] bg-slate-900/50 border border-white/5 shadow-2xl relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none"></div>
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="space-y-8">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2 block">Simulador de Impacto</span>
+            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none mb-4">Quanto seu bar está <span className="text-red-500 italic">perdendo</span> hoje?</h3>
+            <p className="text-slate-400 text-sm leading-relaxed">Pequenos erros de caixa, comandas esquecidas e fiados não pagos parecem pouco, mas no fim do ano viram um rombo.</p>
+          </div>
 
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Faturamento Mensal</label>
+                <span className="text-lg font-black text-white">R$ {revenue.toLocaleString('pt-BR')}</span>
+              </div>
+              <input 
+                type="range" min="5000" max="200000" step="1000" 
+                value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
+                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+              />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Estimativa de Perda (Erro/Fuga)</label>
+                <span className="text-lg font-black text-red-500">{leakage}%</span>
+              </div>
+              <input 
+                type="range" min="1" max="15" step="1" 
+                value={leakage} onChange={(e) => setLeakage(Number(e.target.value))}
+                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+              />
+              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic text-right">*Média do mercado: 4% a 8%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-slate-950/50 p-10 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative">
+          <div className="absolute -top-4 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20">Economia Potencial</div>
+          <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Você deixaria de perder</div>
+          <div className="text-5xl md:text-6xl font-black text-emerald-500 tracking-tighter mb-2">R$ {monthlySavings.toLocaleString('pt-BR')}</div>
+          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest">por mês</div>
+          
+          <div className="mt-8 pt-8 border-t border-white/5 w-full">
+            <div className="text-3xl font-black text-white tracking-tighter mb-1">R$ {yearlySavings.toLocaleString('pt-BR')}</div>
+            <div className="text-slate-400 text-[9px] font-black uppercase tracking-widest italic">por ano no seu bolso</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 
@@ -209,9 +261,7 @@ const WhatsAppSimulation: React.FC = () => (
     </div>
 
     <div className="mt-8 text-center">
-    <div className="mt-8 text-center">
       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Exemplo de Compartilhamento via WhatsApp</span>
-    </div>
     </div>
   </div>
 );
