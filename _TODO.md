@@ -45,6 +45,18 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Exemplo: "Sexta com calor: movimento esperado ALTO"
    - Sugestão: Preparar +40 long neck, +2 caixas de gelo
 
+5. **Régua de Cobrança Educada para "Pendura"**
+   - Sistema gera mensagens de WhatsApp semi-prontas e educadas para cobrar o fiado
+   - Avisa clientes que têm conta vencida sem constranger o dono
+   - Reduz a inadimplência de forma automatizada e profissional
+
+6. **Clube de Assinaturas do Boteco (Recorrência)**
+   - Módulo para o bar vender planos de assinatura mensais (ex: 1 chopp por dia, 1 drink por semana, etc).
+   - Cadastro flexível de tipos de planos e produtos vinculados, não restrito a apenas uma bebida.
+   - Gera receita recorrente previsível, garantindo caixa mesmo em dias fracos.
+   - Fideliza o cliente e incentiva a venda cruzada (cliente vai buscar o drink do plano e pede uma porção).
+   - Complexidade: alta
+
 ---
 
 ### Gestão de Estoque & Compras

@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl">B</div>
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tighter uppercase font-barrio">Botequista</span>
-                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v4.3</span>
+                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v4.9.0</span>
               </div>
             </div>
             <div className="hidden lg:flex items-center gap-12">
@@ -223,6 +223,9 @@ export const LandingPage: React.FC = () => {
                 <ComparisonRow feature="Sinalização de Mesa Ociosa" bot={true} trad={false} isNew />
                 <ComparisonRow feature="PDV Ninja (Atalhos + Modo Rápido)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Dashboard Multi-Unidades Real" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Radar de Prejuízo (Margem < 30%)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Smart Stock Híbrido (Hot Items)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Régua de Cobrança (Pendura)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Funcionamento Offline Nativo" bot={true} trad={false} />
                 <ComparisonRow feature="Exportação via WhatsApp" bot={true} trad={true} />
               </div>
@@ -238,7 +241,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <PlanCard title="Startup" price="0" badge="GRÁTIS" features={['1 Unidade', 'PDV Offline', 'Recibos via WhatsApp', 'Estoque Básico']} />
-                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Curva ABC Full', 'Heatmap de Vendas', 'Atalhos Profissionais', 'Suporte Prioritário']} />
+                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Curva ABC Full', 'Radar de Prejuízo (v4.9)', 'Smart Stock Híbrido (v4.9)', 'Atalhos Profissionais', 'Suporte Prioritário']} />
                 <PlanCard title="Enterprise" price="0" badge="ESCALA" features={['Controle de Franquias', 'White Label (Sob consulta)', 'Consultoria de Fluxo', 'API Dedicada']} />
               </div>
               <div className="mt-16 p-8 rounded-[40px] bg-white/5 border border-white/10 max-w-2xl mx-auto text-center italic">

@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Digital Menu Elite & Dynamic SEO Protocol v4.8.0
+           Inteligência Botequista & AI Insights v4.9.0
         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -165,6 +165,33 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* 11. Radar de Prejuízo (v4.9.0) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-red-100 dark:border-red-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-red-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-red-600">
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">💸</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Radar de Prejuízo</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-red-600 font-black italic">MARGENS CRÍTICAS:</span> O Botequista varre os custos (CMV) e vendas. Se um item tiver margem menor que 30% e estiver vendendo bem, ele gera um alerta para o dono reajustar os preços.</p>
+          </div>
+        </section>
+
+        {/* 12. Smart Stock & Alta Demanda (v4.9.0) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-orange-100 dark:border-orange-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-orange-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-orange-600">
+            <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">📡</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Smart Stock Híbrido</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-orange-600 font-black italic">COM ESTOQUE:</span> Prevê exatamente em quantas horas o produto esgotará.</p>
+            <p>• <span className="text-orange-600 font-black italic">SEM ESTOQUE:</span> Aciona o modo **Alta Demanda (Hot Item)** informando que o produto está saindo muito acima da média, sem quebrar a operação do bar.</p>
+          </div>
+        </section>
+
       </div>
 
       {/* Seção FAQ */}
@@ -242,7 +269,7 @@ const Help: React.FC = () => {
             </h3>
             <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.8.0 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.8.0</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.9.0</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">

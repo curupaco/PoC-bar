@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.8.1 (Event Flow & Intelligent HH)
+**Versão:** 4.9.0 (AI Insights & Margin Intelligence)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -27,6 +27,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Modo Evento (v4.8.1):** Trava o PDV em fluxo de vendas expressas contínuas, ideal para baladas e dias de pico.
 *   **Happy Hour Automático (v4.8.1):** Transição de preços automatizada baseada no relógio do sistema, com badges visuais.
 *   **Confirmação Visual de Pagamento (v4.8.1):** Indicador de "Pagamento Completo" para garantir o fechamento seguro de contas e zerar o saldo devedor de forma óbvia.
+*   **Radar de Prejuízo (v4.9.0):** Varredura automática em tempo real que cruza CMV e vendas semanais para apontar itens com margens abaixo de 30% e alta rotatividade.
+*   **Smart Stock Híbrido (v4.9.0):** Alertas de estoque preditivos para itens controlados (ETA de esgotamento) e modo **Alta Demanda (Hot Item)** inteligente para produtos/bars sem estoque.
 *   **Deduplicação e Validação (v4.7.1):** O frontend aplica normalização estrita (Trim + UpperCase) e impede o cadastro de produtos duplicados ou com preço zerado.
 *   **Feedback Visual Aprimorado (v4.7.1):** Sistema de notificações (Toasts) com duração estendida (6s) e semântica de cores (Verde para sucesso, Vermelho para erro).
 

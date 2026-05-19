@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.8.1 Digital Menu & Dynamic UX.*
+> *Material de apresentação comercial — versão v4.9.0 AI Insights & Margins.*
 
 ---
 
@@ -14,13 +14,17 @@ Todo dono de bar já passou por isso:
 - A internet caiu e as vendas pararam.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v4.8.1)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v4.9.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
 
-## Novidades da Versão 4.8.1 Elite 🚀
+## Novidades da Versão 4.9.0 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
+
+### 🧠 Inteligência Competitiva e de Margens (Novo v4.9.0)
+- **Radar de Prejuízo:** O Botequista te avisa na hora se a margem de lucro de um item muito vendido caiu abaixo de 30%. Proteja seu fluxo de caixa contra a inflação e reajuste os preços com dados reais.
+- **Smart Stock Híbrido:** Alertas de esgotamento preditivo por tempo (ex: "Acaba em 2.4 horas") para produtos com estoque ativo. Se o bar optou por trabalhar sem controle de estoque, o Botequista não atrapalha: ele apenas aponta quais são os itens mais quentes da noite (**Hot Item - Alta Demanda**) para o dono preparar a operação.
 
 ### 🎉 Dinâmica de Eventos e Happy Hour (Novo v4.8.1)
 - **Happy Hour Automático:** Defina horários e preços promocionais. O PDV muda tudo sozinho, risca o preço antigo e adiciona alertas visuais sem o caixa precisar apertar um botão.
@@ -249,6 +253,8 @@ Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado
 ✅ Módulo de Gratificação / Taxa 10% (v4.7.3)  
 ✅ Happy Hour Automático (v4.8.1)
 ✅ Modo Evento / Venda Expressa Contínua (v4.8.1)
+✅ Radar de Prejuízo (Margem < 30%) (v4.9.0)
+✅ Smart Stock Híbrido & Alerta de Alta Demanda (v4.9.0)
 ✅ QR Code da Mesa (v4.7.3)
 ✅ Resumo Diário via WhatsApp (v4.7.3)
 ✅ Relatório de Pool de Gorjetas (v4.7.3)  
@@ -310,5 +316,5 @@ Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um pe
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.8.1 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.9.0 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

@@ -622,6 +622,9 @@ export const LandingPage2: React.FC = () => {
               'Mapa de horário de pico',
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
+              'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
+              'Smart Stock Híbrido & Hot Items (v4.9.0)',
+              'Régua de Cobrança Educada (Pendura) (v4.9.0)',
               'Validação Anti-Erro (v4.7.3)',
               'Confirmação Segura (v4.7.2)',
               'Admin & Logout Guard (v4.7.3)',
@@ -653,9 +656,11 @@ export const LandingPage2: React.FC = () => {
               { title: 'Lucro Real & CMV', desc: 'Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria cadastrado por você.', icon: '💰', tag: 'FINANCEIRO' },
               { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente para evitar confusão no fim do turno.', icon: '🤝', tag: 'EQUIPE' },
               { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consumir. Sugestão visual de saideira para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
+              { title: 'Radar de Prejuízo', desc: 'Cruza custos e vendas, alertando se a margem de algum item de alto giro cair abaixo de 30% para você precificar melhor.', icon: '📈', tag: 'INTELIGÊNCIA' },
+              { title: 'Smart Stock Híbrido', desc: 'Estoque crítico estimado em horas de consumo para itens controlados, e alertas de Alta Demanda (Hot Items) para produtos comuns.', icon: '⏳', tag: 'ESTOQUE' },
               { title: 'Cardápio Digital QR', desc: 'Gere um link para os clientes visualizarem seu menu atualizado direto no celular, sem baixar nada.', icon: '📱', tag: 'ATENDIMENTO' },
               { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que registra cada fechamento de caixa.', icon: '🛡️', tag: 'SEGURANÇA' },
-              { title: 'Gestão de Fiado (Pendura)', desc: 'Tenha o histórico de consumo de cada cliente da casa. Saiba exatamente quem deve o quê, com organização total.', icon: '📋', tag: 'GESTÃO' },
+              { title: 'Gestão de Fiado (Pendura)', desc: 'Histórico de consumo de cada cliente. Régua de cobrança educada para reaver valores pendentes com organização.', icon: '📋', tag: 'GESTÃO' },
             ].map((f, i) => (
               <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
@@ -739,6 +744,9 @@ export const LandingPage2: React.FC = () => {
               { f: 'Happy Hour Automático', b: true, t: false },
               { f: 'Modo Evento (Venda Expressa)', b: true, t: false },
               { f: 'Cardápio Digital QR Sync', b: true, t: false },
+              { f: 'Radar de Prejuízo (CMV/Giro)', b: true, t: false },
+              { f: 'Smart Stock Híbrido & Hot Items', b: true, t: false },
+              { f: 'Régua de Cobrança (Pendura)', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">
@@ -947,7 +955,7 @@ export const LandingPage2: React.FC = () => {
                 </div>
                 <div className="flex gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   <span className="text-emerald-500/50">root@botequista:</span>
-                  <span>~/architecture_v4.4</span>
+                  <span>~/architecture_v4.9.0</span>
                 </div>
               </div>
               <div className="text-[10px] font-black text-emerald-500 animate-pulse tracking-tighter">
@@ -1077,7 +1085,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SYNC_READY</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> DB_CONNECTED</span>
               </div>
-              <div>BOTEQUISTA_SYSTEM_V4.7.1_STABLE</div>
+              <div>BOTEQUISTA_SYSTEM_V4.9.0_STABLE</div>
             </div>
           </div>
         </div>

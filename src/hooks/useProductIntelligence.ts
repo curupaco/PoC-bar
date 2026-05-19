@@ -10,6 +10,8 @@ export interface ProductInsight {
   isHighVolumeWarning: boolean; // Para quem não tem estoque ligado
   recommendedRestock: number;
   averageWeeklySales: number;
+  profitMargin: number | null;
+  isLowMarginHighVolume: boolean;
 }
 
 export const useProductIntelligence = (
@@ -68,6 +70,18 @@ export const useProductIntelligence = (
       const targetStock = avgSalesPerDay * 7 * 1.2;
       const recommendedRestock = Math.max(0, Math.ceil(targetStock - currentStock));
 
+      // Lógica de Margem de Lucro (Radar de Prejuízo)
+      const cost = p.lastCostPrice || 0;
+      const price = p.price || 0;
+      let profitMargin: number | null = null;
+      let isLowMarginHighVolume = false;
+
+      if (price > 0 && cost > 0) {
+        profitMargin = ((price - cost) / price) * 100;
+        // Alerta se margem for menor que 30% e estiver girando (pelo menos 5 itens na semana)
+        isLowMarginHighVolume = profitMargin < 30 && weekQty >= 5;
+      }
+
       result[p.id] = {
         productId: p.id,
         currentStock,
@@ -76,7 +90,9 @@ export const useProductIntelligence = (
         isCritical,
         isHighVolumeWarning,
         recommendedRestock,
-        averageWeeklySales: weekQty
+        averageWeeklySales: weekQty,
+        profitMargin,
+        isLowMarginHighVolume
       };
     });
 

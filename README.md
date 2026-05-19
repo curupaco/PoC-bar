@@ -110,7 +110,9 @@ O fechamento de caixa é "cego". O operador insere a contagem física do dinheir
 ### 3. Gestão de Inventário & Curva ABC
 Engenharia de cardápio integrada. Identifique automaticamente quais produtos são seus "Carro-Chefe" (Alta Venda / Alta Margem) e quais são "Abacaxis" (Baixa Venda / Baixa Margem).
 
-### 4. Inteligência e Segurança Operacional (v4.8.1)
+### 4. Inteligência e Segurança Operacional (v4.9.0)
+- **Radar de Prejuízo (v4.9.0):** Algoritmo que cruza CMV e vendas para apontar itens com margens abaixo de 30% e alto giro, ajudando o dono a agir contra a inflação e precificar melhor.
+- **Smart Stock Híbrido (v4.9.0):** Alertas de esgotamento preditivo em horas para bares com controle de estoque ativo, e alertas de **Alta Demanda (Hot Item)** para bares que operam sem controle de estoque.
 - **Modo Evento / Balada (v4.8.1):** Trava o PDV em fluxo de Venda Expressa contínua.
 - **Happy Hour Inteligente (v4.8.1):** Transição de preços automatizada com base no horário configurado.
 - **Pagamento Seguro (v4.8.1):** Confirmação visual quando o saldo devedor é integralmente quitado.
