@@ -28,6 +28,8 @@ interface POSProps {
   stockBalances?: Record<string, number>;
   sales?: Sale[];
   activeUnit?: Unit;
+  isEventMode?: boolean;
+  setIsEventMode?: (val: boolean) => void;
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -58,7 +60,9 @@ export const POS: React.FC<POSProps> = ({
   stockTransactions = [],
   stockBalances = {},
   sales = [],
-  activeUnit
+  activeUnit,
+  isEventMode: propIsEventMode,
+  setIsEventMode: propSetIsEventMode
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -67,7 +71,9 @@ export const POS: React.FC<POSProps> = ({
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [isClosingTab, setIsClosingTab] = useState(false);
   const [isWideMode, setIsWideMode] = useState(false);
-  const [isEventMode, setIsEventMode] = useState(false);
+  const [localIsEventMode, localSetIsEventMode] = useState(false);
+  const isEventMode = propIsEventMode !== undefined ? propIsEventMode : localIsEventMode;
+  const setIsEventMode = propSetIsEventMode !== undefined ? propSetIsEventMode : localSetIsEventMode;
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);

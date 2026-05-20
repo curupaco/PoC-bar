@@ -43,6 +43,7 @@ export const App: React.FC = () => {
   }, []);
 
   const [activeView, setActiveView] = useState<View>('pos');
+  const [isEventMode, setIsEventMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
@@ -94,6 +95,22 @@ export const App: React.FC = () => {
   }, [store.sales]);
 
   // Handlers
+  const requestExitEventMode = () => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Desativar Modo Evento?',
+      message: 'O sistema retornará para o controle padrão de comandas e mesas. Deseja realmente sair do Modo Evento?',
+      onConfirm: () => {
+        setIsEventMode(false);
+        showToast('Modo Evento Desativado! 🎉', 'info');
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      },
+      confirmLabel: 'Sim, Desativar',
+      cancelLabel: 'Manter Ativo',
+      isDanger: false
+    });
+  };
+
   const requestLogout = () => {
     setConfirmModal({
       isOpen: true,
@@ -140,7 +157,7 @@ export const App: React.FC = () => {
 
   const renderActiveView = () => {
     switch (activeView) {
-      case 'pos': return <POS products={store.products} modifierGroups={store.modifierGroups} categoryModifiers={store.categoryModifiers} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} onUpdateTabItem={store.handleUpdateTabItem} onDeleteTab={store.handleDeleteTab} onCompleteSale={store.handleCompleteSale} activeShift={store.shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={store.penduraThreshold} longDurationThreshold={store.longDurationThreshold} dbStatus={store.dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} stockTransactions={store.stockTransactions} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} />;
+      case 'pos': return <POS products={store.products} modifierGroups={store.modifierGroups} categoryModifiers={store.categoryModifiers} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} onUpdateTabItem={store.handleUpdateTabItem} onDeleteTab={store.handleDeleteTab} onCompleteSale={store.handleCompleteSale} activeShift={store.shifts.find(s => s.status === 'open')} onViewChange={setActiveView} penduraThreshold={store.penduraThreshold} longDurationThreshold={store.longDurationThreshold} dbStatus={store.dbStatus} shortcutCheckout={shortcutCheckout} onClearShortcut={() => setShortcutCheckout(null)} stockTransactions={store.stockTransactions} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} isEventMode={isEventMode} setIsEventMode={setIsEventMode} />;
       case 'products': return <ProductList products={store.products} setProducts={store.handleUpdateProducts} modifierGroups={store.modifierGroups} setModifierGroups={store.setModifierGroups} categoryModifiers={store.categoryModifiers} setCategoryModifiers={store.handleUpdateCategoryModifiers} categories={store.categories} setCategories={store.setCategories} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} currentUser={currentUser} />;
       case 'shifts': return <ShiftControl shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} currentUser={currentUser} sales={store.sales} activeTabsCount={store.openTabs.length} />;
       case 'cash': return <CashManagement shifts={store.shifts} onUpdateShifts={store.handleUpdateShifts} sales={store.sales} currentUser={currentUser} onViewChange={setActiveView} />;
@@ -171,6 +188,29 @@ export const App: React.FC = () => {
           <div className="bg-amber-500 text-slate-900 px-4 py-2 text-center text-xs font-black uppercase tracking-widest shadow-md z-50 flex justify-center items-center gap-4">
             <span>⚠️ Você está testando o sistema. Nenhuma alteração será salva.</span>
             <button onClick={() => { localStorage.removeItem('_demo_mode'); window.location.href = '/landing2'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
+          </div>
+        )}
+        {isEventMode && (
+          <div className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-800 text-white px-4 md:px-8 py-3.5 shadow-xl z-40 flex flex-col sm:flex-row justify-between items-center gap-4 animate-in slide-in-from-top duration-300 border-b border-indigo-500/30">
+            <div className="flex items-center gap-3.5">
+              <span className="text-2xl animate-bounce leading-none select-none">🎉</span>
+              <div className="flex flex-col text-left">
+                <div className="flex items-center gap-2">
+                  <span className="bg-white/20 text-white text-[8px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest animate-pulse leading-none">Ativo</span>
+                  <h4 className="text-xs md:text-sm font-black uppercase tracking-tight italic leading-none">Modo Evento Botequista</h4>
+                </div>
+                <p className="text-[10px] text-indigo-100 font-medium tracking-wide mt-1 hidden md:block">
+                  Fluxo Contínuo de Venda Rápida ativo no PDV. Comandas fechadas automaticamente para acelerar o atendimento!
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={requestExitEventMode}
+              className="w-full sm:w-auto bg-white/10 border border-white/20 text-white hover:bg-white/20 px-6 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+            >
+              <span>✕</span>
+              <span>Sair do Modo Evento</span>
+            </button>
           </div>
         )}
         <AppHeader 
