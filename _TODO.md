@@ -304,6 +304,31 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ---
 
+## 🖨️ Integração com Impressoras Térmicas (Planejamento & Futuro)
+
+Este grupo descreve o plano de integração com impressoras térmicas (58mm/80mm) para impressão de comandas, comprovantes e fechamento de caixa. É uma funcionalidade planejada para amadurecimento com a equipe.
+
+### 📋 Necessidades Operacionais
+- **Fichas de Cozinha/Balcão (Eventos):** Impressão instantânea de novos itens adicionados a comandas ou vendas expressas para agilizar a preparação rápida.
+- **Comprovantes de Consumo (Via do Cliente):** Layout profissional de conferência e quitação de mesa, com detalhamento de taxa de serviço (10%) e fechamento visual limpo.
+- **Fechamento de Caixa/Turno:** Impressão do relatório consolidado e auditoria de caixa (fechamento cego) para o operador arquivar fisicamente.
+- **Modo de Teste Interno:** Interface nas Configurações que permite simular a impressão em tela (preview monoespaçado idêntico ao papel térmico) e testar a conexão física da impressora.
+
+### 🚧 Principais Dificuldades & Desafios Técnicos
+- **Suporte Limitado a Bluetooth no iOS:** O Safari móvel não suporta nativamente a Web Bluetooth API, o que inviabiliza conexões diretas em dispositivos Apple sem wrappers terceiros (forçando o uso de `window.print()`).
+- **Codificação de Comandos ESC/POS:** Impressoras térmicas dependem de bytes binários específicos para comandos físicos (negrito, corte de papel, bip sonoro, abertura de gaveta). Precisaremos construir um codificador nativo em JS/TS.
+- **Variedade de Hardwares:** Diversidade de tamanhos de bobina (58mm vs 80mm) e diferentes protocolos de hardware (USB, Bluetooth, Rede Ethernet/Wi-Fi).
+- **Silent Printing em PWAs:** Navegadores web comuns impõem caixas de diálogo de confirmação ao usar a API padrão de impressão. Para impressão "silenciosa" (zero clique), dependemos de Web Bluetooth no Chrome ou gateways externos de impressão (ex: app RawBT no Android).
+
+### ❓ Dúvidas em Aberto para Amadurecer com a Equipe
+- [ ] **Qual é o hardware real mais comum dos clientes?** (Ex: Impressoras portáteis Bluetooth de cinto ou impressoras de mesa padrão Epson/Elgin por rede/USB?).
+- [ ] **Devemos suportar ambas as larguras de bobina?** (Criar layouts dinâmicos em código para 58mm e 80mm).
+- [ ] **Integração com QR Code Pix Dinâmico:** (Adicionar no cupom de fechamento o QR Code gerado na hora com o valor total).
+- [ ] **O app auxiliar RawBT é uma barreira viável?** (Para clientes no Android/SmartPOS, exigir a configuração do RawBT para garantir impressão estável com 1 toque).
+
+---
+
+
 ## Priorização Recomendada
 
 ### 1. Críticos (Alta Prioridade)
