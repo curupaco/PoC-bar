@@ -112,24 +112,18 @@ Engenharia de cardápio integrada. Identifique automaticamente quais produtos s�
 
 ### 4. Inteligência e Segurança Operacional (v4.9.0)
 - **Radar de Prejuízo (v4.9.0):** Algoritmo que cruza CMV e vendas para apontar itens com margens abaixo de 30% e alto giro, ajudando o dono a agir contra a inflação e precificar melhor.
-- **Smart Stock Híbrido (v4.9.0):** Alertas de esgotamento preditivo em horas para bares com controle de estoque ativo, e alertas de **Alta Demanda (Hot Item)** para bares que operam sem controle de estoque.
+- **Smart Stock Híbrido (v4.9.0):** Alertas de estoque preditivos para itens controlados e modo **Alta Demanda (Hot Item)** para produtos sem estoque.
 - **Modo Evento / Balada (v4.8.1):** Trava o PDV em fluxo de Venda Expressa contínua.
-- **Happy Hour Inteligente (v4.8.1):** Transição de preços automatizada com base no horário configurado.
-- **Pagamento Seguro (v4.8.1):** Confirmação visual quando o saldo devedor é integralmente quitado.
-- **QR Code da Mesa (v4.7.3):** Cliente escaneia e vê a conta ou efetua pagamento.
-- **Resumo Diário via WhatsApp (v4.7.3):** Envia faturamento, ticket médio, produto mais vendido e garçom destaque.
-- **Engenharia de Cardápio:** Controle de custo (CMV) e cálculo de lucro real por item.
-- **Ranking de Produtos por Lucro (v4.7.3):** Curva ABC ordenada por lucro real, não apenas faturamento.
-- **Top Combos Vendidos (v4.5):** Descoberta automática de produtos vendidos juntos.
-- **Ticket Médio por Mesa (v4.7.3):** Métrica individual com comparativo percentual.
-- **Detector de Mesa Travada (v4.4):** Alerta visual e sugestão de "Saideira" para mesas sem consumo.
-- **Taxa de Serviço:** Módulo de gratificação inteligente com relatório de pool para equipe.
-- **Cardápio Digital QR Elite (v4.8.0):** Rotas dinâmicas `/menu/NOME-DO-BAR`, suporte a temas (Dark/Light) e SEO amigável.
-- **Acesso Rápido (v4.8.0):** Ícones de atalho para o cardápio no cadastro de unidades e dashboard.
-- **Admin Lock & Logout Guard:** Proteção da conta mestre e prevenção de saídas acidentais.
-- **WhatsApp Summary:** Envio instantâneo de faturamento e métricas ao dono.
-- **UX Polish:** Legibilidade aumentada, tooltips contextuais e atalhos documentados.
-- Validações avançadas no cadastro (preço zero, duplicidade), notificações visuais dinâmicas (Toasts persistentes e coloridos) e interface PDV totalmente responsiva para qualquer hardware.
+- **Happy Hour Inteligente (v4.8.1):** Transição de preços automática com badges promocionais.
+- **QR Code da Mesa (v4.7.3):** Cliente escaneia para ver a conta ou pagar.
+- **Resumo Diário via WhatsApp:** Relatório consolidado enviado automaticamente ao fechar o turno.
+
+### 5. Monitor de Produção da Cozinha (v4.9.5)
+Painel dark-mode touch-friendly de alto contraste desenvolvido especialmente para cozinhas, bares ou chapas.
+- **Fila de Produção Reativa (PENDING):** Agrupa os pratos a serem feitos com base nos pedidos das comandas ativas (FIFO), com cronômetros de tempo de espera e alertas de atraso cromáticos.
+- **Campainha e Alertas Globais (Ding! 🛎️):** Sintetizador Web Audio API puro que gera som físico de campainha de balcão e dispara alertas Toast sincronizados para todos os atendentes conectados ao mesmo bar no exato milissegundo em que o prato é marcado como pronto.
+- **Sinalização Reativa no PDV (🛎️):** O PDV avisa o garçom piscando um sino nos cards de mesa que possuem pratos prontos, enquanto a Sidebar exibe o total de pendências em tempo real.
+- **Histórico e Segurança Financeira (Fechada 🔒):** Mantém comandas fechadas/pagas visíveis na aba de "Prontos" por 2h (limite de 15 tickets). Estes tickets aparecem com uma trava de segurança e cadeado, impedindo edições manuais que possam afetar os relatórios financeiros do caixa.
 
 ---
 
@@ -160,4 +154,4 @@ Distribuído sob licença proprietária para uso comercial restrito.
 *Designed with Offline-First Architecture, Performance and Business-Critical Reliability in mind.*
 
 ---
-*Automatic Deployment Test: 2026-05-02*
+*Automatic Deployment Test: 2026-05-21*

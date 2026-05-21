@@ -12,8 +12,8 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-           Inteligência Botequista & AI Insights v4.9.0
-        </div>
+           Inteligência Botequista & AI Insights v4.9.5
+         </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
         </h2>
@@ -192,6 +192,21 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* 13. Monitor de Cozinha (v4.9.5) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-red-500/10 dark:border-red-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-red-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-red-600">
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🍳</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Monitor de Cozinha</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-red-600 font-black italic">CONFIGURAÇÃO:</span> No cadastro do produto, ative a opção <span className="font-bold underline">Enviar para a Cozinha</span>.</p>
+            <p>• **SINCRONISMO (🛎️)**: Sempre que um prato ficar pronto na cozinha, todas as telas do bar reproduzem um som de sino e mostram um aviso. O card da mesa no PDV pisca com um sino.</p>
+            <p>• **HISTÓRICO🔒**: As últimas 15 comandas fechadas permanecem visíveis na aba de "Prontos" por 2h com travas de segurança para auditoria.</p>
+          </div>
+        </section>
+
       </div>
 
       {/* Seção FAQ */}
@@ -209,6 +224,12 @@ const Help: React.FC = () => {
              </p>
           </div>
           <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-red-600">Como funciona o Monitor de Produção?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Ele junta os pedidos de todas as mesas que possuem itens de cozinha. O cozinheiro clica em "Pronto" para avisar o garçom. O garçom vê o sino 🛎️ piscando na mesa do PDV e ouve o aviso sonoro instantaneamente para retirar o pedido.
+             </p>
+          </div>
+          <div className="space-y-3">
              <h4 className="text-lg font-black uppercase italic text-red-600">Como mudar a ordem da curva ABC?</h4>
              <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
                Nos relatórios de produtos, use o seletor no topo para alternar entre **Volume** (o que mais sai) e **Faturamento** (o que mais traz dinheiro).
@@ -223,7 +244,7 @@ const Help: React.FC = () => {
           <div className="space-y-3">
              <h4 className="text-lg font-black uppercase italic text-red-600">A mesa ficou vermelha e com alerta de ociosidade, o que fazer?</h4>
              <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
-               Envie o garçom até a mesa. Pergunte se "deseja mais uma rodada". Isso evita que o cliente ocupe lugar sem consumir e gera mais lucro.
+               Envie o garçom até a mesa. Pergunte se "deseja mais uma rodada". Isso evita que o cliente ocupe lugar sem consumo e gera mais lucro.
              </p>
           </div>
           <div className="space-y-3">
@@ -269,7 +290,7 @@ const Help: React.FC = () => {
             </h3>
             <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v4.8.0 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.9.0</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v4.9.5</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">

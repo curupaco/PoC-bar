@@ -77,6 +77,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [categories, setCategories] = useState<Category[]>(isDemo ? mockCategories : []);
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>(isDemo ? mockOpenTabs : []);
+  const latestOpenTabsRef = React.useRef<Tab[]>([]);
+  useEffect(() => {
+    latestOpenTabsRef.current = openTabs;
+  }, [openTabs]);
+
   const [users, setUsers] = useState<User[]>(isDemo ? mockUsers : []);
   const [shifts, setShifts] = useState<Shift[]>(isDemo ? mockShifts : []);
   const [units, setUnits] = useState<Unit[]>(isDemo ? mockUnits : []);
@@ -161,40 +166,41 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       items: Array.isArray(t.items) ? t.items : (t.items ? (Object.values(t.items) as SaleItem[]) : [])
     }));
 
-    setOpenTabs(prevOpenTabs => {
-      // Detect transition to READY status when old state exists (prevents audio storm on initial synchronization)
-      if (prevOpenTabs && prevOpenTabs.length > 0) {
-        sanitized.forEach((newTab: any) => {
-          const oldTab = prevOpenTabs.find(t => t.id === newTab.id);
-          if (oldTab) {
-            newTab.items.forEach((newItem: any) => {
-              if (newItem.productionStatus === 'READY') {
-                const oldItem = oldTab.items.find(i => i.id === newItem.id);
-                const wasNotReady = !oldItem || oldItem.productionStatus !== 'READY';
+    const prevOpenTabs = latestOpenTabsRef.current;
+
+    // Detect transition to READY status when old state exists (prevents audio storm on initial synchronization)
+    if (prevOpenTabs && prevOpenTabs.length > 0) {
+      sanitized.forEach((newTab: any) => {
+        const oldTab = prevOpenTabs.find(t => t.id === newTab.id);
+        if (oldTab) {
+          newTab.items.forEach((newItem: any) => {
+            if (newItem.productionStatus === 'READY') {
+              const oldItem = oldTab.items.find(i => i.id === newItem.id);
+              const wasNotReady = !oldItem || oldItem.productionStatus !== 'READY';
+              
+              if (wasNotReady) {
+                // DING DING! Pedido pronto!
+                playBellChime();
                 
-                if (wasNotReady) {
-                  // DING DING! Pedido pronto!
-                  playBellChime();
-                  
-                  // Format toast notification beautifully
-                  let msg = "Pedido pronto!";
-                  if (newTab.name.toUpperCase().startsWith('EXPRESSA')) {
-                    msg = `Pedido pronto! Venda expressa. 🛎️`;
-                  } else if (newTab.name.toUpperCase().startsWith('MESA')) {
-                    msg = `Pedido pronto! ${newTab.name} 🛎️`;
-                  } else if (newTab.name) {
-                    msg = `Pedido pronto! ${newTab.name} 🛎️`;
-                  }
-                  
-                  showToast(msg, 'info');
+                // Format toast notification beautifully
+                let msg = "Pedido pronto!";
+                if (newTab.name.toUpperCase().startsWith('EXPRESSA')) {
+                  msg = `Pedido pronto! Venda expressa. 🛎️`;
+                } else if (newTab.name.toUpperCase().startsWith('MESA')) {
+                  msg = `Pedido pronto! ${newTab.name} 🛎️`;
+                } else if (newTab.name) {
+                  msg = `Pedido pronto! ${newTab.name} 🛎️`;
                 }
+                
+                showToast(msg, 'info');
               }
-            });
-          }
-        });
-      }
-      return sanitized;
-    });
+            }
+          });
+        }
+      });
+    }
+
+    setOpenTabs(sanitized);
   }, [showToast]);
 
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({

@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.9.0 AI Insights & Margins.*
+> *Material de apresentação comercial — versão v4.9.5 Kitchen Monitor & Realtime Alerts.*
 
 ---
 
@@ -12,28 +12,36 @@ Todo dono de bar já passou por isso:
 - O caixa fechou errado. Falta dinheiro e ninguém sabe explicar.
 - O sistema travou exatamente na hora do rush da sexta.
 - A internet caiu e as vendas pararam.
+- **O grande gargalo:** O cozinheiro grita que o prato está pronto, mas o garçom está longe. O prato esfria, o cliente reclama e a cozinha fica desorganizada.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v4.9.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v4.9.5)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
 
-## Novidades da Versão 4.9.0 Elite 🚀
+## Novidades da Versão 4.9.5 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
 
-### 🧠 Inteligência Competitiva e de Margens (Novo v4.9.0)
+### 🍳 Monitor de Cozinha e Produção Inteligente (Novo v4.9.5) 💎
+- **Fila de Produção Reativa:** Painel touch-friendly escuro de alto contraste (ideal para visualização à distância no calor da cozinha) que agrupa os pratos a serem preparados por ordem de chegada (FIFO), com cronômetros de tempo de espera.
+- **Campainha e Alertas Globais (Ding! 🛎️):** O sistema agora gera o som de um sino físico de metal através de síntese de áudio programática (Web Audio API) e dispara notificações Toast na tela de todos os atendentes logados no exato segundo em que o cozinheiro clica em "Pronto"!
+- **Alerta de Retirada no PDV:** O card da mesa no PDV do garçom pisca um sino discreto e animado (🛎️), sinalizando que o prato já está no balcão de entrega e pode ser retirado.
+- **Trava de Segurança Financeira (Fechada 🔒):** As comandas recém-fechadas e pagas continuam visíveis na aba de "Prontos" por até 2 horas (limite de 15 tickets) para que a cozinha consulte as saídas. Elas são exibidas com um cadeado e têm a edição bloqueada, impedindo alterações acidentais de status que possam alterar os dados do caixa.
+- **Interruptor de Cozinha:** Adicione o toggle "Enviar para a Cozinha" no cadastro de produtos para que apenas os pratos corretos entrem na fila de produção.
+
+### 🧠 Inteligência Competitiva e de Margens (v4.9.0)
 - **Radar de Prejuízo:** O Botequista te avisa na hora se a margem de lucro de um item muito vendido caiu abaixo de 30%. Proteja seu fluxo de caixa contra a inflação e reajuste os preços com dados reais.
 - **Smart Stock Híbrido:** Alertas de esgotamento preditivo por tempo (ex: "Acaba em 2.4 horas") para produtos com estoque ativo. Se o bar optou por trabalhar sem controle de estoque, o Botequista não atrapalha: ele apenas aponta quais são os itens mais quentes da noite (**Hot Item - Alta Demanda**) para o dono preparar a operação.
 
-### 🎉 Dinâmica de Eventos e Happy Hour (Novo v4.8.1)
+### 🎉 Dinâmica de Eventos e Happy Hour (v4.8.1)
 - **Happy Hour Automático:** Defina horários e preços promocionais. O PDV muda tudo sozinho, risca o preço antigo e adiciona alertas visuais sem o caixa precisar apertar um botão.
 - **Modo Evento (Balada):** Trava o PDV no fluxo de Venda Expressa contínua. Fechou uma venda, a próxima abre na mesma hora. Ideal para picos de movimento intensos onde não se usam mesas.
 - **Segurança de Pagamento:** Confirmação visual em verde "PAGAMENTO COMPLETO" quando o saldo zera, cortando erros de troco e fechamento prematuro pela raiz.
 
 ### 📱 Cardápio Digital Dinâmico (Novo v4.8)
 - **URL Personalizada:** Chega de links complicados. Seu cliente acessa `/menu/Nome-Do-Seu-Bar` — simples, fácil e profissional.
-- **Temas Premium:** Cardápio com visual "Elite", suportando modo claro e escuro ( Dark Mode como padrão). Uma experiência visual que valoriza seu bar.
+- **Temas Premium:** Cardápio com visual "Elite", suportando modo claro e escuro. Uma experiência visual que valoriza seu bar.
 - **Sincronização Atômica:** O que acaba no PDV some na hora do cardápio digital do cliente. Zero frustração.
 - **Acesso Rápido:** Atalhos direto no cadastro de bares para você visualizar seu menu com um clique.
 
@@ -43,37 +51,6 @@ Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega
 - **Detector de Mesa Travada (Premium):** O sistema agora não só monitora o tempo, mas avisa exatamente há quanto tempo foi o último pedido. Se a mesa "travar", um pulso vermelho e uma sugestão de "Sugerir Saideira 🍻" aparecem para a equipe.
 - **Tempo de Mesa em Tempo Real:** Cada comanda exibe seu cronômetro de abertura, permitindo controle absoluto do giro do salão.
 - **QR Code da Mesa:** Cada mesa tem seu próprio QR code. O cliente escaneia e vê a conta ou efetua o pagamento direto pelo celular. O garçom ganha tempo e o cliente não precisa chamar ninguém.
-
-### 🧠 Inteligência Competitiva (Dashboards que Vendem)
-- **Ranking de Garçom:** Saiba quem são os seus "vendedores de elite" com gráficos de barras em tempo real. Incentive sua equipe com dados concretos.
-- **Ticket Médio com Tendência:** Veja se o seu consumo médio está subindo ou descendo com comparativos automáticos em relação ao período anterior (ex: ↑ +12% vs ontem).
-- **Ticket Médio por Mesa:** Cada mesa tem seu próprio ticket. Identifique mesas de alto valor e otimize seu giro.
-- **Mapa de Calor (Heatmap):** Descubra exatamente em quais horas seu bar "bomba". Planeje melhor as escalas de funcionários e o preparo da cozinha.
-- **Curva ABC Inteligente:** Descubra não só o que sai mais, mas **o que dá mais lucro**. Filtre seus produtos por faturamento, volume de vendas ou lucro real em um segundo.
-- **Ranking de Produtos por Lucro:** Além do faturamento, veja quais produtos geram mais lucro após descontar os custos.
-- **Detector de Produto Morto:** Inteligência híbrida que varre o cardápio e o estoque para encontrar itens "esquecidos". Se um item não vende há 15 dias, o Botequista avisa. Limpe seu menu e libere capital parado.
-- **Top Combos Automáticos (v4.5):** O sistema analisa quais produtos são vendidos juntos com mais frequência (ex: Cerveja + Porção). Crie promoções baseadas em dados reais, não em "achismo".
-- **Smart Stock Intelligence (v4.6):** Agora o Botequista prevê o futuro. O sistema calcula a velocidade de venda em tempo real e avisa: *"A Original acaba em 45 minutos"*. Chega de surpresas no meio do rush.
-- **Reposição Inteligente via WhatsApp:** O sistema gera sua lista de compras baseada na média de consumo e envia direto para o seu fornecedor pelo WhatsApp. Automação total do estoque.
-
-### 🛡️ Segurança e Comodidade (v4.7 Enhanced)
-- **Auto-Backup Pós-Turno:** Ao fechar o caixa, o sistema sugere automaticamente a geração de um backup em arquivo. Seus dados protegidos contra qualquer falha.
-- **Recibo via WhatsApp:** Chega de papel. Envie o comprovante detalhado direto para o celular do cliente pelo WhatsApp com total profissionalismo.
-- **Resumo Diário Automático via WhatsApp:** Ao fechar o turno, o sistema envia automaticamente para o seu WhatsApp: faturamento total, ticket médio, total de mesas atendidas, produto mais vendido e garçom destaque.
-- **Quitação em Lote:** Selecione vários devedores do fiado e quite as dívidas de todos de uma única vez. Organização financeira sem esforço.
-- **Badges de Estoque & ETA:** Veja o nível de estoque e o tempo estimado para acabar direto no botão de venda. Inteligência pura no PDV.
-- **Acessibilidade Universal:** Sistema 100% navegável via teclado e compatível com leitores de tela, garantindo inclusão e conformidade técnica.
-- **Privacidade de Credenciais:** Gestão de usuários com ocultação estrita de senhas e proteção de contas de sistema contra alterações acidentais.
-- **Segurança Operacional (v4.7.3):** Proteção de contas mestre e prevenção de logout acidental.
-- **Interface Responsiva PDV:** Grid de produtos que se adapta a qualquer tamanho de tela, garantindo agilidade mesmo em dispositivos móveis antigos.
-
-### 💰 Inteligência Financeira Elite (v4.8.0) 💎
-- **Engenharia de Lucro Real (CMV):** Saiba exatamente o custo de mercadoria de cada item. O sistema calcula seu lucro líquido real, não apenas o faturamento.
-- **Markup Sugerido:** Ferramenta de apoio à decisão de preços baseada na margem desejada vs custo real.
-- **Taxa de Serviço Inteligente:** Módulo de gratificação (10%) que pode ser ligado/desligado por unidade. Cálculo automático e transparente no fechamento.
-- **Cardápio Digital QR Code Sync:** Gere um menu elegante para seus clientes escanearem. O que acaba no estoque do PDV, some instantaneamente do cardápio digital. Zero frustração de "pedir o que não tem".
-- **Relatório de Pool de Gorjetas:** Saiba exatamente quanto cada membro da equipe deve receber de gratificação no final do dia ou semana.
-- **Blindagem de Conta Admin:** Proteção visual e funcional para a conta mestre, impedindo edições de login ou logouts acidentais que possam comprometer a gestão.
 
 ---
 
@@ -164,157 +141,46 @@ Mais de **20 permissões granulares** para montar a hierarquia certa para o seu 
 O cardápio do Botequista suporta:
 
 - **Categorias personalizadas** — Drinks, Petiscos, Cervejas, etc.
-- **Grupos de adicionais** — Ponto da carne, tamanho do copo, ingredientes extras.
-- **Vínculos automáticos** — Toda categoria pode ter adicionais padrão, sem precisar configurar produto por produto.
-- **Venda por peso** — Para itens a granel, o sistema abre um modal para digitar o peso e calcula automaticamente.
-- **Controle de Estoque Seletivo** — Defina quais produtos devem ter estoque controlado e quais são apenas serviços (como taxa de entrega).
-- **Busca Global Instantânea** — Localize qualquer produto no cadastro em milissegundos.
-- **Itens favoritos** — O operador pode marcar os mais vendidos para acesso rápido no PDV.
+- **Grupos de adicionais** — Ponto da carne, tamanho do copo, extras.
+- **Vínculos automáticos** — Toda categoria pode ter adicionais padrão.
+- **Venda por peso** — Para itens a granel, calcula o peso no checkout.
+- **Controle de Estoque Seletivo** — Defina quais itens descontam estoque.
+- **Itens favoritos** — Atalhos para os mais vendidos no PDV.
 
 ---
 
 ### 🏢 Suporte a Múltiplas Unidades e Franquias
    
-O Botequista foi pensado para crescer com você. A plataforma suporta **múltiplos pontos de venda** (unidades) com dados completamente isolados entre si, e um novo **Dashboard de Franquia** para controle centralizado.
+O Botequista foi pensado para crescer com você. A plataforma suporta **múltiplos pontos de venda** com dados isolados e um **Dashboard de Franquia** centralizado.
 
-- Um operador pode ter acesso à Unidade A e B — mas não à C.
-- O dono ou franqueador (admin) vê todas as unidades em um painel consolidado.
-- Cada bar tem seu próprio banco de dados, cardápio e histórico de vendas.
-- Ideal para redes, franquias ou donos com mais de um estabelecimento que buscam escala.
+- O dono ou franqueador vê todas as unidades em um painel consolidado.
+- Cada bar tem seu próprio banco de dados, cardápio e histórico.
 
 ---
 
-### 🧾 Comanda de Mesa com Colaboração em Tempo Real
+### Perguntas Frequentes
 
-Mais de um garçom pode trabalhar na mesma mesa simultaneamente. O sistema sincroniza os itens em tempo real entre dispositivos — o que um adiciona aparece para o outro em segundos.
+**O Monitor de Cozinha funciona sem internet?**  
+Sim! A fila de preparo e o histórico ficam disponíveis no cache local do dispositivo e se mantêm 100% utilizáveis durante qualquer oscilação de sinal.
 
-- Renomeação de mesa a qualquer momento.
-- Conversão de venda expressa em mesa permanente.
-- Pagamento múltiplo: divide a conta entre Pix, dinheiro e cartão na mesma transação.
-- Quitação de pendura direto pelo fluxo de pagamento.
+**O som da campainha toca em todos os aparelhos?**  
+Com certeza! Graças ao sincronismo em tempo real, quando o prato é marcado como pronto, um sinal é emitido para todos os computadores, tablets ou celulares logados na unidade, disparando a campainha física (Ding!) e um pop-up com a mesa correspondente.
 
----
-
-### 🛡️ Rastreabilidade Total — Auditoria de Eventos
-
-Toda ação crítica é registrada automaticamente com hora, usuário e detalhes:
-
-- Abertura e fechamento de turno
-- Abertura e fechamento de mesas
-- Cancelamento de vendas
-- Descarte de comandas
-- Tentativas duplicadas de fechamento
-- Alertas de Saída Acidental (Protege sincronização de dados)
-
-O registro de auditoria é visível apenas para usuários com permissão, e fica disponível por 7 dias para análise de discrepâncias.
-
----
-
-### 💾 Backup Automático + Resgate de Emergência
-
-O Botequista mantém **três camadas de proteção** para seus dados:
-
-1. **Firebase (Nuvem)** — sincronização em tempo real enquanto há internet.
-2. **IndexedDB (Dispositivo)** — cache local persistente, sobrevive a quedas de internet.
-3. **Backup Manual (JSON/GitHub)** — exportação periódica para arquivo ou Gist privado no GitHub.
-4. **Guarda de Saída** — O navegador impede o fechamento da aba se houver dados ainda não sincronizados.
-
-Se tudo falhar, o botão de **Resgate de Emergência** recupera o último estado salvo no cache do navegador.
-
----
-
-## Para Quem é o Botequista?
-
-| Tipo de Negócio | Por Que Funciona |
-|---|---|
-| **Bar com alto giro de balcão** | Venda Expressa reduz o tempo de atendimento |
-| **Restaurante com mesas** | Comandas multiplas com colaboração de garçons |
-| **Bar com turno à noite** | Conferência Cega protege o empresário |
-| **Rede com múltiplos pontos** | Gestão centralizada com dados isolados por unidade |
-| **Negócio familiar** | Interface simples, sem necessidade de treinamento longo |
-| **Bar em local com internet instável** | Offline-First garante operação contínua |
-
----
-
-## O Que Você NÃO Precisa Para Usar o Botequista
-
-❌ Instalar nada no computador  
-❌ Comprar hardware específico — funciona em qualquer dispositivo com navegador  
-❌ Contratar uma equipe de TI  
-❌ Pagar taxa de App Store  
-❌ Depender de internet 100% do tempo  
-
----
-
-## O Que Vem Incluído
-
-✅ Cardápio Digital QR Code sincronizado com estoque (v4.7.3)  
-✅ Engenharia de Lucro Real (Custo CMV) (v4.7.3)  
-✅ Módulo de Gratificação / Taxa 10% (v4.7.3)  
-✅ Happy Hour Automático (v4.8.1)
-✅ Modo Evento / Venda Expressa Contínua (v4.8.1)
-✅ Radar de Prejuízo (Margem < 30%) (v4.9.0)
-✅ Smart Stock Híbrido & Alerta de Alta Demanda (v4.9.0)
-✅ QR Code da Mesa (v4.7.3)
-✅ Resumo Diário via WhatsApp (v4.7.3)
-✅ Relatório de Pool de Gorjetas (v4.7.3)  
-✅ Ranking de Produtos por Lucro (v4.7.3)
-✅ Tempo Médio de Mesa (v4.4)
-✅ PDV (Ponto de Venda) completo com Venda Expressa  
-✅ Gestão de mesas e comandas em tempo real  
-✅ Cardápio com categorias, adicionais e variações  
-✅ Tesouraria com sangria, suprimento e conferência cega  
-✅ 7 tipos de relatórios gerenciais  
-✅ Controle de equipe com permissões granulares  
-✅ Gestão de penduras (fiado) com botão de quitação  
-✅ Suporte a múltiplas unidades  
-✅ Registro de auditoria completo  
-✅ Backup automático em nuvem + local  
-✅ Top Combos Vendidos (Descoberta Automática)  
-✅ Dark Mode nativo — importante para ambientes noturnos  
-✅ Funciona em tablet, celular e computador  
-
----
-
-## Perguntas Frequentes
-
-**O sistema funciona sem internet?**  
-Sim. O Botequista salva tudo localmente e sincroniza automaticamente quando a conexão volta. O bar não para em nenhum momento.
-
-**Preciso comprar algum equipamento?**  
-Não. Funciona em qualquer dispositivo com um navegador moderno — Android, iOS, Windows, Mac.
-
-**Quantos usuários posso ter?**  
-Sem limite de usuários por unidade. Cada operador tem login e permissões individuais.
-
-**Como funciona o fechamento de caixa?**  
-O operador conta o dinheiro físico e informa o valor. O sistema calcula automaticamente a diferença, sem revelar o número esperado antes da contagem (Conferência Cega).
-
-**As vendas podem ser canceladas?**  
-Sim, por usuários com a permissão correta. Toda anulação fica registrada no log de auditoria com hora e responsável.
-
-**É possível dividir a conta?**  
-Sim. Um único pagamento pode ser dividido entre múltiplas formas (ex.: parte em Pix, parte em dinheiro).
+**O que é o cadeado na aba de prontos da cozinha?**  
+É a trava de **Segurança Financeira**. Quando uma conta de mesa é paga e finalizada no caixa, ela entra no histórico da cozinha sob a sinalização `Fechada 🔒`. O botão de "Desfazer" é bloqueado para impedir que alterações manuais na cozinha descaracterizem a transação e criem furos nos relatórios fiscais do caixa.
 
 ---
 
 ## Tecnologia Que Você Não Precisa Entender, Mas Pode Confiar
 
-O Botequista é construído com tecnologia usada por grandes empresas globais:
-- **Offline-First Nativo** — O Chrome vira seu banco de dados local.
-- **Sincronização Atômica** — Dados espelhados em todos os aparelhos em milissegundos.
-- **Interface Premium** — Design limpo e moderno, feito para ser usado no escuro do bar.
+O Botequista é construído com tecnologia de ponta:
+- **Offline-First Nativo** — O navegador gerencia o banco de dados local.
+- **Sincronização Atômica** — Dados espelhados em milissegundos.
+- **Sintetizador Web Audio API** — Campainha acústica de balcão gerada por código.
 
-Tudo isso significa que você tem, na prática, uma solução de nível enterprise — acessível para o bar da esquina.
-
----
-
-## Próximos Passos
-
-
-Entre em contato para agendar uma **demonstração ao vivo** — ou inicie um período de avaliação direto pelo sistema.
+Tudo isso significa uma solução de nível enterprise — perfeitamente acessível para o seu bar.
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.9.0 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v4.9.5 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*
