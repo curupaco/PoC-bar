@@ -168,7 +168,8 @@ export const POS: React.FC<POSProps> = ({
         const updatedItem: SaleItem = {
             ...existingItem,
             quantity: newQty,
-            totalPrice: safeFloat(newQty * existingItem.unitPrice)
+            totalPrice: safeFloat(newQty * existingItem.unitPrice),
+            ...(product.toKitchen ? { productionStatus: 'PENDING' } : {})
         };
         if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
         showFeedback(`+${quantity} ${product.name}`);
@@ -186,7 +187,8 @@ export const POS: React.FC<POSProps> = ({
           unitPrice: effectiveUnitPrice, 
           totalPrice: safeFloat(quantity * effectiveUnitPrice), 
           costPrice: product.lastCostPrice,
-          modifier 
+          modifier,
+          ...(product.toKitchen ? { productionStatus: 'PENDING' } : {})
         };
         if (onUpdateTabItem) await onUpdateTabItem(activeTabId, newItem);
         showFeedback(`+${quantity} ${product.name}`);
@@ -202,7 +204,7 @@ export const POS: React.FC<POSProps> = ({
     if (product) {
        await executeAddItem(product, lastItem.quantity, lastItem.modifier);
        showFeedback("SAIDEIRA ADICIONADA! 🍻");
-    }
+     }
   };
 
   const addToTab = useCallback(async (product: Product, quantity: number = 1) => {
@@ -223,9 +225,15 @@ export const POS: React.FC<POSProps> = ({
     if (newQty <= 0) {
        // Opcional: remover item se chegar a zero? Por enquanto mantemos como o original.
     }
-    const updatedItem: SaleItem = { ...item, quantity: newQty, totalPrice: safeFloat(newQty * item.unitPrice) };
+    const prod = products.find(p => p.id === item.productId);
+    const updatedItem: SaleItem = { 
+      ...item, 
+      quantity: newQty, 
+      totalPrice: safeFloat(newQty * item.unitPrice),
+      ...(prod?.toKitchen && delta > 0 ? { productionStatus: 'PENDING' } : {})
+    };
     if (onUpdateTabItem) await onUpdateTabItem(activeTabId, updatedItem);
-  }, [activeTabId, activeTab, tabItems, onUpdateTabItem]);
+  }, [activeTabId, activeTab, tabItems, onUpdateTabItem, products]);
 
   const handleQuickSale = async () => {
     const shortId = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -412,6 +420,9 @@ export const POS: React.FC<POSProps> = ({
                 const isIdle = Date.now() - lastActivity > idleLimit;
                 const isVeryIdle = Date.now() - lastActivity > idleLimit * 2;
 
+                const tabItemsList = Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]);
+                const hasReadyItems = tabItemsList.some(item => item.productionStatus === 'READY');
+
                 return (
                   <div key={tab.id} className="relative group">
                     <div onClick={() => setActiveTabId(tab.id)} className={`p-6 rounded-[35px] border-2 cursor-pointer transition-all flex flex-col justify-between h-40 shadow-sm hover:shadow-xl 
@@ -420,8 +431,13 @@ export const POS: React.FC<POSProps> = ({
                          isIdle ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900 border-dashed' :
                          'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-red-500'}`}>
                       <div className="flex justify-between items-start">
-                        <div className="flex flex-col min-w-0">
-                           <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                        <div className="flex flex-col min-w-0 max-w-[80%]">
+                           <div className="flex items-center gap-2">
+                              <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                              {hasReadyItems && (
+                                 <span className="animate-bounce bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 p-1 rounded-lg text-xs leading-none shrink-0" title="Prato Pronto! 🛎️">🛎️</span>
+                              )}
+                           </div>
                            <div className="flex flex-col">
                               <div className="flex items-center gap-1.5">
                                  <span className="text-[10px] font-bold text-slate-500 opacity-70" title="Tempo total aberta">{formatElapsedTime(tab.openedAt)}</span>

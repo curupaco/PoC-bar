@@ -7,6 +7,55 @@ import { safeLocalStorage } from '../utils/storage';
 import { ALL_PERMISSIONS } from '../constants/permissions';
 import { mockProducts, mockCategories, mockUnits, mockUsers, mockShifts, mockOpenTabs } from '../utils/mockData';
 
+// Helper to programmatically synthesize a crisp, physical service bell ding (🛎️) using Web Audio API
+const playBellChime = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Resume immediately or request resume on click due to browser autoplay protections
+    if (audioCtx.state === 'suspended') {
+      const resume = () => {
+        audioCtx.resume();
+        window.removeEventListener('click', resume);
+      };
+      window.addEventListener('click', resume);
+    }
+
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    const gain2 = audioCtx.createGain();
+
+    // Crisp high pitch (2200 Hz)
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(2200, audioCtx.currentTime);
+    
+    // Metallic chime second harmonic (4400 Hz)
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(4400, audioCtx.currentTime);
+
+    gain1.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+
+    gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.8);
+
+    osc1.connect(gain1);
+    gain1.connect(audioCtx.destination);
+
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+
+    osc1.start();
+    osc2.start();
+
+    osc1.stop(audioCtx.currentTime + 1.2);
+    osc2.stop(audioCtx.currentTime + 0.8);
+  } catch (e) {
+    console.warn('AudioContext not allowed or not supported:', e);
+  }
+};
+
 interface AppStoreProps {
   currentUser: User | null;
   currentUserRef: React.MutableRefObject<User | null>;
@@ -111,8 +160,42 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       ...t,
       items: Array.isArray(t.items) ? t.items : (t.items ? (Object.values(t.items) as SaleItem[]) : [])
     }));
-    setOpenTabs(sanitized);
-  }, []);
+
+    setOpenTabs(prevOpenTabs => {
+      // Detect transition to READY status when old state exists (prevents audio storm on initial synchronization)
+      if (prevOpenTabs && prevOpenTabs.length > 0) {
+        sanitized.forEach((newTab: any) => {
+          const oldTab = prevOpenTabs.find(t => t.id === newTab.id);
+          if (oldTab) {
+            newTab.items.forEach((newItem: any) => {
+              if (newItem.productionStatus === 'READY') {
+                const oldItem = oldTab.items.find(i => i.id === newItem.id);
+                const wasNotReady = !oldItem || oldItem.productionStatus !== 'READY';
+                
+                if (wasNotReady) {
+                  // DING DING! Pedido pronto!
+                  playBellChime();
+                  
+                  // Format toast notification beautifully
+                  let msg = "Pedido pronto!";
+                  if (newTab.name.toUpperCase().startsWith('EXPRESSA')) {
+                    msg = `Pedido pronto! Venda expressa. 🛎️`;
+                  } else if (newTab.name.toUpperCase().startsWith('MESA')) {
+                    msg = `Pedido pronto! ${newTab.name} 🛎️`;
+                  } else if (newTab.name) {
+                    msg = `Pedido pronto! ${newTab.name} 🛎️`;
+                  }
+                  
+                  showToast(msg, 'info');
+                }
+              }
+            });
+          }
+        });
+      }
+      return sanitized;
+    });
+  }, [showToast]);
 
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,

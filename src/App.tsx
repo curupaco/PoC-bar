@@ -18,8 +18,7 @@ import Login from './features/auth/Login';
 import FeedbackModal from './shared/ui/FeedbackModal';
 import ConfirmationModal from './shared/ui/ConfirmationModal';
 import LoadingScreen from './shared/ui/LoadingScreen';
-
-// New Modular Components & Hooks
+import ProductionMonitor from './features/kitchen/ProductionMonitor';
 import { FirebaseGuard } from './shared/ui/FirebaseGuard';
 import { UnitSelector } from './features/auth/UnitSelector';
 import { AppHeader } from './shared/ui/AppHeader';
@@ -93,6 +92,13 @@ export const App: React.FC = () => {
       return acc + debit;
     }, 0);
   }, [store.sales]);
+
+  const pendingKitchenCount = useMemo(() => {
+    return store.openTabs.reduce((acc, tab) => {
+      const items = Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as any[]);
+      return acc + items.filter((item: any) => item.productionStatus === 'PENDING').length;
+    }, 0);
+  }, [store.openTabs]);
 
   // Handlers
   const requestExitEventMode = () => {
@@ -169,6 +175,7 @@ export const App: React.FC = () => {
       case 'inventory': return <Inventory products={store.products} stockTransactions={store.stockTransactions} onUpdateStock={store.handleUpdateStock} currentUser={currentUser} activeUnitId={store.validatedActiveUnitId} sales={store.sales} units={store.units} />;
       case 'settings': return <Settings products={store.products} sales={store.sales} openTabs={store.openTabs} users={store.users} shifts={store.shifts} units={store.units} onUpdateUnits={store.handleUpdateUnits} onImport={store.handleDataManagement} dbStatus={store.dbStatus} currentUser={currentUser} penduraThreshold={store.penduraThreshold} setPenduraThreshold={store.setPenduraThreshold} longDurationThreshold={store.longDurationThreshold} setLongDurationThreshold={store.setLongDurationThreshold} activeUnitId={store.validatedActiveUnitId} auditLogs={store.auditLogs} pendingSyncCount={store.pendingSyncCount} />;
       case 'help': return <Help />;
+      case 'production_monitor': return <ProductionMonitor openTabs={store.openTabs} onUpdateTabItem={store.handleUpdateTabItem} />;
       default: return null;
     }
   };
@@ -181,6 +188,7 @@ export const App: React.FC = () => {
         activeTabsCount={store.openTabs.length} totalPendura={totalPendura} penduraThreshold={store.penduraThreshold} 
         isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
         dbStatus={store.dbStatus} isOnline={navigator.onLine} theme={theme} 
+        pendingKitchenCount={pendingKitchenCount}
       />
 
       <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>

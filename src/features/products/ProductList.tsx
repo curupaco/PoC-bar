@@ -59,6 +59,7 @@ const ProductList: React.FC<ProductListProps> = ({
   const [modGroupId, setModGroupId] = useState<string>('');
   const [trackStock, setTrackStock] = useState(true);
   const [cost, setCost] = useState('');
+  const [toKitchen, setToKitchen] = useState(false);
   
   // Happy Hour
   const [hhPrice, setHhPrice] = useState('');
@@ -113,7 +114,8 @@ const ProductList: React.FC<ProductListProps> = ({
         lastCostPrice: parseCurrencyValue(cost) || undefined,
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
-        happyHourEnd: hhEnd || undefined
+        happyHourEnd: hhEnd || undefined,
+        toKitchen
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -129,7 +131,8 @@ const ProductList: React.FC<ProductListProps> = ({
         lastCostPrice: parseCurrencyValue(cost) || undefined,
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
-        happyHourEnd: hhEnd || undefined
+        happyHourEnd: hhEnd || undefined,
+        toKitchen
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -174,6 +177,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setHhPrice(p.happyHourPrice ? p.happyHourPrice.toFixed(2).replace('.', ',') : '');
     setHhStart(p.happyHourStart || '');
     setHhEnd(p.happyHourEnd || '');
+    setToKitchen(p.toKitchen ?? false);
     setShowModal(true);
   };
 
@@ -190,6 +194,7 @@ const ProductList: React.FC<ProductListProps> = ({
     setHhPrice('');
     setHhStart('');
     setHhEnd('');
+    setToKitchen(false);
     setError(null);
   };
 
@@ -439,6 +444,21 @@ const ProductList: React.FC<ProductListProps> = ({
                   </div>
                   <div className={`w-12 h-6 rounded-full p-1 transition-colors ${trackStock ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
                     <div className={`w-4 h-4 bg-white rounded-full transition-transform ${trackStock ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <button 
+                  onClick={() => setToKitchen(!toKitchen)}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${toKitchen ? 'bg-red-50 border-red-200 dark:bg-red-900/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950'}`}
+                >
+                  <div className="flex flex-col items-start">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${toKitchen ? 'text-red-600' : 'text-slate-400'}`}>Enviar para a Cozinha</span>
+                    <span className="text-[9px] font-bold text-slate-400">Exibir no monitor de produção da cozinha</span>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${toKitchen ? 'bg-red-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${toKitchen ? 'translate-x-6' : 'translate-x-0'}`} />
                   </div>
                 </button>
               </div>
