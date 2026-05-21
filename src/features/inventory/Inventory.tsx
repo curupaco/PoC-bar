@@ -21,12 +21,22 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
   const [showLossModal, setShowLossModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [modalSearchTerm, setModalSearchTerm] = useState('');
   
   // Form States
   const [qty, setQty] = useState('');
   const [cost, setCost] = useState('');
   const [reason, setReason] = useState('Quebra');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Autocomplete para seleção de produto no modal
+  const modalFilteredProducts = useMemo(() => {
+    if (!modalSearchTerm.trim()) return [];
+    const term = modalSearchTerm.toLowerCase();
+    return products
+      .filter(p => p.trackStock !== false && p.name.toLowerCase().includes(term))
+      .slice(0, 5);
+  }, [products, modalSearchTerm]);
 
   // Calcula o saldo atual de cada produto
   const stockBalances = useMemo(() => {
@@ -124,6 +134,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
     setShowLossModal(false);
     setShowAdjustModal(false);
     setSelectedProduct(null);
+    setModalSearchTerm('');
     setQty('');
     setCost('');
   };
@@ -313,88 +324,178 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
            </div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="space-y-4">
+          {/* Visualização de Tabela para Desktop */}
+          <div className="hidden md:block bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden animate-in fade-in">
             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                    <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Data/Hora</th>
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produto</th>
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Tipo</th>
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Qtd</th>
-                            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Custo</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                        {history.slice(0, 100).map(t => {
-                            const product = products.find(p => p.id === t.productId);
-                            return (
-                                <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
-                                    <td className="px-6 py-4 text-[10px] font-bold text-slate-500">{new Date(t.timestamp).toLocaleString()}</td>
-                                    <td className="px-6 py-4">
-                                        <p className="text-xs font-black uppercase text-slate-800 dark:text-white">{product?.name || 'Item Removido'}</p>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
-                                            t.type === 'IN' ? 'bg-emerald-100 text-emerald-600' : 
-                                            (t.type === 'LOSS' ? 'bg-red-100 text-red-600' : 
-                                            (t.type === 'OUT' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'))
-                                        }`}>
-                                            {t.type === 'IN' ? 'Entrada' : (t.type === 'LOSS' ? `Perda (${t.reason})` : (t.type === 'OUT' ? 'Venda' : 'Ajuste'))}
-                                        </span>
-                                    </td>
-                                    <td className={`px-6 py-4 text-xs font-black text-right ${t.quantity > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                        {t.quantity > 0 ? '+' : ''}{t.quantity}
-                                    </td>
-                                    <td className="px-6 py-4 text-xs font-bold text-slate-500 text-right">
-                                        {t.price ? formatCurrency(t.price) : '-'}
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-950/50 border-b border-slate-200 dark:border-slate-800">
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Data/Hora</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Produto</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Tipo</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Qtd</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-widest text-right">Custo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {history.slice(0, 100).map(t => {
+                    const product = products.find(p => p.id === t.productId);
+                    return (
+                      <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/20 transition-colors">
+                        <td className="px-6 py-4 text-[10px] font-bold text-slate-500">{new Date(t.timestamp).toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <p className="text-xs font-black uppercase text-slate-800 dark:text-white">{product?.name || 'Item Removido'}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                            t.type === 'IN' ? 'bg-emerald-100 text-emerald-600' : 
+                            (t.type === 'LOSS' ? 'bg-red-100 text-red-600' : 
+                            (t.type === 'OUT' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'))
+                          }`}>
+                            {t.type === 'IN' ? 'Entrada' : (t.type === 'LOSS' ? `Perda (${t.reason})` : (t.type === 'OUT' ? 'Venda' : 'Ajuste'))}
+                          </span>
+                        </td>
+                        <td className={`px-6 py-4 text-xs font-black text-right ${t.quantity > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                          {t.quantity > 0 ? '+' : ''}{t.quantity}
+                        </td>
+                        <td className="px-6 py-4 text-xs font-bold text-slate-500 text-right">
+                          {t.price ? formatCurrency(t.price) : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          </div>
+
+          {/* Visualização de Cards para Mobile */}
+          <div className="block md:hidden space-y-3 animate-in fade-in">
+            {history.slice(0, 50).map(t => {
+              const product = products.find(p => p.id === t.productId);
+              const isPositive = t.quantity > 0;
+              const borderAccentColor = t.type === 'IN' ? 'border-l-emerald-500 bg-emerald-50/10 dark:bg-emerald-950/5' : 
+                                       t.type === 'LOSS' ? 'border-l-red-500 bg-red-50/10 dark:bg-red-950/5' : 
+                                       t.type === 'OUT' ? 'border-l-blue-500 bg-blue-50/10 dark:bg-blue-950/5' : 
+                                       'border-l-slate-400 bg-slate-50/20 dark:bg-slate-900/10';
+              
+              return (
+                <div key={t.id} className={`p-4 rounded-[24px] border border-slate-200 dark:border-slate-800 border-l-4 ${borderAccentColor} flex flex-col gap-3 shadow-sm`}>
+                  <div className="flex justify-between items-start">
+                    <div className="min-w-0 flex-1 pr-2">
+                      <p className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-none">{product?.category || 'GERAL'}</p>
+                      <h4 className="text-xs font-black text-slate-800 dark:text-white uppercase truncate mt-1">{product?.name || 'Item Removido'}</h4>
+                      <p className="text-[9px] font-bold text-slate-400 mt-1">
+                        {new Date(t.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={`text-base font-black italic tracking-tighter leading-none ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {isPositive ? '+' : ''}{t.quantity}
+                      </p>
+                      {t.price && (
+                        <p className="text-[9px] font-bold text-slate-400 mt-1.5">{formatCurrency(t.price)}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/50">
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${
+                      t.type === 'IN' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/45 dark:text-emerald-400' : 
+                      (t.type === 'LOSS' ? 'bg-red-100 text-red-600 dark:bg-red-950/45 dark:text-red-400' : 
+                      (t.type === 'OUT' ? 'bg-blue-100 text-blue-600 dark:bg-blue-950/45 dark:text-blue-400' : 
+                      'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'))
+                    }`}>
+                      {t.type === 'IN' ? 'Entrada' : (t.type === 'LOSS' ? `Perda (${t.reason})` : (t.type === 'OUT' ? 'Venda' : 'Ajuste'))}
+                    </span>
+                    <span className="text-[8px] font-bold text-slate-400">Op: {t.userId ? 'Funcionário' : 'Admin'}</span>
+                  </div>
+                </div>
+              );
+            })}
+            {history.length === 0 && (
+              <div className="text-center py-12 text-slate-400 font-bold uppercase text-[10px] tracking-widest italic opacity-40">Nenhuma movimentação registrada</div>
+            )}
+          </div>
         </div>
       )}
 
       {(showEntryModal || showLossModal || showAdjustModal) && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => { setShowEntryModal(false); setShowLossModal(false); setShowAdjustModal(false); setSelectedProduct(null); }} />
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+          <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center p-0 md:p-4">
+            <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => { setShowEntryModal(false); setShowLossModal(false); setShowAdjustModal(false); setSelectedProduct(null); setModalSearchTerm(''); }} />
+            <div className="bg-white dark:bg-slate-900 w-full max-w-full md:max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 md:p-10 shadow-2xl relative z-10 border-t md:border border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom md:zoom-in-95 transition-all max-h-[92vh] md:max-h-auto overflow-y-auto no-scrollbar">
                 <div className="flex justify-between items-center mb-8">
                     <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
                         {showEntryModal ? 'Lançar Entrada' : (showLossModal ? 'Registrar Perda' : 'Ajustar Saldo')}
                     </h3>
-                    <button onClick={() => { setShowEntryModal(false); setShowLossModal(false); setShowAdjustModal(false); setSelectedProduct(null); }} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold" aria-label="Fechar modal de estoque">✕</button>
+                    <button onClick={() => { setShowEntryModal(false); setShowLossModal(false); setShowAdjustModal(false); setSelectedProduct(null); setModalSearchTerm(''); }} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold" aria-label="Fechar modal de estoque">✕</button>
                 </div>
 
                 <div className="space-y-6">
                     <div className="space-y-2">
                         <label htmlFor="inventory-product-search" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Selecione o Produto</label>
-                        <div className="relative group">
+                        <div className="relative">
                             <input 
                                 id="inventory-product-search"
                                 type="text"
-                                placeholder="BUSCAR PRODUTO..."
-                                className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all pl-10"
+                                placeholder="DIGITE PARA BUSCAR PRODUTO..."
+                                value={selectedProduct ? selectedProduct.name : modalSearchTerm}
                                 onChange={(e) => {
-                                    const search = e.target.value.toLowerCase();
-                                    const found = products.find(p => p.trackStock !== false && p.name.toLowerCase() === search);
-                                    if (found) setSelectedProduct(found);
+                                    const search = e.target.value;
+                                    if (selectedProduct) {
+                                      setSelectedProduct(null);
+                                    }
+                                    setModalSearchTerm(search);
                                 }}
-                                list="inventory-prod-list"
+                                className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all pl-10"
                             />
                             <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <datalist id="inventory-prod-list">
-                                {products.filter(p => p.trackStock !== false).map(p => (
-                                    <option key={p.id} value={p.name}>{p.category}</option>
-                                ))}
-                            </datalist>
+                            
+                            {selectedProduct && (
+                              <button 
+                                onClick={() => {
+                                  setSelectedProduct(null);
+                                  setModalSearchTerm('');
+                                }} 
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 font-black text-xs uppercase tracking-wider"
+                                title="Limpar seleção"
+                                type="button"
+                              >
+                                Limpar
+                              </button>
+                            )}
                         </div>
+
+                        {/* Autocomplete sugerido para mobile/desktop */}
+                        {!selectedProduct && modalSearchTerm && (
+                          <div className="p-2 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-1 animate-in fade-in slide-in-from-top-1 max-h-48 overflow-y-auto no-scrollbar animate-duration-200">
+                            {modalFilteredProducts.map(p => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedProduct(p);
+                                  setModalSearchTerm('');
+                                  if (showEntryModal) {
+                                    setCost((p.lastCostPrice || 0).toFixed(2).replace('.', ','));
+                                  }
+                                }}
+                                className="w-full text-left p-3.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-900 transition-all flex items-center justify-between text-xs font-black uppercase text-slate-700 dark:text-slate-300"
+                              >
+                                <span>{p.name}</span>
+                                <span className="text-[8px] font-black uppercase bg-slate-200/60 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">{p.category}</span>
+                              </button>
+                            ))}
+                            {modalFilteredProducts.length === 0 && (
+                              <p className="text-[9px] font-bold text-slate-400 text-center py-4 uppercase italic">Nenhum produto encontrado</p>
+                            )}
+                          </div>
+                        )}
+                        
                         {selectedProduct && (
                             <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl border border-indigo-100 dark:border-indigo-800 animate-in slide-in-from-top-1">
-                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter italic">Selecionado: {selectedProduct.name}</span>
+                                <span className="text-[10px] font-black text-indigo-600 uppercase tracking-tighter italic">✓ Produto Selecionado: {selectedProduct.name}</span>
                             </div>
                         )}
                     </div>

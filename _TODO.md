@@ -292,8 +292,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Armazenar scroll position em ref
 - [x] G10: Botão "Ver logs de sincronização" não funcional [FEITO]
   - Implementar modal/log ou remover botão
-- G11: Teclado numérico mobile cobre o campo
-  - Considerar teclado customizado em mobile
+- [x] G11: Teclado numérico mobile cobre o campo [FEITO v4.7.4]
+  - Ajustado modais de estoque para se comportarem como Bottom-Sheets elegantes que se posicionam perfeitamente acima do teclado virtual.
 
 ---
 

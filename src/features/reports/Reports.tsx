@@ -366,16 +366,24 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8">
-        <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
-          {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'] as ReportCategory[]).map(cat => {
-            const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
-            return (
-              <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>
-                {isAlert && <span>⚠️</span>} {cat}
-              </button>
-            );
-          })}
+      <div className="flex flex-col md:flex-row justify-center items-center gap-4 border-t border-slate-100 dark:border-slate-800 pt-8 w-full">
+        <div className="relative w-full max-w-full">
+          {/* Sombra de desbotamento à esquerda para indicar scroll no mobile */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10 md:hidden"></div>
+          
+          {/* Sombra de desbotamento à direita para indicar scroll no mobile */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10 md:hidden"></div>
+
+          <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
+            {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'] as ReportCategory[]).map(cat => {
+              const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
+              return (
+                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>
+                  {isAlert && <span>⚠️</span>} {cat}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <div className="min-h-[500px]">{renderActiveReport()}</div>
