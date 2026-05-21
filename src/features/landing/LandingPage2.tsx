@@ -100,6 +100,7 @@ const screenshots = [
   { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: 'Sete tipos de relatório: financeiro, produtos, equipe, tudo organizado por turno' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe', desc: 'Cada funcinário com seu nível de acesso: quem pode cancelar, quem pode fechar o caixa' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Um log que mostra quem fez o quê, quando. Se algo estranho acontecer, você rastreia.' },
+  { src: '/landing_assets/assets/dashboard_real.png', label: 'Cozinha', desc: 'Fila de pedidos touch-screen para os cozinheiros, totalmente integrada com alarmes sonoros em tempo real.' },
 ];
 
 const ScreenshotGallery: React.FC = () => {
@@ -550,6 +551,7 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="🚨" title="Velocidade de Estoque" desc="O sistema calcula a velocidade de venda e avisa se um produto corre risco de acabar nas próximas horas." accent="emerald" />
             <FeatureCard icon="📊" title="Lista de Compras" desc="Gere sua lista de reposição baseada no giro real dos últimos 7 dias e compartilhe pelo WhatsApp em um clique." accent="emerald" />
             <FeatureCard icon="⏰" title="Detector de Mesa Travada" desc="O sistema identifica mesas ociosas e alerta o garçom para oferecer uma nova rodada, otimizando o giro do seu bar." accent="emerald" />
+            <FeatureCard icon="🍳" title="Monitor de Cozinha" desc="Fila touch reativa para cozinheiros com som de campainha sincronizado em tempo real nos aparelhos dos garçons." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}
@@ -675,6 +677,9 @@ export const LandingPage2: React.FC = () => {
               'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
               'Smart Stock Híbrido & Hot Items (v4.9.0)',
               'Régua de Cobrança Educada (Pendura) (v4.9.0)',
+              'Monitor de Cozinha Touch Sincronizado (v4.9.5)',
+              'Campainha de Balcão & Toasts Reativos (v4.9.5)',
+              'Travas de Segurança para Contas Fechadas (v4.9.5)',
               'Validação Anti-Erro (v4.7.3)',
               'Confirmação Segura (v4.7.2)',
               'Admin & Logout Guard (v4.7.3)',
@@ -797,6 +802,7 @@ export const LandingPage2: React.FC = () => {
               { f: 'Radar de Prejuízo (CMV/Giro)', b: true, t: false },
               { f: 'Smart Stock Híbrido & Hot Items', b: true, t: false },
               { f: 'Régua de Cobrança (Pendura)', b: true, t: false },
+              { f: 'Monitor de Cozinha Reativo (Ding! 🛎️)', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">

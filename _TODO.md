@@ -25,7 +25,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### Gestão Financeira & Inteligência de Negócio
 
-1. **Radar de Prejuízo** (produto que parece vender mas dá pouco lucro)
+1. [x] **Radar de Prejuízo** [FEITO] (produto que parece vender mas dá pouco lucro)
    - Mostrar quais produtos Vendem muito, mas geram pouca margem
    - Sugestão automática de promover itens mais lucrativos
    - Complexidade: baixa
@@ -61,17 +61,17 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### Gestão de Estoque & Compras
 
-5. **Alerta de Produto Acabando (Smart Stock Warning)**
+5. [x] **Alerta de Produto Acabando (Smart Stock Warning)** [FEITO]
    - "Heineken Long Neck vai acabar em ~35 vendas (~3h)"
    - Calcula velocidade média de venda por hora
    - UI simples com alerta visual
-
-6. **Sugestão de Reposição Automática**
+ 
+6. [x] **Sugestão de Reposição Automática** [FEITO]
    - Sugestão de compra semanal baseada em média dos últimos 7 dias
    - Exemplo: "Heineken: +120, Original: +80, Carvão: +6 Sacos"
    - Não precisa IA — só médias simples
-
-7. **Detector de Produto Morto**
+ 
+7. [x] **Detector de Produto Morto** [FEITO]
    - Identifica itens que não vendem há X dias
    - Mostra última venda, estoque atual
    - Sugestão: promoção ou remoção do cardápio
@@ -81,7 +81,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### Experiência do Cliente & Operações
 
-8. [x] **Modo Happy Hour Automático**
+8. [x] **Modo Happy Hour Automático** [FEITO]
    - Ativa em horário configurado (ex: 18:00)
    - Produtos mudam preço automaticamente
    - Diferencial: ativa sozinho, sem intervenção
@@ -92,7 +92,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Ajuda novos funcionários a identificar itens rapidamente
    - Complexidade: quase zero
 
-10. [x] **Modo Evento / Festa**
+10. [x] **Modo Evento / Festa** [FEITO]
     - Ativa modo que ignora mesas, tudo vira venda expressa
     - Perfeito para festivais, open bar, eventos
     - Muito simples de implementar
@@ -171,25 +171,25 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 - [x] Links de rodapé não funcionam na LP [FEITO]
 - [x] LP feia com abordagem ELITE. Mudar para "Simplicidade + Inteligência". [FEITO]
 
-### Bugs Identificados na Revisão de Código (Maio/2026)
+### Bugs Identificados na Revisão de Código (Maio/2026) [FEITO]
 
-- **[CRÍTICO] useAppStore.ts:91** - Typo em stockBalances
+- [x] **[CRÍTICO] useAppStore.ts:91** - Typo em stockBalances [FEITO]
   ```tsx
   const balances: Record<string, number> = {};  // ERRO:Record<string
   ```
   Deveria ser: `Record<string, number> = {};` (sem vírgula após string)
 
-- **[CRÍTICO] ShiftControl.tsx:100** - Variável currentDifference usada sem valor inicial
+- [x] **[CRÍTICO] ShiftControl.tsx:100** - Variável currentDifference usada sem valor inicial [FEITO]
   - Verificar se `openingBalance` e `expectedCashInDrawer` estão sendo passados corretamente para o modal de conferência
   - O cálculo parece existir mas precisa validar se não há referência a variável não inicializada
 
-- **[ERRO] Reports.tsx:4** - Importação não utilizada
+- [x] **[ERRO] Reports.tsx:4** - Importação não utilizada [FEITO]
   ```tsx
   import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService';
   ```
   - Parece estar em uso (linha 53, 62) mas precisa verificar se o serviço existe
 
-- **Fluxo de Fechamento de Turno** - Verificar se a lógica de "diferença visível" está funcionando em tempo real (C4)
+- [x] **Fluxo de Fechamento de Turno** - Verificar se a lógica de "diferença visível" está funcionando em tempo real (C4) [FEITO]
 
 ---
 
@@ -221,7 +221,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Considerar F4 ou Ctrl+Enter
 - C4: Fechamento de turno sem "diferença" visível
   - Toggle opcional para revelar diferença em tempo real
-- C5: Seleção de produto no inventário por texto
+- [x] C5: Seleção de produto no inventário por texto [FEITO]
   - Substituir por dropdown com busca
 - C6: Filtro de datas não mostra datas selecionadas claramente
   - Destacar período com badge maior
@@ -243,7 +243,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 - [x] E1: Sidebar não colapsa corretamente em tablets
   - Adicionada transição suave de 300ms no overlay e container principal.
-- E3: Modal de payment panel em mobile sem back button
+- [x] E3: Modal de payment panel em mobile sem back button [FEITO]
   - Adicionar header com "X" e "Voltar" claros
 - E4: Header não mostra nome da unidade em mobile
   - Mostrar nome em texto maior ou badge destacado
@@ -275,7 +275,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Adicionada opacidade e badge "ESGOTADO" apenas se controle de estoque estiver ativo.
 - G7: Navegação entre tabs perde scroll position
   - Armazenar scroll position em ref
-- G10: Botão "Ver logs de sincronização" não funcional
+- [x] G10: Botão "Ver logs de sincronização" não funcional [FEITO]
   - Implementar modal/log ou remover botão
 - G11: Teclado numérico mobile cobre o campo
   - Considerar teclado customizado em mobile
