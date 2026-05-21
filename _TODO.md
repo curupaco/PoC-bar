@@ -97,7 +97,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Perfeito para festivais, open bar, eventos
     - Muito simples de implementar
 
-11. **QR Code da Mesa** [FEITO v4.7.3]
+11. [x] **QR Code da Mesa** [FEITO v4.7.3]
     - Cliente escaneia e vê conta ou paga
     - MVP: QR mostra conta, garçom ganha tempo
 
@@ -167,7 +167,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ## 🐛 Correções & Bugs (A Fazer)
 
-- Vínculo de novos bares e fracking não funciona
+- [x] Vínculo de novos bares e fracking não funciona [FEITO]
 - [x] Links de rodapé não funcionam na LP [FEITO]
 - [x] LP feia com abordagem ELITE. Mudar para "Simplicidade + Inteligência". [FEITO]
 
@@ -225,7 +225,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Substituir por dropdown com busca
 - C6: Filtro de datas não mostra datas selecionadas claramente
   - Destacar período com badge maior
-- C7: Edição de senha sem saber a atual
+- [x] C7: Edição de senha sem saber a atual
   - Toggle "Alterar senha" só exibe campo quando marcado
 - [x] C9: Atalhos de teclado não indicados
   - Adicionar painel de "Atalhos Disponíveis" acessível via ícone ?
