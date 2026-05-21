@@ -86,8 +86,6 @@ const touchMetadata = async (url: string, token: string, path: string | undefine
   const unitId = parts[unitIndex + 1];
   const collection = parts[unitIndex + 2]; 
 
-  if (collection === 'openTabs') return; 
-
   const metaPath = `data/units/${unitId}/_meta/${collection}_ts`;
   const targetUrl = getFirebaseUrl(url, token, metaPath);
 
