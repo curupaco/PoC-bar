@@ -29,6 +29,8 @@ import { LandingPage } from './features/landing/LandingPage';
 import { LandingPage2 } from './features/landing/LandingPage2';
 import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
 import { MinimalistMenu } from './features/landing/MinimalistMenu';
+import { TodoViewer } from './features/todo/TodoViewer';
+
 
 export const App: React.FC = () => {
   // 1. App Hooks
@@ -142,6 +144,9 @@ export const App: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlUnitId = urlParams.get('u');
     return <MinimalistMenu products={store.products} unitName={barName || activeUnitName} unitId={urlUnitId || store.validatedActiveUnitId} syncConfig={store.syncConfig} barName={barName} />;
+  }
+  if (window.location.pathname.startsWith('/todo') || window.location.pathname === '/todo') {
+    return <TodoViewer />;
   }
   if (!import.meta.env.VITE_FIREBASE_API_KEY) return <FirebaseGuard />;
   if (!currentUser) return <Login onLogin={(u, p) => handleLogin(u, p, store.users)} isLoading={store.dbStatus === 'loading' && store.users.length === 0} error={loginError} />;

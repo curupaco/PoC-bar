@@ -1,4 +1,5 @@
 User-agent: *
+Disallow: /todo
 Allow: /
 
 Sitemap: https://botequista.app/sitemap.xml
