@@ -337,26 +337,51 @@ export const POS: React.FC<POSProps> = ({
       {!activeTabId ? (
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-6 animate-in fade-in p-1">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
-            <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Vendas</h2>
-            <div className="flex w-full sm:w-auto gap-3 items-center flex-wrap sm:flex-nowrap">
-              <button onClick={() => setShowShortcutsModal(true)} className="flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[10px] tracking-widest transition-colors mr-2">
-                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center">?</span>
-                <span className="hidden md:inline">Atalhos</span>
-              </button>
-              
+            <div className="flex justify-between items-center w-full sm:w-auto">
+              <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Vendas</h2>
               <button 
-                onClick={() => setIsEventMode(!isEventMode)}
-                className={`flex items-center gap-2 px-4 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all border-2 ${isEventMode ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
+                onClick={() => setShowShortcutsModal(true)} 
+                className="sm:hidden flex items-center gap-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[9px] tracking-widest transition-colors"
               >
-                <span>🎉</span>
-                <span className="hidden md:inline">Modo Evento</span>
+                <span className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center font-black">?</span>
+                <span>Atalhos</span>
               </button>
+            </div>
+            <div className="flex w-full sm:w-auto gap-3 items-center">
+              <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center sm:gap-3">
+                <button 
+                  onClick={() => setShowShortcutsModal(true)} 
+                  className="hidden sm:flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[10px] tracking-widest transition-colors mr-2"
+                >
+                  <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center font-black">?</span>
+                  <span>Atalhos</span>
+                </button>
+                
+                <button 
+                  onClick={() => setIsEventMode(!isEventMode)}
+                  className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-3 py-3 sm:px-4 sm:py-4 rounded-2xl font-black uppercase tracking-wider transition-all border-2 text-center
+                     ${isEventMode ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400'}`}
+                >
+                  <span className="text-base sm:text-sm">🎉</span>
+                  <span className="text-[8px] sm:text-[10px] tracking-tight leading-tight sm:leading-normal">M. Evento</span>
+                </button>
 
-              <button onClick={handleQuickSale} className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all flex items-center justify-center gap-2">
-                <span>⚡</span>
-                <span className="hidden sm:inline">Venda Rápida</span>
-              </button>
-              <button onClick={() => setIsAddingTab(true)} className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl transition-all">Abrir Mesa</button>
+                <button 
+                  onClick={handleQuickSale} 
+                  className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-3 sm:px-8 sm:py-4 rounded-2xl font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all text-center"
+                >
+                  <span className="text-base sm:text-xs">⚡</span>
+                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">V. Rápida</span>
+                </button>
+
+                <button 
+                  onClick={() => setIsAddingTab(true)} 
+                  className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-3 sm:px-10 sm:py-4 rounded-2xl font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all text-center"
+                >
+                  <span className="text-base sm:text-xs">🪑</span>
+                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Abrir Mesa</span>
+                </button>
+              </div>
             </div>
           </div>
           

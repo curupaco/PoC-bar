@@ -77,6 +77,11 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Sugestão: promoção ou remoção do cardápio
    - Donos adoram limpar cardápio
 
+8. **Registro de Perda & Desperdício de Estoque**
+   - Módulo simples no estoque para registrar perdas (quebras, consumo interno, vencimento)
+   - Permite manter estoque físico e contábil 100% integrados
+   - Complexidade: baixa
+
 ---
 
 ### Experiência do Cliente & Operações
@@ -119,6 +124,16 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 16. [x] **Tempo Médio de Mesa** [FEITO]
     - "1h 34min" ou "Mesa 12: 2h 20min"
     - Ajuda a medir giro das mesas
+
+17. **QR Code Pix Dinâmico no PDV**
+    - Exibe um QR Code na tela de pagamento do Pix com o valor exato da conta
+    - Evita erros de digitação e filas no caixa
+    - Complexidade: baixa
+
+18. **Mensagem de Fidelidade Pós-Venda (WhatsApp)**
+    - Permite enviar agradecimento rápido via WhatsApp Web após fechamento completo da venda
+    - Oferece benefício de cortesia automático para estimular o retorno do cliente
+    - Complexidade: baixa
 
 ---
 
