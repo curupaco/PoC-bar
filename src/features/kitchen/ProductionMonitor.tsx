@@ -1,6 +1,32 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Tab, SaleItem, Sale, Product } from '../../types';
 
+const playKitchenBell = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    // Oscilador para o ding agudo metálico
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(987.77, ctx.currentTime); // Nota B5
+    
+    gainNode.gain.setValueAtTime(0.4, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.3);
+  } catch (err) {
+    console.warn("Falha ao reproduzir som da cozinha:", err);
+  }
+};
+
 interface ProductionMonitorProps {
   openTabs: Tab[];
   onUpdateTabItem: (tabId: string, item: SaleItem) => Promise<void>;
@@ -15,7 +41,33 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
   products = []
 }) => {
   const [filter, setFilter] = useState<'PENDING' | 'READY'>('PENDING');
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('kitchen_sound_enabled');
+    return saved !== 'false';
+  });
   const [, setTick] = useState(0);
+
+  // Calcula total de itens pendentes ativos
+  const pendingCount = useMemo(() => {
+    let count = 0;
+    openTabs.forEach(tab => {
+      const itemsList = Array.isArray(tab.items) 
+        ? tab.items 
+        : (Object.values(tab.items || {}) as SaleItem[]);
+      count += itemsList.filter(item => item.productionStatus === 'PENDING').length;
+    });
+    return count;
+  }, [openTabs]);
+
+  const prevPendingCountRef = React.useRef(pendingCount);
+
+  // Efeito reativo para tocar o sino de comanda quando novo pedido entra na fila
+  useEffect(() => {
+    if (soundEnabled && pendingCount > prevPendingCountRef.current) {
+      playKitchenBell();
+    }
+    prevPendingCountRef.current = pendingCount;
+  }, [pendingCount, soundEnabled]);
 
   // Live timer tick
   useEffect(() => {
@@ -171,33 +223,75 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
           </p>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex bg-slate-950 p-2 rounded-2xl border border-slate-800 self-stretch sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-stretch sm:self-auto w-full sm:w-auto">
+          {/* Controle de Som de Notificação */}
           <button
-            onClick={() => setFilter('PENDING')}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 ${
-              filter === 'PENDING'
-                ? 'bg-red-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
+            onClick={() => {
+              const newVal = !soundEnabled;
+              setSoundEnabled(newVal);
+              localStorage.setItem('kitchen_sound_enabled', String(newVal));
+              if (newVal) {
+                // Toca sino rápido de confirmação ao ativar
+                try {
+                  const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                  if (AudioContextClass) {
+                    const ctx = new AudioContextClass();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.4);
+                  }
+                } catch (e) {}
+              }
+            }}
+            className={`px-4 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 border flex-1 sm:flex-none ${
+              soundEnabled 
+                ? 'bg-slate-800 text-emerald-400 border-emerald-500/20 hover:bg-slate-800/80' 
+                : 'bg-slate-800 text-slate-500 border-slate-700/50 hover:bg-slate-800/80'
             }`}
+            title={soundEnabled ? "Silenciar notificações sonoras" : "Ativar notificações sonoras"}
+            type="button"
           >
-            <span>Fila</span>
-            {consolidatedPending.length > 0 && (
-              <span className="bg-white text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-md min-w-[16px] text-center">
-                {consolidatedPending.reduce((acc, c) => acc + c.qty, 0)}
-              </span>
-            )}
+            <span>{soundEnabled ? '🔊' : '🔇'}</span>
+            <span>{soundEnabled ? 'Sons Ativos' : 'Mudo'}</span>
           </button>
-          <button
-            onClick={() => setFilter('READY')}
-            className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 ${
-              filter === 'READY'
-                ? 'bg-emerald-600 text-white shadow-lg'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <span>Prontos / Entregues</span>
-          </button>
+
+          {/* Navigation Tabs */}
+          <div className="flex bg-slate-950 p-2 rounded-2xl border border-slate-800 flex-[2] sm:flex-none">
+            <button
+              onClick={() => setFilter('PENDING')}
+              className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 ${
+                filter === 'PENDING'
+                  ? 'bg-red-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              type="button"
+            >
+              <span>Fila</span>
+              {consolidatedPending.length > 0 && (
+                <span className="bg-white text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded-md min-w-[16px] text-center">
+                  {consolidatedPending.reduce((acc, c) => acc + c.qty, 0)}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setFilter('READY')}
+              className={`flex-1 sm:flex-none px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2 ${
+                filter === 'READY'
+                  ? 'bg-emerald-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              type="button"
+            >
+              <span>Prontos</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -262,10 +356,24 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
             return (
               <div 
                 key={ticket.tabId} 
-                className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-[35px] shadow-sm flex flex-col justify-between overflow-hidden transition-all duration-300 hover:border-red-500/20 hover:shadow-xl"
+                className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-[35px] shadow-sm flex flex-col justify-between overflow-hidden transition-all duration-300 hover:border-red-500/20 hover:shadow-xl relative"
               >
+                {/* Barra de Progresso de Atraso (Heatmap de Urgência) */}
+                {filter === 'PENDING' && (
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-100 dark:bg-slate-800/60">
+                    <div 
+                      className={`h-full transition-all duration-500 ${
+                        timeSinceLastItem >= 20 ? 'bg-red-500 animate-pulse' :
+                        timeSinceLastItem >= 10 ? 'bg-amber-500' :
+                        'bg-emerald-500'
+                      }`}
+                      style={{ width: `${Math.min((timeSinceLastItem / 20) * 100, 100)}%` }}
+                    />
+                  </div>
+                )}
+
                 {/* Ticket Header */}
-                <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50/50 dark:bg-slate-950/20">
+                <div className="pt-7 pb-6 px-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-start bg-slate-50/50 dark:bg-slate-950/20">
                   <div className="min-w-0 pr-3">
                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Comanda</span>
                     <h4 className="text-lg font-black uppercase italic truncate tracking-tight text-slate-800 dark:text-white leading-none mt-1">
