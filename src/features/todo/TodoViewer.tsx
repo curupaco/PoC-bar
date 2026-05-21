@@ -96,6 +96,17 @@ export const TodoViewer: React.FC = () => {
         continue;
       }
 
+      // Ignorar seções que são apenas textos explicativos, marketing ou resumos de priorização
+      const sectionUpper = currentMainSection.toUpperCase();
+      if (
+        sectionUpper.includes('LANDIGPAGE') || 
+        sectionUpper.includes('LANDINGPAGE') || 
+        sectionUpper.includes('PRIORIZAÇÃO') ||
+        sectionUpper.includes('PRIORIZACAO')
+      ) {
+        continue;
+      }
+
       // Ignorar separadores horizontais e textos introdutórios
       if (trimmed.startsWith('---') || trimmed.startsWith('Este arquivo é destinado')) continue;
 
