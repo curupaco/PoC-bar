@@ -84,6 +84,7 @@ export const TodoViewer: React.FC = () => {
         currentMainSection = line.replace('## ', '').trim();
         // Limpar emojis ou tags se necessário, mas manter clean
         currentMainSection = currentMainSection.replace(/\[FEITO\]/gi, '').trim();
+        currentTask = null;
         continue;
       }
 
@@ -91,16 +92,22 @@ export const TodoViewer: React.FC = () => {
       if (line.startsWith('### ')) {
         currentSubcategory = line.replace('### ', '').trim();
         currentSubcategory = currentSubcategory.replace(/\[FEITO\]/gi, '').trim();
+        currentTask = null;
         continue;
       }
 
       // Ignorar separadores horizontais e textos introdutórios
       if (trimmed.startsWith('---') || trimmed.startsWith('Este arquivo é destinado')) continue;
 
-      // Detectar uma tarefa (linhas que começam com -, * ou números)
-      const isTaskLine = trimmed.startsWith('- ') || 
-                         trimmed.startsWith('* ') || 
-                         /^\d+\.\s+/.test(trimmed);
+      // Identificar se a linha possui indentação de sub-item (começa com espaços ou tabs)
+      const hasLeadingWhitespace = line.startsWith(' ') || line.startsWith('\t');
+
+      // Uma tarefa principal (Feature) deve começar no início da linha (coluna 0) e ter um marcador
+      const isTaskLine = !hasLeadingWhitespace && (
+        trimmed.startsWith('- ') || 
+        trimmed.startsWith('* ') || 
+        /^\d+\.\s+/.test(trimmed)
+      );
 
       if (isTaskLine) {
         // Tratar tarefas concluídas
@@ -142,9 +149,14 @@ export const TodoViewer: React.FC = () => {
           subcategory: currentSubcategory
         };
         tasks.push(currentTask);
-      } else if (currentTask && (line.startsWith('    -') || line.startsWith('\t-') || line.startsWith('  -') || line.startsWith('  '))) {
-        // Sub-itens ou detalhes da tarefa atual (identação)
-        const detailText = trimmed.replace(/^-\s+/, '').replace(/\*\*/g, '').trim();
+      } else if (currentTask && hasLeadingWhitespace) {
+        // Sub-itens ou detalhes da tarefa atual (identação detectada)
+        const detailText = trimmed
+          .replace(/^[-*]\s+/, '') // remove leading "-" or "*" list markers if any
+          .replace(/^\d+\.\s+/, '') // remove leading "1. " list markers if any
+          .replace(/^\[[x\s]\]\s+/i, '') // remove checkboxes inside sub-tasks if any
+          .replace(/\*\*/g, '') // remove bold markers
+          .trim();
         if (detailText) {
           currentTask.details.push(detailText);
         }
@@ -404,74 +416,105 @@ export const TodoViewer: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 gap-3">
-                          {subGroups[subCategory].map(task => (
-                            <div 
-                              key={task.id}
-                              className={`p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-start gap-4 ${task.completed ? 'bg-slate-900/30 border-slate-850 opacity-70' : 'bg-slate-900 border-slate-800 hover:border-slate-700'}`}
-                            >
-                              {/* Checkbox Decorativo */}
-                              <div className="flex shrink-0 items-start mt-0.5">
-                                <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs border ${task.completed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-950 border-slate-800 text-slate-600'}`}>
-                                  {task.completed ? '✓' : ''}
-                                </span>
-                              </div>
+                          {subGroups[subCategory].map(task => {
+                            // Estilos dinâmicos premium baseados na prioridade e status do item
+                            let cardStyle = 'bg-slate-900 border-slate-800 hover:border-slate-700';
+                            let leftBorder = 'border-l-4 border-l-slate-700';
 
-                              {/* Conteúdo Principal */}
-                              <div className="flex-1 min-w-0 space-y-3">
-                                <div>
-                                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                                    {/* Priority Badges */}
-                                    {task.priority === 'CRÍTICO' && (
-                                      <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">CRÍTICO</span>
-                                    )}
-                                    {task.priority === 'ERRO' && (
-                                      <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">INCIDENTE</span>
-                                    )}
-                                    {task.priority === 'UX' && (
-                                      <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">UX / REFINAMENTO</span>
-                                    )}
-                                    {task.completed && (
-                                      <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">✓ CONCLUÍDO</span>
-                                    )}
-                                  </div>
-                                  
-                                  <p className={`text-sm font-black uppercase tracking-tight ${task.completed ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
-                                    {task.text}
-                                  </p>
+                            if (task.completed) {
+                              cardStyle = 'bg-slate-900/35 border-slate-850 opacity-65';
+                              leftBorder = 'border-l-4 border-l-emerald-500';
+                            } else {
+                              switch (task.priority) {
+                                case 'CRÍTICO':
+                                  cardStyle = 'bg-slate-900 border-slate-800 hover:border-red-500/25 shadow-lg shadow-red-950/10';
+                                  leftBorder = 'border-l-4 border-l-red-500';
+                                  break;
+                                case 'ERRO':
+                                  cardStyle = 'bg-slate-900 border-slate-800 hover:border-amber-500/25 shadow-lg shadow-amber-950/10';
+                                  leftBorder = 'border-l-4 border-l-amber-500';
+                                  break;
+                                case 'UX':
+                                  cardStyle = 'bg-slate-900 border-slate-800 hover:border-blue-500/25';
+                                  leftBorder = 'border-l-4 border-l-blue-500';
+                                  break;
+                              }
+                            }
+
+                            return (
+                              <div 
+                                key={task.id}
+                                className={`p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-start gap-4 ${cardStyle} ${leftBorder}`}
+                              >
+                                {/* Checkbox Decorativo */}
+                                <div className="flex shrink-0 items-start mt-0.5">
+                                  <span className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs border ${task.completed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-950 border-slate-800 text-slate-600'}`}>
+                                    {task.completed ? '✓' : ''}
+                                  </span>
                                 </div>
 
-                                {/* Detalhes / Subitens */}
-                                {task.details.length > 0 && (
-                                  <ul className="space-y-1.5 pl-3 border-l-2 border-slate-850">
-                                    {task.details.map((detail, dIdx) => (
-                                      <li key={dIdx} className="text-[11px] font-medium text-slate-400 flex items-start gap-2">
-                                        <span className="text-slate-600 mt-0.5">•</span>
-                                        <span className="uppercase">{detail}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-
-                                {/* Bloco de Código Técnico */}
-                                {task.codeBlock && (
-                                  <div className="bg-slate-950 rounded-xl border border-slate-850 overflow-hidden mt-3 relative group/terminal shadow-inner">
-                                    <div className="bg-slate-900 px-4 py-2 flex justify-between items-center border-b border-slate-850">
-                                      <span className="text-[8px] font-mono text-slate-500 tracking-widest uppercase">Visualizador Técnico / Código de Referência</span>
-                                      <button 
-                                        onClick={() => handleCopyCode(task.id, task.codeBlock || '')}
-                                        className="text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
-                                      >
-                                        {copiedCodeId === task.id ? 'Copiado! ✓' : 'Copiar'}
-                                      </button>
+                                {/* Conteúdo Principal */}
+                                <div className="flex-1 min-w-0 space-y-3">
+                                  <div>
+                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                      {/* Priority Badges */}
+                                      {task.priority === 'CRÍTICO' && (
+                                        <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">CRÍTICO</span>
+                                      )}
+                                      {task.priority === 'ERRO' && (
+                                        <span className="bg-orange-500/10 text-orange-400 border border-orange-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">INCIDENTE</span>
+                                      )}
+                                      {task.priority === 'UX' && (
+                                        <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">UX / REFINAMENTO</span>
+                                      )}
+                                      {task.completed && (
+                                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[7px] font-black uppercase tracking-widest px-2 py-0.5 rounded">✓ CONCLUÍDO</span>
+                                      )}
                                     </div>
-                                    <pre className="p-4 text-xs font-mono text-emerald-400 overflow-x-auto whitespace-pre no-scrollbar leading-relaxed">
-                                      <code>{task.codeBlock}</code>
-                                    </pre>
+                                    
+                                    <p className={`text-sm font-semibold tracking-tight ${task.completed ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+                                      {task.text}
+                                    </p>
                                   </div>
-                                )}
+
+                                  {/* Detalhes / Subitens (Complementos) */}
+                                  {task.details.length > 0 && (
+                                    <div className="mt-3 bg-slate-950/45 p-4 rounded-xl border border-slate-850/60 space-y-2">
+                                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1.5 select-none mb-1">
+                                        <span>⚙️</span> Complementos & Detalhes
+                                      </p>
+                                      <ul className="space-y-1.5 pl-1">
+                                        {task.details.map((detail, dIdx) => (
+                                          <li key={dIdx} className="text-[11px] font-medium text-slate-400 flex items-start gap-2.5 leading-relaxed">
+                                            <span className="text-red-500/60 mt-1.5 text-[6px] shrink-0">▪</span>
+                                            <span>{detail}</span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+
+                                  {/* Bloco de Código Técnico */}
+                                  {task.codeBlock && (
+                                    <div className="bg-slate-950 rounded-xl border border-slate-850 overflow-hidden mt-3 relative group/terminal shadow-inner">
+                                      <div className="bg-slate-900 px-4 py-2 flex justify-between items-center border-b border-slate-850">
+                                        <span className="text-[8px] font-mono text-slate-500 tracking-widest uppercase">Visualizador Técnico / Código de Referência</span>
+                                        <button 
+                                          onClick={() => handleCopyCode(task.id, task.codeBlock || '')}
+                                          className="text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors"
+                                        >
+                                          {copiedCodeId === task.id ? 'Copiado! ✓' : 'Copiar'}
+                                        </button>
+                                      </div>
+                                      <pre className="p-4 text-xs font-mono text-emerald-400 overflow-x-auto whitespace-pre no-scrollbar leading-relaxed">
+                                        <code>{task.codeBlock}</code>
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
