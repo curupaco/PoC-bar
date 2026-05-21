@@ -30,7 +30,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Sugestão automática de promover itens mais lucrativos
    - Complexidade: baixa
 
-2. **Radar de Crescimento do Bar**
+2. [x] **Radar de Crescimento do Bar** [FEITO]
    - Evolução semanal/mensal (% vendas, ticket médio)
    - Alerta de queda vs período anterior
    - Transforma o sistema em painel de negócio
@@ -101,22 +101,22 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Cliente escaneia e vê conta ou paga
     - MVP: QR mostra conta, garçom ganha tempo
 
-12. **Resumo Diário Automático (WhatsApp)** [FEITO]
+12. [x] **Resumo Diário Automático (WhatsApp)** [FEITO]
     - Gera resumo do dia no fim do turno
     - Envia para WhatsApp: faturamento, mesas, ticket médio, top produto, garçom destaque
 
-13. **Ticket Médio por Mesa** [FEITO]
+13. [x] **Ticket Médio por Mesa** [FEITO]
     - Dashboard: "Ticket médio hoje: R$84, ↑ +12% vs ontem"
 
-14. **Top Combos Vendidos** [FEITO]
+14. [x] **Top Combos Vendidos** [FEITO]
     - Detecta automaticamente: "Heineken + Batata Frita"
     - Sugestão de criar combos promocionais
 
-15. **Ranking de Produtos por Lucro** [FEITO v4.7.3]
+15. [x] **Ranking de Produtos por Lucro** [FEITO v4.7.3]
     - Curva ABC por faturamento + custo = lucro real
     - Dashboard: "Top produtos que mais dão lucro"
 
-16. **Tempo Médio de Mesa** [FEITO]
+16. [x] **Tempo Médio de Mesa** [FEITO]
     - "1h 34min" ou "Mesa 12: 2h 20min"
     - Ajuda a medir giro das mesas
 
@@ -130,7 +130,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Mesa fechada com valor reduzido após consumo
     - Previne fraude interna (raro em POS)
 
-18. **Detector de Mesa Travada** [FEITO]
+18. [x] **Detector de Mesa Travada** [FEITO]
     - Mesa aberta há muito tempo sem consumir
     - Sugestão: Oferecer nova rodada
     - Aumenta faturamento
@@ -144,17 +144,17 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Identifica quem vende adicionais, sobremesas
     - Ferramenta de treinamento de equipe
 
-20. **Sugestão de Combo Inteligente**
+20. [x] **Sugestão de Combo Inteligente** [FEITO]
     - Detecta combinações frequentes: "Heineken + Batata"
     - Sugestão: "Criar combo Heineken + Batata por R$18"
     - Aumenta ticket médio naturalmente
 
-21. **Detector de Horário Morto**
+21. [x] **Detector de Horário Morto** [FEITO]
     - Identifica horários fracos (ex: Segunda 16h-18h com 22% ocupação)
     - Sugestão automática: "Happy hour nesse horário"
     - Consultoria automática de negócio
 
-22. **Feed de Insights Automáticos**
+22. [x] **Feed de Insights Automáticos** [FEITO]
     - Dashboard diário: "Heineken vendeu 37% mais", "Mesa média R$92"
     - Faz o dono sentir que "o sistema pensa por mim"
 
