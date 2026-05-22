@@ -674,6 +674,7 @@ export const LandingPage2: React.FC = () => {
               'Mapa de horário de pico',
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
+              'Registro de Perda & Desperdício (v5.0.0)',
               'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
               'Smart Stock Híbrido & Hot Items (v4.9.0)',
               'Régua de Cobrança Educada (Pendura) (v4.9.0)',
@@ -716,6 +717,7 @@ export const LandingPage2: React.FC = () => {
               { title: 'Cardápio Digital QR', desc: 'Gere um link para os clientes visualizarem seu menu atualizado direto no celular, sem baixar nada.', icon: '📱', tag: 'ATENDIMENTO' },
               { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que registra cada fechamento de caixa.', icon: '🛡️', tag: 'SEGURANÇA' },
               { title: 'Gestão de Fiado (Pendura)', desc: 'Histórico de consumo de cada cliente. Régua de cobrança educada para reaver valores pendentes com organização.', icon: '📋', tag: 'GESTÃO' },
+              { title: 'Controle de Desperdício', desc: 'Registre perdas por validade, quebra ou consumo da equipe. Acompanhe gráficos dinâmicos de ralo de caixa e proteja suas margens.', icon: '🚨', tag: 'ESTOQUE' },
             ].map((f, i) => (
               <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
@@ -803,6 +805,7 @@ export const LandingPage2: React.FC = () => {
               { f: 'Smart Stock Híbrido & Hot Items', b: true, t: false },
               { f: 'Régua de Cobrança (Pendura)', b: true, t: false },
               { f: 'Monitor de Cozinha Reativo (Ding! 🛎️)', b: true, t: false },
+              { f: 'Controle de Perdas & Desperdício', b: true, t: false },
               { f: 'Grátis', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">

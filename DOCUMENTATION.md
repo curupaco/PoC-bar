@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 4.9.5 (Kitchen Monitor & Realtime Alerts)
+**Versão:** 5.0.0 (Inventory Loss Tracking & Audit-Aware Dashboard)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -25,6 +25,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Happy Hour Automático (v4.8.1):** Transição de preços automatizada com badges promocionais.
 *   **Radar de Prejuízo (v4.9.0):** Varredura automática em tempo real que cruza CMV e vendas semanais para apontar itens com margens abaixo de 30%.
 *   **Smart Stock Híbrido (v4.9.0):** Alertas de estoque preditivos para itens controlados (ETA de esgotamento) e modo **Alta Demanda (Hot Item)** para produtos sem estoque.
+*   **Registro de Perdas & Desperdício de Estoque (v5.0.0):** Rastreabilidade financeira e auditoria de descartes com preço de custo histórico e isolamento para unidades sem estoque.
 
 ---
 
@@ -74,6 +75,12 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 5.  **Campainha e Alertas Globais (Ding! 🛎️):** Toca som físico sintetizado via Web Audio API e envia Toasts ("*Pedido pronto! Mesa X*") de forma coordenada para todos os dispositivos logados simultaneamente ao concluir pratos, sem dependência de internet ou arquivos locais.
 6.  **Proteção contra Sobrecarga:** Um guard do React Ref impede que a sincronização inicial de dados dispare múltiplos sons ao carregar a página.
 
+### G. Controle de Perdas & Desperdício de Estoque (v5.0.0)
+1.  **Lógica de Custo Histórico:** Gravação automática do preço de custo no momento exato do descarte (`LOSS`), blindando os relatórios contra flutuações futuras de custos no cadastro de produtos.
+2.  **Isolamento de Segurança:** Unidades sem estoque (`useStock: false`) são isoladas e protegidas contra manipulações acidentais, ocultando seções de desperdício em tempo de execução.
+3.  **Logs de Auditoria de Movimentações:** Rastreamento imutável de movimentações manuais de estoque (ENTRADA, PERDA, AJUSTE), registrando data/hora, operador responsável, produto, quantidade e categoria do descarte.
+4.  **Dashboard Premium de Perdas:** Painel dedicado com KPIs de impacto financeiro no desperdício, volume descartado, impacto no CMV e análise visual por categoria.
+
 ---
 
 ## 3. Segurança e Sincronização
@@ -96,4 +103,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Maio de 2026. Botequista System v4.9.5*
+*Documentação atualizada em Maio de 2026. Botequista System v5.0.0*

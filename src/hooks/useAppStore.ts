@@ -11,7 +11,7 @@ import { mockProducts, mockCategories, mockUnits, mockUsers, mockShifts, mockOpe
 const playBellChime = () => {
   try {
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+
     // Resume immediately or request resume on click due to browser autoplay protections
     if (audioCtx.state === 'suspended') {
       const resume = () => {
@@ -29,7 +29,7 @@ const playBellChime = () => {
     // Crisp high pitch (2200 Hz)
     osc1.type = 'sine';
     osc1.frequency.setValueAtTime(2200, audioCtx.currentTime);
-    
+
     // Metallic chime second harmonic (4400 Hz)
     osc2.type = 'sine';
     osc2.frequency.setValueAtTime(4400, audioCtx.currentTime);
@@ -139,7 +139,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       safeLocalStorage.removeItem('btq_active_unit');
     }
   }, [validatedActiveUnitId, rawActiveUnitId, visibleUnits]);
-  
+
   // Memoized Stock Balances
   const stockBalances = useMemo(() => {
     const balances: Record<string, number> = {};
@@ -177,11 +177,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
             if (newItem.productionStatus === 'READY') {
               const oldItem = oldTab.items.find(i => i.id === newItem.id);
               const wasNotReady = !oldItem || oldItem.productionStatus !== 'READY';
-              
+
               if (wasNotReady) {
                 // DING DING! Pedido pronto!
                 playBellChime();
-                
+
                 // Format toast notification beautifully
                 let msg = "Pedido pronto!";
                 if (newTab.name.toUpperCase().startsWith('EXPRESSA')) {
@@ -191,7 +191,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
                 } else if (newTab.name) {
                   msg = `Pedido pronto! ${newTab.name} 🛎️`;
                 }
-                
+
                 showToast(msg, 'info');
               }
             }
@@ -445,7 +445,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
         saveLocalCache('stockTransactions', next);
         return next;
       });
-      
+
       await persist('stockTransactions', transaction, transaction.id);
 
       // Se for uma entrada, atualiza o último preço de custo no produto de forma atômica
@@ -453,14 +453,14 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
         setProducts(prev => {
           const product = prev.find(p => p.id === transaction.productId);
           if (!product) return prev;
-          
+
           const updatedProduct = { ...product, lastCostPrice: transaction.price };
           const next = prev.map(p => p.id === transaction.productId ? updatedProduct : p);
-          
+
           saveLocalCache('products', next);
           // FIX: Persiste apenas o produto alterado, não a lista inteira
-          persist('products', updatedProduct, updatedProduct.id); 
-          
+          persist('products', updatedProduct, updatedProduct.id);
+
           return next;
         });
       }
@@ -500,11 +500,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
         if (!s.items) continue;
         for (const item of s.items) {
           if (item.productId === PRODUCT_ID_DEBT_SETTLEMENT) continue;
-          
+
           // Verifica se o produto deve controlar estoque
           const product = products.find(p => p.id === item.productId);
           if (product && product.trackStock === false) continue;
-          
+
           const transaction: StockTransaction = {
             id: generateUniqueId('stk'),
             productId: item.productId,
@@ -521,11 +521,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       if (batchTransactions.length > 0) {
         // Atualiza estado local de uma vez só
         setStockTransactions(prev => {
-           const next = [...batchTransactions, ...prev].slice(0, 5000);
-           saveLocalCache('stockTransactions', next);
-           return next;
+          const next = [...batchTransactions, ...prev].slice(0, 5000);
+          saveLocalCache('stockTransactions', next);
+          return next;
         });
-        
+
         // Envia para a fila de sincronização (individualmente para auditoria atômica)
         for (const t of batchTransactions) {
           persist('stockTransactions', t, t.id);

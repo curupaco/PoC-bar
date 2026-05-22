@@ -25,16 +25,31 @@ interface ReportsProps {
   penduraThreshold?: number;
   activeUnitId?: string | null;
   syncConfig?: { url: string; key: string; email: string; pass: string }; // Config recebida do App
+  units?: Unit[];
 }
 
 type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA' | 'ESTOQUE';
 
-const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], stockTransactions = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig }) => {
+const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], stockTransactions = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig, units = [] }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
 
   const [startDate, setStartDate] = useState(() => formatDateToISO(new Date()));
   const [endDate, setEndDate] = useState(() => formatDateToISO(new Date()));
+
+  const activeUnit = useMemo(() => {
+    return units.find(u => u.id === activeUnitId);
+  }, [units, activeUnitId]);
+
+  const isStockEnabled = activeUnit?.useStock !== false;
+
+  const categoriesList = useMemo<ReportCategory[]>(() => {
+    const list: ReportCategory[] = ['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'];
+    if (!isStockEnabled) {
+      return list.filter(cat => cat !== 'ESTOQUE');
+    }
+    return list;
+  }, [isStockEnabled]);
   const [periodLabel, setPeriodLabel] = useState('HOJE');
 
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
@@ -340,7 +355,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
       case 'PRODUTOS': return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL': return <OperationalReport reportData={reportData} theme={theme} />;
-      case 'ESTOQUE': return <InventoryReport stockTransactions={stockTransactions} products={products} sales={filteredSales} theme={theme} />;
+      case 'ESTOQUE': return <InventoryReport stockTransactions={stockTransactions} products={products} sales={filteredSales} theme={theme} startDate={startDate} endDate={endDate} users={users} />;
       case 'AUDITORIA': {
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         const recentLogs = auditLogs.filter(log => log.timestamp >= sevenDaysAgo);
@@ -375,7 +390,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10 md:hidden"></div>
 
           <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
-            {(['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'] as ReportCategory[]).map(cat => {
+            {categoriesList.map(cat => {
               const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
               return (
                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>

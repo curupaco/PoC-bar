@@ -125,6 +125,13 @@ Painel dark-mode touch-friendly de alto contraste desenvolvido especialmente par
 - **Sinalização Reativa no PDV (🛎️):** O PDV avisa o garçom piscando um sino nos cards de mesa que possuem pratos prontos, enquanto a Sidebar exibe o total de pendências em tempo real.
 - **Histórico e Segurança Financeira (Fechada 🔒):** Mantém comandas fechadas/pagas visíveis na aba de "Prontos" por 2h (limite de 15 tickets). Estes tickets aparecem com uma trava de segurança e cadeado, impedindo edições manuais que possam afetar os relatórios financeiros do caixa.
 
+### 6. Registro de Perda & Desperdício de Estoque (v5.0.0)
+Módulo inteligente para rastrear descarte de insumos e mercadorias com total transparência e auditoria.
+- **Lógica de Custo Histórico:** Grava o preço de custo no momento exato do descarte (`LOSS`), protegendo relatórios financeiros contra flutuações futuras de preços de compra.
+- **Isolamento de Segurança:** Unidades que operam sem controle de estoque (`useStock: false`) são blindadas contra alterações acidentais, ocultando painéis e abas de relatórios de forma 100% dinâmica.
+- **Logs de Auditoria Imutáveis:** Rastreabilidade total contendo operador responsável, data/hora, produto, quantidade e categoria do descarte (Quebra, Vencimento, Consumo Equipe ou Erro de Preparo).
+- **Dashboard Premium:** Análise detalhada com KPIs de impacto financeiro, volume de descarte, impacto no CMV e ranking de perdas por categoria.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento
@@ -154,4 +161,4 @@ Distribuído sob licença proprietária para uso comercial restrito.
 *Designed with Offline-First Architecture, Performance and Business-Critical Reliability in mind.*
 
 ---
-*Automatic Deployment Test: 2026-05-21*
+*Automatic Deployment Test: 2026-05-22*

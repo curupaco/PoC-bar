@@ -77,7 +77,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Sugestão: promoção ou remoção do cardápio
    - Donos adoram limpar cardápio
 
-8. **Registro de Perda & Desperdício de Estoque**
+8. [x] **Registro de Perda & Desperdício de Estoque** [FEITO]
    - Módulo simples no estoque para registrar perdas (quebras, consumo interno, vencimento)
    - Permite manter estoque físico e contábil 100% integrados
    - Complexidade: baixa

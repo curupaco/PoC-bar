@@ -5,7 +5,7 @@ interface SystemDocsProps {
 }
 
 const SystemDocs: React.FC<SystemDocsProps> = ({ showToast }) => {
-  const [activePanel, setActivePanel] = useState<'OPER' | 'CAIXA' | 'FIADO' | 'FIN' | 'DICAS'>('OPER');
+  const [activePanel, setActivePanel] = useState<'OPER' | 'CAIXA' | 'FIADO' | 'FIN' | 'ESTOQUE'>('OPER');
 
   const panels = {
     OPER: {
@@ -22,7 +22,7 @@ const SystemDocs: React.FC<SystemDocsProps> = ({ showToast }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div className="p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-black text-blue-500 uppercase">Dica: Adicionais</span>
-                <p className="text-[11px] text-slate-500 mt-2">Configure o sistema para perguntar se o cliente quer gelo ou limão automaticamente ao clicar em uma bebida.</p>
+                <p className="text-[11px] text-slate-500 mt-2">Configure o sistema para perguntar se o cliente quer gelo ou limão automaticamente ao clicar in uma bebida.</p>
              </div>
              <div className="p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <span className="text-[10px] font-black text-emerald-500 uppercase">Dica: Peso</span>
@@ -78,6 +78,24 @@ const SystemDocs: React.FC<SystemDocsProps> = ({ showToast }) => {
                 <span className="text-[10px] font-black text-slate-400 uppercase">Horário de Pico</span>
                 <p className="text-[11px] text-slate-500 mt-2">Saiba exatamente quando seu bar "bomba" para reforçar o atendimento.</p>
              </div>
+          </div>
+        </div>
+      )
+    },
+    ESTOQUE: {
+      title: 'Desperdício & Perdas',
+      icon: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
+      content: (
+        <div className="space-y-6 animate-in fade-in">
+          <div className="bg-rose-50 dark:bg-rose-900/10 p-6 rounded-3xl border border-rose-100 dark:border-rose-900/20">
+             <h4 className="text-sm font-black text-rose-600 uppercase mb-3 italic">Controle de Desperdício</h4>
+             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                No módulo de Estoque, você pode registrar perdas de mercadorias especificando o motivo (<strong>Quebra, Vencimento, Consumo Equipe ou Erro de Preparo</strong>). O sistema salva automaticamente o preço de custo no momento do descarte para manter o histórico financeiro protegido.
+             </p>
+          </div>
+          <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
+             <span className="text-[10px] font-black text-rose-500 uppercase">Segurança & Isolamento</span>
+             <p className="text-[11px] text-slate-500 mt-2">Bares que não utilizam controle de estoque têm esse módulo desativado automaticamente, ocultando abas nos relatórios e bloqueando ações acidentais no inventário.</p>
           </div>
         </div>
       )

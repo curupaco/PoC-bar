@@ -120,7 +120,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
       productId: selectedProduct.id,
       unitId: activeUnitId,
       quantity: finalQty,
-      price: type === 'IN' ? numericCost : undefined,
+      price: type === 'IN' ? numericCost : (selectedProduct.lastCostPrice || 0),
       type: type === 'LOSS' ? 'LOSS' : (type === 'ADJUST' ? 'ADJUST' : 'IN'),
       reason: type === 'LOSS' ? reason : (type === 'ADJUST' ? 'Ajuste Manual' : undefined),
       timestamp: Date.now(),
@@ -148,6 +148,28 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
       .filter(i => i.recommendedRestock > 0)
       .sort((a, b) => b.recommendedRestock - a.recommendedRestock);
   }, [insights]);
+
+  if (!isStockEnabled) {
+    return (
+      <div className="max-w-4xl mx-auto py-20 px-6 text-center animate-in fade-in">
+        <div className="w-24 h-24 bg-red-100 dark:bg-red-950/30 rounded-[40px] flex items-center justify-center mx-auto mb-8 shadow-lg shadow-red-900/10 animate-pulse">
+          <span className="text-4xl">📦</span>
+        </div>
+        <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Controle de Estoque Inativo</h2>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-4 max-w-lg mx-auto leading-relaxed">
+          Esta unidade está configurada para não utilizar o controle de estoque. Para habilitar o inventário, entradas de mercadorias, registro de perdas e relatórios de desperdício:
+        </p>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-[32px] shadow-sm max-w-md mx-auto mt-8 text-left space-y-4">
+          <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Passo a passo para ativação:</p>
+          <ol className="text-xs font-bold text-slate-600 dark:text-slate-300 space-y-3 list-decimal list-inside uppercase tracking-tight">
+            <li>Acesse a tela de <strong className="text-red-600">Ajustes</strong> no menu lateral</li>
+            <li>Encontre a seção de <strong className="text-red-600">Gerenciamento de Unidades</strong></li>
+            <li>Clique no botão para ativar o <strong className="text-red-600">Controle de Estoque</strong> para a unidade ativa</li>
+          </ol>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto pb-32">

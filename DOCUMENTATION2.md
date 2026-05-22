@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v4.9.5 Kitchen Monitor & Realtime Alerts.*
+> *Material de apresentação comercial — versão v5.0.0 Inventory Loss Tracking & Audit-Aware Dashboard.*
 
 ---
 
@@ -15,15 +15,21 @@ Todo dono de bar já passou por isso:
 - **O grande gargalo:** O cozinheiro grita que o prato está pronto, mas o garçom está longe. O prato esfria, o cliente reclama e a cozinha fica desorganizada.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v4.9.5)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v5.0.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
 
-## Novidades da Versão 4.9.5 Elite 🚀
+## Novidades da Versão 5.0.0 Elite 🚀
 
 Chegamos ao nível máximo de performance. Veja o que o Botequista Elite entrega agora:
 
-### 🍳 Monitor de Cozinha e Produção Inteligente (Novo v4.9.5) 💎
+### 🚨 Registro de Perda & Desperdício de Estoque (Novo v5.0.0) 💎
+- **Lógica de Custo Histórico:** O Botequista agora grava o preço de custo histórico no momento exato em que o descarte é lançado. Mesmo que o preço de custo do produto mude no futuro no cadastro de produtos, os relatórios do passado permanecem auditáveis e financeiramente perfeitos.
+- **Isolamento de Segurança e Paridade:** Bares que optam por não utilizar controle de estoque (`useStock: false`) são blindados. As abas de estoque nos relatórios e opções de inventário desaparecem em tempo de execução para evitar poluição visual ou lançamentos inválidos acidentais.
+- **Logs de Auditoria de Movimentações:** Rastreamento imutável registrando operador, data, hora, tipo de descarte (Quebra, Vencimento, Consumo Equipe ou Erro de Preparo) e dados detalhados.
+- **Dashboard Premium de Perdas:** KPIs financeiros dedicados, volume total de descarte, impacto real no CMV e ranking de produtos com maior incidência de perdas categoria a categoria com barras CSS.
+
+### 🍳 Monitor de Cozinha e Produção Inteligente (v4.9.5)
 - **Fila de Produção Reativa:** Painel touch-friendly escuro de alto contraste (ideal para visualização à distância no calor da cozinha) que agrupa os pratos a serem preparados por ordem de chegada (FIFO), com cronômetros de tempo de espera.
 - **Campainha e Alertas Globais (Ding! 🛎️):** O sistema agora gera o som de um sino físico de metal através de síntese de áudio programática (Web Audio API) e dispara notificações Toast na tela de todos os atendentes logados no exato segundo em que o cozinheiro clica em "Pronto"!
 - **Alerta de Retirada no PDV:** O card da mesa no PDV do garçom pisca um sino discreto e animado (🛎️), sinalizando que o prato já está no balcão de entrega e pode ser retirado.
@@ -182,5 +188,5 @@ Tudo isso significa uma solução de nível enterprise — perfeitamente acessí
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v4.9.5 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v5.0.0 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*
