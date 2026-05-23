@@ -41,7 +41,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
         <div className="flex items-center gap-3">
           <div className="flex flex-col justify-center">
-            <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl md:text-3xl font-barrio text-slate-900 dark:text-white leading-none uppercase tracking-tight">Botequista</h2>
+              <span className="md:hidden bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse">
+                {activeUnitName}
+              </span>
+            </div>
             <div className="flex items-center gap-2 mt-1 md:mt-1.5">
               <button
                 onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined}

@@ -45,7 +45,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Exemplo: "Sexta com calor: movimento esperado ALTO"
    - Sugestão: Preparar +40 long neck, +2 caixas de gelo
 
-5. **Régua de Cobrança Educada para "Pendura"**
+5. [x] **Régua de Cobrança Educada para "Pendura"** [FEITO v5.1.0]
    - Sistema gera mensagens de WhatsApp semi-prontas e educadas para cobrar o fiado
    - Avisa clientes que têm conta vencida sem constranger o dono
    - Reduz a inadimplência de forma automatizada e profissional
@@ -154,7 +154,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### Métricas & Analytics
 
-19. **Detector de Garçom Esperto**
+19. [x] **Detector de Garçom Esperto** [FEITO v5.1.0]
     - Ranking não por vendas totais, mas por ticket médio
     - Identifica quem vende adicionais, sobremesas
     - Ferramenta de treinamento de equipe
@@ -260,7 +260,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Adicionada transição suave de 300ms no overlay e container principal.
 - [x] E3: Modal de payment panel em mobile sem back button [FEITO]
   - Adicionar header com "X" e "Voltar" claros
-- E4: Header não mostra nome da unidade em mobile
+- [x] E4: Header não mostra nome da unidade em mobile [FEITO v5.1.0]
   - Mostrar nome em texto maior ou badge destacado
 
 ### F - Padrões de UI Inconsistentes

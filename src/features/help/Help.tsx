@@ -90,10 +90,11 @@ const Help: React.FC = () => {
             <div className="w-12 h-12 bg-violet-50 dark:bg-violet-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
               <span className="text-2xl font-black">🏷️</span>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight italic">Quitação em Lote</h3>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Gestão de Penduras</h3>
           </div>
           <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
-            <p>• <span className="text-violet-600 font-black italic">BULK ACTION:</span> Na aba <span className="italic">Relatórios / Penduras</span>, selecione vários devedores de uma vez e clique em <FakeButton color="slate">Quitar Selecionados</FakeButton>.</p>
+            <p>• <span className="text-violet-600 font-black italic">COBRANÇA 1-CLIQUE (v5.1.0):</span> Na aba <span className="italic">Relatórios / Penduras</span>, clique no botão verde <FakeButton color="emerald">Cobrar</FakeButton> ao lado do nome do cliente para disparar uma cobrança amigável pelo WhatsApp Web.</p>
+            <p>• <span className="text-violet-600 font-black italic">QUITAÇÃO EM LOTE:</span> Selecione vários devedores de uma vez no checklist e liquide a conta deles em lote clicando em <FakeButton color="slate">Quitar Selecionados</FakeButton>.</p>
           </div>
         </section>
 
@@ -222,6 +223,20 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* 15. Detector de Garçom Esperto (v5.1.0) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-blue-100 dark:border-blue-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-blue-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-blue-600">
+            <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🏆</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Garçom Esperto</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-blue-600 font-black italic">TICKET MÉDIO (v5.1.0):</span> Na aba <span className="italic">Relatórios / Equipe</span>, clique no seletor <FakeButton color="blue">Ticket Médio 💡</FakeButton> para reordenar o ranking pelo valor médio por venda em vez do faturamento bruto.</p>
+            <p>• <span className="text-blue-600 font-black italic">RECONHECIMENTO:</span> O sistema destaca com o badge de prestígio **🏆 Garçom Esperto** o profissional mais eficiente em vendas cruzadas e adicionais.</p>
+          </div>
+        </section>
+
       </div>
 
       {/* Seção FAQ */}
@@ -296,6 +311,12 @@ const Help: React.FC = () => {
              <h4 className="text-lg font-black uppercase italic text-rose-600">Como funciona o Registro de Perdas & Desperdício?</h4>
              <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
                No estoque, você pode registrar descartes de mercadorias. O sistema grava o preço de custo histórico no ato, e agrupa tudo em um painel premium nos relatórios que mostra o prejuízo total em R$, as fatias de perdas de cada canal e o ranking por produto.
+             </p>
+          </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-red-600">Por que o nome do bar está piscando no topo do celular?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Este é o **Badge Mobile de Unidade Ativa** (v5.1.0). Ele foi desenhado para que atendentes correndo pelo salão em dias cheios saibam instantaneamente em qual unidade ou caixa o dispositivo está ativo, eliminando erros de lançamentos duplicados ou incorretos entre terminais.
              </p>
           </div>
         </div>

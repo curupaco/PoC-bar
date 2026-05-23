@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.0.0 Inventory Loss Tracking & Audit-Aware Dashboard.*
+> *Material de apresentação comercial — versão v5.1.0 WhatsApp Billing, Smart Waiter & Mobile Active Unit Badge.*
 
 ---
 
@@ -18,6 +18,13 @@ Todo dono de bar já passou por isso:
 O **Botequista Elite (v5.0.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
+
+## Novidades da Versão 5.1.0 Elite 🚀
+
+### ⚡ Pacote de Eficiência e Lançamento (Novo v5.1.0) 💎
+- **Régua de Cobrança com 1-Clique (WhatsApp):** O painel de "Penduras" agora possui o botão "Cobrar", que gera uma mensagem cordial e amigável direcionando para o WhatsApp Web do cliente, acelerando a recuperação de crédito com 1 toque.
+- **Detector de Garçom Esperto (Ticket Médio):** A aba de equipe no dashboard ganhou métricas de Ticket Médio por atendente, ordenação por eficiência de upsell e o badge dourado *🏆 Garçom Esperto* destacando o atendente destaque.
+- **Badge Mobile de Unidade Ativa:** Um indicador visual reativo e piscante vermelho foi inserido no topo da tela do celular/tablet, permitindo que a equipe no salão valide na hora em qual terminal está trabalhando.
 
 ## Novidades da Versão 5.0.0 Elite 🚀
 
@@ -188,5 +195,5 @@ Tudo isso significa uma solução de nível enterprise — perfeitamente acessí
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v5.0.0 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v5.1.0 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

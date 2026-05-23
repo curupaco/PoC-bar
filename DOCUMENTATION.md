@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.0.0 (Inventory Loss Tracking & Audit-Aware Dashboard)
+**Versão:** 5.1.0 (WhatsApp Billing, Smart Waiter & Mobile Active Unit Badge)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -26,6 +26,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Radar de Prejuízo (v4.9.0):** Varredura automática em tempo real que cruza CMV e vendas semanais para apontar itens com margens abaixo de 30%.
 *   **Smart Stock Híbrido (v4.9.0):** Alertas de estoque preditivos para itens controlados (ETA de esgotamento) e modo **Alta Demanda (Hot Item)** para produtos sem estoque.
 *   **Registro de Perdas & Desperdício de Estoque (v5.0.0):** Rastreabilidade financeira e auditoria de descartes com preço de custo histórico e isolamento para unidades sem estoque.
+*   **Módulo de Eficiência e Lançamento (v5.1.0):** Lançamento de régua de cobrança em 1-clique via WhatsApp Web, ranking reordenável de equipe por ticket médio e badge mobile reativo de unidade ativa.
 
 ---
 
@@ -39,6 +40,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Sinalização de Mesa Ociosa (v4.3):** Alertas visuais cromáticos (Amarelo/Vermelho) para mesas sem consumo há mais de 30 minutos.
 *   **Detector de Mesa Travada (v4.4):** Monitoramento em tempo real do tempo desde o último pedido, com alertas de pulso vermelho.
 *   **Mesa com Itens Prontos (v4.9.5):** O card da mesa pisca com um ícone de sino animado (🛎️) quando a cozinha marca algum prato como pronto, facilitando a retirada imediata pelo garçom.
+*   **Identificação Móvel de Unidade (v5.1.0):** O cabeçalho em telas portáteis renderiza um badge destacado vermelho com o nome da unidade ativa, blindando garçons contra lançamentos no terminal incorreto em dias de grande movimento.
 
 ### B. Gestão de Inventário
 1.  **Aba Produtos:** Listagem com busca global e edição rápida.
@@ -55,12 +57,12 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Auto-Backup (v4.3):** O sistema sugere a geração de um backup `.json` automático imediatamente após o fechamento de cada turno.
 
 ### D. Relatórios e Inteligência
-*   **Ranking de Equipe:** Performance de vendas por atendente.
+*   **Ranking de Equipe (v5.1.0):** Performance de vendas por atendente com seletor premium para alternar a ordenação do ranking por faturamento bruto ou ticket médio (eficiência), destacando automaticamente o *🏆 Garçom Esperto* com melhor média.
 *   **Ticket Médio por Mesa (v4.7.3):** Métrica individual por mesa com comparativo percentual (ex: "+12% vs ontem").
 *   **Heatmap de Fluxo:** Gráfico de densidade que identifica as horas de pico.
 *   **Top Combos Vendidos (v4.5):** Descoberta automática de produtos vendidos juntos.
 *   **Ranking de Produtos por Lucro (v4.7.3):** Curva ABC ordenada por lucro real, considerando CMV.
-*   **Quitação em Lote:** Interface para selecionar múltiplos devedores e quitar penduras de uma só vez.
+*   **Quitação de Penduras (v5.1.0):** Interface para quitar penduras em lote ou disparar uma cobrança amigável pré-formatada via WhatsApp Web com 1-clique ao lado de cada devedor.
 *   **Resumo Diário Automático (v4.7.3):** Consolida e envia o faturamento para o WhatsApp do dono ao fechar turno.
 
 ### E. Operações & Cliente
@@ -103,4 +105,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Maio de 2026. Botequista System v5.0.0*
+*Documentação atualizada em Maio de 2026. Botequista System v5.1.0*

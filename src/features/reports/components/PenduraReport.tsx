@@ -12,6 +12,13 @@ const PenduraReport: React.FC<PenduraReportProps> = ({ reportData, onQuitarPendu
   const [quitarData, setQuitarData] = useState<{ name: string; total: number; amount: string } | null>(null);
   const [selectedNames, setSelectedNames] = useState<Set<string>>(new Set());
 
+  const handleCobrarWhatsApp = (name: string, amount: number) => {
+    const formattedAmount = amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const message = `Olá, ${name}! Tudo bem? Passando para te lembrar da sua comanda pendente no Botequista de R$ ${formattedAmount}. Quando puder, dá uma passadinha aqui ou solicita a chave Pix para acertarmos. Grande abraço!`;
+    const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(url, '_blank');
+  };
+
   const handleQuitar = () => {
     if (!quitarData) return;
     const numericAmount = parseCurrencyValue(quitarData.amount);
@@ -92,13 +99,25 @@ const PenduraReport: React.FC<PenduraReportProps> = ({ reportData, onQuitarPendu
                           <td className="px-10 py-6 font-black text-slate-800 dark:text-white uppercase">{p.name}</td>
                           <td className="px-10 py-6 text-right font-black text-red-600">{formatCurrency(p.amount)}</td>
                           <td className="px-10 py-6 text-right" onClick={e => e.stopPropagation()}>
-                             <button 
-                               onClick={() => setQuitarData({ name: p.name, total: p.amount, amount: p.amount.toFixed(2).replace('.', ',') })} 
-                               disabled={!canSettle} 
-                               className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-md shadow-red-600/20"
-                             >
-                               Quitar
-                             </button>
+                             <div className="flex items-center justify-end gap-2">
+                                <button
+                                  onClick={() => handleCobrarWhatsApp(p.name, p.amount)}
+                                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5"
+                                  title="Cobrar via WhatsApp"
+                                >
+                                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                     <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.965C16.428 1.977 13.962.95 11.998.95c-5.44 0-9.866 4.372-9.87 9.802 0 1.814.498 3.585 1.442 5.161l-.992 3.624 3.722-.972zm11.236-6.618c-.3-.15-1.776-.875-2.05-1.012-.275-.138-.475-.207-.675.1-.2.3-.775 1.012-.95 1.212-.175.2-.35.225-.65.075-.3-.15-1.263-.465-2.403-1.485-.888-.795-1.487-1.777-1.663-2.074-.177-.3-.018-.465.13-.615.136-.135.3-.349.45-.524.15-.175.2-.3.3-.5.1-.2.05-.375-.025-.524-.075-.15-.675-1.625-.925-2.225-.244-.589-.491-.51-.675-.51-.174-.001-.374-.001-.573-.001-.2 0-.525.075-.8.375-.275.3-1.05 1.024-1.05 2.5 0 1.475 1.075 2.9 1.225 3.1.15.2 2.11 3.22 5.116 4.516.715.309 1.273.493 1.708.632.72.228 1.375.195 1.892.117.577-.087 1.774-.725 2.025-1.425.25-.7.25-1.3.175-1.425-.075-.125-.275-.2-.575-.35z" />
+                                   </svg>
+                                   Cobrar
+                                </button>
+                                <button 
+                                  onClick={() => setQuitarData({ name: p.name, total: p.amount, amount: p.amount.toFixed(2).replace('.', ',') })} 
+                                  disabled={!canSettle} 
+                                  className="bg-red-600 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase active:scale-95 transition-all shadow-md shadow-red-600/20"
+                                >
+                                  Quitar
+                                </button>
+                             </div>
                           </td>
                        </tr>
                     );

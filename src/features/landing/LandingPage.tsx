@@ -221,12 +221,14 @@ export const LandingPage: React.FC = () => {
                   <div className="text-center opacity-40">Outros Sistemas</div>
                 </div>
                 <ComparisonRow feature="Perdas & Desperdício (Descarte)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Detector de Garçom Esperto (Ticket Médio)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Badge Mobile da Unidade Ativa" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Sinalização de Mesa Ociosa" bot={true} trad={false} isNew />
                 <ComparisonRow feature="PDV Ninja (Atalhos + Modo Rápido)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Dashboard Multi-Unidades Real" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Radar de Prejuízo (Margem < 30%)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Smart Stock Híbrido (Hot Items)" bot={true} trad={false} isNew />
-                <ComparisonRow feature="Régua de Cobrança (Pendura)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Cobrança 1-Clique no WhatsApp (Pendura)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Monitor de Cozinha Reativo (Ding! 🛎️)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Funcionamento Offline Nativo" bot={true} trad={false} />
                 <ComparisonRow feature="Exportação via WhatsApp" bot={true} trad={true} />

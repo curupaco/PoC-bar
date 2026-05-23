@@ -132,6 +132,12 @@ Módulo inteligente para rastrear descarte de insumos e mercadorias com total tr
 - **Logs de Auditoria Imutáveis:** Rastreabilidade total contendo operador responsável, data/hora, produto, quantidade e categoria do descarte (Quebra, Vencimento, Consumo Equipe ou Erro de Preparo).
 - **Dashboard Premium:** Análise detalhada com KPIs de impacto financeiro, volume de descarte, impacto no CMV e ranking de perdas por categoria.
 
+### 7. Pacote de Eficiência e Lançamento (v5.1.0)
+Focado no dia a dia da equipe, usabilidade rápida em trânsito e controle ativo de penduras.
+- **Régua de Cobrança 1-Clique (WhatsApp):** No relatório de devedores, um botão "Cobrar" permite disparar mensagens amigáveis pré-formatadas diretamente via WhatsApp Web sem precisar digitar.
+- **Detector de Garçom Esperto (Ticket Médio):** Nova coluna e alternância de ordenação por Ticket Médio de vendas no relatório de equipe, destacando com o selo dourado o atendente mais eficiente em upsell.
+- **Badge Mobile de Unidade Ativa:** Badge vermelho piscante no cabeçalho visível em celulares, garantindo que o garçom no salão veja instantaneamente qual terminal está ativo e evite lançar vendas duplicadas no terminal incorreto.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento
