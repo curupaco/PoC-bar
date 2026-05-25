@@ -9,6 +9,7 @@ interface InventoryReportProps {
   startDate?: string;
   endDate?: string;
   users?: User[];
+  currentUser?: User | null;
 }
 
 const InventoryReport: React.FC<InventoryReportProps> = ({ 
@@ -18,9 +19,16 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
   theme,
   startDate,
   endDate,
-  users = []
+  users = [],
+  currentUser
 }) => {
-  const [reportTab, setReportTab] = useState<'PROFIT' | 'LOSS'>('PROFIT');
+  const hasFinancialCostsPermission = !currentUser || 
+    currentUser.username === 'admin' || 
+    currentUser.permissions.includes('view_financial_costs') || 
+    currentUser.permissions.includes('dashboard') || 
+    currentUser.permissions.includes('reports');
+
+  const [reportTab, setReportTab] = useState<'PROFIT' | 'LOSS'>(() => hasFinancialCostsPermission ? 'PROFIT' : 'LOSS');
 
   // Saldos de estoque consolidados acumulativos (representam o estoque atual, portanto usam toda a base de transações)
   const balances = useMemo(() => {
@@ -188,26 +196,28 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
     <div className="space-y-8 animate-in fade-in duration-500">
       
       {/* NAVEGAÇÃO DE ABAS INTERNA */}
-      <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto">
-        <button 
-          onClick={() => setReportTab('PROFIT')} 
-          className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-            reportTab === 'PROFIT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          📈 Rentabilidade & CMV
-        </button>
-        <button 
-          onClick={() => setReportTab('LOSS')} 
-          className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-            reportTab === 'LOSS' ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          🚨 Perdas & Desperdício
-        </button>
-      </div>
+      {hasFinancialCostsPermission && (
+        <div className="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto">
+          <button 
+            onClick={() => setReportTab('PROFIT')} 
+            className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              reportTab === 'PROFIT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            📈 Rentabilidade & CMV
+          </button>
+          <button 
+            onClick={() => setReportTab('LOSS')} 
+            className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
+              reportTab === 'LOSS' ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            🚨 Perdas & Desperdício
+          </button>
+        </div>
+      )}
 
-      {reportTab === 'PROFIT' ? (
+      {reportTab === 'PROFIT' && hasFinancialCostsPermission ? (
         <>
           {/* TAB 1: RENTABILIDADE & CMV */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

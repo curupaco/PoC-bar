@@ -18,6 +18,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 - [x] **Engenharia de Cardápio (CMV):** Cadastro de custo e cálculo de lucro real (v4.7.3).
 - [x] **Módulo de Gratificação:** Taxa de serviço configurável (10%) no PDV (v4.7.3).
 - [x] **Cardápio Digital QR:** Rota `/menu` para menu minimalista sincronizado (v4.7.3).
+- [x] **Endurecimento de Permissões (Matriz de Direitos v5.2.0):** Implementação de matriz granular de direitos de usuário com camada de retrocompatibilidade (fallbacks herdados), restringindo ações críticas: Modo Evento (PDV), Ajustes/Perdas de Estoque (Inventory), Lançamentos e Relatórios Financeiros/CMV (Dashboard & Reports), e Envio de Lembretes de Cobrança (WhatsApp).
 
 ---
 

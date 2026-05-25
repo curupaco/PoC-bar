@@ -13,13 +13,20 @@ interface DashboardProps {
   users: User[];
   theme: Theme;
   stockBalances: Record<string, number>;
+  currentUser?: User | null;
 }
 
 type Period = 'HOJE' | 'ONTEM' | 'SEMANA' | 'MÊS' | 'ANO';
 
-const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users = [], theme, stockBalances = {} }) => {
+const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users = [], theme, stockBalances = {}, currentUser }) => {
   const isDark = theme === 'dark';
   const [activePeriod, setActivePeriod] = useState<Period>('HOJE');
+
+  const hasFinancialCostsPermission = !currentUser || 
+    currentUser.username === 'admin' || 
+    currentUser.permissions.includes('view_financial_costs') || 
+    currentUser.permissions.includes('dashboard') || 
+    currentUser.permissions.includes('reports');
 
   const filteredSales = useMemo(() => {
     const nowTs = Date.now();
@@ -275,7 +282,9 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
 
         <DemandForecast sales={sales} products={products} />
 
-        <AIInsights products={products} sales={sales} stockBalances={stockBalances} />
+        {hasFinancialCostsPermission && (
+          <AIInsights products={products} sales={sales} stockBalances={stockBalances} />
+        )}
 
         <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">

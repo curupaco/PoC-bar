@@ -56,7 +56,28 @@ const Sidebar: React.FC<SidebarProps> = ({
   const hasPermission = (perm: UserPermission) => {
     if (!currentUser) return false;
     if (currentUser.username === 'admin') return true;
-    return currentUser.permissions.includes(perm);
+    
+    // Concede acesso direto se o usuário já tiver a permissão no cadastro
+    if (currentUser.permissions.includes(perm)) return true;
+
+    // Regras de fallback / retrocompatibilidade para usuários legados
+    switch (perm) {
+      case 'inventory_view':
+      case 'inventory_manage':
+        return currentUser.permissions.includes('products');
+        
+      case 'toggle_event_mode':
+        return currentUser.permissions.includes('pos');
+        
+      case 'view_financial_costs':
+        return currentUser.permissions.includes('dashboard') || currentUser.permissions.includes('reports');
+        
+      case 'manage_debt_reminders':
+        return currentUser.permissions.includes('clear_fiado') || currentUser.permissions.includes('reports');
+        
+      default:
+        return false;
+    }
   };
 
   const NavItem = ({ 
@@ -205,7 +226,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <NavItem 
             view="inventory" 
             label="Estoque" 
-            perm="products" 
+            perm="inventory_view" 
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>} 
           />
           <NavItem 

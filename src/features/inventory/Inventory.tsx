@@ -140,6 +140,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
   };
 
   const isAdmin = currentUser.username === 'admin' || currentUser.permissions.includes('franchise_admin');
+  const canManageStock = currentUser.username === 'admin' || currentUser.permissions.includes('inventory_manage') || currentUser.permissions.includes('products');
 
   const { insights } = useProductIntelligence(products, sales, stockBalances);
   
@@ -178,20 +179,22 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
           <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Controle de Estoque</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão transacional de mercadorias</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-             <button 
-                onClick={() => { setSelectedProduct(null); setShowEntryModal(true); }}
-                className="flex-1 md:flex-none bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
-             >
-                + Entrada
-             </button>
-             <button 
-                onClick={() => { setSelectedProduct(null); setShowLossModal(true); }}
-                className="flex-1 md:flex-none bg-red-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all"
-             >
-                - Perda
-             </button>
-        </div>
+        {canManageStock && (
+          <div className="flex gap-2 w-full md:w-auto">
+               <button 
+                  onClick={() => { setSelectedProduct(null); setShowEntryModal(true); }}
+                  className="flex-1 md:flex-none bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
+               >
+                  + Entrada
+               </button>
+               <button 
+                  onClick={() => { setSelectedProduct(null); setShowLossModal(true); }}
+                  className="flex-1 md:flex-none bg-red-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all"
+               >
+                  - Perda
+               </button>
+          </div>
+        )}
       </div>
 
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -267,34 +270,36 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Último Custo</p>
                             <p className="text-xs font-black text-slate-600 dark:text-slate-300">{formatCurrency(p.lastCostPrice || 0)}</p>
                         </div>
-                        <div className="flex gap-1">
-                            <button 
-                                onClick={() => { setSelectedProduct(p); setShowEntryModal(true); setCost((p.lastCostPrice || 0).toFixed(2).replace('.', ',')); }}
-                                title="Lançar Entrada"
-                                aria-label={`Lançar entrada para ${p.name}`}
-                                className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
-                            </button>
-                            <button 
-                                onClick={() => { setSelectedProduct(p); setShowLossModal(true); }}
-                                title="Lançar Perda"
-                                aria-label={`Lançar perda para ${p.name}`}
-                                className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
-                            </button>
-                            {isAdmin && (
-                                <button 
-                                    onClick={() => { setSelectedProduct(p); setQty(balance.toString()); setShowAdjustModal(true); }}
-                                    title="Ajustar Estoque"
-                                    aria-label={`Ajustar estoque para ${p.name}`}
-                                    className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all"
-                                >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
-                                </button>
-                            )}
-                        </div>
+                        {canManageStock && (
+                          <div className="flex gap-1">
+                              <button 
+                                  onClick={() => { setSelectedProduct(p); setShowEntryModal(true); setCost((p.lastCostPrice || 0).toFixed(2).replace('.', ',')); }}
+                                  title="Lançar Entrada"
+                                  aria-label={`Lançar entrada para ${p.name}`}
+                                  className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all"
+                              >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                              </button>
+                              <button 
+                                  onClick={() => { setSelectedProduct(p); setShowLossModal(true); }}
+                                  title="Lançar Perda"
+                                  aria-label={`Lançar perda para ${p.name}`}
+                                  className="w-8 h-8 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 flex items-center justify-center hover:bg-red-600 hover:text-white transition-all"
+                              >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 12H4" /></svg>
+                              </button>
+                              {isAdmin && (
+                                  <button 
+                                      onClick={() => { setSelectedProduct(p); setQty(balance.toString()); setShowAdjustModal(true); }}
+                                      title="Ajustar Estoque"
+                                      aria-label={`Ajustar estoque para ${p.name}`}
+                                      className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 flex items-center justify-center hover:bg-slate-900 dark:hover:bg-white hover:text-white dark:hover:text-slate-900 transition-all"
+                                  >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                                  </button>
+                              )}
+                          </div>
+                        )}
                     </div>
                   </div>
                 );

@@ -43,13 +43,21 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
 
   const isStockEnabled = activeUnit?.useStock !== false;
 
+  const hasFinancialCostsPermission = currentUser.username === 'admin' || 
+    currentUser.permissions.includes('view_financial_costs') || 
+    currentUser.permissions.includes('dashboard') || 
+    currentUser.permissions.includes('reports');
+
   const categoriesList = useMemo<ReportCategory[]>(() => {
-    const list: ReportCategory[] = ['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'];
+    let list: ReportCategory[] = ['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'];
     if (!isStockEnabled) {
-      return list.filter(cat => cat !== 'ESTOQUE');
+      list = list.filter(cat => cat !== 'ESTOQUE');
+    }
+    if (!hasFinancialCostsPermission) {
+      list = list.filter(cat => cat !== 'FINANCEIRO');
     }
     return list;
-  }, [isStockEnabled]);
+  }, [isStockEnabled, hasFinancialCostsPermission]);
   const [periodLabel, setPeriodLabel] = useState('HOJE');
 
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
@@ -355,7 +363,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
       case 'PRODUTOS': return <ProductReport reportData={reportData} />;
       case 'OPERACIONAL': return <OperationalReport reportData={reportData} theme={theme} />;
-      case 'ESTOQUE': return <InventoryReport stockTransactions={stockTransactions} products={products} sales={filteredSales} theme={theme} startDate={startDate} endDate={endDate} users={users} />;
+      case 'ESTOQUE': return <InventoryReport stockTransactions={stockTransactions} products={products} sales={filteredSales} theme={theme} startDate={startDate} endDate={endDate} users={users} currentUser={currentUser} />;
       case 'AUDITORIA': {
         const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
         const recentLogs = auditLogs.filter(log => log.timestamp >= sevenDaysAgo);
