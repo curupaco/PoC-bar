@@ -354,7 +354,8 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {Object.entries(lossStats.lossesByReason).map(([reason, data]) => {
+                  {Object.entries(lossStats.lossesByReason).map(([reason, dataVal]) => {
+                    const data = dataVal as { qty: number; cost: number };
                     const pct = lossStats.totalLossCost > 0 ? (data.cost / lossStats.totalLossCost) * 100 : 0;
                     const colors = getReasonColor(reason);
                     
