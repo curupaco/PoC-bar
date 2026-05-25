@@ -300,72 +300,84 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   };
 
   const handleSaveTab = useCallback(async (tab: Tab) => {
-    const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
-    setOpenTabs(prev => {
-      const idx = prev.findIndex(t => t.id === tab.id);
-      let nextTabs;
-      if (idx >= 0) {
-        nextTabs = [...prev];
-        nextTabs[idx] = sanitizedTab;
+    try {
+      const sanitizedTab: Tab = { ...tab, items: Array.isArray(tab.items) ? tab.items : (Object.values(tab.items || {}) as SaleItem[]) };
+      setOpenTabs(prev => {
+        const idx = prev.findIndex(t => t.id === tab.id);
+        let nextTabs;
+        if (idx >= 0) {
+          nextTabs = [...prev];
+          nextTabs[idx] = sanitizedTab;
+        } else {
+          sanitizedTab.version = 1;
+          nextTabs = [...prev, sanitizedTab];
+        }
+        saveLocalCache('openTabs', nextTabs);
+        return nextTabs;
+      });
+
+      updateLocalTimestamp('openTabs');
+      await persist('openTabs', tab, tab.id);
+
+      const isNew = !openTabs.some(t => t.id === tab.id);
+      if (isNew) {
+        addAuditLog('TAB_OPEN', `Mesa aberta: ${tab.name}`);
       } else {
-        sanitizedTab.version = 1;
-        nextTabs = [...prev, sanitizedTab];
+        addAuditLog('TAB_UPDATE', `Mesa atualizada: ${tab.name}`);
       }
-      saveLocalCache('openTabs', nextTabs);
-      return nextTabs;
-    });
-
-    updateLocalTimestamp('openTabs');
-    await persist('openTabs', tab, tab.id);
-
-    const isNew = !openTabs.some(t => t.id === tab.id);
-    if (isNew) {
-      addAuditLog('TAB_OPEN', `Mesa aberta: ${tab.name}`);
-    } else {
-      addAuditLog('TAB_UPDATE', `Mesa atualizada: ${tab.name}`);
+    } catch (e) {
+      showToast("Falha ao salvar mesa no servidor ou cache local", "error");
     }
-  }, [persist, saveLocalCache, updateLocalTimestamp, openTabs, addAuditLog]);
+  }, [persist, saveLocalCache, updateLocalTimestamp, openTabs, addAuditLog, showToast]);
 
   const handleUpdateTabItem = useCallback(async (tabId: string, item: SaleItem) => {
-    setOpenTabs(prev => {
-      const nextTabs = prev.map(t => {
-        if (t.id === tabId) {
-          const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
-          const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
-          if (idx > -1) {
-            if (item.quantity <= 0) {
-              currentItems.splice(idx, 1);
-            } else {
-              currentItems[idx] = item;
+    try {
+      setOpenTabs(prev => {
+        const nextTabs = prev.map(t => {
+          if (t.id === tabId) {
+            const currentItems = Array.isArray(t.items) ? [...t.items] : (Object.values(t.items || {}) as SaleItem[]);
+            const idx = currentItems.findIndex((i: SaleItem) => i.id === item.id);
+            if (idx > -1) {
+              if (item.quantity <= 0) {
+                currentItems.splice(idx, 1);
+              } else {
+                currentItems[idx] = item;
+              }
+            } else if (item.quantity > 0) {
+              currentItems.push(item);
             }
-          } else if (item.quantity > 0) {
-            currentItems.push(item);
+            return { ...t, items: currentItems, lastItemAddedAt: Date.now() };
           }
-          return { ...t, items: currentItems, lastItemAddedAt: Date.now() };
-        }
-        return t;
+          return t;
+        });
+        saveLocalCache('openTabs', nextTabs);
+        return nextTabs;
       });
-      saveLocalCache('openTabs', nextTabs);
-      return nextTabs;
-    });
-    updateLocalTimestamp('openTabs');
-    await persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
-    await persist(`openTabs/${tabId}`, Date.now(), 'lastItemAddedAt');
-  }, [persist, saveLocalCache, updateLocalTimestamp]);
+      updateLocalTimestamp('openTabs');
+      await persist(`openTabs/${tabId}/items`, item.quantity <= 0 ? null : item, item.id);
+      await persist(`openTabs/${tabId}`, Date.now(), 'lastItemAddedAt');
+    } catch (e) {
+      showToast("Falha ao atualizar item no servidor ou cache local", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, showToast]);
 
   const handleDeleteTab = useCallback(async (tabId: string) => {
-    setOpenTabs(prev => {
-      if (!prev.some(t => t.id === tabId)) return prev;
-      const nextTabs = prev.filter(t => t.id !== tabId);
-      saveLocalCache('openTabs', nextTabs);
-      return nextTabs;
-    });
-    updateLocalTimestamp('openTabs');
-    await persist('openTabs', null, tabId);
-    await persist(`_meta/deleted_tabs/${tabId}`, Date.now());
-    await registerLocalDeletion(tabId);
-    addAuditLog('TAB_DELETE', `Mesa descartada ID: ${tabId}`);
-  }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp, addAuditLog]);
+    try {
+      setOpenTabs(prev => {
+        if (!prev.some(t => t.id === tabId)) return prev;
+        const nextTabs = prev.filter(t => t.id !== tabId);
+        saveLocalCache('openTabs', nextTabs);
+        return nextTabs;
+      });
+      updateLocalTimestamp('openTabs');
+      await persist('openTabs', null, tabId);
+      await persist(`_meta/deleted_tabs/${tabId}`, Date.now());
+      await registerLocalDeletion(tabId);
+      addAuditLog('TAB_DELETE', `Mesa descartada ID: ${tabId}`);
+    } catch (e) {
+      showToast("Falha ao descartar comanda no servidor", "error");
+    }
+  }, [persist, registerLocalDeletion, saveLocalCache, updateLocalTimestamp, addAuditLog, showToast]);
 
   const handleUpdateProducts = useCallback(async (updater: any) => {
     try {
@@ -418,24 +430,36 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   }, [persist, updateLocalTimestamp, saveLocalCache, addAuditLog, shifts, showToast, currentUserRef]);
 
   const handleUpdateUsers = useCallback((newUsers: User[], changedItem?: User) => {
-    setUsers(newUsers);
-    updateLocalTimestamp('users');
-    saveLocalCache('users', newUsers);
-    if (changedItem) persistGlobal('users', changedItem, changedItem.id);
-    else persistGlobal('users', newUsers);
-  }, [persistGlobal, updateLocalTimestamp, saveLocalCache]);
+    try {
+      setUsers(newUsers);
+      updateLocalTimestamp('users');
+      saveLocalCache('users', newUsers);
+      if (changedItem) persistGlobal('users', changedItem, changedItem.id);
+      else persistGlobal('users', newUsers);
+    } catch (e) {
+      showToast("Falha ao atualizar usuários", "error");
+    }
+  }, [persistGlobal, updateLocalTimestamp, saveLocalCache, showToast]);
 
   const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
-    setUnits(newUnits);
-    saveLocalCache('units', newUnits);
-    persistGlobal('units', newUnits);
-  }, [persistGlobal, saveLocalCache]);
+    try {
+      setUnits(newUnits);
+      saveLocalCache('units', newUnits);
+      persistGlobal('units', newUnits);
+    } catch (e) {
+      showToast("Falha ao atualizar unidades", "error");
+    }
+  }, [persistGlobal, saveLocalCache, showToast]);
 
   const handleUpdateFranchises = useCallback((newFranchises: Franchise[]) => {
-    setFranchises(newFranchises);
-    saveLocalCache('franchises', newFranchises);
-    persistGlobal('franchises', newFranchises);
-  }, [persistGlobal, saveLocalCache]);
+    try {
+      setFranchises(newFranchises);
+      saveLocalCache('franchises', newFranchises);
+      persistGlobal('franchises', newFranchises);
+    } catch (e) {
+      showToast("Falha ao atualizar franquias", "error");
+    }
+  }, [persistGlobal, saveLocalCache, showToast]);
 
   const handleUpdateStock = useCallback(async (transaction: StockTransaction) => {
     if (!validatedActiveUnitId) return;
@@ -470,69 +494,73 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   }, [validatedActiveUnitId, persist, saveLocalCache, showToast]);
 
   const handleCompleteSale = useCallback(async (newSalesList: Sale[], tabIdToClose?: string) => {
-    setSales(prev => {
-      const next = [...prev, ...newSalesList];
-      saveLocalCache('sales', next);
-      return next;
-    });
-    updateLocalTimestamp('sales');
-    for (const s of newSalesList) {
-      await persist('sales', s, s.id);
-    }
-    if (tabIdToClose) {
-      const tab = openTabs.find(t => t.id === tabIdToClose);
-      if (tab) {
-        addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab.name} | Total: ${newSalesList.reduce((acc, s) => acc + s.total, 0)}`);
-        await handleDeleteTab(tabIdToClose);
-      } else {
-        addAuditLog('TAB_CLOSE', `TENTATIVA DUPLICADA: Mesa ID ${tabIdToClose} já fechada.`);
-      }
-    }
-
-    // Baixa de estoque automática (Otimizada para processamento em lote)
-    const activeUnit = units.find(u => u.id === validatedActiveUnitId);
-    if (activeUnit?.useStock) {
-      const batchTransactions: StockTransaction[] = [];
-      const timestamp = Date.now();
-      const userId = currentUserRef.current?.id || 'system';
-
+    try {
+      setSales(prev => {
+        const next = [...prev, ...newSalesList];
+        saveLocalCache('sales', next);
+        return next;
+      });
+      updateLocalTimestamp('sales');
       for (const s of newSalesList) {
-        if (!s.items) continue;
-        for (const item of s.items) {
-          if (item.productId === PRODUCT_ID_DEBT_SETTLEMENT) continue;
-
-          // Verifica se o produto deve controlar estoque
-          const product = products.find(p => p.id === item.productId);
-          if (product && product.trackStock === false) continue;
-
-          const transaction: StockTransaction = {
-            id: generateUniqueId('stk'),
-            productId: item.productId,
-            unitId: validatedActiveUnitId!,
-            quantity: -item.quantity,
-            type: 'OUT',
-            timestamp,
-            userId
-          };
-          batchTransactions.push(transaction);
+        await persist('sales', s, s.id);
+      }
+      if (tabIdToClose) {
+        const tab = openTabs.find(t => t.id === tabIdToClose);
+        if (tab) {
+          addAuditLog('TAB_CLOSE', `Mesa fechada: ${tab.name} | Total: ${newSalesList.reduce((acc, s) => acc + s.total, 0)}`);
+          await handleDeleteTab(tabIdToClose);
+        } else {
+          addAuditLog('TAB_CLOSE', `TENTATIVA DUPLICADA: Mesa ID ${tabIdToClose} já fechada.`);
         }
       }
 
-      if (batchTransactions.length > 0) {
-        // Atualiza estado local de uma vez só
-        setStockTransactions(prev => {
-          const next = [...batchTransactions, ...prev].slice(0, 5000);
-          saveLocalCache('stockTransactions', next);
-          return next;
-        });
+      // Baixa de estoque automática (Otimizada para processamento em lote)
+      const activeUnit = units.find(u => u.id === validatedActiveUnitId);
+      if (activeUnit?.useStock) {
+        const batchTransactions: StockTransaction[] = [];
+        const timestamp = Date.now();
+        const userId = currentUserRef.current?.id || 'system';
 
-        // Envia para a fila de sincronização (individualmente para auditoria atômica)
-        for (const t of batchTransactions) {
-          persist('stockTransactions', t, t.id);
+        for (const s of newSalesList) {
+          if (!s.items) continue;
+          for (const item of s.items) {
+            if (item.productId === PRODUCT_ID_DEBT_SETTLEMENT) continue;
+
+            // Verifica se o produto deve controlar estoque
+            const product = products.find(p => p.id === item.productId);
+            if (product && product.trackStock === false) continue;
+
+            const transaction: StockTransaction = {
+              id: generateUniqueId('stk'),
+              productId: item.productId,
+              unitId: validatedActiveUnitId!,
+              quantity: -item.quantity,
+              type: 'OUT',
+              timestamp,
+              userId
+            };
+            batchTransactions.push(transaction);
+          }
+        }
+
+        if (batchTransactions.length > 0) {
+          // Atualiza estado local de uma vez só
+          setStockTransactions(prev => {
+            const next = [...batchTransactions, ...prev].slice(0, 5000);
+            saveLocalCache('stockTransactions', next);
+            return next;
+          });
+
+          // Envia para a fila de sincronização (individualmente para auditoria atômica)
+          for (const t of batchTransactions) {
+            persist('stockTransactions', t, t.id);
+          }
         }
       }
+    } catch (e) {
+      showToast("Falha ao registrar venda ou baixar estoque", "error");
     }
-  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog, units, validatedActiveUnitId, currentUserRef, products]);
+  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog, units, validatedActiveUnitId, currentUserRef, products, showToast]);
 
   const handleExportData = useCallback(() => {
     const backupData = {

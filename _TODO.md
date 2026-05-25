@@ -225,7 +225,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Mensagens no POSPaymentPanel foram reformuladas para serem mais claras e contextuais.
 - [x] B3: Loading sem mensagem contextual
   - Mensagem de loading no App.tsx detalhada para "Sincronizando dados e produtos...".
-- B4: Falha silenciosa em operações async
+- [x] B4: Falha silenciosa em operações async [FEITO]
   - Adicionar try-catch com showFeedback
 
 ### C - Fluxos de Usuário e Interação
@@ -244,7 +244,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Toggle "Alterar senha" só exibe campo quando marcado
 - [x] C9: Atalhos de teclado não indicados
   - Adicionar painel de "Atalhos Disponíveis" acessível via ícone ?
-- C10: Fluxo de quitação de pendura automático
+- [x] C10: Fluxo de quitação de pendura automático [FEITO]
   - Mostrar resumo antes de abrir tela de pagamento
 
 ### D - Formulários e Validação

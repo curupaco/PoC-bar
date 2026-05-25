@@ -79,6 +79,7 @@ export const POS: React.FC<POSProps> = ({
   const [modifierModalData, setModifierModalData] = useState<{ product: Product, group: ModifierGroup, quantity: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
+  const [showSettleConfirm, setShowSettleConfirm] = useState(false);
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -88,9 +89,7 @@ export const POS: React.FC<POSProps> = ({
 
   useEffect(() => {
     if (shortcutCheckout) {
-      setActiveTabId('shortcut-payment');
-      setIsClosingTab(true);
-      setShowMobileCart(true);
+      setShowSettleConfirm(true);
     }
   }, [shortcutCheckout]);
 
@@ -632,6 +631,54 @@ export const POS: React.FC<POSProps> = ({
              <div className="flex flex-col gap-3">
                 <button onClick={handleConfirmDelete} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Descartar</button>
                 <button onClick={() => setTabToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {showSettleConfirm && shortcutCheckout && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => { if (onClearShortcut) onClearShortcut(); setShowSettleConfirm(false); }} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[1010] text-center border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
+             <div className="w-16 h-16 bg-emerald-600/10 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-3xl">💸</span>
+             </div>
+             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-2 italic">Confirmar Quitação</h3>
+             <p className="text-xs text-slate-400 uppercase tracking-widest font-black mb-6">Resumo de Pendura</p>
+             
+             <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 mb-8 space-y-4 text-left">
+                <div>
+                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Cliente</span>
+                   <span className="text-sm font-black text-slate-800 dark:text-white uppercase">{shortcutCheckout.name}</span>
+                </div>
+                <div>
+                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Valor Total Pendente</span>
+                   <span className="text-xl font-black italic text-emerald-600 leading-none">{formatCurrency(shortcutCheckout.amount)}</span>
+                </div>
+             </div>
+
+             <div className="flex flex-col gap-3">
+                <button 
+                   onClick={() => {
+                      setActiveTabId('shortcut-payment');
+                      setIsClosingTab(true);
+                      setShowMobileCart(true);
+                      setShowSettleConfirm(false);
+                   }} 
+                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-600/20 active:scale-95 transition-all"
+                >
+                   Ir para o Pagamento
+                </button>
+                <button 
+                   onClick={() => {
+                      if (onClearShortcut) onClearShortcut();
+                      setActiveTabId(null);
+                      setShowSettleConfirm(false);
+                   }} 
+                   className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                >
+                   Cancelar
+                </button>
              </div>
           </div>
         </div>
