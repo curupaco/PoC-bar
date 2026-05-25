@@ -677,6 +677,8 @@ export const LandingPage2: React.FC = () => {
               'Registro de Perda & Desperdício (v5.0.0)',
               'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
               'Smart Stock Híbrido & Hot Items (v4.9.0)',
+              'Previsão de Movimento por Clima & Demanda (v5.2.0)',
+              'Matriz de Permissionamentos Híbrida & Retrocompatível (v5.2.0)',
               'Detector de Garçom Esperto por Ticket Médio (v5.1.0)',
               'Badge Mobile da Unidade Ativa no Header (v5.1.0)',
               'Régua de Cobrança com 1 Clique no WhatsApp (v5.1.0)',
@@ -713,13 +715,15 @@ export const LandingPage2: React.FC = () => {
             {[
               { title: 'Lucro Real & CMV', desc: 'Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria cadastrado por você.', icon: '💰', tag: 'FINANCEIRO' },
               { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente para evitar confusão no fim do turno.', icon: '🤝', tag: 'EQUIPE' },
-              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consumir. Sugestão visual de saideira para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
+              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consuming. Sugestão visual de saideira para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
               { title: 'Radar de Prejuízo', desc: 'Cruza custos e vendas, alertando se a margem de algum item de alto giro cair abaixo de 30% para você precificar melhor.', icon: '📈', tag: 'INTELIGÊNCIA' },
               { title: 'Smart Stock Híbrido', desc: 'Estoque crítico estimado em horas de consumo para itens controlados, e alertas de Alta Demanda (Hot Items) para produtos comuns.', icon: '⏳', tag: 'ESTOQUE' },
               { title: 'Cardápio Digital QR', desc: 'Gere um link para os clientes visualizarem seu menu atualizado direto no celular, sem baixar nada.', icon: '📱', tag: 'ATENDIMENTO' },
               { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que registra cada fechamento de caixa.', icon: '🛡️', tag: 'SEGURANÇA' },
               { title: 'Gestão de Fiado (Pendura)', desc: 'Histórico de consumo de cada cliente. Régua de cobrança educada para reaver valores pendentes com organização.', icon: '📋', tag: 'GESTÃO' },
               { title: 'Controle de Desperdício', desc: 'Registre perdas por validade, quebra ou consumo da equipe. Acompanhe gráficos dinâmicos de ralo de caixa e proteja suas margens.', icon: '🚨', tag: 'ESTOQUE' },
+              { title: 'Previsão de Movimento', desc: 'Cruza histórico do dia da semana e tempo real do clima via geolocalização para checklist inteligente de insumos.', icon: '🌤️', tag: 'OPERAÇÃO' },
+              { title: 'Matriz de Direitos Híbrida', desc: 'Permissões granulares de acesso com camada de retrocompatibilidade para contas legadas herdarem direitos sem lockout.', icon: '🔑', tag: 'SEGURANÇA' },
             ].map((f, i) => (
               <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>

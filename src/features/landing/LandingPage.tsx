@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl">B</div>
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tighter uppercase font-barrio">Botequista</span>
-                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.0.0</span>
+                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.2.0</span>
               </div>
             </div>
             <div className="hidden lg:flex items-center gap-12">
@@ -220,6 +220,8 @@ export const LandingPage: React.FC = () => {
                   <div className="text-center text-red-500 font-black">Botequista Elite</div>
                   <div className="text-center opacity-40">Outros Sistemas</div>
                 </div>
+                <ComparisonRow feature="Previsão de Movimento por Clima & Demanda" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Matriz de Permissionamentos Híbrida" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Perdas & Desperdício (Descarte)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Detector de Garçom Esperto (Ticket Médio)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Badge Mobile da Unidade Ativa" bot={true} trad={false} isNew />
@@ -245,7 +247,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <PlanCard title="Startup" price="0" badge="GRÁTIS" features={['1 Unidade', 'PDV Offline', 'Recibos via WhatsApp', 'Estoque Básico']} />
-                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Curva ABC Full', 'Radar de Prejuízo (v4.9)', 'Smart Stock Híbrido (v4.9)', 'Atalhos Profissionais', 'Suporte Prioritário']} />
+                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Curva ABC Full', 'Radar de Prejuízo (v5.2.0)', 'Smart Stock Híbrido (v5.2.0)', 'Atalhos Profissionais', 'Suporte Prioritário']} />
                 <PlanCard title="Enterprise" price="0" badge="ESCALA" features={['Controle de Franquias', 'White Label (Sob consulta)', 'Consultoria de Fluxo', 'API Dedicada']} />
               </div>
               <div className="mt-16 p-8 rounded-[40px] bg-white/5 border border-white/10 max-w-2xl mx-auto text-center italic">

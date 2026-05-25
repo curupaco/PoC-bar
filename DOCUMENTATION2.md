@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.1.0 WhatsApp Billing, Smart Waiter & Mobile Active Unit Badge.*
+> *Material de apresentação comercial — versão v5.2.0 Hybrid Permissions, Weather Demand Predict & WhatsApp Settle Confirmation.*
 
 ---
 
@@ -18,6 +18,17 @@ Todo dono de bar já passou por isso:
 O **Botequista Elite (v5.0.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
 
 ---
+
+## Novidades da Versão 5.2.0 Elite 🚀
+
+### 🔑 Matriz de Permissionamentos Híbrida & Retrocompatível (Novo v5.2.0) 💎
+- **Retrocompatibilidade Inquebrável:** Adicionamos uma camada dinâmica de heranças protetoras de direitos de acesso. Contas e operadores criados sob o banco de dados antigo continuam funcionando instantaneamente e herdam direitos das permissões pai sem risco de lockouts.
+- **Segurança Granular de Tela:** Bloqueios visualmente amigáveis e desativações individuais para ações críticas como Modo Evento, registro/descarte de perdas de estoque, lembretes/réguas de WhatsApp e relatórios de CMV/Margens.
+
+### 🌤️ Previsão de Movimento do Dia por Clima e Vendas (Novo v5.2.0) 💎
+- **Motor Preditivo Offline:** O sistema calcula médias móveis das vendas nos últimos dias agrupados por dia da semana para estimar a tendência básica do movimento.
+- **Geolocalização Climática:** Integra-se em tempo real com a API Open-Meteo via geolocalização do navegador para cruzar o clima real com as vendas.
+- **Simulador Interativo e Checklist:** Permite ao gerente testar hipóteses climáticas em tempo real e gera uma lista interativa de preparo adaptando os volumes do estoque ao fluxo esperado.
 
 ## Novidades da Versão 5.1.0 Elite 🚀
 
@@ -195,5 +206,5 @@ Tudo isso significa uma solução de nível enterprise — perfeitamente acessí
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v5.1.0 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v5.2.0 | Maio de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

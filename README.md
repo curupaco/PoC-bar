@@ -138,6 +138,11 @@ Focado no dia a dia da equipe, usabilidade rápida em trânsito e controle ativo
 - **Detector de Garçom Esperto (Ticket Médio):** Nova coluna e alternância de ordenação por Ticket Médio de vendas no relatório de equipe, destacando com o selo dourado o atendente mais eficiente em upsell.
 - **Badge Mobile de Unidade Ativa:** Badge vermelho piscante no cabeçalho visível em celulares, garantindo que o garçom no salão veja instantaneamente qual terminal está ativo e evite lançar vendas duplicadas no terminal incorreto.
 
+### 8. Previsão de Demanda & Hardening de Permissionamentos (v5.2.0)
+Foco em inteligência preditiva local e segurança operacional avançada sem quebra de retrocompatibilidade.
+- **Previsão de Movimento (Demand Forecast):** Motor matemático offline que cruza médias históricas do dia da semana e geolocalização do clima local (API Open-Meteo) com um simulador de clima manual e checklist dinâmico de preparo.
+- **Matriz de Direitos Híbrida & Retrocompatível:** Implementação de permissões granulares de acesso (estoque, Modo Evento, lembretes de WhatsApp, CMV/margens) acopladas a uma camada de heranças dinâmicas que impede lockouts de usuários legados.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento

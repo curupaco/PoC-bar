@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.1.0 (WhatsApp Billing, Smart Waiter & Mobile Active Unit Badge)
+**Versão:** 5.2.0 (Demand Forecast, Hardened Permissions Matrix & WhatsApp Settle Confirmation)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -27,6 +27,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Smart Stock Híbrido (v4.9.0):** Alertas de estoque preditivos para itens controlados (ETA de esgotamento) e modo **Alta Demanda (Hot Item)** para produtos sem estoque.
 *   **Registro de Perdas & Desperdício de Estoque (v5.0.0):** Rastreabilidade financeira e auditoria de descartes com preço de custo histórico e isolamento para unidades sem estoque.
 *   **Módulo de Eficiência e Lançamento (v5.1.0):** Lançamento de régua de cobrança em 1-clique via WhatsApp Web, ranking reordenável de equipe por ticket médio e badge mobile reativo de unidade ativa.
+*   **Previsão de Movimento por Clima & Demanda (v5.2.0):** Previsão matemática offline que cruza médias do dia da semana e geolocalização do clima local (API Open-Meteo) com simulador de clima e checklist dinâmico.
+*   **Matriz de Permissionamentos Híbrida & Retrocompatível (v5.2.0):** Camada de heranças dinâmicas que concede acessos a contas legadas a partir de permissões pai, implementando controle granular individualizado (Modo Evento, ajustes/perdas de estoque, lembretes de WhatsApp, CMV/lucro bruto).
 
 ---
 
@@ -91,10 +93,11 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 O sistema registra automaticamente ações críticas para evitar "perda de dados" aparente entre dispositivos.
 *   **Eventos Rastreados:** `SHIFT_OPEN/CLOSE`, `TAB_OPEN/CLOSE/DELETE`, `ITEM_ADD/DELETE`, etc.
 
-### Controle de Acesso (RBAC)
-*   **Operador/Garçom:** Vendas e operação básica de mesa.
-*   **Gerente:** Cancelamentos, Fechamento (Modo Cego) e Auditoria.
-*   **Admin:** Gestão de Unidades, Backups e Revelação de Valores.
+### Controle de Acesso (RBAC) (Híbrido & Retrocompatível v5.2.0)
+*   **Camada de Herança Dinâmica:** Garante estabilidade retrocompatível total. Usuários cadastrados no banco legado herdam automaticamente os novos acessos granulares a partir de suas permissões raiz (ex: `inventory_view` e `inventory_manage` herdam de `products`, `toggle_event_mode` herda de `pos`, `view_financial_costs` herda de `dashboard`/`reports`, e `manage_debt_reminders` herda de `clear_fiado`/`reports`).
+*   **Operador/Garçom:** Vendas, operação básica de mesa e Modo Evento (caso possua `pos`). Bloqueado para ajustes/perdas de estoque e dados de CMV/lucros.
+*   **Gerente/Estoquista:** Acesso configurável de visualização ou controle (Modo Evento, controle e perdas de estoque, régua de cobrança).
+*   **Admin:** Controle irrestrito de dados, exportação de backups, gestão de equipes, unidades e revelação do faturamento esperado.
 
 ---
 
@@ -105,4 +108,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Maio de 2026. Botequista System v5.1.0*
+*Documentação atualizada em Maio de 2026. Botequista System v5.2.0*
