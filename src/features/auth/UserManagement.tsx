@@ -27,6 +27,7 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
       { id: 'history', label: 'Histórico', desc: 'Acesso à lista de vendas realizadas.' },
       { id: 'reports', label: 'Relatórios', desc: 'Acesso às métricas financeiras detalhadas.' },
       { id: 'products', label: 'Cardápio', desc: 'Visualiza a lista de produtos cadastrados.' },
+      { id: 'inventory_view', label: 'Visualizar Estoque', desc: 'Permite acessar a aba de saldos de estoque.' },
       { id: 'users_admin', label: 'Gestão de Equipe', desc: 'Gerencia usuários e permissões.' },
       { id: 'settings', label: 'Ajustes', desc: 'Acesso às configurações técnicas do sistema.' },
       { id: 'help_view', label: 'Manual do Bar', desc: 'Acesso ao guia operacional.' },
@@ -38,7 +39,9 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
     permissions: [
       { id: 'open_shift', label: 'Abrir Turno', desc: 'Permite iniciar a operação do dia.' },
       { id: 'close_shift', label: 'Fechar Turno', desc: 'Permite encerrar o caixa e conferir valores.' },
+      { id: 'toggle_event_mode', label: 'Modo Evento', desc: 'Permite ativar/desativar o Modo Evento no PDV.' },
       { id: 'clear_fiado', label: 'Baixa em Fiados', desc: 'Permite registrar o recebimento de dívidas.' },
+      { id: 'manage_debt_reminders', label: 'Lembretes de Cobrança', desc: 'Permite disparar lembretes e réguas de cobrança no WhatsApp.' },
     ]
   },
   {
@@ -47,6 +50,7 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
     permissions: [
       { id: 'edit_product', label: 'Editar Cardápio', desc: 'Pode alterar nomes e preços de itens.' },
       { id: 'delete_product', label: 'Excluir Itens', desc: 'Pode remover produtos do sistema.' },
+      { id: 'inventory_manage', label: 'Movimentar Estoque', desc: 'Permite registrar entradas, perdas e perdas históricas.' },
     ]
   },
   {
@@ -54,6 +58,7 @@ const PERMISSION_STRUCTURE: PermissionGroup[] = [
     color: 'red',
     permissions: [
       { id: 'delete_sale', label: 'Anular Vendas', desc: 'Pode cancelar registros de faturamento.' },
+      { id: 'view_financial_costs', label: 'Custos e CMV', desc: 'Permite visualizar custos reais, margem de lucro e Radar de Prejuízo.' },
       { id: 'export_report', label: 'Exportar Dados', desc: 'Permite salvar relatórios em PNG/PDF.' },
       { id: 'manage_units', label: 'Gestão de Franquia', desc: 'Cria e edita unidades/bares da rede.' },
       { id: 'manage_backup', label: 'Gestão de Backup', desc: 'Acesso a backups externos (GitHub).' },
