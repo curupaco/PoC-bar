@@ -165,6 +165,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct,
           placeholder="BUSCAR NO CARDÁPIO..." 
           value={searchTerm} 
           onChange={e => setSearchTerm(e.target.value)} 
+          autoFocus
           className="w-full px-3 md:px-6 py-2 md:py-4 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-[10px] md:text-[11px] tracking-widest outline-none border-none shadow-inner" 
         />
       </div>

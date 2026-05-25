@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, View, UserPermission, Theme, formatCurrency } from '../../types';
+import { User, View, UserPermission, Theme, formatCurrency, isAdmin } from '../../types';
 
 interface SidebarProps {
   activeView: View;
@@ -55,7 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   
   const hasPermission = (perm: UserPermission) => {
     if (!currentUser) return false;
-    if (currentUser.username === 'admin') return true;
+    if (isAdmin(currentUser)) return true;
     
     // Concede acesso direto se o usuário já tiver a permissão no cadastro
     if (currentUser.permissions.includes(perm)) return true;

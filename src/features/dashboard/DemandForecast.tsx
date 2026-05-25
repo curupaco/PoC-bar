@@ -134,19 +134,24 @@ export const DemandForecast: React.FC<DemandForecastProps> = ({ sales = [], prod
       }
     };
 
-    // Tenta usar a geolocalização do navegador
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          fetchWeather(pos.coords.latitude, pos.coords.longitude);
-        },
-        () => {
-          // Fallback para coordenadas aproximadas de São Paulo
-          fetchWeather(-23.5489, -46.6388);
-        },
-        { timeout: 5000 }
-      );
-    } else {
+    // Tenta usar a geolocalização do navegador com tratamento rígido de exceções
+    try {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            fetchWeather(pos.coords.latitude, pos.coords.longitude);
+          },
+          () => {
+            // Fallback para coordenadas aproximadas de São Paulo
+            fetchWeather(-23.5489, -46.6388);
+          },
+          { timeout: 5000 }
+        );
+      } else {
+        fetchWeather(-23.5489, -46.6388);
+      }
+    } catch (e) {
+      console.warn('Geolocalização não suportada ou bloqueada de forma síncrona', e);
       fetchWeather(-23.5489, -46.6388);
     }
   }, [weatherMode]);

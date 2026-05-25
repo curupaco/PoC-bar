@@ -108,6 +108,10 @@ export interface User {
   franchiseId?: string;
 }
 
+export const isAdmin = (user: User | null | undefined): boolean => {
+  return user?.username === 'admin';
+};
+
 export interface Franchise {
   id: string;
   name: string;

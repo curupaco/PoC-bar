@@ -305,7 +305,9 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
           {/* TAB 2: PERDAS & DESPERDÍCIO */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in slide-in-from-top duration-300">
             <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-4 right-4 bg-red-100 dark:bg-red-950/30 p-2 rounded-xl text-red-500 text-xs">🚨</div>
+              <div className="absolute top-4 right-4 bg-red-100 dark:bg-red-950/30 p-2 rounded-xl text-red-500 flex items-center justify-center">
+                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Custo de Desperdício</p>
               <p className="text-2xl font-black italic tracking-tighter text-red-500">
                 {formatCurrency(lossStats.totalLossCost)}
@@ -314,7 +316,9 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-slate-500 text-xs">📦</div>
+              <div className="absolute top-4 right-4 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl text-slate-500 flex items-center justify-center">
+                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+              </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Quantidade Descartada</p>
               <p className="text-2xl font-black italic tracking-tighter text-slate-800 dark:text-white">
                 {lossStats.totalLossQty.toFixed(1)} <span className="text-[10px] font-bold text-slate-400">UN/KG</span>
@@ -323,7 +327,9 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-indigo-100 dark:bg-indigo-950/30 p-2 rounded-xl text-indigo-500 text-xs">📊</div>
+              <div className="absolute top-4 right-4 bg-indigo-100 dark:bg-indigo-950/30 p-2 rounded-xl text-indigo-500 flex items-center justify-center">
+                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Impacto no CMV</p>
               <p className="text-2xl font-black italic tracking-tighter text-indigo-500">
                 {totalCost > 0 ? ((lossStats.totalLossCost / totalCost) * 100).toFixed(1) : '0.0'}%
@@ -332,7 +338,9 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-amber-100 dark:bg-amber-950/30 p-2 rounded-xl text-amber-500 text-xs">⚠️</div>
+              <div className="absolute top-4 right-4 bg-amber-100 dark:bg-amber-950/30 p-2 rounded-xl text-amber-500 flex items-center justify-center">
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              </div>
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Principal Motivo</p>
               <p className={`text-2xl font-black italic tracking-tighter uppercase ${lossStats.totalLossCost > 0 ? getReasonColor(lossStats.worstReason).text : 'text-slate-400'}`}>
                 {lossStats.worstReason}
@@ -349,7 +357,7 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
 
               {lossStats.totalLossCost === 0 ? (
                 <div className="h-60 flex flex-col items-center justify-center text-center">
-                  <span className="text-4xl mb-3">🍃</span>
+                  <svg className="w-12 h-12 text-emerald-400/40 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 21l-.813-5.096L3 15l5.096-.813L9 9l.813 5.096L15 15l-5.096.813zM19.071 4.929l-.244 1.53-.244-1.53-1.53-.244 1.53-.244.244-1.53.244 1.53 1.53.244-1.53.244z" /></svg>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Nenhuma perda registrada</p>
                 </div>
               ) : (
@@ -392,7 +400,7 @@ const InventoryReport: React.FC<InventoryReportProps> = ({
 
               {lossStats.lossesByProduct.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center py-10 text-center">
-                  <span className="text-4xl mb-3">✅</span>
+                  <svg className="w-12 h-12 text-emerald-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Estoque 100% íntegro no período</p>
                 </div>
               ) : (

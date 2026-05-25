@@ -283,8 +283,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
             </div>
 
             <div className="flex gap-4 pt-8">
-              <button onClick={handleSave} className="flex-1 bg-red-600 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all">Salvar Perfil Operacional</button>
               <button onClick={resetForm} className="px-12 bg-slate-100 dark:bg-slate-800 text-slate-500 py-6 rounded-3xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">Descartar</button>
+              <button onClick={handleSave} className="flex-1 bg-red-600 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all">Salvar Perfil Operacional</button>
             </div>
           </div>
         </div>

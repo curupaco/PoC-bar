@@ -292,6 +292,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                                  inputMode="decimal"
                                  value={item.val}
                                  onChange={e => { setOpenError(null); item.set(sanitizeCurrencyInput(e.target.value)); }}
+                                 autoFocus={idx === 0}
                                  className="w-full text-right bg-transparent font-black text-2xl outline-none text-slate-800 dark:text-white placeholder-slate-200"
                                  placeholder="0,00"
                               />
