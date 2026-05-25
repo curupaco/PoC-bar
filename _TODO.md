@@ -40,7 +40,7 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
    - Sugestão de oferecer cortesia ocasional
    - Donos amam reconhecer clientes fiéis
 
-4. **Previsão de Movimento do Dia**
+4. [x] **Previsão de Movimento do Dia** [FEITO]
    - Usa histórico + dia da semana + clima
    - Exemplo: "Sexta com calor: movimento esperado ALTO"
    - Sugestão: Preparar +40 long neck, +2 caixas de gelo

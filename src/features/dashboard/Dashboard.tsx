@@ -5,6 +5,7 @@ import {
   AreaChart, Area
 } from 'recharts';
 import AIInsights from './AIInsights';
+import DemandForecast from './DemandForecast';
 
 interface DashboardProps {
   sales: Sale[];
@@ -271,6 +272,8 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
               </ResponsiveContainer>
            </div>
         </div>
+
+        <DemandForecast sales={sales} products={products} />
 
         <AIInsights products={products} sales={sales} stockBalances={stockBalances} />
 
