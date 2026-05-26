@@ -267,12 +267,694 @@ const WhatsAppSimulation: React.FC = () => (
   </div>
 );
 
+// ─── INTERACTIVE TECH SECTION ───
+const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagnostics }) => {
+  const [activeTab, setActiveTab] = useState<'sync' | 'rateLimit' | 'sandbox' | 'rbac'>('sync');
+
+  // ─── 1. SYNCHRONIZATION ENGINE STATE ───
+  const [isOnline, setIsOnline] = useState(true);
+  const [localQueue, setLocalQueue] = useState<{ id: string; type: string; name: string; price: number }[]>([]);
+  const [cloudDb, setCloudDb] = useState<{ id: string; type: string; name: string; price: number }[]>([
+    { id: 'v_e489', type: 'venda', name: 'Cerveja Duplo Malte', price: 12 },
+    { id: 'v_c230', type: 'venda', name: 'Porção de Batata Frita', price: 38 },
+  ]);
+  const [syncLogs, setSyncLogs] = useState<string[]>([
+    'SYSTEM: [02:50:00] Dispositivo inicializado com sucesso.',
+    'SYNC: [02:50:01] Sincronização atômica estabelecida com Firebase RTDB.',
+    'CACHE: [02:50:01] 0 transações pendentes no IndexedDB (latência zero).'
+  ]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Scroll sync logs to bottom
+  useEffect(() => {
+    if (logsEndRef.current) {
+      logsEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [syncLogs]);
+
+  const handleSimulateSale = (itemName: string, price: number) => {
+    const saleId = `v_${Math.random().toString(36).substring(2, 6)}`;
+    const newSale = { id: saleId, type: 'venda', name: itemName, price };
+
+    if (!isOnline) {
+      setLocalQueue(prev => [...prev, newSale]);
+      setSyncLogs(prev => [
+        ...prev,
+        `CACHE: [${new Date().toLocaleTimeString()}] OFFLINE: Venda de "${itemName}" (R$ ${price}) gravada no IndexedDB em 2.4ms (Offline-First).`
+      ]);
+    } else {
+      setCloudDb(prev => [...prev, newSale]);
+      setSyncLogs(prev => [
+        ...prev,
+        `SYNC: [${new Date().toLocaleTimeString()}] ONLINE: Venda de "${itemName}" (R$ ${price}) transmitida diretamente ao Firebase.`
+      ]);
+    }
+  };
+
+  const handleSyncQueue = () => {
+    if (localQueue.length === 0) {
+      setSyncLogs(prev => [...prev, `SYNC: [${new Date().toLocaleTimeString()}] Fila local limpa. Nada para sincronizar.`]);
+      return;
+    }
+
+    setSyncLogs(prev => [
+      ...prev,
+      `SYNC: [${new Date().toLocaleTimeString()}] Iniciando upload de ${localQueue.length} transações pendentes...`,
+      `SYNC: [${new Date().toLocaleTimeString()}] Canal TLS 1.3 estabelecido com a Nuvem Google.`
+    ]);
+
+    setTimeout(() => {
+      setCloudDb(prev => [...prev, ...localQueue]);
+      setSyncLogs(prev => [
+        ...prev,
+        `SYNC: [${new Date().toLocaleTimeString()}] Sincronização atômica concluída! ${localQueue.length} comanda(s) gravadas no Firebase RTDB.`,
+        `CACHE: [${new Date().toLocaleTimeString()}] Cache do IndexedDB liberado.`
+      ]);
+      setLocalQueue([]);
+    }, 1200);
+  };
+
+  // ─── 2. RATE LIMIT STATE ───
+  const [rateLogs, setRateLogs] = useState<{ id: number; path: string; status: number; time: string; delay: number }[]>([]);
+  const [remainingLimit, setRemainingLimit] = useState(30);
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null);
+  const [rateCooldown, setRateCooldown] = useState(0);
+  const [recentClicks, setRecentClicks] = useState<number[]>([]);
+
+  // Cooldown countdown
+  useEffect(() => {
+    if (blockedUntil !== null) {
+      const interval = setInterval(() => {
+        const diff = Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000));
+        setRateCooldown(diff);
+        if (diff === 0) {
+          setBlockedUntil(null);
+          setRemainingLimit(30);
+          setRecentClicks([]);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [blockedUntil]);
+
+  const handleRateLimitRequest = (path: string) => {
+    if (blockedUntil !== null) return;
+
+    const now = Date.now();
+    const newClicks = [...recentClicks, now].filter(t => now - t < 3000);
+    setRecentClicks(newClicks);
+
+    let status = 200;
+    const remaining = Math.max(0, remainingLimit - 1);
+    setRemainingLimit(remaining);
+
+    // Block if clicks are too fast (more than 5 in 3 seconds) or limit is 0
+    if (newClicks.length > 5 || remaining === 0) {
+      status = 429;
+      setBlockedUntil(now + 10000); // 10s cooldown for simulation
+      setRateCooldown(10);
+      setRateLogs(prev => [
+        { id: prev.length + 1, path, status, time: new Date().toLocaleTimeString(), delay: 1.8 },
+        ...prev
+      ]);
+      return;
+    }
+
+    setRateLogs(prev => [
+      { id: prev.length + 1, path, status, time: new Date().toLocaleTimeString(), delay: Math.floor(Math.random() * 12) + 4 },
+      ...prev
+    ]);
+  };
+
+  // ─── 3. SANDBOX STORAGE STATE ───
+  const [storageKeys, setStorageKeys] = useState<{ key: string; value: string; isProtected: boolean }[]>([
+    { key: 'btq_active_unit', value: 'Unidade_Vila_Mada', isProtected: true },
+    { key: 'btq_session_token', value: 'JWT_eYjhbGciOiJIUzI1NiIsInR5c...', isProtected: true },
+    { key: 'btq_cached_products', value: '57_itens_cadastrados', isProtected: true },
+    { key: 'theme', value: 'dark', isProtected: false },
+    { key: 'user_preferred_zoom', value: '110%', isProtected: false },
+  ]);
+  const [storageActionLog, setStorageActionLog] = useState<string>('Aguardando gravação de chave no Sandbox...');
+
+  const handleAddStorageItem = (rawKey: string, val: string) => {
+    const isSensitive = ['session', 'token', 'unit', 'sales', 'cache', 'products', 'admin', 'user'].some(word => rawKey.toLowerCase().includes(word));
+    const processedKey = isSensitive && !rawKey.startsWith('btq_') ? `btq_${rawKey}` : rawKey;
+
+    setStorageKeys(prev => {
+      const filtered = prev.filter(item => item.key !== processedKey);
+      return [{ key: processedKey, value: val, isProtected: isSensitive }, ...filtered];
+    });
+
+    setStorageActionLog(
+      isSensitive 
+        ? `SISTEMA: safeLocalStorage interceptou gravação de "${rawKey}". Detectado dado sensível. Chave redirecionada transparentemente para o sandbox protegido como "${processedKey}".`
+        : `SISTEMA: safeLocalStorage gravou "${rawKey}" diretamente. Chave utilitária livre de prefixação.`
+    );
+  };
+
+  // ─── 4. CENTRALIZED RBAC STATE ───
+  const [selectedRole, setSelectedRole] = useState<'admin' | 'caixa' | 'garcom' | 'cozinha'>('admin');
+
+  return (
+    <section id="tech-console" className="py-32 px-6 bg-slate-950 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(16,185,129,0.02)_0%,transparent_60%)]"></div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        {/* Section Header */}
+        <div className="text-center mb-20">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+            Arquitetura & Segurança v5.3.0
+          </span>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
+            Engenharia de Borda & <span className="text-emerald-500 italic">Conectividade</span>
+          </h2>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
+            Interaja diretamente com o console técnico real do Botequista. Veja em tempo real nossas soluções de segurança ativa, rate limiting e resiliência offline.
+          </p>
+        </div>
+
+        {/* Console Box */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          
+          {/* Tab Sidebar */}
+          <div className="lg:col-span-3 flex flex-col gap-2.5">
+            {[
+              { id: 'sync', title: 'Sincronismo Atômico', desc: 'SyncQueue e Cache Offline-First', icon: '🔄' },
+              { id: 'rateLimit', title: 'Edge Rate Limiting', desc: 'Proteção contra DoS / Raspagem', icon: '🛡️' },
+              { id: 'sandbox', title: 'Sandbox Storage', desc: 'safeLocalStorage isolado', icon: '📦' },
+              { id: 'rbac', title: 'Blindagem de Admin', desc: 'useIsAdmin() & Route Guard', icon: '🔐' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`w-full text-left p-5 rounded-2xl border transition-all duration-300 relative overflow-hidden group ${
+                  activeTab === tab.id
+                    ? 'bg-[#0b1328]/80 border-emerald-500/30 text-white shadow-lg shadow-emerald-900/10 glow-pulse'
+                    : 'bg-slate-900/30 border-white/5 text-slate-400 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className={`text-xl ${activeTab === tab.id ? 'scale-110 rotate-12' : ''} transition-transform`}>{tab.icon}</span>
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider">{tab.title}</h4>
+                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">{tab.desc}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+
+            {/* Diagnostics Link card */}
+            <button
+              onClick={onOpenDiagnostics}
+              className="mt-6 w-full p-5 rounded-2xl bg-gradient-to-r from-red-600/10 to-transparent border border-red-500/20 text-left transition-all hover:scale-[1.02] active:scale-[0.98] group"
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-1">Diagnóstico Geral</h4>
+                  <p className="text-[9px] text-slate-400 font-bold uppercase">Executar Auditoria de Borda CLI</p>
+                </div>
+                <span className="text-lg group-hover:translate-x-1 transition-transform">⚡</span>
+              </div>
+            </button>
+          </div>
+
+          {/* Interactive Output Console */}
+          <div className="lg:col-span-9 rounded-3xl bg-[#070b19]/90 border border-white/5 overflow-hidden flex flex-col relative shadow-2xl">
+            <div className="scanline"></div>
+            
+            {/* Terminal Header */}
+            <div className="bg-slate-900/60 p-4 border-b border-white/5 flex justify-between items-center relative z-20">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                </div>
+                <span className="text-[9px] font-mono font-bold tracking-widest text-slate-500 uppercase">
+                  engine@botequista:~/{activeTab}_simulator
+                </span>
+              </div>
+              <span className="text-[8px] font-mono text-emerald-500 font-bold uppercase tracking-wider">
+                status: active_sandbox
+              </span>
+            </div>
+
+            {/* Console Content */}
+            <div className="flex-1 p-6 sm:p-8 flex flex-col relative z-20 overflow-y-auto no-scrollbar">
+              
+              {/* TAB 1: SYNCHRONIZATION ENGINE */}
+              {activeTab === 'sync' && (
+                <div className="space-y-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base font-black uppercase tracking-wider mb-2">🔄 Sincronismo Atômico & Fila Local Híbrida</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 font-mono">
+                      O sistema detecta a perda de sinal instantaneamente. Quando OFFLINE, os dados são salvos no IndexedDB local do garçom em 2.4ms. Ao retornar ONLINE, o Botequista sincroniza a fila acumulada atomicamente para evitar conflitos de mesas concorrentes.
+                    </p>
+
+                    {/* Simulation Controls */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col justify-between gap-3">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Canal de Rede</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setIsOnline(true);
+                              setSyncLogs(prev => [...prev, `SYNC: [${new Date().toLocaleTimeString()}] Rede restaurada. Canal ONLINE ativo.`]);
+                            }}
+                            className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
+                              isOnline ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-900 text-slate-500 hover:text-white'
+                            }`}
+                          >
+                            Online
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsOnline(false);
+                              setSyncLogs(prev => [...prev, `SYNC: [${new Date().toLocaleTimeString()}] Rede desconectada pelo usuário. Canal em modo OFFLINE-FIRST.`]);
+                            }}
+                            className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all ${
+                              !isOnline ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-slate-900 text-slate-500 hover:text-white'
+                            }`}
+                          >
+                            Offline
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col justify-between gap-3">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Simular Lançamentos</span>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSimulateSale('Chopp IPA 500ml', 16)}
+                            className="flex-1 py-1.5 rounded-lg bg-[#111833] border border-white/10 text-[9px] font-black uppercase text-white hover:border-emerald-500/40 hover:bg-[#152044] transition-all"
+                          >
+                            + Chopp
+                          </button>
+                          <button
+                            onClick={() => handleSimulateSale('Porção Pastéis', 42)}
+                            className="flex-1 py-1.5 rounded-lg bg-[#111833] border border-white/10 text-[9px] font-black uppercase text-white hover:border-emerald-500/40 hover:bg-[#152044] transition-all"
+                          >
+                            + Pastéis
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col justify-between gap-3">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ação do Sync</span>
+                        <button
+                          onClick={handleSyncQueue}
+                          disabled={localQueue.length === 0}
+                          className={`w-full py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
+                            localQueue.length > 0
+                              ? 'bg-emerald-500 text-white hover:scale-105 active:scale-95 shadow-lg shadow-emerald-500/20'
+                              : 'bg-slate-900 text-slate-600 cursor-not-allowed border border-white/5'
+                          }`}
+                        >
+                          Sincronizar ({localQueue.length})
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Sync Engine Visual Map */}
+                    <div className="grid grid-cols-1 md:grid-cols-7 gap-4 items-center bg-[#050813] p-5 rounded-2xl border border-white/5 mb-6">
+                      
+                      {/* Local Client Device */}
+                      <div className="md:col-span-2 p-3 bg-slate-900/60 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center gap-1.5 relative">
+                        <span className="text-2xl">📱</span>
+                        <div className="text-[9px] font-black text-white uppercase tracking-widest">IndexedDB (Local)</div>
+                        <div className="text-[8px] font-mono text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold">
+                          Fila Local: {localQueue.length} comandas
+                        </div>
+                      </div>
+
+                      {/* Connection path */}
+                      <div className="md:col-span-3 flex flex-col items-center justify-center text-center py-2">
+                        {isOnline ? (
+                          <div className="w-full px-4 flex flex-col items-center gap-1">
+                            <span className="text-[8px] font-black text-emerald-500 tracking-wider uppercase animate-pulse">Online • Canal Seguro</span>
+                            <div className="w-full h-1 bg-emerald-500/20 rounded-full overflow-hidden relative">
+                              <div className="absolute inset-y-0 w-1/3 bg-emerald-500 rounded-full animate-[grow_1.5s_ease-in-out_infinite]"></div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-full px-4 flex flex-col items-center gap-1">
+                            <span className="text-[8px] font-black text-amber-500 tracking-wider uppercase">Offline • Sincronismo Retido</span>
+                            <div className="w-full h-1 bg-amber-500/25 rounded-full border border-dashed border-amber-500/40"></div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Remote Firebase Database */}
+                      <div className="md:col-span-2 p-3 bg-slate-900/60 rounded-xl border border-white/5 flex flex-col items-center justify-center text-center gap-1.5">
+                        <span className="text-2xl">☁️</span>
+                        <div className="text-[9px] font-black text-white uppercase tracking-widest">Firebase Cloud</div>
+                        <div className="text-[8px] font-mono text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-full font-bold">
+                          Cloud DB: {cloudDb.length} itens
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Terminal Console Output */}
+                  <div className="bg-[#03060c] p-4 rounded-xl border border-white/5 font-mono text-[9px] text-emerald-400/90 h-32 overflow-y-auto space-y-1.5 no-scrollbar shadow-inner">
+                    {syncLogs.map((log, index) => (
+                      <div key={index} className="leading-relaxed whitespace-pre-wrap">
+                        <span className="text-emerald-600/70 select-none">&gt;</span> {log}
+                      </div>
+                    ))}
+                    <div ref={logsEndRef}></div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: EDGE API RATE LIMITING */}
+              {activeTab === 'rateLimit' && (
+                <div className="space-y-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base font-black uppercase tracking-wider mb-2">🛡️ Proteção de Borda & Edge Rate Limiting</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 font-mono">
+                      Para mitigar ataques de força bruta, scripts de scraping ou robôs inflando comandas, nossa API enforca um controle de frequência atômico (limite de 30 requisições/min). Abusos retornam HTTP 429 com cabeçalhos padrão RFC.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
+                      {/* Controller & Clicker */}
+                      <div className="md:col-span-5 bg-slate-950/60 p-5 rounded-2xl border border-white/5 flex flex-col justify-between gap-4">
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Simulador de Ataque</span>
+                          <p className="text-[10px] text-slate-400 font-bold leading-normal">
+                            Clique rapidamente no botão abaixo para simular disparos concorrentes contra a API do bar.
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={() => handleRateLimitRequest('/api/reports')}
+                          disabled={blockedUntil !== null}
+                          className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                            blockedUntil !== null
+                              ? 'bg-red-500/10 text-red-500 border border-red-500/20 cursor-not-allowed'
+                              : 'bg-red-600 hover:bg-red-500 text-white hover:scale-105 active:scale-95 shadow-lg shadow-red-900/20'
+                          }`}
+                        >
+                          {blockedUntil !== null ? `BLOQUEADO (${rateCooldown}s)` : 'Disparar GET /api/reports'}
+                        </button>
+                      </div>
+
+                      {/* Header values output */}
+                      <div className="md:col-span-7 bg-[#050813] p-5 rounded-2xl border border-white/5 font-mono text-[9px] text-slate-400 space-y-2.5">
+                        <span className="text-[8px] font-sans font-black text-slate-500 uppercase tracking-widest block mb-1">
+                          Cabeçalhos da Resposta HTTP (Live)
+                        </span>
+                        
+                        <div className="grid grid-cols-12 gap-1 py-1 border-b border-white/5">
+                          <span className="col-span-5 text-white font-bold">HTTP/1.1</span>
+                          <span className={`col-span-7 font-black ${blockedUntil !== null ? 'text-red-500' : 'text-emerald-500'}`}>
+                            {blockedUntil !== null ? '429 Too Many Requests' : '200 OK'}
+                          </span>
+                        </div>
+                        
+                        <div className="grid grid-cols-12 gap-1 py-1 border-b border-white/5">
+                          <span className="col-span-5 text-slate-400">content-type:</span>
+                          <span className="col-span-7 text-white font-semibold">application/json</span>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-1 py-1 border-b border-white/5">
+                          <span className="col-span-5 text-slate-400">x-ratelimit-limit:</span>
+                          <span className="col-span-7 text-white font-semibold">30</span>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-1 py-1 border-b border-white/5">
+                          <span className="col-span-5 text-slate-400">x-ratelimit-remaining:</span>
+                          <span className={`col-span-7 font-bold ${remainingLimit < 10 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                            {remainingLimit}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-1 py-1 border-b border-white/5">
+                          <span className="col-span-5 text-slate-400">x-ratelimit-reset:</span>
+                          <span className="col-span-7 text-white font-semibold">{blockedUntil !== null ? `${rateCooldown}s` : '0s'}</span>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-1">
+                          <span className="col-span-5 text-slate-400">retry-after:</span>
+                          <span className={`col-span-7 font-black ${blockedUntil !== null ? 'text-red-500 animate-pulse' : 'text-slate-500'}`}>
+                            {blockedUntil !== null ? `${rateCooldown}s` : '0'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terminal Request Log */}
+                  <div className="bg-[#03060c] rounded-xl border border-white/5 h-32 overflow-y-auto no-scrollbar shadow-inner">
+                    {rateLogs.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-[10px] font-mono text-slate-600 font-bold uppercase tracking-widest italic">
+                        Nenhuma requisição disparada nas últimas 3s
+                      </div>
+                    ) : (
+                      <div className="p-4 font-mono text-[9px] space-y-1.5">
+                        {rateLogs.map((log) => (
+                          <div
+                            key={log.id}
+                            className={`flex justify-between items-center py-0.5 px-2 rounded ${
+                              log.status === 429 ? 'bg-red-500/10 text-red-400 border border-red-500/25 animate-pulse' : 'text-emerald-400/90'
+                            }`}
+                          >
+                            <span>
+                              [{log.time}] GET {log.path} - HTTP {log.status}
+                            </span>
+                            <span className="text-slate-500 font-bold uppercase">
+                              {log.status === 429 ? 'Rate Limit Exceeded' : `latência: ${log.delay}ms`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: SANDBOX LOCAL STORAGE */}
+              {activeTab === 'sandbox' && (
+                <div className="space-y-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base font-black uppercase tracking-wider mb-2">📦 Sandboxing de Storage & safeLocalStorage</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 font-mono">
+                      Para evitar colisões com variáveis de outros sites no navegador ou interceptação maliciosa, o Botequista implementa um wrapper chamado `safeLocalStorage`. Chaves sensíveis (como tokens de autenticação e cache de faturamento) recebem um namespace fixo `btq_` isolado.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
+                      
+                      {/* Controller Form */}
+                      <div className="md:col-span-5 bg-slate-950/60 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">
+                          Simular Chamadas ao LocalStorage
+                        </span>
+                        
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-bold text-slate-400 uppercase">Selecione uma chave:</label>
+                          <div className="grid grid-cols-1 gap-2">
+                            <button
+                              onClick={() => handleAddStorageItem('session_token', 'JWT_a78c1b9...') }
+                              className="py-1.5 px-3 rounded-lg bg-[#111833] border border-white/5 text-[9px] font-black uppercase text-slate-200 text-left hover:border-emerald-500/40 hover:bg-[#152044] transition-all flex justify-between items-center"
+                            >
+                              <span>session_token</span>
+                              <span className="text-[8px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">sensível</span>
+                            </button>
+                            <button
+                              onClick={() => handleAddStorageItem('sales_cache', '124_vendas_fila') }
+                              className="py-1.5 px-3 rounded-lg bg-[#111833] border border-white/5 text-[9px] font-black uppercase text-slate-200 text-left hover:border-emerald-500/40 hover:bg-[#152044] transition-all flex justify-between items-center"
+                            >
+                              <span>sales_cache</span>
+                              <span className="text-[8px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">sensível</span>
+                            </button>
+                            <button
+                              onClick={() => handleAddStorageItem('theme', 'dark_mode') }
+                              className="py-1.5 px-3 rounded-lg bg-[#111833] border border-white/5 text-[9px] font-black uppercase text-slate-200 text-left hover:border-emerald-500/40 hover:bg-[#152044] transition-all flex justify-between items-center"
+                            >
+                              <span>theme</span>
+                              <span className="text-[8px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-bold">genérico</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Storage Partition Table */}
+                      <div className="md:col-span-7 bg-[#050813] p-5 rounded-2xl border border-white/5 flex flex-col gap-3 font-mono text-[9px]">
+                        <span className="text-[8px] font-sans font-black text-slate-500 uppercase tracking-widest block">
+                          Estado das Partições no Navegador (Live)
+                        </span>
+
+                        <div className="flex-1 space-y-2 max-h-[140px] overflow-y-auto no-scrollbar">
+                          {storageKeys.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className={`flex justify-between items-center p-2 rounded border ${
+                                item.isProtected
+                                  ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400'
+                                  : 'bg-slate-900/40 border-white/5 text-slate-400'
+                              }`}
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span>{item.isProtected ? '🔒' : '🔓'}</span>
+                                <span className="font-bold">{item.key}</span>
+                              </div>
+                              <span className="text-[8px] opacity-75 truncate max-w-[120px]">{item.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Engine storage log */}
+                  <div className="bg-[#03060c] p-4 rounded-xl border border-white/5 font-mono text-[9px] text-emerald-400/90 leading-relaxed min-h-16 flex items-center shadow-inner">
+                    <span className="text-emerald-600/70 mr-1.5 select-none font-bold">&gt;</span> {storageActionLog}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: CENTRALIZED RBAC */}
+              {activeTab === 'rbac' && (
+                <div className="space-y-6 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-white text-base font-black uppercase tracking-wider mb-2">🔐 Central de Privilégios & useIsAdmin() Blindage</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 font-mono">
+                      Evitamos validações locais dispersas e vulneráveis a adulteração manual. Criamos o `AuthContext` e centralizamos a blindagem no hook customizado `useIsAdmin()`. Troque o perfil de equipe no simulador para ver as restrições em tempo real.
+                    </p>
+
+                    {/* Role selector panel */}
+                    <div className="flex gap-2 mb-6 flex-wrap">
+                      {[
+                        { id: 'admin', label: '👑 Administrador', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+                        { id: 'caixa', label: '💰 Caixa', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+                        { id: 'garcom', label: '📋 Garçom', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                        { id: 'cozinha', label: '🍳 Cozinheiro', color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                      ].map(role => (
+                        <button
+                          key={role.id}
+                          onClick={() => setSelectedRole(role.id as any)}
+                          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase border transition-all ${
+                            selectedRole === role.id
+                              ? 'bg-white text-slate-950 font-black scale-105 border-white shadow-lg'
+                              : 'bg-slate-900/50 border-white/5 text-slate-400 hover:text-white'
+                          }`}
+                        >
+                          {role.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Mock Interface showing route blocks */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#050813] p-5 rounded-2xl border border-white/5">
+                      
+                      {/* Action 1: PDV Vendas */}
+                      <div className="p-4 bg-slate-900/60 rounded-xl border border-white/5 relative overflow-hidden flex flex-col justify-between min-h-24">
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider block">1. Frente de Caixa & Vendas</span>
+                        <div className="flex justify-between items-center mt-4">
+                          <span className="text-[8px] text-emerald-400 font-bold uppercase">PDV Disponível</span>
+                          <span className="text-xs">🟢</span>
+                        </div>
+                      </div>
+
+                      {/* Action 2: Kitchen monitor */}
+                      <div className="p-4 bg-slate-900/60 rounded-xl border border-white/5 relative overflow-hidden flex flex-col justify-between min-h-24">
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider block">2. Monitor de Cozinha Touch</span>
+                        <div className="flex justify-between items-center mt-4">
+                          <span className="text-[8px] text-emerald-400 font-bold uppercase">Display Disponível</span>
+                          <span className="text-xs">🟢</span>
+                        </div>
+                      </div>
+
+                      {/* Action 3: Finance reports (Admin-only) */}
+                      <div className={`p-4 rounded-xl border relative overflow-hidden flex flex-col justify-between min-h-24 transition-all duration-500 ${
+                        selectedRole === 'admin' 
+                          ? 'bg-slate-900/60 border-white/5' 
+                          : 'bg-slate-950/40 border-red-500/10'
+                      }`}>
+                        {selectedRole !== 'admin' && (
+                          <div className="absolute inset-0 bg-[#02050c]/90 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center text-center p-3">
+                            <span className="text-sm mb-1">🔐</span>
+                            <span className="text-[8px] font-mono text-red-500 font-black uppercase tracking-widest leading-none">
+                              Acesso Negado (useIsAdmin)
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider block relative z-0">
+                          3. Relatórios Financeiros (CMV)
+                        </span>
+                        <div className="flex justify-between items-center mt-4 relative z-0">
+                          <span className="text-[8px] text-emerald-400 font-bold uppercase">Lucro Real Ativo</span>
+                          <span className="text-xs">🟢</span>
+                        </div>
+                      </div>
+
+                      {/* Action 4: Settings (Admin-only) */}
+                      <div className={`p-4 rounded-xl border relative overflow-hidden flex flex-col justify-between min-h-24 transition-all duration-500 ${
+                        selectedRole === 'admin' 
+                          ? 'bg-slate-900/60 border-white/5' 
+                          : 'bg-slate-950/40 border-red-500/10'
+                      }`}>
+                        {selectedRole !== 'admin' && (
+                          <div className="absolute inset-0 bg-[#02050c]/90 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center text-center p-3">
+                            <span className="text-sm mb-1">🔐</span>
+                            <span className="text-[8px] font-mono text-red-500 font-black uppercase tracking-widest leading-none">
+                              Acesso Negado (useIsAdmin)
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider block relative z-0">
+                          4. Nível de Acesso da Equipe
+                        </span>
+                        <div className="flex justify-between items-center mt-4 relative z-0">
+                          <span className="text-[8px] text-emerald-400 font-bold uppercase">RBAC Habilitado</span>
+                          <span className="text-xs">🟢</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* RBAC verification readout */}
+                  <div className="bg-[#03060c] p-4 rounded-xl border border-white/5 font-mono text-[9px] leading-relaxed shadow-inner">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400 font-bold">STATUS DA AUTENTICAÇÃO ATUAL:</span>
+                      <span className={`font-black ${selectedRole === 'admin' ? 'text-emerald-400 animate-pulse' : 'text-amber-400'}`}>
+                        {selectedRole === 'admin' ? 'PRIVILÉGIOS TOTAIS (ADMIN)' : 'OPERADOR RESTRITO'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Terminal Footer */}
+            <div className="bg-slate-950 p-4 border-t border-white/5 flex justify-between items-center text-[9px] font-bold text-slate-500 tracking-widest relative z-20">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> CONEXÃO_OK</span>
+                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> BD_SEGURO</span>
+              </div>
+              <div>BOTEQUISTA_SECURITY_v5.3.0</div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // ─── MAIN COMPONENT ───
 export const LandingPage2: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
   const [isNerdModalOpen, setIsNerdModalOpen] = useState(false);
-  const [nerdTab, setNerdTab] = useState<'stack' | 'sync' | 'perf'>('stack');
+  const [nerdTab, setNerdTab] = useState<'stack' | 'sync' | 'perf' | 'sec'>('stack');
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [faqSearch, setFaqSearch] = useState('');
@@ -371,6 +1053,34 @@ export const LandingPage2: React.FC = () => {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
         }
+        .glow-pulse {
+          animation: glowPulse 2s ease-in-out infinite;
+        }
+        .glow-pulse-amber {
+          animation: glowPulseAmber 2s ease-in-out infinite;
+        }
+        .glow-pulse-red {
+          animation: glowPulseRed 2s ease-in-out infinite;
+        }
+        @keyframes glowPulse {
+          0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.15), inset 0 0 5px rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2); }
+          50% { box-shadow: 0 0 25px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); }
+        }
+        @keyframes glowPulseAmber {
+          0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.15), inset 0 0 5px rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2); }
+          50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), inset 0 0 10px rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.5); }
+        }
+        @keyframes glowPulseRed {
+          0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.15), inset 0 0 5px rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2); }
+          50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.5); }
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
       `}</style>
 
       {/* ─── NAVIGATION ─── */}
@@ -388,7 +1098,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
-            <button onClick={() => setIsNerdModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
+            <button onClick={() => scrollToSection('tech-console')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
             <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
               WhatsApp
@@ -405,7 +1115,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
-            <button onClick={() => { setIsNerdModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
+            <button onClick={() => { scrollToSection('tech-console'); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
             <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
               Falar no WhatsApp
@@ -675,6 +1385,9 @@ export const LandingPage2: React.FC = () => {
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
               'Registro de Perda & Desperdício (v5.0.0)',
+              'API Rate Limiting e Proteção de Borda Vercel Edge (v5.3.0)',
+              'Isolamento de Namespace do LocalStorage com safeLocalStorage (v5.3.0)',
+              'Centralização do Controle de Admin via React Context e useIsAdmin() (v5.3.0)',
               'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
               'Smart Stock Híbrido & Hot Items (v4.9.0)',
               'Previsão de Movimento por Clima & Demanda (v5.2.0)',
@@ -823,6 +1536,9 @@ export const LandingPage2: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ─── INTERACTIVE TECH SECTION ─── */}
+      <TechSection onOpenDiagnostics={() => setIsNerdModalOpen(true)} />
 
       {/* ─── TESTIMONIALS ─── */}
       <section className="py-32 px-6">
@@ -1020,7 +1736,7 @@ export const LandingPage2: React.FC = () => {
                 </div>
                 <div className="flex gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   <span className="text-emerald-500/50">root@botequista:</span>
-                  <span>~/architecture_v4.9.0</span>
+                  <span>~/architecture_v5.3.0</span>
                 </div>
               </div>
               <div className="text-[10px] font-black text-emerald-500 animate-pulse tracking-tighter">
@@ -1034,6 +1750,7 @@ export const LandingPage2: React.FC = () => {
                 { id: 'stack', label: '01. TECH_STACK', icon: '🛠️' },
                 { id: 'sync', label: '02. SYNC_ENGINE', icon: '🔄' },
                 { id: 'perf', label: '03. BENCHMARKS', icon: '⚡' },
+                { id: 'sec', label: '04. SECURITY_HARDENING', icon: '🛡️' },
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -1142,6 +1859,34 @@ export const LandingPage2: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {nerdTab === 'sec' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { title: 'RBAC HÍBRIDO (v5.2.0)', desc: 'Matriz granular de 27 permissões de nível militar com fallbacks automáticos para contas legadas (anti-lockout).', icon: '🔑' },
+                      { title: 'API RATE LIMITING (v5.3.0)', desc: 'Bloqueio instantâneo contra DoS/scraping. Máximo de 30 req/min por IP. Headers padrão RFC-6585 ativos.', icon: '🛡️' },
+                      { title: 'SANDBOX STORAGE (v5.3.0)', desc: 'Wrapper safeLocalStorage. Enforça namespace btq_ determinístico, isolando dados de faturamento.', icon: '📦' },
+                      { title: 'BLINDAGEM ADMIN (v5.3.0)', desc: 'Centralização de privilégios de rotas com React Context e hook useIsAdmin(), impedindo ataques locais.', icon: '🔐' }
+                    ].map((item, i) => (
+                      <div key={i} className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/20 transition-all">
+                        <div className="absolute top-4 right-4 text-2xl opacity-10 group-hover:opacity-30 transition-opacity">{item.icon}</div>
+                        <h4 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2 pr-8">{item.title}</h4>
+                        <p className="text-slate-400 text-xs leading-relaxed font-mono">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-emerald-500 text-xs font-bold flex items-center gap-2">
+                      <span className="text-white">$</span> botequista --audit-security
+                    </p>
+                    <div className="bg-slate-950/50 p-6 rounded-2xl border border-white/5 text-slate-400 text-xs leading-relaxed font-mono">
+                      <span>[SECURITY AUDIT] Matriz de Direitos Híbrida em conformidade com as regras RTDB estritas. O tráfego de dados é blindado em trânsito com criptografia TLS 1.3 e em repouso com IndexedDB encriptado localmente. Proteção ativa contra cancelamentos suspeitos (Auditoria Anti-Fraude) e fechamento cego de caixa.</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Terminal Footer */}
@@ -1150,7 +1895,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SYNC_READY</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> DB_CONNECTED</span>
               </div>
-              <div>BOTEQUISTA_SYSTEM_V4.9.0_STABLE</div>
+              <div>BOTEQUISTA_SYSTEM_V5.3.0_STABLE</div>
             </div>
           </div>
         </div>

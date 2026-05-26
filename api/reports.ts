@@ -1,3 +1,4 @@
+import { rateLimit } from './rateLimiter';
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -6,6 +7,19 @@ export default async function handler(req: any, res: any) {
   res.setHeader('Access-Control-Allow-Headers', 'x-fb-url, x-fb-token, Content-Type');
   
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Rate Limiting
+  const ipRaw = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || '127.0.0.1';
+  const ip = Array.isArray(ipRaw) ? ipRaw[0] : (typeof ipRaw === 'string' ? ipRaw.split(',')[0].trim() : '127.0.0.1');
+  const { isLimited, remaining, reset } = rateLimit(ip, 30, 60 * 1000); // 30 req/min
+  
+  res.setHeader('X-RateLimit-Limit', '30');
+  res.setHeader('X-RateLimit-Remaining', String(remaining));
+  res.setHeader('X-RateLimit-Reset', String(Math.ceil(reset / 1000)));
+
+  if (isLimited) {
+     return res.status(429).json({ error: "Excesso de requisições. Por favor, tente novamente mais tarde." });
+  }
   
   const { unitId, startDate, endDate } = req.query;
   

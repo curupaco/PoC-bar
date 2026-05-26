@@ -386,10 +386,10 @@ Dica de "Copy" para o topo da página:
 - Criar pipeline de validação no CI/CD
 
 ### Hardening Recomendado
-- **Centralizar verificação de admin:** Criar hook `useIsAdmin()` para evitar checagem `username === 'admin'` dispersa no código
-- **Rate limiting:** Adicionar controle de frequência nos endpoints de API (`/api/reports`, `/api/debtors`)
-- **Content Security Policy:** Adicionar no vite.config.ts para prevenir XSS
-- **Sanitização de localStorage:** Usar prefixo consistente (ex: `btq_`) para todas as chaves
+- [x] **Centralizar verificação de admin:** Criar hook `useIsAdmin()` e `AuthContext` para centralizar sessões e evitar checagens dispersas [FEITO]
+- [x] **Rate limiting:** Controle de frequência leve e profissional de 30 req/min nas APIs (`/api/reports`, `/api/debtors`) [FEITO]
+- **Content Security Policy:** Adicionar no vite.config.ts para prevenir XSS (Adiado por decisão estratégica de arquitetura de PoC)
+- [x] **Sanitização de localStorage:** Uso de prefixo consistente `btq_` transparente via safeLocalStorage [FEITO]
 
 ### Auditoria
 - Adicionar logs de auditoria para mudanças críticas

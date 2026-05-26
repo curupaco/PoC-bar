@@ -23,8 +23,9 @@ import { FirebaseGuard } from './shared/ui/FirebaseGuard';
 import { UnitSelector } from './features/auth/UnitSelector';
 import { AppHeader } from './shared/ui/AppHeader';
 import { useTheme } from './hooks/useTheme';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, AuthContext } from './hooks/useAuth';
 import { useAppStore } from './hooks/useAppStore';
+import { safeLocalStorage } from './utils/storage';
 import { LandingPage } from './features/landing/LandingPage';
 import { LandingPage2 } from './features/landing/LandingPage2';
 import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
@@ -61,14 +62,14 @@ export const App: React.FC = () => {
   const { currentUser, setCurrentUser, currentUserRef, loginError, handleLogin, logout, syncCurrentUser, enableDemoMode } = useAuth();
   const store = useAppStore({ currentUser, currentUserRef, showToast });
 
-  const isDemo = window.location.search.includes('demo=true') || localStorage.getItem('_demo_mode') === 'true';
+  const isDemo = window.location.search.includes('demo=true') || safeLocalStorage.getItem('_demo_mode') === 'true';
 
   useEffect(() => {
     if (window.location.search.includes('demo=true')) {
-      localStorage.setItem('_demo_mode', 'true');
+      safeLocalStorage.setItem('_demo_mode', 'true');
       enableDemoMode();
-    } else if (!isDemo && localStorage.getItem('_demo_mode')) {
-      localStorage.removeItem('_demo_mode');
+    } else if (!isDemo && safeLocalStorage.getItem('_demo_mode')) {
+      safeLocalStorage.removeItem('_demo_mode');
     }
   }, [enableDemoMode, isDemo]);
 
@@ -186,7 +187,8 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
+    <AuthContext.Provider value={{ currentUser }}>
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white font-sans overflow-hidden">
       <Sidebar 
         activeView={activeView} onViewChange={setActiveView} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} 
         currentUser={currentUser} onLogout={requestLogout} onSwitchUnit={store.handleSwitchUnit} isShiftOpen={isShiftOpen} 
@@ -200,7 +202,7 @@ export const App: React.FC = () => {
         {isDemo && (
           <div className="bg-amber-500 text-slate-900 px-4 py-2 text-center text-xs font-black uppercase tracking-widest shadow-md z-50 flex justify-center items-center gap-4">
             <span>⚠️ Você está testando o sistema. Nenhuma alteração será salva.</span>
-            <button onClick={() => { localStorage.removeItem('_demo_mode'); window.location.href = '/landing2'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
+            <button onClick={() => { safeLocalStorage.removeItem('_demo_mode'); window.location.href = '/landing2'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
           </div>
         )}
         {isEventMode && (
@@ -277,6 +279,7 @@ export const App: React.FC = () => {
         onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
         isDanger={confirmModal.isDanger} confirmLabel={confirmModal.confirmLabel} cancelLabel={confirmModal.cancelLabel}
       />
-    </div>
+      </div>
+    </AuthContext.Provider>
   );
 };

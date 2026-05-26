@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Tab, SaleItem, Sale, Product } from '../../types';
+import { safeLocalStorage } from '../../utils/storage';
 
 const playKitchenBell = () => {
   try {
@@ -42,7 +43,7 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
 }) => {
   const [filter, setFilter] = useState<'PENDING' | 'READY'>('PENDING');
   const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem('kitchen_sound_enabled');
+    const saved = safeLocalStorage.getItem('kitchen_sound_enabled');
     return saved !== 'false';
   });
   const [, setTick] = useState(0);
@@ -229,7 +230,7 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
             onClick={() => {
               const newVal = !soundEnabled;
               setSoundEnabled(newVal);
-              localStorage.setItem('kitchen_sound_enabled', String(newVal));
+              safeLocalStorage.setItem('kitchen_sound_enabled', String(newVal));
               if (newVal) {
                 // Toca sino rápido de confirmação ao ativar
                 try {

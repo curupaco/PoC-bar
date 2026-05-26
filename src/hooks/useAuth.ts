@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
 import { User } from '../types';
 import { hashPassword } from '../services/cryptoService';
 import { safeLocalStorage } from '../utils/storage';
@@ -70,4 +70,13 @@ export const useAuth = () => {
     logout,
     enableDemoMode
   };
+};
+
+export const AuthContext = createContext<{ currentUser: User | null }>({ currentUser: null });
+
+export const useCurrentUser = () => useContext(AuthContext);
+
+export const useIsAdmin = () => {
+  const { currentUser } = useCurrentUser();
+  return currentUser?.username === 'admin';
 };

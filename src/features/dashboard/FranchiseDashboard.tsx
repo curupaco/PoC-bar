@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Franchise, Unit, User, Sale, formatCurrency, PaymentMethod } from '../../types';
 import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService';
+import { safeLocalStorage } from '../../utils/storage';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell
@@ -63,12 +64,12 @@ const FranchiseDashboard: React.FC<FranchiseDashboardProps> = ({ units, franchis
         results.forEach(r => { map[r.unitId] = r.sales; });
         
         // Salva em cache para uso offline ou falha futura
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: map }));
+        safeLocalStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: map }));
         setFranchiseSales(map);
       } catch (e) {
         console.error("Failed to fetch franchise data", e);
         // Fallback para cache local se o fetch principal falhar
-        const cached = localStorage.getItem(CACHE_KEY);
+        const cached = safeLocalStorage.getItem(CACHE_KEY);
         if (cached) {
           const { data } = JSON.parse(cached);
           setFranchiseSales(data);
