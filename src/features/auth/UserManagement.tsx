@@ -92,7 +92,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
 
   const handleSave = () => {
     setError(null);
-    if (!username || !password || !displayName) {
+    if (!username || !displayName || (!editingUser && !password)) {
         setError("Preencha todos os campos.");
         return;
     }
