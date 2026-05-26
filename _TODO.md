@@ -215,8 +215,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 - [x] A4: Foco de teclado não visível em elementos interativos
   - Adicionado focus visível globalmente via index.css
-- A5: Modais sem foco inicial garantido
-  - Usar useEffect com ref.current?.focus()
+- [x] A5: Modais sem foco inicial garantido [FEITO]
+  - Foco inicial garantido via atributo autoFocus em modais/inputs interativos
 - A6: Erros em campos sem aria-invalid e aria-describedby
   - Adicionar aria-invalid="true" e aria-describedby
 
@@ -250,8 +250,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 ### D - Formulários e Validação
 
-- D2: Validação de abertura de turno permite zero
-  - Confirmar "Abrir turno sem fundo?"
+- [x] D2: Validação de abertura de turno permite zero [FEITO]
+  - Bloqueada abertura zerada com validação e aviso visual no ShiftControl
 - D5: Input de quantidade aceita valores decimais inconsistentes
   - Usar regex mais robusta: /^-?\d*[.,]?\d*$/
 
@@ -272,8 +272,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
   - Definir paleta: erro=red-600, sucesso=emerald-600, warning=amber-500
 - F4: Modais com tamanhos diferentes
   - Padronizar: max-w-md principais, max-w-sm para.confirmações
-- F5: Ícones misturados (Emoji vs SVG)
-  - Escolher padrão SVG, manter emoji só decorativo
+- [x] F5: Ícones misturados (Emoji vs SVG) [FEITO]
+  - Padronização em massa para ícones SVG em várias telas (ex: InventoryReport)
 - F6: Nomenclatura de abas inconsistente
   - Uniformizarpara：上海ercase
 - F7: Ordem de botões de ação inconsistente
@@ -285,8 +285,8 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
 
 - G3: Dados de exemplo muito grandes (5000 vendas)
   - Implementar paginação ou "carregar mais"
-- G4: Seleção de data em Reports reset ao trocar de aba
-  - Manter estados no nível do componente
+- [x] G4: Seleção de data em Reports reset ao trocar de aba [FEITO]
+  - Persistência das datas via localStorage no Reports.tsx
 - [x] G5: Produtos sem estoque aparecem no POS
   - Adicionada opacidade e badge "ESGOTADO" apenas se controle de estoque estiver ativo.
 - G7: Navegação entre tabs perde scroll position

@@ -376,7 +376,7 @@ export const POS: React.FC<POSProps> = ({
                   title={(!currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos')) ? 'Alternar Modo Evento' : 'Acesso restrito à gerência'}
                 >
                   <span className="text-base sm:text-sm">🎉</span>
-                  <span className="text-[8px] sm:text-[10px] tracking-tight leading-tight sm:leading-normal">M. Evento</span>
+                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Modo Evento</span>
                 </button>
 
                 <button 
@@ -384,7 +384,7 @@ export const POS: React.FC<POSProps> = ({
                   className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-3 sm:px-8 sm:py-4 rounded-2xl font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all text-center"
                 >
                   <span className="text-base sm:text-xs">⚡</span>
-                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">V. Rápida</span>
+                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Venda Rápida</span>
                 </button>
 
                 <button 
