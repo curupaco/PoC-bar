@@ -4,6 +4,7 @@ import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase 
 import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, StockTransaction, Franchise, AuditLog } from '../types';
 import { SyncQueue, QueueItem } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
+import { diagnosticLogger } from '../utils/diagnosticLogger';
 
 interface SyncProps {
   setProducts: (data: any) => void;
@@ -67,6 +68,7 @@ export const useSync = (props: SyncProps) => {
       serverTombstones.current.clear();
       errorCount.current = 0;
       currentUnitRef.current = activeUnitId;
+      diagnosticLogger.info('useSync', `Unidade alterada para: ${activeUnitId}`, { activeUnitId });
     }
   }, [activeUnitId]);
 
@@ -110,6 +112,7 @@ export const useSync = (props: SyncProps) => {
       isProcessingQueue.current = false;
       processQueue(token);
     } catch (e) {
+      diagnosticLogger.error('useSync', 'Erro ao processar fila de sincronização', e, activeUnitId);
       const currentRetry = item.retryCount || 0;
       if (currentRetry >= 10) await SyncQueue.dequeue(item.id);
       else await SyncQueue.update({ ...item, retryCount: currentRetry + 1 });
@@ -209,6 +212,7 @@ export const useSync = (props: SyncProps) => {
       ];
 
       if (!initialLoadDone.current) {
+        diagnosticLogger.info('useSync', 'Carregando dados do cache local', { activeUnitId });
         const cachedData = await idb.get<Record<string, any>>(`btq_cache_${activeUnitId}`);
         if (cachedData && fetchStartedForUnit === activeUnitId) {
           nodesToCheck.forEach(node => {
@@ -218,11 +222,16 @@ export const useSync = (props: SyncProps) => {
             }
           });
           setDbStatus('success');
+          diagnosticLogger.info('useSync', 'Cache carregado com sucesso', { activeUnitId });
+        } else {
+          diagnosticLogger.warn('useSync', 'Nenhum cache encontrado para a unidade', { activeUnitId });
         }
       }
 
       const token = await getFirebaseToken(config.email, config.pass, config.key);
-      if (!token) throw new Error("Auth Failed");
+      if (!token) {
+        throw new Error("Falha na autenticação Firebase");
+      }
 
       errorCount.current = 0;
       processQueue(token);
@@ -260,11 +269,18 @@ export const useSync = (props: SyncProps) => {
         if (!initialLoadDone.current || (serverTs && serverTs > localTs)) {
           const query = limitConfig[node.key] || '';
           const path = `data/units/${activeUnitId}/${node.key}`;
-          const data = await loadFromFirebase(config.url, undefined, token, path, query);
-          if (data !== null) {
-            const merged = smartMerge(data, node.key, currentQueue, currentBlacklist);
-            localMeta.current[node.key] = serverTs || now;
-            return { key: node.key, data: merged };
+          try {
+            const data = await loadFromFirebase(config.url, undefined, token, path, query);
+            if (data !== null) {
+              const merged = smartMerge(data, node.key, currentQueue, currentBlacklist);
+              localMeta.current[node.key] = serverTs || now;
+              diagnosticLogger.info('useSync', `Dados sincronizados: ${node.key}`, { activeUnitId, itemCount: Array.isArray(merged) ? merged.length : Object.keys(merged || {}).length });
+              return { key: node.key, data: merged };
+            } else {
+              diagnosticLogger.warn('useSync', `Dados nulos retornados para: ${node.key}`, { activeUnitId });
+            }
+          } catch (nodeError) {
+            diagnosticLogger.error('useSync', `Erro ao carregar ${node.key}`, nodeError, activeUnitId);
           }
         }
         return null;
@@ -292,28 +308,38 @@ export const useSync = (props: SyncProps) => {
 
       initialLoadDone.current = true;
       setDbStatus('success');
+      diagnosticLogger.info('useSync', 'Sincronização completada com sucesso', { activeUnitId });
     } catch (e) {
+      diagnosticLogger.error('useSync', 'Erro geral no fetchData', e, activeUnitId);
       errorCount.current += 1;
-      if (errorCount.current >= 3) setDbStatus('offline');
+      if (errorCount.current >= 3) {
+        setDbStatus('offline');
+        diagnosticLogger.error('useSync', 'Muitos erros - marcando como offline', { errorCount: errorCount.current, activeUnitId }, activeUnitId);
+      }
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus]);
+  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus, setAuditLogs, setStockTransactions]);
 
   const fetchGlobal = useCallback(async () => {
     if (config.isDemo) return;
-    const token = await getFirebaseToken(config.email, config.pass, config.key);
-    if (token) {
-      processQueue(token);
-      setPendingSyncCount(SyncQueue.getLength());
-      const [uRaw, unitsRaw, franchisesRaw] = await Promise.all([
-        loadFromFirebase(config.url, undefined, token, 'users'),
-        loadFromFirebase(config.url, undefined, token, 'units'),
-        loadFromFirebase(config.url, undefined, token, 'franchises')
-      ]);
-      if (uRaw !== null) setUsers(ensureArray(uRaw));
-      if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
-      if (franchisesRaw !== null) setFranchises(ensureArray(franchisesRaw));
+    try {
+      const token = await getFirebaseToken(config.email, config.pass, config.key);
+      if (token) {
+        processQueue(token);
+        setPendingSyncCount(SyncQueue.getLength());
+        const [uRaw, unitsRaw, franchisesRaw] = await Promise.all([
+          loadFromFirebase(config.url, undefined, token, 'users'),
+          loadFromFirebase(config.url, undefined, token, 'units'),
+          loadFromFirebase(config.url, undefined, token, 'franchises')
+        ]);
+        if (uRaw !== null) setUsers(ensureArray(uRaw));
+        if (unitsRaw !== null) setUnits(ensureArray(unitsRaw));
+        if (franchisesRaw !== null) setFranchises(ensureArray(franchisesRaw));
+        diagnosticLogger.info('useSync', 'Dados globais sincronizados');
+      }
+    } catch (e) {
+      diagnosticLogger.error('useSync', 'Erro ao sincronizar dados globais', e);
     }
   }, [config, setUsers, setUnits, setFranchises, processQueue]);
 
@@ -330,6 +356,7 @@ export const useSync = (props: SyncProps) => {
     localMeta.current = {};
     initialLoadDone.current = false;
     serverTombstones.current.clear();
+    diagnosticLogger.info('useSync', 'Refresh manual acionado', { activeUnitId });
     fetchGlobal();
     if (activeUnitId) fetchData();
   }, [fetchGlobal, fetchData, activeUnitId]);
