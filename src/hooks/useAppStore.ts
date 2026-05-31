@@ -184,10 +184,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
                 // Format toast notification beautifully
                 let msg = "Pedido pronto!";
-                if (newTab.name.toUpperCase().startsWith('EXPRESSA')) {
+                const normalizedName = newTab.name?.toUpperCase() || '';
+                if (normalizedName.startsWith('EXPRESSA')) {
                   msg = `Pedido pronto! Venda expressa. 🛎️`;
-                } else if (newTab.name.toUpperCase().startsWith('MESA')) {
-                  msg = `Pedido pronto! ${newTab.name} 🛎️`;
+                } else if (normalizedName.startsWith('MESA')) {
+                  msg = `Pedido pronto! ${newTab.name || 'Mesa'} 🛎️`;
                 } else if (newTab.name) {
                   msg = `Pedido pronto! ${newTab.name} 🛎️`;
                 }

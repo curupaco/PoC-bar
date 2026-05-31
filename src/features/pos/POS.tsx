@@ -451,7 +451,7 @@ export const POS: React.FC<POSProps> = ({
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {openTabs.map(tab => {
-                const isExpress = tab.name.startsWith('EXPRESSA');
+                const isExpress = tab.name?.startsWith('EXPRESSA') ?? false;
                 
                 const idleLimit = (longDurationThreshold || 30) * 60 * 1000;
                 const lastActivity = tab.lastItemAddedAt || tab.openedAt;
@@ -471,7 +471,7 @@ export const POS: React.FC<POSProps> = ({
                       <div className="flex justify-between items-start">
                         <div className="flex flex-col min-w-0 max-w-[80%]">
                            <div className="flex items-center gap-2">
-                              <h3 className="font-black uppercase text-sm truncate">{tab.name}</h3>
+                              <h3 className="font-black uppercase text-sm truncate">{tab.name || 'Mesa sem Nome'}</h3>
                               {hasReadyItems && (
                                  <span className="animate-bounce bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 p-1 rounded-lg text-xs leading-none shrink-0" title="Prato Pronto! 🛎️">🛎️</span>
                               )}
@@ -531,12 +531,12 @@ export const POS: React.FC<POSProps> = ({
                      
                      <div className="flex-1 flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-red-600/10 flex items-center justify-center text-red-600 font-bold text-xs italic">
-                           {activeTab?.name.substring(0, 2)}
+                           {activeTab?.name?.substring(0, 2) || '??'}
                         </div>
                         <div className="flex flex-col">
                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Mesa Selecionada</span>
-                           <h2 className={`text-sm font-black uppercase italic leading-none ${activeTab?.name.startsWith('EXPRESSA') ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
-                              {activeTab?.name}
+                           <h2 className={`text-sm font-black uppercase italic leading-none ${(activeTab?.name?.startsWith('EXPRESSA') ?? false) ? 'text-emerald-600' : 'text-slate-800 dark:text-white'}`}>
+                              {activeTab?.name || 'Mesa sem Nome'}
                            </h2>
                         </div>
                      </div>
@@ -550,10 +550,10 @@ export const POS: React.FC<POSProps> = ({
             )}
 
             <div className={`${!showMobileCart && !isClosingTab ? 'hidden lg:flex' : 'fixed inset-0 z-[500] flex'} lg:relative ${isClosingTab ? 'flex-1' : (isWideMode ? 'lg:w-[850px]' : 'lg:w-[420px]')} flex-col bg-white dark:bg-slate-900 border-l-2 border-slate-200 dark:border-slate-800 shadow-2xl lg:shadow-none animate-in slide-in-from-right duration-300 transition-all overflow-hidden`}>
-              <div className={`p-6 text-white flex justify-between items-center shrink-0 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-700' : 'bg-slate-900'}`}>
+              <div className={`p-6 text-white flex justify-between items-center shrink-0 ${(activeTab?.name?.startsWith('EXPRESSA') ?? false) ? 'bg-emerald-700' : 'bg-slate-900'}`}>
                  <div className="flex items-center gap-2">
-                    <h3 className="font-black uppercase tracking-tighter italic">{isClosingTab ? `Fechamento: ${activeTab?.name}` : 'Itens na Comanda'}</h3>
-                    {activeTab?.name.startsWith('EXPRESSA') && <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded">MODO RÁPIDO</span>}
+                    <h3 className="font-black uppercase tracking-tighter italic">{isClosingTab ? `Fechamento: ${activeTab?.name || 'Mesa sem Nome'}` : 'Itens na Comanda'}</h3>
+                    {(activeTab?.name?.startsWith('EXPRESSA') ?? false) && <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded">MODO RÁPIDO</span>}
                  </div>
                  <button onClick={() => { setIsClosingTab(false); setShowMobileCart(false); }} className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-all">✕</button>
               </div>
@@ -599,7 +599,7 @@ export const POS: React.FC<POSProps> = ({
                          </div>
                       </div>
                       
-                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
+                      <button onClick={() => setIsClosingTab(true)} disabled={tabItems.length === 0} className={`w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-30 text-white ${(activeTab?.name?.startsWith('EXPRESSA') ?? false) ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}>Fechar Conta</button>
                       
                       <div className="grid grid-cols-2 gap-2">
                         <button onClick={handleSaideira} disabled={tabItems.length === 0} className="py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-black uppercase text-[7px] tracking-widest hover:border-emerald-500 transition-all flex items-center justify-center gap-1 opacity-70 hover:opacity-100">
@@ -624,13 +624,13 @@ export const POS: React.FC<POSProps> = ({
            {activeTabId && !showMobileCart && !isClosingTab && (
              <button 
                onClick={() => setShowMobileCart(true)}
-               className={`lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 text-white px-8 py-5 rounded-[30px] shadow-2xl flex items-center gap-4 z-[400] animate-in slide-in-from-bottom-10 ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-900' : 'bg-slate-900'}`}
+               className={`lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 text-white px-8 py-5 rounded-[30px] shadow-2xl flex items-center gap-4 z-[400] animate-in slide-in-from-bottom-10 ${(activeTab?.name?.startsWith('EXPRESSA') ?? false) ? 'bg-emerald-900' : 'bg-slate-900'}`}
              >
                 <div className="flex flex-col text-left">
                    <span className="text-[8px] font-black uppercase opacity-60">Ver Carrinho</span>
                    <span className="text-lg font-black italic leading-none">{formatCurrency(tabTotal)}</span>
                 </div>
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${activeTab?.name.startsWith('EXPRESSA') ? 'bg-emerald-500' : 'bg-red-600'}`}>{tabItems.length}</div>
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${(activeTab?.name?.startsWith('EXPRESSA') ?? false) ? 'bg-emerald-500' : 'bg-red-600'}`}>{tabItems.length}</div>
              </button>
            )}
         </div>
@@ -641,7 +641,7 @@ export const POS: React.FC<POSProps> = ({
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md" onClick={() => setTabToDelete(null)} />
           <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-[1010] text-center border border-slate-200 dark:border-slate-800 animate-in zoom-in-95">
              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Anular Venda?</h3>
-             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a descartar "{tabToDelete.name}". Esta ação é irreversível.</p>
+             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a descartar "{tabToDelete.name || 'Mesa sem Nome'}". Esta ação é irreversível.</p>
              <div className="flex flex-col gap-3">
                 <button onClick={handleConfirmDelete} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Descartar</button>
                 <button onClick={() => setTabToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
