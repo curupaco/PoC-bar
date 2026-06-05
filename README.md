@@ -143,6 +143,14 @@ Foco em inteligência preditiva local e segurança operacional avançada sem que
 - **Previsão de Movimento (Demand Forecast):** Motor matemático offline que cruza médias históricas do dia da semana e geolocalização do clima local (API Open-Meteo) com um simulador de clima manual e checklist dinâmico de preparo.
 - **Matriz de Direitos Híbrida & Retrocompatível:** Implementação de permissões granulares de acesso (estoque, Modo Evento, lembretes de WhatsApp, CMV/margens) acopladas a uma camada de heranças dinâmicas que impede lockouts de usuários legados.
 
+### 9. Assistente do Dono (Premium) (v5.3.0)
+Módulo offline de inteligência de negócios e controladoria financeira para o proprietário:
+- **Resumo de Saúde Financeira:** Faturamento consumido (líquido de 10% de serviço), CMV consolidado, lucro bruto real e margens de lucro consolidadas de vendas.
+- **Matriz BCG de Engenharia de Cardápio:** Classificação dinâmica em quadrantes (Estrelas, Vacas Leiteiras, Quebra-Cabeças, Abacaxis) cruzando mediana de giro e média de margem de lucro. Inclui atualização simplificada de custos pendentes em lote.
+- **Precificador de Margem Alvo:** Simulador interativo local para sugerir preços de venda com base no custo de mercadoria para margens de 50%, 60% e 70%.
+- **Ranking de Upsell de Atendentes:** Tabela de performance de vendas que classifica a equipe pela proporção de itens de alta margem vendidos, com distintivos automáticos.
+- **Alertas de Ruptura e Auditoria:** Avisos preditivos de ruptura de estoque (dias restantes) e alertas de segurança contra anomalias (mesas ociosas sem novos pedidos há mais de 4h, diferenças de caixa > 5% e cancelamentos excessivos de operadores).
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento
@@ -172,4 +180,4 @@ Distribuído sob licença proprietária para uso comercial restrito.
 *Designed with Offline-First Architecture, Performance and Business-Critical Reliability in mind.*
 
 ---
-*Automatic Deployment Test: 2026-05-22*
+*Automatic Deployment Test: 2026-06-05*
