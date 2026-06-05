@@ -958,6 +958,7 @@ export const LandingPage2: React.FC = () => {
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [faqSearch, setFaqSearch] = useState('');
+  const [isTechConsoleModalOpen, setIsTechConsoleModalOpen] = useState(false);
 
   const faqs = [
     { q: 'É grátis mesmo?', a: 'Sim. Zero mensalidade. Zero contrato. Zero cartão. Enquanto você for parceiro fundador, é de graça pra sempre.' },
@@ -1538,8 +1539,66 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── INTERACTIVE TECH SECTION ─── */}
-      <TechSection onOpenDiagnostics={() => setIsNerdModalOpen(true)} />
+      {/* ─── TECHNOLOGY SECTION ─── */}
+      <section className="py-24 px-6 bg-slate-950/40 border-t border-b border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.02)_0%,transparent_60%)]"></div>
+        <div className="max-w-4xl mx-auto text-center space-y-8 relative z-10 scroll-reveal">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em]">
+            Arquitetura & Conectividade
+          </span>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase leading-[0.9]">
+            Tecnologia de ponta que <span className="text-emerald-500 italic">funciona na prática</span>
+          </h2>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+            O Botequista foi desenhado para ser inquebrável. Nosso motor local offline-first garante estabilidade total para a sua operação, protegendo seus dados e seu caixa mesmo sem nenhuma conexão com a internet.
+          </p>
+          <div className="pt-4">
+            <button
+              onClick={() => setIsTechConsoleModalOpen(true)}
+              className="px-8 py-4 rounded-full bg-slate-900 border border-white/10 hover:border-emerald-500/30 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow-xl hover:shadow-emerald-950/20"
+            >
+              🖥️ Abrir Console de Engenharia (Modo Nerd)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── INTERACTIVE TECH MODAL ─── */}
+      {isTechConsoleModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-xl" onClick={() => setIsTechConsoleModalOpen(false)} />
+          
+          <div className="relative bg-[#070b19]/90 border border-white/5 rounded-[40px] w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(16,185,129,0.15)] flex flex-col no-scrollbar">
+            {/* Modal Header */}
+            <div className="bg-[#0b1328] p-5 border-b border-white/5 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div onClick={() => setIsTechConsoleModalOpen(false)} className="w-3 h-3 rounded-full bg-red-500 cursor-pointer hover:bg-red-400 transition-colors"></div>
+                  <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                </div>
+                <span className="text-[10px] font-mono font-black tracking-widest text-slate-400 uppercase">
+                  engine@botequista:~/interactive_tech_console
+                </span>
+              </div>
+              <button 
+                onClick={() => setIsTechConsoleModalOpen(false)} 
+                className="text-[10px] font-black text-slate-400 hover:text-white uppercase tracking-widest"
+              >
+                Fechar
+              </button>
+            </div>
+            
+            {/* Modal Content */}
+            <div className="flex-1 bg-slate-950">
+              <TechSection onOpenDiagnostics={() => {
+                setIsTechConsoleModalOpen(false);
+                setIsNerdModalOpen(true);
+              }} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── TESTIMONIALS ─── */}
       <section className="py-32 px-6">
