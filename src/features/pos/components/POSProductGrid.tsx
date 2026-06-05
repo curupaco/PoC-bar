@@ -144,7 +144,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct,
   const stockMap = useMemo(() => {
     const map: Record<string, number> = {};
     stockTransactions.forEach(t => {
-       map[t.productId] = (map[t.productId] || 0) + (t.type === 'in' ? t.quantity : -t.quantity);
+       map[t.productId] = (map[t.productId] || 0) + t.quantity;
     });
     return map;
   }, [stockTransactions]);
