@@ -1099,7 +1099,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
-            <button onClick={() => scrollToSection('tech-console')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
+            <button onClick={() => scrollToSection('tecnologia')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
             <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
               WhatsApp
@@ -1116,7 +1116,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
-            <button onClick={() => { scrollToSection('tech-console'); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
+            <button onClick={() => { scrollToSection('tecnologia'); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
             <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
               Falar no WhatsApp
