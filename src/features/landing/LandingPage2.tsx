@@ -1082,6 +1082,26 @@ export const LandingPage2: React.FC = () => {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #020617;
+          border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #1e293b;
+          border-radius: 9999px;
+          border: 2px solid #020617;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #10b981;
+        }
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #1e293b #020617;
+        }
       `}</style>
 
       {/* ─── NAVIGATION ─── */}
@@ -1099,7 +1119,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
-            <button onClick={() => scrollToSection('tecnologia')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
+            <button onClick={() => setIsTechConsoleModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
             <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
               WhatsApp
@@ -1116,7 +1136,7 @@ export const LandingPage2: React.FC = () => {
             <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
             <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
-            <button onClick={() => { scrollToSection('tecnologia'); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
+            <button onClick={() => { setIsTechConsoleModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
             <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Ver Demo</a>
             <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
               Falar no WhatsApp
@@ -1539,36 +1559,12 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── TECHNOLOGY SECTION ─── */}
-      <section className="py-24 px-6 bg-slate-950/40 border-t border-b border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.02)_0%,transparent_60%)]"></div>
-        <div className="max-w-4xl mx-auto text-center space-y-8 relative z-10 scroll-reveal">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-[0.3em]">
-            Arquitetura & Conectividade
-          </span>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase leading-[0.9]">
-            Tecnologia de ponta que <span className="text-emerald-500 italic">funciona na prática</span>
-          </h2>
-          <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-            O Botequista foi desenhado para ser inquebrável. Nosso motor local offline-first garante estabilidade total para a sua operação, protegendo seus dados e seu caixa mesmo sem nenhuma conexão com a internet.
-          </p>
-          <div className="pt-4">
-            <button
-              onClick={() => setIsTechConsoleModalOpen(true)}
-              className="px-8 py-4 rounded-full bg-slate-900 border border-white/10 hover:border-emerald-500/30 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow-xl hover:shadow-emerald-950/20"
-            >
-              🖥️ Abrir Console de Engenharia (Modo Nerd)
-            </button>
-          </div>
-        </div>
-      </section>
-
       {/* ─── INTERACTIVE TECH MODAL ─── */}
       {isTechConsoleModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-xl" onClick={() => setIsTechConsoleModalOpen(false)} />
           
-          <div className="relative bg-[#070b19]/90 border border-white/5 rounded-[40px] w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(16,185,129,0.15)] flex flex-col no-scrollbar">
+          <div className="relative bg-[#070b19]/90 border border-white/5 rounded-[40px] w-full max-w-6xl max-h-[90vh] overflow-y-auto shadow-[0_0_60px_rgba(16,185,129,0.15)] flex flex-col custom-scrollbar">
             {/* Modal Header */}
             <div className="bg-[#0b1328] p-5 border-b border-white/5 flex justify-between items-center sticky top-0 z-50 backdrop-blur-md">
               <div className="flex items-center gap-3">
@@ -1825,7 +1821,7 @@ export const LandingPage2: React.FC = () => {
             </div>
 
             {/* Terminal Body */}
-            <div className="flex-1 overflow-y-auto p-8 relative z-20 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 relative z-20 custom-scrollbar">
               {nerdTab === 'stack' && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1972,7 +1968,7 @@ export const LandingPage2: React.FC = () => {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed custom-scrollbar">
               <p className="text-slate-300 text-xs">Última atualização: Abril de 2026</p>
               <div>
                 <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Dados Coletados</h4>
@@ -2014,7 +2010,7 @@ export const LandingPage2: React.FC = () => {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 text-slate-300 text-sm leading-relaxed custom-scrollbar">
               <p className="text-slate-300 text-xs">Última atualização: Abril de 2026</p>
               <div>
                 <h4 className="text-white font-black uppercase text-xs tracking-widest mb-3">1. Aceitação dos Termos</h4>
