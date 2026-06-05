@@ -174,10 +174,12 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Dashboard diário: "Heineken vendeu 37% mais", "Mesa média R$92"
     - Faz o dono sentir que "o sistema pensa por mim"
 
-23. **Assistente do Dono** (Premium)
-    - Insights consolidados do dia
-    - Parece IA avançada, mas é simples
-    - Pode virar assinatura premium
+23. [x] **Assistente do Dono** (Premium) [FEITO]
+    - Insights consolidados do dia (Faturamento, CMV, Lucro Bruto Real e Margem)
+    - Matriz BCG de Engenharia de Cardápio (Estrelas, Vacas Leiteiras, Quebra-Cabeças, Abacaxis)
+    - Precificador Inteligente local e Simulador de Margem Alvo (50%, 60%, 70%)
+    - Ranking de conversão de Upsell por atendente (com badges de desempenho)
+    - Alertas de ruptura preditivos e auditoria anti-fraudes (caixa, cancelamentos e comandas ociosas)
 
 ---
 

@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.2.0 Hybrid Permissions, Weather Demand Predict & WhatsApp Settle Confirmation.*
+> *Material de apresentação comercial — versão v5.3.0 Hybrid Permissions, Weather Demand Predict, WhatsApp Settle Confirmation & Premium Owner Assistant.*
 
 ---
 
@@ -16,6 +16,15 @@ Todo dono de bar já passou por isso:
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
 O **Botequista Elite (v5.0.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+
+## Novidades da Versão 5.3.0 Elite 🚀
+
+### 🧠 Assistente do Dono (Premium) (Novo v5.3.0) 💎
+- **Conselho de Borda Local:** Reúne 5 novas ferramentas offline de inteligência de negócios para dar controle total de margens e riscos operacionais ao dono do bar, blindado pela permissão `view_financial_costs`.
+- **Matriz BCG do Cardápio:** Classifica de forma inteligente e dinâmica todos os produtos em Estrelas, Vacas Leiteiras, Quebra-Cabeças e Abacaxis, revelando as estratégias ideais de vendas para cada item. Inclui atualização simplificada de custos pendentes em lote.
+- **Precificador de Margem Alvo:** Permite que você digite o preço de custo do insumo e o sistema calcule de forma imediata o preço ideal de venda e o lucro para margens de 50%, 60% e 70%.
+- **Ranking de Conversão de Upsell:** Identifica quais garçons possuem a maior proporção de vendas de itens de alta lucratividade (Estrelas e Quebra-Cabeças) sobre as vendas gerais.
+- **Alertas de Ruptura e Fraude:** Avisa o proprietário sobre anomalias no caixa (quebra de caixa > 5%), operadores realizando exclusões excessivas de itens, mesas abertas ociosas sem novos pedidos por mais de 4 horas, e projeção de produtos que esgotarão em breve.
 
 ---
 
@@ -206,5 +215,5 @@ Tudo isso significa uma solução de nível enterprise — perfeitamente acessí
 
 ---
 
-*Botequista — Sistema de Gestão para Bares v5.2.0 | Maio de 2026*  
+*Botequista — Sistema de Gestão para Bares v5.3.0 | Junho de 2026*  
 *Documento comercial de apresentação. Para documentação técnica, consulte DOCUMENTATION.md*

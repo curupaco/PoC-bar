@@ -1262,6 +1262,7 @@ export const LandingPage2: React.FC = () => {
             <FeatureCard icon="📊" title="Lista de Compras" desc="Gere sua lista de reposição baseada no giro real dos últimos 7 dias e compartilhe pelo WhatsApp em um clique." accent="emerald" />
             <FeatureCard icon="⏰" title="Detector de Mesa Travada" desc="O sistema identifica mesas ociosas e alerta o garçom para oferecer uma nova rodada, otimizando o giro do seu bar." accent="emerald" />
             <FeatureCard icon="🍳" title="Monitor de Cozinha" desc="Fila touch reativa para cozinheiros com som de campainha sincronizado em tempo real nos aparelhos dos garçons." accent="emerald" />
+            <FeatureCard icon="🧠" title="Assistente do Dono (Premium)" desc="Painel offline de inteligência de negócios com faturamento, CMV, Lucro Real, Matriz BCG de cardápio, simulador de preços e auditoria de riscos operacionais." accent="emerald" />
           </div>
 
           {/* Highlight: Offline */}

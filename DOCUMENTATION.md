@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.2.0 (Demand Forecast, Hardened Permissions Matrix & WhatsApp Settle Confirmation)
+**Versão:** 5.3.0 (Demand Forecast, Hardened Permissions Matrix, WhatsApp Settle Confirmation & Premium Owner Assistant)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -85,6 +85,14 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 3.  **Logs de Auditoria de Movimentações:** Rastreamento imutável de movimentações manuais de estoque (ENTRADA, PERDA, AJUSTE), registrando data/hora, operador responsável, produto, quantidade e categoria do descarte.
 4.  **Dashboard Premium de Perdas:** Painel dedicado com KPIs de impacto financeiro no desperdício, volume descartado, impacto no CMV e análise visual por categoria.
 
+### H. Assistente do Dono (Premium) (v5.3.0)
+1.  **Resumo Financeiro Consolidado:** Métricas de faturamento consumido (excluindo taxa de serviço de 10%), custo de vendas (CMV consolidado), lucro bruto real e margem geral média do bar.
+2.  **Matriz BCG de Engenharia de Cardápio:** Classificação dinâmica em quadrantes (Estrelas, Vacas Leiteiras, Quebra-Cabeças, Abacaxis) cruzando mediana de giro e média de margem de lucro. Exibe estratégias sugeridas com click-to-expand.
+3.  **Lote de Custos Faltantes (CMV):** Formulário interativo para salvar em lote o preço de custo de produtos que não possuem CMV cadastrado.
+4.  **Precificador de Margem Alvo:** Simulador interativo local onde o usuário insere a categoria e preço de custo (CMV) do produto, recebendo projeções de preços sugeridos para margens de 50%, 60% e 70%.
+5.  **Ranking de Conversão de Upsell:** Ordenação dos garçons baseada na proporção de itens vendidos que pertencem a quadrantes de alta lucratividade (Estrelas e Quebra-Cabeças), atribuindo badges automatizados de desempenho.
+6.  **Alertas Preditivos e de Auditoria:** Radar de ruptura para itens com risco de esgotar nas próximas 24h a 72h e alertas de prevenção a fraudes (comandas inativas há mais de 4h, turnos com quebra de caixa acima de 5% e operadores com excesso de cancelamentos).
+
 ---
 
 ## 3. Segurança e Sincronização
@@ -108,4 +116,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Maio de 2026. Botequista System v5.2.0*
+*Documentação atualizada em Junho de 2026. Botequista System v5.3.0*
