@@ -136,6 +136,10 @@ Este arquivo é destinado a anotações rápidas sobre próximas features, corre
     - Oferece benefício de cortesia automático para estimular o retorno do cliente
     - Complexidade: baixa
 
+19. **Campo de Texto Livre nos Adicionais**
+    - Permitir a inserção de um texto livre/observação personalizada nos adicionais/complementos de um item no PDV
+    - Complexidade: baixa
+
 ---
 
 ### Auditoria & Segurança Antifraude
