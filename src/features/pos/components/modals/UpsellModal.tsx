@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product, ModifierGroup, ModifierOption, formatCurrency } from '../../../../types';
 
 interface UpsellModalProps {
@@ -12,9 +12,43 @@ interface UpsellModalProps {
 }
 
 const UpsellModal: React.FC<UpsellModalProps> = ({ data, onConfirm, onClose }) => {
+  const [comment, setComment] = useState('');
+
+  useEffect(() => {
+    if (!data) {
+      setComment('');
+    }
+  }, [data]);
+
   if (!data) return null;
 
   const { product, group } = data;
+
+  const handleCommentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Sanitização simples contra tags HTML e injeção removendo < e >
+    const value = e.target.value.replace(/[<>]/g, '');
+    if (value.length <= 140) {
+      setComment(value);
+    }
+  };
+
+  const handleConfirm = (opt?: ModifierOption) => {
+    const cleanComment = comment.trim();
+    if (opt) {
+      onConfirm({
+        ...opt,
+        comment: cleanComment || undefined
+      });
+    } else if (cleanComment) {
+      onConfirm({
+        name: '',
+        price: 0,
+        comment: cleanComment
+      });
+    } else {
+      onConfirm(undefined);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[550] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in">
@@ -32,7 +66,7 @@ const UpsellModal: React.FC<UpsellModalProps> = ({ data, onConfirm, onClose }) =
              {group.options.map((opt, idx) => (
                 <button 
                    key={idx}
-                   onClick={() => onConfirm(opt)}
+                   onClick={() => handleConfirm(opt)}
                    className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl flex justify-between items-center hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-500 border border-transparent transition-all group"
                 >
                    <span className="font-black uppercase text-sm text-slate-700 dark:text-slate-300 group-hover:text-red-600">
@@ -43,11 +77,29 @@ const UpsellModal: React.FC<UpsellModalProps> = ({ data, onConfirm, onClose }) =
                    </span>
                 </button>
              ))}
+
+             {group.showCommentInput && (
+                <div className="mt-4 space-y-2 text-left animate-in slide-in-from-bottom-2">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 flex justify-between">
+                      <span>Observação</span>
+                      <span className={comment.length >= 130 ? 'text-red-500 font-bold' : 'text-slate-400'}>
+                         {comment.length}/140
+                      </span>
+                   </label>
+                   <input 
+                      type="text" 
+                      value={comment}
+                      onChange={handleCommentChange}
+                      placeholder="Ex: sem gelo, bem passado, etc."
+                      className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold uppercase text-xs outline-none focus:ring-2 focus:ring-red-500 transition-all text-slate-700 dark:text-slate-300 placeholder-slate-400"
+                   />
+                </div>
+             )}
           </div>
 
           <div className="flex flex-col gap-3">
              <button 
-                onClick={() => onConfirm(undefined)}
+                onClick={() => handleConfirm(undefined)}
                 className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
              >
                 Pular / Sem Adicional

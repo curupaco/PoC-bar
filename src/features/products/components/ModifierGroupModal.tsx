@@ -13,12 +13,14 @@ const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({ isOpen, onClose
   const [name, setName] = useState('');
   const [category, setCategory] = useState(''); // Usado para "Destaque" ou categoria interna
   const [options, setOptions] = useState<{ id: string; name: string; price: string }[]>([]);
+  const [showCommentInput, setShowCommentInput] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
         setName(initialData.name);
         setCategory(initialData.category || '');
+        setShowCommentInput(initialData.showCommentInput || false);
         setOptions(
           initialData.options.map((opt) => ({
             id: generateUniqueId('opt'), // ID temporário para key do React
@@ -29,6 +31,7 @@ const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({ isOpen, onClose
       } else {
         setName('');
         setCategory('');
+        setShowCommentInput(false);
         setOptions([{ id: generateUniqueId('opt'), name: '', price: '0,00' }]);
       }
     }
@@ -74,6 +77,7 @@ const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({ isOpen, onClose
       name: name.toUpperCase().trim(),
       category: category.toUpperCase().trim() || undefined,
       options: finalOptions,
+      showCommentInput,
     };
 
     onSave(group);
@@ -118,6 +122,23 @@ const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({ isOpen, onClose
                 className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black uppercase text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all"
               />
             </div>
+          </div>
+
+          {/* Configurações do Grupo */}
+          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex items-center justify-between transition-all hover:border-red-500/30">
+            <div className="flex flex-col text-left">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Texto Livre nos Adicionais</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mt-1">Exibir campo de observações no PDV</span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                checked={showCommentInput} 
+                onChange={(e) => setShowCommentInput(e.target.checked)} 
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-red-600"></div>
+            </label>
           </div>
 
           {/* Lista de Opções */}

@@ -173,14 +173,16 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
         : (Object.values(tab.items || {}) as SaleItem[]);
 
       itemsList.filter(i => i.productionStatus === 'PENDING').forEach(item => {
-        const key = item.productId + (item.modifier ? `-${item.modifier.name}` : '');
+        const key = item.productId + (item.modifier ? `-${item.modifier.name}-${item.modifier.comment || ''}` : '');
         if (counts[key]) {
           counts[key].qty += item.quantity;
         } else {
           counts[key] = {
             name: item.productName,
             qty: item.quantity,
-            modifier: item.modifier?.name
+            modifier: item.modifier 
+              ? [item.modifier.name, item.modifier.comment].filter(Boolean).join(' - ')
+              : undefined
           };
         }
       });
@@ -405,7 +407,7 @@ export const ProductionMonitor: React.FC<ProductionMonitorProps> = ({
                         {item.modifier && (
                           <div className="mt-1 pl-7">
                             <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-wide">
-                              {item.modifier.name}
+                              {[item.modifier.name, item.modifier.comment].filter(Boolean).join(' - ')}
                             </span>
                           </div>
                         )}

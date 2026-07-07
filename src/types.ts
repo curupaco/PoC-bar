@@ -15,6 +15,7 @@ export enum PaymentMethod {
 export interface ModifierOption {
   name: string;
   price: number;
+  comment?: string;
 }
 
 export interface ModifierGroup {
@@ -22,6 +23,7 @@ export interface ModifierGroup {
   name: string;
   category?: string;
   options: ModifierOption[];
+  showCommentInput?: boolean;
 }
 
 export interface Product {

@@ -160,7 +160,7 @@ export const POS: React.FC<POSProps> = ({
         item.productId === product.id && 
         (
             (!item.modifier && !modifier) || 
-            (item.modifier && modifier && item.modifier.name === modifier.name && item.modifier.price === modifier.price)
+            (item.modifier && modifier && item.modifier.name === modifier.name && item.modifier.price === modifier.price && item.modifier.comment === modifier.comment)
         )
     );
 
@@ -569,7 +569,11 @@ export const POS: React.FC<POSProps> = ({
                           <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex justify-between items-center group transition-all hover:border-red-500/30">
                             <div className="flex-1 min-w-0 pr-2">
                               <p className="text-[10px] font-black uppercase leading-tight truncate text-slate-800 dark:text-slate-200">{item.productName}</p>
-                              {item.modifier && <p className="text-[8px] font-bold text-slate-400 truncate leading-none mt-0.5">({item.modifier.name})</p>}
+                              {item.modifier && (
+                                <p className="text-[8px] font-bold text-slate-400 truncate leading-none mt-0.5">
+                                  ({[item.modifier.name, item.modifier.comment].filter(Boolean).join(' - ')})
+                                </p>
+                              )}
                               <p className="text-[9px] font-black text-red-600 mt-0.5">{formatCurrency(item.totalPrice)}</p>
                             </div>
                             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
