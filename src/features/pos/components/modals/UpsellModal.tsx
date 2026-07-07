@@ -100,9 +100,13 @@ const UpsellModal: React.FC<UpsellModalProps> = ({ data, onConfirm, onClose }) =
           <div className="flex flex-col gap-3">
              <button 
                 onClick={() => handleConfirm(undefined)}
-                className="w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-all"
+                className={`w-full py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all ${
+                  comment.trim() 
+                    ? 'bg-red-600 text-white hover:bg-red-700 shadow-lg active:scale-95' 
+                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'
+                }`}
              >
-                Pular / Sem Adicional
+                {comment.trim() ? 'Enviar' : 'Pular / Sem Adicional'}
              </button>
              <button 
                 onClick={onClose}
