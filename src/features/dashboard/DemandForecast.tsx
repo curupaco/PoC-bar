@@ -30,9 +30,9 @@ export const DemandForecast: React.FC<DemandForecastProps> = ({ sales = [], prod
 
   // 2. Faturamento Diário Médio Geral
   const overallDailyAvg = useMemo(() => {
-    const values = Object.values(dailyTotals);
+    const values = Object.values(dailyTotals) as number[];
     if (values.length === 0) return 0;
-    const sum = values.reduce((acc, v) => acc + v, 0);
+    const sum = values.reduce((acc: number, v: number) => acc + v, 0);
     return sum / values.length;
   }, [dailyTotals]);
 
@@ -43,7 +43,7 @@ export const DemandForecast: React.FC<DemandForecastProps> = ({ sales = [], prod
 
   const dayOfWeekStats = useMemo(() => {
     const daySalesValues: number[] = [];
-    Object.entries(dailyTotals).forEach(([dayStr, total]) => {
+    (Object.entries(dailyTotals) as [string, number][]).forEach(([dayStr, total]) => {
       // Reconstrói a data com segurança
       const parts = dayStr.split('-');
       const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
@@ -53,7 +53,7 @@ export const DemandForecast: React.FC<DemandForecastProps> = ({ sales = [], prod
     });
 
     if (daySalesValues.length === 0) return { avg: 0, count: 0 };
-    const sum = daySalesValues.reduce((acc, v) => acc + v, 0);
+    const sum = daySalesValues.reduce((acc: number, v: number) => acc + v, 0);
     return { avg: sum / daySalesValues.length, count: daySalesValues.length };
   }, [dailyTotals, todayDayOfWeek]);
 

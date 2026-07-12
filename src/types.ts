@@ -190,9 +190,11 @@ export interface RoomState {
   status: RoomStatus;
   openedAt?: number;
   linkedTabId?: string;
+  tabId?: string;
   timeLimitMinutes?: number;
   additionalMinutes?: number;
   lastStatusChangedAt?: number;
+  notes?: string;
 }
 
 export interface Category {
