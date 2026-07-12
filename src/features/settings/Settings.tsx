@@ -18,8 +18,9 @@ interface SettingsProps {
   openTabs: Tab[];
   users: User[];
   shifts: Shift[];
-  units: Unit[];
+  rooms?: any[];
   onUpdateUnits: (units: Unit[]) => void;
+  onUpdateRooms?: (updater: any) => void;
   onImport: (data: any) => void;
   dbStatus: string;
   currentUser: User;
@@ -39,7 +40,9 @@ const Settings: React.FC<SettingsProps> = ({
   users,
   shifts,
   units,
+  rooms = [],
   onUpdateUnits,
+  onUpdateRooms,
   onImport,
   dbStatus,
   currentUser,
@@ -213,6 +216,172 @@ const Settings: React.FC<SettingsProps> = ({
                            className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all" 
                         />
                      </div>
+                  </div>
+               </div>
+            </div>
+
+            {/* MÓDULO DE HOSPEDARIA TEMPORÁRIA */}
+            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 flex items-center justify-center">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Hospedaria Temporária (Controle de Quartos)</h4>
+                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gerencie aluguel de quartos por pílulas de tempo</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <button 
+                     onClick={() => {
+                        const activeUnit = units.find(u => u.id === unitId);
+                        if (!activeUnit) return;
+                        const next = !activeUnit.lodgingEnabled;
+                        const defaultCount = activeUnit.roomsCount || 4;
+                        const defaultPrefix = activeUnit.roomPrefix || 'Quarto';
+                        onUpdateUnits(units.map(u => u.id === unitId ? { 
+                          ...u, 
+                          lodgingEnabled: next,
+                          roomsCount: defaultCount,
+                          roomPrefix: defaultPrefix,
+                          lodgingBillingIncrementMinutes: u.lodgingBillingIncrementMinutes || 30,
+                          roomPricePerIncrement: u.roomPricePerIncrement || 30,
+                          lodgingGracePeriodMinutes: u.lodgingGracePeriodMinutes !== undefined ? u.lodgingGracePeriodMinutes : 5
+                        } : u));
+                        
+                        // Initialize rooms if they don't exist
+                        if (next && rooms.length === 0) {
+                          const initialRooms: any[] = [];
+                          for (let i = 1; i <= defaultCount; i++) {
+                            initialRooms.push({
+                              id: `room-${i}`,
+                              number: i,
+                              name: `${defaultPrefix} ${i}`,
+                              status: 'AVAILABLE',
+                              lastStatusChangedAt: Date.now()
+                            });
+                          }
+                          if (onUpdateRooms) onUpdateRooms(initialRooms);
+                        }
+                        
+                        showToast(next ? "HOSPEDARIA ATIVADA" : "HOSPEDARIA DESATIVADA");
+                     }}
+                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'bg-emerald-50 border-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-50 border-transparent dark:bg-slate-950 opacity-60'}`}
+                  >
+                     <div className="text-left">
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>Status do Módulo</p>
+                        <p className="text-[12px] font-black text-slate-800 dark:text-white uppercase">{units.find(u => u.id === unitId)?.lodgingEnabled ? 'Módulo Ativo' : 'Módulo Inativo'}</p>
+                     </div>
+                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                     </div>
+                  </button>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Quantidade de Quartos</label>
+                     <input 
+                        type="number" 
+                        min={1}
+                        max={100}
+                        value={units.find(u => u.id === unitId)?.roomsCount || 4} 
+                        onChange={e => {
+                           const val = Math.max(1, Math.min(100, Number(e.target.value)));
+                           const activeUnit = units.find(u => u.id === unitId);
+                           const prefix = activeUnit?.roomPrefix || 'Quarto';
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, roomsCount: val } : u));
+                           
+                           // Resize rooms list
+                           const currentCount = rooms.length;
+                           if (val > currentCount) {
+                             const added: any[] = [];
+                             for (let i = currentCount + 1; i <= val; i++) {
+                               added.push({
+                                 id: `room-${i}`,
+                                 number: i,
+                                 name: `${prefix} ${i}`,
+                                 status: 'AVAILABLE',
+                                 lastStatusChangedAt: Date.now()
+                               });
+                             }
+                             if (onUpdateRooms) onUpdateRooms([...rooms, ...added]);
+                           } else if (val < currentCount) {
+                             if (onUpdateRooms) onUpdateRooms(rooms.slice(0, val));
+                           }
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                     />
+                  </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Prefixo dos Quartos</label>
+                     <input 
+                        type="text" 
+                        value={units.find(u => u.id === unitId)?.roomPrefix || 'Quarto'} 
+                        onChange={e => {
+                           const val = e.target.value || 'Quarto';
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, roomPrefix: val } : u));
+                           // Rename existing rooms
+                           if (onUpdateRooms) {
+                             onUpdateRooms(rooms.map(r => ({
+                               ...r,
+                               name: `${val} ${r.number}`
+                             })));
+                           }
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                        placeholder="Ex: Quarto, Suíte, Chalé"
+                     />
+                  </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tamanho da Pílula (Bloco de Tempo)</label>
+                     <select 
+                        value={units.find(u => u.id === unitId)?.lodgingBillingIncrementMinutes || 30} 
+                        onChange={e => {
+                           const val = Number(e.target.value);
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingBillingIncrementMinutes: val } : u));
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-lg outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                     >
+                        <option value={15}>15 Minutos</option>
+                        <option value={30}>30 Minutos (Padrão)</option>
+                        <option value={45}>45 Minutos</option>
+                        <option value={60}>60 Minutos (1 Hora)</option>
+                        <option value={120}>120 Minutos (2 Horas)</option>
+                     </select>
+                  </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço por Pílula/Bloco</label>
+                     <div className="relative">
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                        <input 
+                           type="number" 
+                           step="0.01"
+                           value={units.find(u => u.id === unitId)?.roomPricePerIncrement || 30} 
+                           onChange={e => {
+                              const val = Math.max(0, Number(e.target.value));
+                              onUpdateUnits(units.map(u => u.id === unitId ? { ...u, roomPricePerIncrement: val } : u));
+                           }}
+                           className="w-full pl-12 pr-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                        />
+                     </div>
+                  </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tempo de Tolerância (Minutos)</label>
+                     <input 
+                        type="number" 
+                        min={0}
+                        max={60}
+                        value={units.find(u => u.id === unitId)?.lodgingGracePeriodMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingGracePeriodMinutes : 5} 
+                        onChange={e => {
+                           const val = Math.max(0, Math.min(60, Number(e.target.value)));
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingGracePeriodMinutes: val } : u));
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                     />
                   </div>
                </div>
             </div>

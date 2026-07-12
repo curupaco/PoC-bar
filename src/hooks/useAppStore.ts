@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState } from '../types';
 import { useSync } from './useSync';
 import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
@@ -77,6 +77,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [categories, setCategories] = useState<Category[]>(isDemo ? mockCategories : []);
   const [sales, setSales] = useState<Sale[]>([]);
   const [openTabs, setOpenTabs] = useState<Tab[]>(isDemo ? mockOpenTabs : []);
+  const [rooms, setRooms] = useState<RoomState[]>([]);
   const latestOpenTabsRef = React.useRef<Tab[]>([]);
   useEffect(() => {
     latestOpenTabsRef.current = openTabs;
@@ -207,7 +208,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
-    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setDbStatus,
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setDbStatus,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -296,6 +297,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     safeLocalStorage.removeItem('btq_active_unit');
     setProducts([]); setSales([]); setOpenTabs([]); setShifts([]);
     setModifierGroups([]); setCategories([]); setCategoryModifiers({});
+    setRooms([]);
     setDbStatus('idle'); setLastSyncTime(null);
     refresh();
   };
@@ -452,6 +454,34 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     }
   }, [persistGlobal, saveLocalCache, showToast]);
 
+  const handleUpdateRooms = useCallback(async (updater: any) => {
+    try {
+      setRooms(prev => {
+        const next = typeof updater === 'function' ? updater(prev) : updater;
+        updateLocalTimestamp('rooms');
+        saveLocalCache('rooms', next);
+        persist('rooms', next);
+        return next;
+      });
+    } catch (e) {
+      showToast("Falha ao salvar quartos", "error");
+    }
+  }, [persist, updateLocalTimestamp, saveLocalCache, showToast]);
+
+  const handleUpdateRoom = useCallback(async (room: RoomState) => {
+    try {
+      setRooms(prev => {
+        const next = prev.map(r => r.id === room.id ? room : r);
+        saveLocalCache('rooms', next);
+        return next;
+      });
+      updateLocalTimestamp('rooms');
+      await persist('rooms', room, room.id);
+    } catch (e) {
+      showToast("Falha ao atualizar quarto", "error");
+    }
+  }, [persist, updateLocalTimestamp, saveLocalCache, showToast]);
+
   const handleUpdateFranchises = useCallback((newFranchises: Franchise[]) => {
     try {
       setFranchises(newFranchises);
@@ -565,7 +595,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
   const handleExportData = useCallback(() => {
     const backupData = {
-      products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units,
+      products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms,
       config: { penduraThreshold, longDurationThreshold },
       meta: { exportedAt: Date.now(), exportedBy: currentUser?.username, systemVersion: '3.9.x' }
     };
@@ -579,7 +609,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, penduraThreshold, longDurationThreshold, currentUser]);
+  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, penduraThreshold, longDurationThreshold, currentUser]);
 
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') { handleExportData(); return; }
@@ -589,6 +619,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       if (data.users) { setUsers(data.users); updateLocalTimestamp('users'); saveLocalCache('users', data.users); persistGlobal('users', data.users); }
       if (data.shifts) { setShifts(data.shifts); updateLocalTimestamp('shifts'); saveLocalCache('shifts', data.shifts); persist('shifts', data.shifts); }
       if (data.units) { setUnits(data.units); saveLocalCache('units', data.units); persistGlobal('units', data.units); }
+      if (data.rooms) { setRooms(data.rooms); updateLocalTimestamp('rooms'); saveLocalCache('rooms', data.rooms); persist('rooms', data.rooms); }
 
       if (data.modifierGroups) { setModifierGroups(data.modifierGroups); updateLocalTimestamp('modifierGroups'); saveLocalCache('modifierGroups', data.modifierGroups); persist('modifierGroups', data.modifierGroups); }
       if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); saveLocalCache('categoryModifiers', data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
@@ -607,6 +638,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     categoryModifiers, setCategoryModifiers, sales, setSales, openTabs, setOpenTabs,
     users, setUsers, shifts, setShifts, units, setUnits, franchises, setFranchises, auditLogs, setAuditLogs,
     stockTransactions, setStockTransactions, stockBalances,
+    rooms, setRooms,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,
@@ -615,7 +647,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     handleSwitchUnit, handleSaveTab, handleUpdateTabItem, handleDeleteTab,
     handleUpdateProducts, handleUpdateCategoryModifiers, handleUpdateShifts,
     handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
-    handleUpdateStock,
+    handleUpdateStock, handleUpdateRooms, handleUpdateRoom,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };

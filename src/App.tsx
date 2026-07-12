@@ -32,6 +32,7 @@ import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
 import { MinimalistMenu } from './features/landing/MinimalistMenu';
 import { TodoViewer } from './features/todo/TodoViewer';
 import OwnerAssistant from './features/dashboard/OwnerAssistant';
+import LodgingDashboard from './features/lodging/LodgingDashboard';
 
 
 export const App: React.FC = () => {
@@ -181,9 +182,10 @@ export const App: React.FC = () => {
       case 'reports': return <Reports sales={store.sales} products={store.products} users={store.users} shifts={store.shifts} auditLogs={store.auditLogs} stockTransactions={store.stockTransactions} currentUser={currentUser} onQuitarPendura={(name, amt) => { setShortcutCheckout({ name, amount: amt }); setActiveView('pos'); }} penduraThreshold={store.penduraThreshold} activeUnitId={store.validatedActiveUnitId} syncConfig={store.syncConfig} theme={theme} units={store.units} />;
       case 'assistant': return <OwnerAssistant products={store.products} sales={store.sales} stockTransactions={store.stockTransactions} auditLogs={store.auditLogs} shifts={store.shifts} users={store.users} handleUpdateProducts={store.handleUpdateProducts} activeUnitId={store.validatedActiveUnitId} openTabs={store.openTabs} />;
       case 'inventory': return <Inventory products={store.products} stockTransactions={store.stockTransactions} onUpdateStock={store.handleUpdateStock} currentUser={currentUser} activeUnitId={store.validatedActiveUnitId} sales={store.sales} units={store.units} />;
-      case 'settings': return <Settings products={store.products} sales={store.sales} openTabs={store.openTabs} users={store.users} shifts={store.shifts} units={store.units} onUpdateUnits={store.handleUpdateUnits} onImport={store.handleDataManagement} dbStatus={store.dbStatus} currentUser={currentUser} penduraThreshold={store.penduraThreshold} setPenduraThreshold={store.setPenduraThreshold} longDurationThreshold={store.longDurationThreshold} setLongDurationThreshold={store.setLongDurationThreshold} activeUnitId={store.validatedActiveUnitId} auditLogs={store.auditLogs} pendingSyncCount={store.pendingSyncCount} />;
+      case 'settings': return <Settings products={store.products} sales={store.sales} openTabs={store.openTabs} users={store.users} shifts={store.shifts} units={store.units} rooms={store.rooms} onUpdateUnits={store.handleUpdateUnits} onUpdateRooms={store.handleUpdateRooms} onImport={store.handleDataManagement} dbStatus={store.dbStatus} currentUser={currentUser} penduraThreshold={store.penduraThreshold} setPenduraThreshold={store.setPenduraThreshold} longDurationThreshold={store.longDurationThreshold} setLongDurationThreshold={store.setLongDurationThreshold} activeUnitId={store.validatedActiveUnitId} auditLogs={store.auditLogs} pendingSyncCount={store.pendingSyncCount} />;
       case 'help': return <Help />;
       case 'production_monitor': return <ProductionMonitor openTabs={store.openTabs} onUpdateTabItem={store.handleUpdateTabItem} />;
+      case 'lodging': return <LodgingDashboard rooms={store.rooms} onUpdateRooms={store.handleUpdateRooms} onUpdateRoom={store.handleUpdateRoom} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} currentUser={currentUser} showToast={showToast} />;
       default: return null;
     }
   };
@@ -198,6 +200,7 @@ export const App: React.FC = () => {
         isCollapsed={isSidebarCollapsed} onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
         dbStatus={store.dbStatus} isOnline={navigator.onLine} theme={theme} 
         pendingKitchenCount={pendingKitchenCount}
+        lodgingEnabled={store.units.find(u => u.id === store.validatedActiveUnitId)?.lodgingEnabled}
       />
 
       <main className={`flex-1 flex flex-col min-w-0 h-full relative overflow-hidden transition-all ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>

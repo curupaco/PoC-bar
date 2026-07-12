@@ -19,6 +19,7 @@ interface SyncProps {
   setCategories: (data: any) => void;
   setAuditLogs: (data: any) => void;
   setStockTransactions: (data: any) => void;
+  setRooms: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
   activeUnitId: string | null;
   config: { url: string; key: string; email: string; pass: string; allPerms: any[]; isDemo?: boolean; }
@@ -37,7 +38,7 @@ export const useSync = (props: SyncProps) => {
 
   const {
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
-    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setDbStatus, activeUnitId, config
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setDbStatus, activeUnitId, config
   } = props;
 
   const ensureArray = (data: any): any[] => {
@@ -209,6 +210,7 @@ export const useSync = (props: SyncProps) => {
         { key: 'openTabs', setter: setOpenTabs },
         { key: 'auditLogs', setter: setAuditLogs },
         { key: 'stockTransactions', setter: setStockTransactions },
+        { key: 'rooms', setter: setRooms },
       ];
 
       if (!initialLoadDone.current) {
@@ -319,7 +321,7 @@ export const useSync = (props: SyncProps) => {
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setDbStatus, setAuditLogs, setStockTransactions]);
+  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setRooms, setDbStatus, setAuditLogs, setStockTransactions]);
 
   const fetchGlobal = useCallback(async () => {
     if (config.isDemo) return;

@@ -47,7 +47,7 @@ describe('Settings Component', () => {
     );
 
     // Encontra o botão pelo texto (ou parte dele)
-    const switchButton = screen.getByText(/Módulo Inativo/i).closest('button');
+    const switchButton = screen.getAllByText(/Módulo Inativo/i)[0].closest('button');
     expect(switchButton).toBeTruthy();
 
     if (switchButton) {
@@ -86,7 +86,7 @@ describe('Settings Component', () => {
       />
     );
 
-    const switchButton = screen.getByText(/Módulo Inativo/i).closest('button');
+    const switchButton = screen.getAllByText(/Módulo Inativo/i)[0].closest('button');
     if (switchButton) {
       fireEvent.click(switchButton);
     }

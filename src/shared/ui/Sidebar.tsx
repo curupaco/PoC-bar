@@ -19,6 +19,7 @@ interface SidebarProps {
   isOnline: boolean;
   theme: Theme;
   pendingKitchenCount?: number;
+  lodgingEnabled?: boolean;
 }
 
 // Restauração do Ícone Vetorial (Tampinha) para a Sidebar
@@ -51,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isOnline,
   theme,
   pendingKitchenCount = 0,
+  lodgingEnabled = false,
 }) => {
   
   const hasPermission = (perm: UserPermission) => {
@@ -195,6 +197,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             badge={activeTabsCount}
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} 
           />
+          {lodgingEnabled && (
+            <NavItem 
+              view="lodging" 
+              label="Hospedaria" 
+              perm="pos" 
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>} 
+            />
+          )}
           <NavItem 
             view="production_monitor" 
             label="Cozinha" 
