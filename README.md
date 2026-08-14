@@ -151,6 +151,20 @@ Módulo offline de inteligência de negócios e controladoria financeira para o 
 - **Ranking de Upsell de Atendentes:** Tabela de performance de vendas que classifica a equipe pela proporção de itens de alta margem vendidos, com distintivos automáticos.
 - **Alertas de Ruptura e Auditoria:** Avisos preditivos de ruptura de estoque (dias restantes) e alertas de segurança contra anomalias (mesas ociosas sem novos pedidos há mais de 4h, diferenças de caixa > 5% e cancelamentos excessivos de operadores).
 
+### 10. Hospedaria de Quartos & Tempos de Faxina (v5.4.0)
+Módulo completo de hospedagem e arrumação integrado ao caixa do bar.
+- **Ciclos de Quarto:** Transições de estados (Disponível -> Ocupado -> Limpeza -> Disponível) com acompanhamento em tempo real.
+- **Alertas de Alerta Customizáveis:** Alertas visuais piscantes nos cards dos quartos para término de pacotes e blocos de tempo baseados na configuração da unidade.
+- **Histórico de Arrumação:** Gravação imutável no banco com cálculo da duração da estadia, valores cobrados e medição de eficiência da equipe de faxina (tempo em minutos de higienização).
+
+### 11. Controle de Ativação de Módulos (v5.4.0)
+Habilidade de ligar/desligar módulos por unidade (bar) diretamente nas configurações.
+- **Ocultação Reativa:** Ao desativar o módulo de Drinks ou Hospedaria, o sistema oculta dinamicamente abas de consignações no estoque, fichas de receitas no cardápio e seletores de eventos no PDV em tempo de execução.
+
+### 12. Recuperação de Senha Mestre & Atalho Seguro F4 (v5.4.0)
+- **Auto-Recuperação do Admin:** Permite redefinir a senha do admin para a padrão `admin123` digitando a Senha Master do Firebase no Login.
+- **Remapeamento de Atalho de Checkout:** Atalho global de checkout remapeado de `Espaço` para `F4`, eliminando qualquer conflito com digitação de inputs ou buscas textuais no PDV.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento

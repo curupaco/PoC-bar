@@ -425,7 +425,7 @@ const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagno
         <div className="text-center mb-20">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Arquitetura & Segurança v5.3.0
+            Arquitetura & Segurança v5.4.0
           </span>
           <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
             Engenharia de Borda & <span className="text-emerald-500 italic">Conectividade</span>
@@ -938,7 +938,7 @@ const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagno
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> CONEXÃO_OK</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> BD_SEGURO</span>
               </div>
-              <div>BOTEQUISTA_SECURITY_v5.3.0</div>
+              <div>BOTEQUISTA_SECURITY_v5.4.0</div>
             </div>
 
           </div>
@@ -1407,6 +1407,10 @@ export const LandingPage2: React.FC = () => {
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
               'Registro de Perda & Desperdício (v5.0.0)',
+              'Ativação/Desativação de Módulos (Drinks e Hospedaria) por Bar (v5.4.0)',
+              'Redefinição Segura de Senha do Admin via Firebase Master Key (v5.4.0)',
+              'Remapeamento do Atalho do PDV de Espaço para F4 (v5.4.0)',
+              'Hospedaria de Quartos & Ciclos de Limpeza Cronometrados (v5.4.0)',
               'API Rate Limiting e Proteção de Borda Vercel Edge (v5.3.0)',
               'Isolamento de Namespace do LocalStorage com safeLocalStorage (v5.3.0)',
               'Centralização do Controle de Admin via React Context e useIsAdmin() (v5.3.0)',
@@ -1792,7 +1796,7 @@ export const LandingPage2: React.FC = () => {
                 </div>
                 <div className="flex gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   <span className="text-emerald-500/50">root@botequista:</span>
-                  <span>~/architecture_v5.3.0</span>
+                  <span>~/architecture_v5.4.0</span>
                 </div>
               </div>
               <div className="text-[10px] font-black text-emerald-500 animate-pulse tracking-tighter">
@@ -1921,9 +1925,9 @@ export const LandingPage2: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
                       { title: 'RBAC HÍBRIDO (v5.2.0)', desc: 'Matriz granular de 27 permissões de nível militar com fallbacks automáticos para contas legadas (anti-lockout).', icon: '🔑' },
-                      { title: 'API RATE LIMITING (v5.3.0)', desc: 'Bloqueio instantâneo contra DoS/scraping. Máximo de 30 req/min por IP. Headers padrão RFC-6585 ativos.', icon: '🛡️' },
-                      { title: 'SANDBOX STORAGE (v5.3.0)', desc: 'Wrapper safeLocalStorage. Enforça namespace btq_ determinístico, isolando dados de faturamento.', icon: '📦' },
-                      { title: 'BLINDAGEM ADMIN (v5.3.0)', desc: 'Centralização de privilégios de rotas com React Context e hook useIsAdmin(), impedindo ataques locais.', icon: '🔐' }
+                      { title: 'DESATIVAÇÃO DE MÓDULOS (v5.4.0)', desc: 'Interruptores liga-desliga por bar que ocultam dinamicamente seções de consignações e receitas no PDV e Estoque.', icon: '🔌' },
+                      { title: 'RECUPERAÇÃO SEGURA (v5.4.0)', desc: 'Bypass de redefinição rápida do admin para admin123 autenticado via chave master do banco Firebase.', icon: '🔐' },
+                      { title: 'ATALHO PDV SEM CONFLITO (v5.4.0)', desc: 'Remapeamento do atalho global de checkout de Espaço para F4, evitando conflitos de digitação.', icon: '⌨️' }
                     ].map((item, i) => (
                       <div key={i} className="bg-slate-900/50 p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/20 transition-all">
                         <div className="absolute top-4 right-4 text-2xl opacity-10 group-hover:opacity-30 transition-opacity">{item.icon}</div>
@@ -1951,7 +1955,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SYNC_READY</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> DB_CONNECTED</span>
               </div>
-              <div>BOTEQUISTA_SYSTEM_V5.3.0_STABLE</div>
+              <div>BOTEQUISTA_SYSTEM_V5.4.0_STABLE</div>
             </div>
           </div>
         </div>

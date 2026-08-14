@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.3.0 Hybrid Permissions, Weather Demand Predict, WhatsApp Settle Confirmation & Premium Owner Assistant.*
+> *Material de apresentação comercial — versão v5.4.0 Custom Lodging, Module Switches, F4 Keyboard Shortcut & Admin Forgotten Password.*
 
 ---
 
@@ -15,7 +15,24 @@ Todo dono de bar já passou por isso:
 - **O grande gargalo:** O cozinheiro grita que o prato está pronto, mas o garçom está longe. O prato esfria, o cliente reclama e a cozinha fica desorganizada.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v5.0.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v5.4.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+
+## Novidades da Versão 5.4.0 Elite 🚀
+
+### 🏨 Hospedaria de Quartos & Tempos de Faxina 🧹
+- **Cronometragem de Ciclos de Quarto:** O sistema gerencia o ciclo completo (Disponível -> Ocupado -> Limpeza -> Disponível) e armazena registros de estadias e faxinas na nuvem.
+- **Alertas de Tempo Dinâmicos:** Permite configurar limites de alerta visual para pacotes e blocos de tempo livre de forma personalizada por unidade de bar.
+- **Auditoria de Eficiência:** Mostra no histórico de quartos quanto tempo cada quarto demorou para ser limpo antes de ser liberado novamente para venda.
+
+### 🔌 Liga/Desliga de Recursos por Bar (Módulos Dinâmicos) ⚙️
+- **Ativação Customizada:** Ative ou desative os módulos de Hospedaria e Drinks individualmente para cada bar/unidade de forma simples nas configurações.
+- **Ocultação de Recursos:** O sistema esconde dinamicamente seções de Consignações, Fichas Técnicas de receitas de drinks e seletores de evento ou modo Open Bar quando os recursos não estiverem ativos.
+
+### 🔑 Esqueci Minha Senha & Atalho F4 de Checkout ⌨️
+- **Auto-Recuperação do Admin:** Permite redefinir a senha do admin instantaneamente para o padrão `admin123` digitando a Senha Master do Firebase no Login.
+- **Remapeamento de Atalho de Checkout:** Atalho redefinido de `Espaço` para `F4` no PDV para erradicar conflitos com digitação.
+
+---
 
 ## Novidades da Versão 5.3.0 Elite 🚀
 

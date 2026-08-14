@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.3.0 (Demand Forecast, Hardened Permissions Matrix, WhatsApp Settle Confirmation & Premium Owner Assistant)
+**Versão:** 5.4.0 (Custom Lodging Warnings & Arrumação, Toggleable Bar Modules, Admin Forgotten Password Recovery)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -29,6 +29,9 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Módulo de Eficiência e Lançamento (v5.1.0):** Lançamento de régua de cobrança em 1-clique via WhatsApp Web, ranking reordenável de equipe por ticket médio e badge mobile reativo de unidade ativa.
 *   **Previsão de Movimento por Clima & Demanda (v5.2.0):** Previsão matemática offline que cruza médias do dia da semana e geolocalização do clima local (API Open-Meteo) com simulador de clima e checklist dinâmico.
 *   **Matriz de Permissionamentos Híbrida & Retrocompatível (v5.2.0):** Camada de heranças dinâmicas que concede acessos a contas legadas a partir de permissões pai, implementando controle granular individualizado (Modo Evento, ajustes/perdas de estoque, lembretes de WhatsApp, CMV/lucro bruto).
+*   **Hospedaria Temporária com Alertas Customizados (v5.4.0):** Ciclos de estadia e faxina cronometrados para controle de quartos e histórico permanente.
+*   **Controle de Ativação de Módulos (v5.4.0):** Permite ligar/desligar os módulos de Hospedaria e Drinks por bar, ocultando seções em tempo de execução.
+*   **Recuperação de Senha Mestre do Admin (v5.4.0):** Modal de redefinição rápida com chave do banco Firebase e remapeamento do atalho de checkout de Espaço para F4.
 
 ---
 
@@ -93,6 +96,19 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 5.  **Ranking de Conversão de Upsell:** Ordenação dos garçons baseada na proporção de itens vendidos que pertencem a quadrantes de alta lucratividade (Estrelas e Quebra-Cabeças), atribuindo badges automatizados de desempenho.
 6.  **Alertas Preditivos e de Auditoria:** Radar de ruptura para itens com risco de esgotar nas próximas 24h a 72h e alertas de prevenção a fraudes (comandas inativas há mais de 4h, turnos com quebra de caixa acima de 5% e operadores com excesso de cancelamentos).
 
+### I. Hospedaria Temporária (Controle de Quartos) & Faxina (v5.4.0)
+1.  **Ciclo de Estados Completo:** O quarto transita entre `AVAILABLE` (Disponível), `OCCUPIED` (Ocupado), `CLEANING` (Em Limpeza) e retorna para `AVAILABLE`.
+2.  **Alertas Dinâmicos de Limite de Tempo:** Alertas visuais com pulsação amarela/vermelha no grid de quartos com base nos limites configurados de aviso de fim e próximo bloco.
+3.  **Histórico de Estadias e Limpeza:** Rastreia e exibe permanentemente os registros anteriores (`RoomHistoryRecord`), medindo o faturamento da estadia, o tempo consumido no quarto e o tempo gasto pela equipe na higienização (faxina).
+
+### J. Módulos Liga/Desliga por Unidade (v5.4.0)
+1.  **Desativação em Tempo de Execução:** Chaves individuais ativam/desativam a exibição dos módulos de Hospedaria ou Drinks por bar.
+2.  **Limpeza Visual e Funcional:** Oculta abas de Consignação de Eventos no Estoque, o Modo Evento/Open Bar no PDV e as configurações de receitas (Ficha Técnica) no Cardápio caso os recursos estejam desativados.
+
+### K. Recuperação de Senha & Atalhos de Teclado (v5.4.0)
+1.  **Modal "Esqueci Minha Senha":** Interface no Login que instrui colaboradores a buscar o gerente e permite ao Administrador redefinir sua senha instantaneamente para `admin123` digitando a Senha Master do Firebase.
+2.  **Atalhos Seguros do PDV:** Remapeamento da tecla de checkout de `Espaço` para `F4`, evitando conflitos com inputs e seletores do sistema.
+
 ---
 
 ## 3. Segurança e Sincronização
@@ -116,4 +132,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Junho de 2026. Botequista System v5.3.0*
+*Documentação atualizada em Agosto de 2026. Botequista System v5.4.0*
