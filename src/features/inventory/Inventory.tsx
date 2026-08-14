@@ -14,6 +14,7 @@ interface InventoryProps {
   consignedEvents?: ConsignedEvent[];
   setConsignedEvents?: React.Dispatch<React.SetStateAction<ConsignedEvent[]>>;
   persist?: (node: string, data: any, id?: string) => Promise<void>;
+  drinksEnabled?: boolean;
 }
 
 const Inventory: React.FC<InventoryProps> = ({ 
@@ -26,7 +27,8 @@ const Inventory: React.FC<InventoryProps> = ({
   units, 
   consignedEvents = [], 
   setConsignedEvents, 
-  persist 
+  persist,
+  drinksEnabled = true
 }) => {
   const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY' | 'SUGGESTION' | 'CONSIGNMENT'>('STOCK');
   const [searchTerm, setSearchTerm] = useState('');
@@ -364,7 +366,9 @@ const Inventory: React.FC<InventoryProps> = ({
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
         <button onClick={() => setActiveTab('STOCK')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'STOCK' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Saldo Atual</button>
         <button onClick={() => setActiveTab('SUGGESTION')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'SUGGESTION' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Reposição Inteligente</button>
-        <button onClick={() => setActiveTab('CONSIGNMENT')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'CONSIGNMENT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Consignações</button>
+        {drinksEnabled && (
+          <button onClick={() => setActiveTab('CONSIGNMENT')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'CONSIGNMENT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Consignações</button>
+        )}
         <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'HISTORY' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Movimentações</button>
       </div>
 

@@ -416,6 +416,44 @@ const Settings: React.FC<SettingsProps> = ({
                </div>
             </div>
 
+            {/* MÓDULO DE DRINKS E ESTOQUE CONSIGNADO */}
+            <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
+               <div className="flex items-center gap-4 mb-8">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                  </div>
+                  <div>
+                     <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Módulo de Drinks & Insumos Fracionados</h4>
+                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Habilita o controle de receitas fracionadas e eventos consignados (Open Bar)</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <button 
+                     onClick={() => {
+                        const activeUnit = units.find(u => u.id === unitId);
+                        if (!activeUnit) return;
+                        const next = !activeUnit.drinksEnabled;
+                        onUpdateUnits(units.map(u => u.id === unitId ? { 
+                          ...u, 
+                          drinksEnabled: next 
+                        } : u));
+                        
+                        showToast(next ? "MÓDULO DE DRINKS ATIVADO" : "MÓDULO DE DRINKS DESATIVADO");
+                     }}
+                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-emerald-50 border-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-50 border-transparent dark:bg-slate-950 opacity-60'}`}
+                  >
+                     <div className="text-left">
+                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${units.find(u => u.id === unitId)?.drinksEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>Status do Módulo</p>
+                        <p className="text-[12px] font-black text-slate-800 dark:text-white uppercase">{units.find(u => u.id === unitId)?.drinksEnabled ? 'Módulo Ativo' : 'Módulo Inativo'}</p>
+                     </div>
+                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${units.find(u => u.id === unitId)?.drinksEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                     </div>
+                  </button>
+               </div>
+            </div>
+
             {/* MÓDULO DE MENU DIGITAL (NOVO) */}
             <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
                <div className="flex items-center gap-4 mb-8">

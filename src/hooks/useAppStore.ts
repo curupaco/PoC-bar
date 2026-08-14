@@ -446,6 +446,46 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     }
   }, [persistGlobal, updateLocalTimestamp, saveLocalCache, showToast]);
 
+  const handleResetAdminPassword = useCallback(async (firebasePass: string): Promise<boolean> => {
+    if (isDemo) return false;
+    if (firebasePass !== syncConfig.pass) return false;
+    
+    try {
+      const nextUsers = users.map(u => {
+        if (u.username === 'admin') {
+          return {
+            ...u,
+            password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9' // admin123
+          };
+        }
+        return u;
+      });
+
+      const adminExists = users.some(u => u.username === 'admin');
+      if (!adminExists) {
+        const newAdmin: User = {
+          id: 'user-admin-recovery',
+          username: 'admin',
+          password: '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', // admin123
+          displayName: 'Administrador',
+          permissions: ALL_PERMISSIONS,
+          allowedUnits: []
+        };
+        nextUsers.push(newAdmin);
+      }
+      
+      setUsers(nextUsers);
+      updateLocalTimestamp('users');
+      saveLocalCache('users', nextUsers);
+      await persistGlobal('users', nextUsers);
+      addAuditLog('USER_RESET_ADMIN', 'Senha do admin redefinida via chave master');
+      return true;
+    } catch (e) {
+      console.error("Falha ao recuperar admin:", e);
+      return false;
+    }
+  }, [isDemo, syncConfig.pass, users, persistGlobal, saveLocalCache, updateLocalTimestamp, addAuditLog]);
+
   const handleUpdateUnits = useCallback((newUnits: Unit[]) => {
     try {
       setUnits(newUnits);
@@ -709,7 +749,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     handleSwitchUnit, handleSaveTab, handleUpdateTabItem, handleDeleteTab,
     handleUpdateProducts, handleUpdateCategoryModifiers, handleUpdateShifts,
     handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
-    handleUpdateStock, handleUpdateRooms, handleUpdateRoom, handleUpdateRoomHistory, handleSaveRoomHistoryRecord,
+    handleUpdateStock, handleUpdateRooms, handleUpdateRoom, handleUpdateRoomHistory, handleSaveRoomHistoryRecord, handleResetAdminPassword,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };

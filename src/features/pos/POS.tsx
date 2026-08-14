@@ -32,6 +32,7 @@ interface POSProps {
   setIsEventMode?: (val: boolean) => void;
   currentUser?: User | null;
   consignedEvents?: ConsignedEvent[];
+  drinksEnabled?: boolean;
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -66,7 +67,8 @@ export const POS: React.FC<POSProps> = ({
   isEventMode: propIsEventMode,
   setIsEventMode: propSetIsEventMode,
   currentUser,
-  consignedEvents = []
+  consignedEvents = [],
+  drinksEnabled = true
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -386,7 +388,7 @@ export const POS: React.FC<POSProps> = ({
               </button>
             </div>
             <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3 items-end sm:items-center">
-              {consignedEvents.filter(e => e.status === 'PENDING').length > 0 && (
+              {drinksEnabled && consignedEvents.filter(e => e.status === 'PENDING').length > 0 && (
                 <div className="w-full sm:w-auto flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
                   <span className="text-sm">🍸</span>
                   <select
@@ -414,26 +416,28 @@ export const POS: React.FC<POSProps> = ({
                   <span>Atalhos</span>
                 </button>
                 
-                <button 
-                  onClick={() => {
-                    const hasEventModePermission = !currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos');
-                    if (!hasEventModePermission) {
-                      showFeedback("ACESSO NEGADO 🔒");
-                      return;
-                    }
-                    setIsEventMode(!isEventMode);
-                  }}
-                  className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-3 py-3 sm:px-4 sm:py-4 rounded-2xl font-black uppercase tracking-wider transition-all border-2 text-center
-                     ${(() => {
-                       const hasEventModePermission = !currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos');
-                       if (!hasEventModePermission) return 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-800 text-slate-400';
-                       return isEventMode ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400';
-                     })()}`}
-                  title={(!currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos')) ? 'Alternar Modo Evento' : 'Acesso restrito à gerência'}
-                >
-                  <span className="text-base sm:text-sm">🎉</span>
-                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Modo Evento</span>
-                </button>
+                {drinksEnabled && (
+                  <button 
+                    onClick={() => {
+                      const hasEventModePermission = !currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos');
+                      if (!hasEventModePermission) {
+                        showFeedback("ACESSO NEGADO 🔒");
+                        return;
+                      }
+                      setIsEventMode(!isEventMode);
+                    }}
+                    className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-3 py-3 sm:px-4 sm:py-4 rounded-2xl font-black uppercase tracking-wider transition-all border-2 text-center
+                       ${(() => {
+                         const hasEventModePermission = !currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos');
+                         if (!hasEventModePermission) return 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-800 text-slate-400';
+                         return isEventMode ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-transparent border-slate-200 dark:border-slate-700 text-slate-500 hover:border-indigo-400';
+                       })()}`}
+                    title={(!currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos')) ? 'Alternar Modo Evento' : 'Acesso restrito à gerência'}
+                  >
+                    <span className="text-base sm:text-sm">🎉</span>
+                    <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Modo Evento</span>
+                  </button>
+                )}
 
                 <button 
                   onClick={handleQuickSale} 

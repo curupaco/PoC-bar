@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface LoginProps {
   onLogin: (username: string, password: string) => void;
   isLoading: boolean;
   error: string | null;
+  onResetAdminPassword: (firebasePass: string) => Promise<boolean>;
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error, onResetAdminPassword }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
 
   useEffect(() => {
     if (error) {
@@ -106,9 +109,24 @@ const Login: React.FC<LoginProps> = ({ onLogin, isLoading, error }) => {
             >
               {isLoading && username.toLowerCase() !== 'admin' ? 'Aguarde...' : 'Entrar no Bar'}
             </button>
+
+            <div className="text-center mt-6">
+              <button
+                type="button"
+                onClick={() => setIsForgotOpen(true)}
+                className="text-[9px] font-black text-slate-550 hover:text-white uppercase tracking-widest transition-colors"
+              >
+                Esqueci minha senha
+              </button>
+            </div>
           </form>
         </div>
       </div>
+      <ForgotPasswordModal 
+        isOpen={isForgotOpen} 
+        onClose={() => setIsForgotOpen(false)} 
+        onResetAdminPassword={onResetAdminPassword} 
+      />
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }

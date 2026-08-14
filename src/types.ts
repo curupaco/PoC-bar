@@ -213,6 +213,7 @@ export interface Unit {
   lodgingGracePeriodMinutes?: number;
   lodgingLimitWarningMinutes?: number;
   lodgingFreeWarningMinutes?: number;
+  drinksEnabled?: boolean;
 }
 
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'CLEANING';

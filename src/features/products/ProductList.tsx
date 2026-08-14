@@ -20,6 +20,7 @@ interface ProductListProps {
   categories?: Category[];
   setCategories?: (updater: (prev: Category[]) => Category[]) => void;
   currentUser: User;
+  drinksEnabled?: boolean;
 }
 
 const ProductList: React.FC<ProductListProps> = ({ 
@@ -33,7 +34,8 @@ const ProductList: React.FC<ProductListProps> = ({
   onSaveTab,
   categories = [],
   setCategories,
-  currentUser
+  currentUser,
+  drinksEnabled = true
 }) => {
   const [activeTab, setActiveTab] = useState<'ITEMS' | 'GROUPS' | 'LINKS' | 'CATEGORIES_MANAGE'>('ITEMS');
   const [showModal, setShowModal] = useState(false);
@@ -448,7 +450,7 @@ const ProductList: React.FC<ProductListProps> = ({
               </div>
 
               {/* FICHA TÉCNICA */}
-              {!isRawMaterial && (
+              {!isRawMaterial && drinksEnabled && (
                 <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
                   <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
                     <span>🍸</span> Ficha Técnica (Ingredientes)
