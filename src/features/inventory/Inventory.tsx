@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Product, StockTransaction, User, Sale, Unit, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput } from '../../types';
+import { Product, StockTransaction, User, Sale, Unit, formatCurrency, generateUniqueId, parseCurrencyValue, sanitizeCurrencyInput, ConsignedEvent } from '../../types';
 import { useProductIntelligence, ProductInsight } from '../../hooks/useProductIntelligence';
 
 interface InventoryProps {
@@ -11,10 +11,24 @@ interface InventoryProps {
   activeUnitId: string;
   sales: Sale[];
   units: Unit[];
+  consignedEvents?: ConsignedEvent[];
+  setConsignedEvents?: React.Dispatch<React.SetStateAction<ConsignedEvent[]>>;
+  persist?: (node: string, data: any, id?: string) => Promise<void>;
 }
 
-const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUpdateStock, currentUser, activeUnitId, sales, units }) => {
-  const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY' | 'SUGGESTION'>('STOCK');
+const Inventory: React.FC<InventoryProps> = ({ 
+  products, 
+  stockTransactions, 
+  onUpdateStock, 
+  currentUser, 
+  activeUnitId, 
+  sales, 
+  units, 
+  consignedEvents = [], 
+  setConsignedEvents, 
+  persist 
+}) => {
+  const [activeTab, setActiveTab] = useState<'STOCK' | 'HISTORY' | 'SUGGESTION' | 'CONSIGNMENT'>('STOCK');
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyDeadProducts, setShowOnlyDeadProducts] = useState(false);
   const [showEntryModal, setShowEntryModal] = useState(false);
@@ -28,6 +42,23 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
   const [cost, setCost] = useState('');
   const [reason, setReason] = useState('Quebra');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Consignment Event States
+  const [showConsignModal, setShowConsignModal] = useState(false);
+  const [showReconcileModal, setShowReconcileModal] = useState(false);
+  const [consignEventName, setConsignEventName] = useState('');
+  const [consignEventType, setConsignEventType] = useState<'NORMAL' | 'OPEN_BAR'>('NORMAL');
+  const [consignContractValue, setConsignContractValue] = useState('');
+  const [consignItems, setConsignItems] = useState<{ productId: string; loadedQty: number }[]>([]);
+  const [tempConsignProductId, setTempConsignProductId] = useState('');
+  const [tempConsignQty, setTempConsignQty] = useState('');
+
+  // Reconcile Event States
+  const [reconcilingEvent, setReconcilingEvent] = useState<ConsignedEvent | null>(null);
+  const [reconcileReturnedMap, setReconcileReturnedMap] = useState<Record<string, string>>({});
+  const [reconcileStaff, setReconcileStaff] = useState<{ name: string; amount: number }[]>([]);
+  const [tempStaffName, setTempStaffName] = useState('');
+  const [tempStaffAmount, setTempStaffAmount] = useState('');
 
   // Autocomplete para seleção de produto no modal
   const modalFilteredProducts = useMemo(() => {
@@ -139,6 +170,139 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
     setCost('');
   };
 
+  const handleCreateConsignment = async () => {
+    if (!consignEventName.trim()) {
+      alert("Nome do evento é obrigatório.");
+      return;
+    }
+    if (consignItems.length === 0) {
+      alert("Adicione pelo menos um item à consignação.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const timestamp = Date.now();
+      const eventNameUpper = consignEventName.toUpperCase().trim();
+
+      // 1. Gera as transações de saída de estoque para os itens consignados
+      for (const item of consignItems) {
+        const product = products.find(p => p.id === item.productId);
+        const transaction: StockTransaction = {
+          id: generateUniqueId('stk'),
+          productId: item.productId,
+          unitId: activeUnitId,
+          quantity: -item.loadedQty,
+          price: product?.lastCostPrice || 0,
+          type: 'OUT',
+          reason: `Carga Consignada: ${eventNameUpper}`,
+          timestamp,
+          userId: currentUser.id
+        };
+        await onUpdateStock(transaction);
+      }
+
+      // 2. Cria o objeto do evento consignado
+      const newEvent: ConsignedEvent = {
+        id: generateUniqueId('evt'),
+        name: eventNameUpper,
+        date: timestamp,
+        status: 'PENDING',
+        type: consignEventType,
+        contractValue: consignEventType === 'OPEN_BAR' ? (parseCurrencyValue(consignContractValue) || 0) : undefined,
+        items: consignItems.map(item => ({
+          productId: item.productId,
+          loadedQty: item.loadedQty
+        })),
+        unitId: activeUnitId,
+        createdAt: timestamp,
+        userId: currentUser.id
+      };
+
+      // 3. Atualiza estado e persiste
+      if (setConsignedEvents && persist) {
+        setConsignedEvents(prev => [newEvent, ...prev]);
+        await persist('consignedEvents', newEvent, newEvent.id);
+      }
+
+      // 4. Limpa estados
+      setConsignEventName('');
+      setConsignEventType('NORMAL');
+      setConsignContractValue('');
+      setConsignItems([]);
+      setShowConsignModal(false);
+    } catch (e) {
+      alert("Erro ao salvar consignação.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleReconcileConsignment = async () => {
+    if (!reconcilingEvent) return;
+
+    setIsSaving(true);
+    try {
+      const timestamp = Date.now();
+
+      // 1. Gera as transações de retorno para o estoque principal (sobras)
+      const reconciledItems = reconcilingEvent.items.map(item => {
+        const rawRet = reconcileReturnedMap[item.productId] || '0';
+        const retQty = parseFloat(rawRet.replace(',', '.'));
+        const finalRetQty = isNaN(retQty) ? 0 : Math.min(retQty, item.loadedQty);
+
+        return {
+          ...item,
+          returnedQty: finalRetQty,
+          consumedQty: item.loadedQty - finalRetQty
+        };
+      });
+
+      for (const item of reconciledItems) {
+        if (item.returnedQty && item.returnedQty > 0) {
+          const product = products.find(p => p.id === item.productId);
+          const transaction: StockTransaction = {
+            id: generateUniqueId('stk'),
+            productId: item.productId,
+            unitId: activeUnitId,
+            quantity: item.returnedQty,
+            price: product?.lastCostPrice || 0,
+            type: 'IN',
+            reason: `Retorno Consignado: ${reconcilingEvent.name}`,
+            timestamp,
+            userId: currentUser.id
+          };
+          await onUpdateStock(transaction);
+        }
+      }
+
+      // 2. Atualiza o objeto de evento para RECONCILED
+      const updatedEvent: ConsignedEvent = {
+        ...reconcilingEvent,
+        status: 'RECONCILED',
+        reconciledAt: timestamp,
+        items: reconciledItems,
+        staffExpenses: reconcileStaff
+      };
+
+      // 3. Atualiza estado e persiste
+      if (setConsignedEvents && persist) {
+        setConsignedEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+        await persist('consignedEvents', updatedEvent, updatedEvent.id);
+      }
+
+      // 4. Limpa estados
+      setReconcilingEvent(null);
+      setReconcileReturnedMap({});
+      setReconcileStaff([]);
+      setShowReconcileModal(false);
+    } catch (e) {
+      alert("Erro ao reconciliar consignação.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const isAdmin = currentUser.username === 'admin' || currentUser.permissions.includes('franchise_admin');
   const canManageStock = currentUser.username === 'admin' || currentUser.permissions.includes('inventory_manage') || currentUser.permissions.includes('products');
 
@@ -200,6 +364,7 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
       <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
         <button onClick={() => setActiveTab('STOCK')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'STOCK' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Saldo Atual</button>
         <button onClick={() => setActiveTab('SUGGESTION')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'SUGGESTION' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Reposição Inteligente</button>
+        <button onClick={() => setActiveTab('CONSIGNMENT')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'CONSIGNMENT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Consignações</button>
         <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'HISTORY' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Movimentações</button>
       </div>
 
@@ -251,6 +416,9 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
                                 <span className="text-[8px] font-black uppercase text-slate-400 tracking-widest bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">{p.category}</span>
+                                {p.isRawMaterial && (
+                                    <span className="text-[8px] font-black uppercase text-indigo-600 bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-md">Insumo</span>
+                                )}
                                 {deadProductIds.has(p.id) && (
                                     <span className="text-[8px] font-black uppercase text-white bg-orange-500 px-2 py-0.5 rounded-md animate-pulse">🚨 Parado</span>
                                 )}
@@ -258,8 +426,8 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                             <h4 className="font-black text-slate-800 dark:text-white uppercase text-sm mt-1">{p.name}</h4>
                         </div>
                         <div className="text-right">
-                            <p className={`text-2xl font-black italic tracking-tighter ${balance > 0 ? 'text-slate-800 dark:text-white' : (balance < 0 ? 'text-red-500' : 'text-slate-300')}`}>
-                                {balance.toLocaleString()}
+                            <p className={`text-xl font-black italic tracking-tighter ${balance > 0 ? 'text-slate-800 dark:text-white' : (balance < 0 ? 'text-red-500' : 'text-slate-300')}`}>
+                                {balance.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })} <span className="text-xs normal-case">{p.unitLabel || 'un'}</span>
                             </p>
                             <p className="text-[8px] font-black uppercase text-slate-400">Em Estoque</p>
                         </div>
@@ -348,7 +516,168 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                   <p className="text-[10px] font-bold text-slate-400 mt-2">Continue vendendo para alimentar a inteligência do bar.</p>
                 </div>
               )}
-           </div>
+            </div>
+         </div>
+      ) : activeTab === 'CONSIGNMENT' ? (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex-1">
+              <h3 className="text-xl font-black uppercase text-slate-800 dark:text-white italic">Eventos Externos / Consignações</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Carga e reconciliação de estoque por evento</p>
+            </div>
+            <button 
+              onClick={() => {
+                setConsignEventName('');
+                setConsignEventType('NORMAL');
+                setConsignContractValue('');
+                setConsignItems([]);
+                setShowConsignModal(true);
+              }}
+              className="bg-indigo-600 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-all w-full md:w-auto"
+            >
+              Nova Consignação
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {consignedEvents.filter(e => e.unitId === activeUnitId).length > 0 ? (
+              consignedEvents.filter(e => e.unitId === activeUnitId).map(event => {
+                // Calculate P&L if reconciled
+                const eventSales = sales.filter(s => s.eventId === event.id && !s.deleted);
+                const salesTotal = eventSales.reduce((sum, s) => sum + s.total, 0);
+                const contractVal = event.contractValue || 0;
+                const totalRevenue = salesTotal + contractVal;
+                const cmvTotal = event.items.reduce((sum, item) => {
+                  const prod = products.find(p => p.id === item.productId);
+                  const costPrice = prod?.lastCostPrice || 0;
+                  const consumed = item.consumedQty || 0;
+                  return sum + (consumed * costPrice);
+                }, 0);
+                const staffExpTotal = event.staffExpenses?.reduce((sum, exp) => sum + exp.amount, 0) || 0;
+                const netProfit = totalRevenue - cmvTotal - staffExpTotal;
+
+                return (
+                  <div key={event.id} className={`bg-white dark:bg-slate-900 p-6 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 ${event.status === 'PENDING' ? 'border-l-amber-500' : 'border-l-emerald-500'} space-y-6`}>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded ${event.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {event.status === 'PENDING' ? 'Pendente' : 'Reconciliado'}
+                          </span>
+                          <span className="text-[8px] font-black uppercase bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 px-2 py-0.5 rounded">
+                            {event.type === 'OPEN_BAR' ? 'OPEN BAR 🍸' : 'NORMAL 💵'}
+                          </span>
+                          {event.contractValue !== undefined && (
+                            <span className="text-[8px] font-black uppercase bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
+                              Contrato: {formatCurrency(event.contractValue)}
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-base font-black text-slate-800 dark:text-white uppercase mt-1 italic tracking-tight">{event.name}</h4>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{new Date(event.date).toLocaleDateString('pt-BR')} às {new Date(event.date).toLocaleTimeString('pt-BR')}</p>
+                      </div>
+
+                      {event.status === 'PENDING' ? (
+                        <button 
+                          onClick={() => {
+                            setReconcilingEvent(event);
+                            const initialReturned: Record<string, string> = {};
+                            event.items.forEach(it => {
+                              initialReturned[it.productId] = '0';
+                            });
+                            setReconcileReturnedMap(initialReturned);
+                            setReconcileStaff([]);
+                            setShowReconcileModal(true);
+                          }}
+                          className="bg-amber-500 hover:bg-amber-600 text-white px-6 py-2.5 rounded-xl font-black uppercase text-[9px] tracking-widest shadow-md active:scale-95 transition-all w-full md:w-auto"
+                        >
+                          Reconciliar Estoque
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-end">
+                          <span className="text-[9px] font-black text-slate-400 uppercase">Resultado Evento</span>
+                          <span className={`text-xl font-black italic tracking-tighter ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {formatCurrency(netProfit)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tabela de Itens Consignados */}
+                    <div className="overflow-x-auto no-scrollbar border border-slate-100 dark:border-slate-800 rounded-2xl">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 dark:bg-slate-950 text-slate-400 font-black uppercase text-[8px] tracking-wider border-b border-slate-100 dark:border-slate-800">
+                          <tr>
+                            <th className="p-3">Produto</th>
+                            <th className="p-3 text-center">Carga Inicial</th>
+                            {event.status === 'RECONCILED' && (
+                              <>
+                                <th className="p-3 text-center">Sobras (Retorno)</th>
+                                <th className="p-3 text-center">Consumo Líquido</th>
+                                <th className="p-3 text-right">Preço Custo (CMV)</th>
+                              </>
+                            )}
+                          </tr>
+                        </thead>
+                        <tbody className="font-bold text-slate-700 dark:text-slate-300 uppercase">
+                          {event.items.map(it => {
+                            const prod = products.find(p => p.id === it.productId);
+                            return (
+                              <tr key={it.productId} className="border-b border-slate-50 dark:border-slate-800 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/10">
+                                <td className="p-3">{prod?.name || 'Item Removido'}</td>
+                                <td className="p-3 text-center">{it.loadedQty} {prod?.unitLabel || 'un'}</td>
+                                {event.status === 'RECONCILED' && (
+                                  <>
+                                    <td className="p-3 text-center text-amber-600">{it.returnedQty ?? 0} {prod?.unitLabel || 'un'}</td>
+                                    <td className="p-3 text-center text-emerald-600 font-black">{it.consumedQty ?? 0} {prod?.unitLabel || 'un'}</td>
+                                    <td className="p-3 text-right text-slate-400">{formatCurrency((it.consumedQty ?? 0) * (prod?.lastCostPrice || 0))}</td>
+                                  </>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* DRE / P&L Card se Reconciliado */}
+                    {event.status === 'RECONCILED' && (
+                      <div className="bg-slate-50 dark:bg-slate-950 p-5 rounded-[24px] border border-slate-100 dark:border-slate-800 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black text-slate-400 uppercase">Faturamento (Contrato + POS)</p>
+                          <p className="text-base font-black text-slate-800 dark:text-white italic">{formatCurrency(totalRevenue)}</p>
+                          <p className="text-[7px] font-medium text-slate-400">Contrato: {formatCurrency(contractVal)} | PDV: {formatCurrency(salesTotal)}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black text-slate-400 uppercase">CMV Real dos Insumos</p>
+                          <p className="text-base font-black text-red-500 italic">-{formatCurrency(cmvTotal)}</p>
+                          <p className="text-[7px] font-medium text-slate-400">Baseado no custo de compra</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black text-slate-400 uppercase">Despesas de Equipe</p>
+                          <p className="text-base font-black text-red-500 italic">-{formatCurrency(staffExpTotal)}</p>
+                          <p className="text-[7px] font-medium text-slate-400">{event.staffExpenses?.length || 0} prestadores pagos</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black text-slate-400 uppercase">Lucro Líquido</p>
+                          <p className={`text-base font-black italic ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {formatCurrency(netProfit)}
+                          </p>
+                          <p className="text-[7px] font-medium text-slate-400">Margem: {totalRevenue > 0 ? `${((netProfit / totalRevenue) * 100).toFixed(0)}%` : '0%'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-24 flex flex-col items-center justify-center border-4 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] opacity-50">
+                <span className="text-6xl mb-6">🚚</span>
+                <p className="text-sm font-black uppercase tracking-widest text-slate-400">Sem eventos consignados registrados</p>
+                <p className="text-[10px] font-bold text-slate-400 mt-2">Cadastre um evento externo para controlar estoque e lucratividade.</p>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -531,15 +860,22 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label htmlFor="inventory-qty-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{showAdjustModal ? 'Novo Saldo Real' : 'Quantidade'}</label>
-                            <input 
-                                id="inventory-qty-input"
-                                type="text" 
-                                inputMode="decimal"
-                                value={qty} 
-                                onChange={e => setQty(sanitizeCurrencyInput(e.target.value))} 
-                                className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-lg outline-none focus:ring-2 focus:ring-red-500 transition-all" 
-                                placeholder="0" 
-                            />
+                            <div className="relative">
+                                <input 
+                                    id="inventory-qty-input"
+                                    type="text" 
+                                    inputMode="decimal"
+                                    value={qty} 
+                                    onChange={e => setQty(sanitizeCurrencyInput(e.target.value))} 
+                                    className="w-full pr-16 pl-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-lg outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                                    placeholder="0" 
+                                />
+                                {selectedProduct?.unitLabel && (
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-xs text-slate-400 uppercase">
+                                        {selectedProduct.unitLabel}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         {showEntryModal && (
                             <div className="space-y-2">
@@ -588,6 +924,256 @@ const Inventory: React.FC<InventoryProps> = ({ products, stockTransactions, onUp
                 </div>
             </div>
           </div>
+      )}
+
+      {/* MODAL DE NOVA CONSIGNAÇÃO */}
+      {showConsignModal && (
+        <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center p-0 md:p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowConsignModal(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-full md:max-w-lg rounded-t-[40px] md:rounded-[40px] p-8 md:p-10 shadow-2xl relative z-10 border-t md:border border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom md:zoom-in-95 transition-all max-h-[92vh] overflow-y-auto no-scrollbar flex flex-col">
+            
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Nova Consignação</h3>
+              <button onClick={() => setShowConsignModal(false)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold">✕</button>
+            </div>
+
+            <div className="space-y-6 flex-1">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome do Evento</label>
+                <input 
+                  type="text" 
+                  value={consignEventName} 
+                  onChange={e => setConsignEventName(e.target.value)} 
+                  className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                  placeholder="EX: CASAMENTO ANA & PEDRO" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Evento</label>
+                  <select 
+                    value={consignEventType} 
+                    onChange={e => setConsignEventType(e.target.value as 'NORMAL' | 'OPEN_BAR')}
+                    className="w-full p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all"
+                  >
+                    <option value="NORMAL">Normal (Preço Bar)</option>
+                    <option value="OPEN_BAR">Open Bar (Preço R$ 0)</option>
+                  </select>
+                </div>
+                {consignEventType === 'OPEN_BAR' && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor Contrato (Receita)</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                      <input 
+                        type="text" 
+                        inputMode="decimal"
+                        value={consignContractValue} 
+                        onChange={e => setConsignContractValue(sanitizeCurrencyInput(e.target.value))} 
+                        className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-base outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                        placeholder="0,00" 
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Form de adicionar item à carga */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Adicionar Produtos para Carga</label>
+                <div className="flex gap-2">
+                  <select
+                    value={tempConsignProductId}
+                    onChange={e => setTempConsignProductId(e.target.value)}
+                    className="flex-1 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-xs uppercase outline-none"
+                  >
+                    <option value="">Selecionar Produto...</option>
+                    {products
+                      .filter(p => p.trackStock !== false && !consignItems.some(i => i.productId === p.id))
+                      .map(p => {
+                        const bal = stockBalances[p.id] || 0;
+                        return (
+                          <option key={p.id} value={p.id}>
+                            {p.name} (Saldo: {bal} {p.unitLabel || 'un'})
+                          </option>
+                        );
+                      })}
+                  </select>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="Qtd"
+                    value={tempConsignQty}
+                    onChange={e => setTempConsignQty(sanitizeCurrencyInput(e.target.value))}
+                    className="w-20 p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-black text-sm text-center outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      const qtyVal = parseFloat(tempConsignQty.replace(',', '.'));
+                      if (!tempConsignProductId) return;
+                      if (isNaN(qtyVal) || qtyVal <= 0) return;
+                      setConsignItems(prev => [...prev, { productId: tempConsignProductId, loadedQty: qtyVal }]);
+                      setTempConsignProductId('');
+                      setTempConsignQty('');
+                    }}
+                    className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-xs active:scale-95 transition-all"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista de carga atual */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Itens Consignados ({consignItems.length})</label>
+                {consignItems.length > 0 ? (
+                  <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-48 overflow-y-auto no-scrollbar bg-slate-50 dark:bg-slate-950 p-2 space-y-2">
+                    {consignItems.map((item, idx) => {
+                      const prod = products.find(p => p.id === item.productId);
+                      return (
+                        <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-black uppercase">
+                          <span className="text-slate-800 dark:text-white truncate max-w-[200px]">{prod?.name}</span>
+                          <div className="flex items-center gap-3">
+                            <span>{item.loadedQty} {prod?.unitLabel || 'un'}</span>
+                            <button 
+                              onClick={() => setConsignItems(prev => prev.filter((_, i) => i !== idx))}
+                              className="text-red-500 hover:text-red-700 font-bold p-1"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs font-bold text-slate-400 text-center py-6 uppercase bg-slate-50 dark:bg-slate-950 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">Carga vazia. Adicione itens acima.</p>
+                )}
+              </div>
+
+              <button 
+                disabled={isSaving || !consignEventName || consignItems.length === 0}
+                onClick={handleCreateConsignment}
+                className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all disabled:opacity-50 mt-4"
+              >
+                {isSaving ? 'Salvando...' : 'Confirmar Envio (Carga)'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE RECONCILIAÇÃO */}
+      {showReconcileModal && reconcilingEvent && (
+        <div className="fixed inset-0 z-[1000] flex items-end md:items-center justify-center p-0 md:p-4">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowReconcileModal(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-full md:max-w-xl rounded-t-[40px] md:rounded-[40px] p-8 md:p-10 shadow-2xl relative z-10 border-t md:border border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom md:zoom-in-95 transition-all max-h-[92vh] overflow-y-auto no-scrollbar flex flex-col">
+            
+            <div className="flex justify-between items-center mb-6 shrink-0">
+              <div>
+                <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Reconciliar Estoque</h3>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Evento: {reconcilingEvent.name}</p>
+              </div>
+              <button onClick={() => setShowReconcileModal(false)} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold">✕</button>
+            </div>
+
+            <div className="space-y-6 flex-1">
+              {/* Lista de itens para digitar o retorno */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 block">Insira a Quantidade que Sobrou (Retornou Fechada)</label>
+                <div className="space-y-2.5 max-h-56 overflow-y-auto no-scrollbar pr-1">
+                  {reconcilingEvent.items.map(it => {
+                    const prod = products.find(p => p.id === it.productId);
+                    return (
+                      <div key={it.productId} className="flex justify-between items-center bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs font-black uppercase gap-4">
+                        <div className="flex-1">
+                          <span className="text-slate-800 dark:text-white truncate block">{prod?.name}</span>
+                          <span className="text-[9px] font-bold text-slate-400">Enviado: {it.loadedQty} {prod?.unitLabel || 'un'}</span>
+                        </div>
+                        <div className="relative w-32 shrink-0">
+                          <input 
+                            type="text"
+                            inputMode="decimal"
+                            value={reconcileReturnedMap[it.productId] || ''}
+                            onChange={e => setReconcileReturnedMap(prev => ({ ...prev, [it.productId]: sanitizeCurrencyInput(e.target.value) }))}
+                            className="w-full pr-12 pl-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-black text-center text-sm outline-none"
+                            placeholder="0"
+                          />
+                          {prod?.unitLabel && (
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-slate-400">{prod.unitLabel}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Registro de despesas de staff */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Lançar Despesa de Staff (Equipe / Garçom)</label>
+                
+                {reconcileStaff.length > 0 && (
+                  <div className="space-y-1 max-h-24 overflow-y-auto no-scrollbar">
+                    {reconcileStaff.map((st, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-900 px-3 py-2 rounded-xl text-[10px] font-bold uppercase border border-slate-100 dark:border-slate-800">
+                        <span className="text-slate-700 dark:text-slate-300">{st.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-red-500 font-black">{formatCurrency(st.amount)}</span>
+                          <button onClick={() => setReconcileStaff(prev => prev.filter((_, i) => i !== idx))} className="text-red-500 font-bold" type="button">✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Nome (ex: Garçom João)"
+                    value={tempStaffName}
+                    onChange={e => setTempStaffName(e.target.value)}
+                    className="flex-1 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-xs uppercase outline-none"
+                  />
+                  <div className="relative w-28">
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">R$</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Valor"
+                      value={tempStaffAmount}
+                      onChange={e => setTempStaffAmount(sanitizeCurrencyInput(e.target.value))}
+                      className="w-full pl-7 pr-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-black text-xs outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const amountVal = parseCurrencyValue(tempStaffAmount);
+                      if (!tempStaffName.trim()) return;
+                      if (isNaN(amountVal) || amountVal <= 0) return;
+                      setReconcileStaff(prev => [...prev, { name: tempStaffName.toUpperCase().trim(), amount: amountVal }]);
+                      setTempStaffName('');
+                      setTempStaffAmount('');
+                    }}
+                    className="px-3 py-2.5 bg-red-600 text-white font-black uppercase text-[10px] rounded-xl"
+                    type="button"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <button 
+                disabled={isSaving}
+                onClick={handleReconcileConsignment}
+                className="w-full py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all mt-4"
+              >
+                {isSaving ? 'Salvando...' : 'Confirmar Reconciliação'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

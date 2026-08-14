@@ -26,6 +26,11 @@ export interface ModifierGroup {
   showCommentInput?: boolean;
 }
 
+export interface RecipeItem {
+  productId: string;
+  quantity: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -40,6 +45,31 @@ export interface Product {
   happyHourStart?: string;
   happyHourEnd?: string;
   toKitchen?: boolean;
+  isRawMaterial?: boolean;
+  recipe?: RecipeItem[];
+  unitLabel?: string;
+}
+
+export interface EventStockItem {
+  productId: string;
+  loadedQty: number;
+  returnedQty?: number;
+  consumedQty?: number;
+}
+
+export interface ConsignedEvent {
+  id: string;
+  name: string;
+  date: number;
+  status: 'PENDING' | 'RECONCILED';
+  type: 'NORMAL' | 'OPEN_BAR';
+  contractValue?: number;
+  items: EventStockItem[];
+  staffExpenses?: { name: string; amount: number }[];
+  unitId: string;
+  createdAt: number;
+  reconciledAt?: number;
+  userId: string;
 }
 
 export interface StockTransaction {
@@ -89,6 +119,7 @@ export interface Sale {
   deletedAt?: number;
   deletedBy?: string;
   serviceTax?: number;
+  eventId?: string;
 }
 
 export interface Tab {
@@ -98,6 +129,7 @@ export interface Tab {
   openedAt: number;
   lastItemAddedAt?: number;
   version?: number;
+  eventId?: string;
 }
 
 export interface User {

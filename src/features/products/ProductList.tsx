@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab, Category } from '../../types';
+import { Product, formatCurrency, User, ModifierGroup, ModifierOption, parseCurrencyValue, sanitizeCurrencyInput, generateUniqueId, SellType, Tab, Category, RecipeItem } from '../../types';
 import { validateItemName } from '../../utils/wordValidator';
 import ProductItemsTab from './components/ProductItemsTab';
 import ModifierGroupsTab from './components/ModifierGroupsTab';
@@ -60,6 +60,11 @@ const ProductList: React.FC<ProductListProps> = ({
   const [trackStock, setTrackStock] = useState(true);
   const [cost, setCost] = useState('');
   const [toKitchen, setToKitchen] = useState(false);
+  const [isRawMaterial, setIsRawMaterial] = useState(false);
+  const [unitLabel, setUnitLabel] = useState('');
+  const [recipe, setRecipe] = useState<RecipeItem[]>([]);
+  const [tempIngId, setTempIngId] = useState('');
+  const [tempIngQty, setTempIngQty] = useState('');
   
   // Happy Hour
   const [hhPrice, setHhPrice] = useState('');
@@ -115,7 +120,10 @@ const ProductList: React.FC<ProductListProps> = ({
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
         happyHourEnd: hhEnd || undefined,
-        toKitchen
+        toKitchen,
+        isRawMaterial,
+        unitLabel: unitLabel.trim() || undefined,
+        recipe: isRawMaterial ? undefined : recipe
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -132,7 +140,10 @@ const ProductList: React.FC<ProductListProps> = ({
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
         happyHourEnd: hhEnd || undefined,
-        toKitchen
+        toKitchen,
+        isRawMaterial,
+        unitLabel: unitLabel.trim() || undefined,
+        recipe: isRawMaterial ? undefined : recipe
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -178,6 +189,9 @@ const ProductList: React.FC<ProductListProps> = ({
     setHhStart(p.happyHourStart || '');
     setHhEnd(p.happyHourEnd || '');
     setToKitchen(p.toKitchen ?? false);
+    setIsRawMaterial(p.isRawMaterial ?? false);
+    setUnitLabel(p.unitLabel || '');
+    setRecipe(p.recipe || []);
     setShowModal(true);
   };
 
@@ -195,6 +209,11 @@ const ProductList: React.FC<ProductListProps> = ({
     setHhStart('');
     setHhEnd('');
     setToKitchen(false);
+    setIsRawMaterial(false);
+    setUnitLabel('');
+    setRecipe([]);
+    setTempIngId('');
+    setTempIngQty('');
     setError(null);
   };
 
@@ -389,13 +408,117 @@ const ProductList: React.FC<ProductListProps> = ({
                  </div>
               </div>
 
-              <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Unidade de Medida</label>
+              {/* TIPO DE PRODUTO & INSUMO */}
+              <div className="pt-2">
+                <button 
+                  onClick={() => setIsRawMaterial(!isRawMaterial)}
+                  className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${isRawMaterial ? 'bg-indigo-50 border-indigo-200 dark:bg-indigo-900/20' : 'bg-slate-50 border-slate-200 dark:bg-slate-950'}`}
+                  type="button"
+                >
+                  <div className="flex flex-col items-start">
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${isRawMaterial ? 'text-indigo-600' : 'text-slate-400'}`}>Apenas Insumo / Matéria-prima</span>
+                    <span className="text-[9px] font-bold text-slate-400">Não aparece no cardápio de vendas do PDV</span>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${isRawMaterial ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isRawMaterial ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+              </div>
+
+              {/* RENDERIZADOR DE UNIDADE DE MEDIDA PERSONALIZADA */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Venda/Estoque por</label>
                   <div className="flex p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
-                    <button onClick={() => setSellType('unit')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'unit' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>UN (Unidade)</button>
-                    <button onClick={() => setSellType('weight')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase transition-all ${sellType === 'weight' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>KG (Peso/Volume)</button>
+                    <button type="button" onClick={() => setSellType('unit')} className={`flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all ${sellType === 'unit' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>UN</button>
+                    <button type="button" onClick={() => setSellType('weight')} className={`flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase transition-all ${sellType === 'weight' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm' : 'text-slate-400'}`}>KG</button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="product-unit-label" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sigla Unidade (Ex: ml, g, dose)</label>
+                  <input 
+                    id="product-unit-label"
+                    type="text" 
+                    value={unitLabel} 
+                    onChange={e => setUnitLabel(e.target.value)} 
+                    className="w-full p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xs uppercase outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                    placeholder="EX: ML" 
+                  />
                 </div>
               </div>
+
+              {/* FICHA TÉCNICA */}
+              {!isRawMaterial && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
+                  <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                    <span>🍸</span> Ficha Técnica (Ingredientes)
+                  </h4>
+                  
+                  {recipe.length > 0 ? (
+                    <div className="space-y-2 max-h-40 overflow-y-auto no-scrollbar pr-1">
+                      {recipe.map((rItem, idx) => {
+                        const ing = products.find(p => p.id === rItem.productId);
+                        return (
+                          <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold uppercase">
+                            <span className="text-slate-800 dark:text-white">{ing?.name || 'Item Desconhecido'}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-red-600 font-black">{rItem.quantity} {ing?.unitLabel || 'un'}</span>
+                              <button 
+                                onClick={() => setRecipe(prev => prev.filter((_, i) => i !== idx))}
+                                className="text-red-500 hover:text-red-700 font-bold p-1"
+                                type="button"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[9px] font-bold text-slate-400 uppercase text-center py-2">Sem ingredientes cadastrados na receita</p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <select
+                      value={tempIngId}
+                      onChange={e => setTempIngId(e.target.value)}
+                      className="flex-1 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase outline-none"
+                    >
+                      <option value="">Selecionar Insumo...</option>
+                      {products
+                        .filter(p => p.isRawMaterial && !recipe.some(r => r.productId === p.id))
+                        .map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} {p.unitLabel ? `(${p.unitLabel})` : ''}
+                          </option>
+                        ))}
+                    </select>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="Qtd"
+                      value={tempIngQty}
+                      onChange={e => setTempIngQty(sanitizeCurrencyInput(e.target.value))}
+                      className="w-16 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-black text-xs text-center outline-none"
+                    />
+                    <button
+                      onClick={() => {
+                        const qtyVal = parseFloat(tempIngQty.replace(',', '.'));
+                        if (!tempIngId) { alert('Selecione um insumo'); return; }
+                        if (isNaN(qtyVal) || qtyVal <= 0) { alert('Qtd inválida'); return; }
+                        setRecipe(prev => [...prev, { productId: tempIngId, quantity: qtyVal }]);
+                        setTempIngId('');
+                        setTempIngQty('');
+                      }}
+                      className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black uppercase text-[10px] active:scale-95 transition-all"
+                      type="button"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
 
             <div className="space-y-2">
                 <label htmlFor="product-category-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria</label>

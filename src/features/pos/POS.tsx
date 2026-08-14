@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT, isHappyHourActive, User } from '../../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT, isHappyHourActive, User, ConsignedEvent } from '../../types';
 import { validateItemName } from '../../utils/wordValidator';
 import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
@@ -31,6 +31,7 @@ interface POSProps {
   isEventMode?: boolean;
   setIsEventMode?: (val: boolean) => void;
   currentUser?: User | null;
+  consignedEvents?: ConsignedEvent[];
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -64,7 +65,8 @@ export const POS: React.FC<POSProps> = ({
   activeUnit,
   isEventMode: propIsEventMode,
   setIsEventMode: propSetIsEventMode,
-  currentUser
+  currentUser,
+  consignedEvents = []
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -83,6 +85,22 @@ export const POS: React.FC<POSProps> = ({
   const [tabToDelete, setTabToDelete] = useState<Tab | null>(null);
   const [showSettleConfirm, setShowSettleConfirm] = useState(false);
   const [, setTick] = useState(0);
+
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+
+  const activeEvent = useMemo(() => {
+    return (consignedEvents || []).find(e => e.id === activeEventId);
+  }, [consignedEvents, activeEventId]);
+
+  const isEventOpenBar = useMemo(() => {
+    return activeEvent?.type === 'OPEN_BAR';
+  }, [activeEvent]);
+
+  useEffect(() => {
+    if (activeEventId) {
+      setIsEventMode(true);
+    }
+  }, [activeEventId, setIsEventMode]);
 
   useEffect(() => {
     const timer = setInterval(() => setTick(t => t + 1), 60000);
@@ -176,8 +194,8 @@ export const POS: React.FC<POSProps> = ({
         showFeedback(`+${quantity} ${product.name}`);
     } else {
         const isHH = isHappyHourActive(product);
-        const basePrice = isHH && product.happyHourPrice ? product.happyHourPrice : product.price;
-        const modPrice = modifier ? modifier.price : 0;
+        const basePrice = isEventOpenBar ? 0 : (isHH && product.happyHourPrice ? product.happyHourPrice : product.price);
+        const modPrice = isEventOpenBar ? 0 : (modifier ? modifier.price : 0);
         const effectiveUnitPrice = safeFloat(basePrice + modPrice);
         const newItem: SaleItem = { 
           id: generateUniqueId('it'), 
@@ -245,7 +263,8 @@ export const POS: React.FC<POSProps> = ({
       id: newTabId,
       name: expressName,
       items: [],
-      openedAt: Date.now()
+      openedAt: Date.now(),
+      eventId: activeEventId || undefined
     });
     
     setActiveTabId(newTabId);
@@ -286,7 +305,8 @@ export const POS: React.FC<POSProps> = ({
        customerName: isShortcut ? shortcutCheckout?.name : payments[0]?.customerName,
        userId: '', 
        shiftId: activeShift?.id || '',
-       serviceTax: serviceTaxAmount > 0 ? serviceTaxAmount : undefined
+       serviceTax: serviceTaxAmount > 0 ? serviceTaxAmount : undefined,
+       eventId: activeEventId || undefined
     };
     
     await onCompleteSale([newSale], !isShortcut ? activeTabId! : undefined);
@@ -329,6 +349,23 @@ export const POS: React.FC<POSProps> = ({
 
   return (
     <div className="flex flex-col h-full gap-4 relative overflow-hidden">
+      {activeEvent && (
+        <div className={`p-4 rounded-3xl flex items-center justify-between text-white shrink-0 shadow-lg ${activeEvent.type === 'OPEN_BAR' ? 'bg-gradient-to-r from-red-600 to-orange-600 animate-pulse' : 'bg-gradient-to-r from-indigo-600 to-indigo-900'} duration-1000`}>
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🚨</span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest leading-none">Modo Evento Ativo</p>
+              <h4 className="text-sm font-black uppercase mt-1 leading-none">{activeEvent.name} {activeEvent.type === 'OPEN_BAR' ? '(Open Bar)' : '(Consignado)'}</h4>
+            </div>
+          </div>
+          <button 
+            onClick={() => setActiveEventId(null)} 
+            className="px-4 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-[9px] font-black uppercase tracking-widest text-white border border-white/10"
+          >
+            Sair do Evento
+          </button>
+        </div>
+      )}
       {toast && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[600] animate-bounce">
            <div className="bg-red-600 text-white px-6 py-2 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl">{toast}</div>
@@ -348,7 +385,26 @@ export const POS: React.FC<POSProps> = ({
                 <span>Atalhos</span>
               </button>
             </div>
-            <div className="flex w-full sm:w-auto gap-3 items-center">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3 items-end sm:items-center">
+              {consignedEvents.filter(e => e.status === 'PENDING').length > 0 && (
+                <div className="w-full sm:w-auto flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+                  <span className="text-sm">🍸</span>
+                  <select
+                    value={activeEventId || ''}
+                    onChange={e => setActiveEventId(e.target.value || null)}
+                    className="bg-transparent font-black text-[9px] uppercase tracking-wider outline-none cursor-pointer w-full sm:w-32 text-slate-700 dark:text-slate-300"
+                  >
+                    <option value="" className="text-slate-800">Sem Evento</option>
+                    {consignedEvents
+                      .filter(e => e.status === 'PENDING')
+                      .map(e => (
+                        <option key={e.id} value={e.id} className="text-slate-800">
+                          {e.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              )}
               <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center sm:gap-3">
                 <button 
                   onClick={() => setShowShortcutsModal(true)} 
@@ -412,7 +468,7 @@ export const POS: React.FC<POSProps> = ({
                     const tError = validateItemName(finalName);
                     if (tError) { showFeedback(tError); return; }
                     
-                    await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now() });
+                    await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now(), eventId: activeEventId || undefined });
                     setActiveTabId(null);
                     setIsAddingTab(false);
                     setNewTabName('');
@@ -426,7 +482,7 @@ export const POS: React.FC<POSProps> = ({
                     if (finalName) { 
                       const tError = validateItemName(finalName);
                       if (tError) { showFeedback(tError); return; }
-                      await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now() }); 
+                      await onSaveTab({ id: generateUniqueId('tab'), name: finalName, items: [], openedAt: Date.now(), eventId: activeEventId || undefined }); 
                       setNewTabName(''); 
                       setIsAddingTab(false); 
                     } 

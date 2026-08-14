@@ -65,7 +65,7 @@ const ProductCard = React.memo(({ product, onClick, stock, insight }: { product:
       {product.trackStock && stock !== undefined && (
         <div className={`absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[7px] font-black uppercase shadow-sm border 
           ${insight?.isCritical ? 'bg-red-600 text-white border-red-400 animate-pulse' : stock <= 5 ? 'bg-red-600 text-white border-red-400 animate-pulse' : stock <= 15 ? 'bg-amber-500 text-white border-amber-300' : 'bg-emerald-100 text-emerald-700 border-emerald-200'}`}>
-          {stock <= 0 ? 'ESGOTADO' : `${Math.floor(stock)} UN`}
+          {stock <= 0 ? 'ESGOTADO' : `${stock % 1 === 0 ? stock.toFixed(0) : stock.toFixed(2)} ${product.unitLabel || 'UN'}`}
           {insight?.isCritical && ` • ~${insight.estimatedHoursLeft?.toFixed(1)}H`}
         </div>
       )}
@@ -107,7 +107,7 @@ const POSProductGrid: React.FC<POSProductGridProps> = ({ products, onAddProduct,
   }, [debouncedTerm]);
 
   const filteredProducts = useMemo(() => 
-    (products || []).filter(p => p.name.toLowerCase().includes(debouncedTerm.toLowerCase())),
+    (products || []).filter(p => !p.isRawMaterial && p.name.toLowerCase().includes(debouncedTerm.toLowerCase())),
   [products, debouncedTerm]);
 
   const favorites = useMemo(() => 

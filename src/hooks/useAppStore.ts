@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState, ConsignedEvent } from '../types';
 import { useSync } from './useSync';
 import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
@@ -89,6 +89,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [franchises, setFranchises] = useState<Franchise[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
+  const [consignedEvents, setConsignedEvents] = useState<ConsignedEvent[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
 
@@ -208,7 +209,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const { refresh, registerLocalDeletion, updateLocalTimestamp, pendingSyncCount } = useSync({
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
-    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setDbStatus,
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setConsignedEvents, setDbStatus,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -559,18 +560,41 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
             // Verifica se o produto deve controlar estoque
             const product = products.find(p => p.id === item.productId);
-            if (product && product.trackStock === false) continue;
+            if (!product) continue;
 
-            const transaction: StockTransaction = {
-              id: generateUniqueId('stk'),
-              productId: item.productId,
-              unitId: validatedActiveUnitId!,
-              quantity: -item.quantity,
-              type: 'OUT',
-              timestamp,
-              userId
-            };
-            batchTransactions.push(transaction);
+            // 1. Processa a Ficha Técnica Híbrida se houver receita
+            if (product.recipe && product.recipe.length > 0) {
+              for (const recipeItem of product.recipe) {
+                const ingredient = products.find(p => p.id === recipeItem.productId);
+                if (ingredient && ingredient.trackStock !== false) {
+                  const transaction: StockTransaction = {
+                    id: generateUniqueId('stk'),
+                    productId: recipeItem.productId,
+                    unitId: validatedActiveUnitId!,
+                    quantity: -(recipeItem.quantity * item.quantity),
+                    type: 'OUT',
+                    reason: `Consumo: ${product.name}`,
+                    timestamp,
+                    userId
+                  };
+                  batchTransactions.push(transaction);
+                }
+              }
+            }
+
+            // 2. Processa o produto principal se estiver com controle de estoque ativo
+            if (product.trackStock !== false) {
+              const transaction: StockTransaction = {
+                id: generateUniqueId('stk'),
+                productId: item.productId,
+                unitId: validatedActiveUnitId!,
+                quantity: -item.quantity,
+                type: 'OUT',
+                timestamp,
+                userId
+              };
+              batchTransactions.push(transaction);
+            }
           }
         }
 
@@ -595,7 +619,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
   const handleExportData = useCallback(() => {
     const backupData = {
-      products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms,
+      products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents,
       config: { penduraThreshold, longDurationThreshold },
       meta: { exportedAt: Date.now(), exportedBy: currentUser?.username, systemVersion: '3.9.x' }
     };
@@ -609,7 +633,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, penduraThreshold, longDurationThreshold, currentUser]);
+  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, penduraThreshold, longDurationThreshold, currentUser]);
 
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') { handleExportData(); return; }
@@ -625,6 +649,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       if (data.categoryModifiers) { setCategoryModifiers(data.categoryModifiers); updateLocalTimestamp('categoryModifiers'); saveLocalCache('categoryModifiers', data.categoryModifiers); persist('categoryModifiers', data.categoryModifiers); }
       if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); saveLocalCache('categories', data.categories); persist('categories', data.categories); }
       if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); saveLocalCache('openTabs', data.openTabs); persist('openTabs', data.openTabs); }
+      if (data.consignedEvents) { setConsignedEvents(data.consignedEvents); updateLocalTimestamp('consignedEvents'); saveLocalCache('consignedEvents', data.consignedEvents); persist('consignedEvents', data.consignedEvents); }
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
@@ -638,6 +663,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     categoryModifiers, setCategoryModifiers, sales, setSales, openTabs, setOpenTabs,
     users, setUsers, shifts, setShifts, units, setUnits, franchises, setFranchises, auditLogs, setAuditLogs,
     stockTransactions, setStockTransactions, stockBalances,
+    consignedEvents, setConsignedEvents,
     rooms, setRooms,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,

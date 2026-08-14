@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, StockTransaction, Franchise, AuditLog } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, StockTransaction, Franchise, AuditLog, ConsignedEvent } from '../types';
 import { SyncQueue, QueueItem } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
 import { diagnosticLogger } from '../utils/diagnosticLogger';
@@ -20,6 +20,7 @@ interface SyncProps {
   setAuditLogs: (data: any) => void;
   setStockTransactions: (data: any) => void;
   setRooms: (data: any) => void;
+  setConsignedEvents: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
   activeUnitId: string | null;
   config: { url: string; key: string; email: string; pass: string; allPerms: any[]; isDemo?: boolean; }
@@ -38,7 +39,7 @@ export const useSync = (props: SyncProps) => {
 
   const {
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
-    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setDbStatus, activeUnitId, config
+    setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setConsignedEvents, setDbStatus, activeUnitId, config
   } = props;
 
   const ensureArray = (data: any): any[] => {
@@ -211,6 +212,7 @@ export const useSync = (props: SyncProps) => {
         { key: 'auditLogs', setter: setAuditLogs },
         { key: 'stockTransactions', setter: setStockTransactions },
         { key: 'rooms', setter: setRooms },
+        { key: 'consignedEvents', setter: setConsignedEvents },
       ];
 
       if (!initialLoadDone.current) {

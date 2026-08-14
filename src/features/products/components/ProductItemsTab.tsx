@@ -96,11 +96,16 @@ const ProductItemsTab: React.FC<ProductItemsTabProps> = React.memo(({
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-black uppercase text-sm text-slate-800 dark:text-white">{p.name}</p>
+                        {p.isRawMaterial && (
+                          <span className="text-[7px] font-black px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase tracking-widest">Insumo</span>
+                        )}
                         <button onClick={() => setProducts(prev => prev.map(x => x.id === p.id ? {...x, isFavorite: !x.isFavorite} : x))} className={`text-sm ${p.isFavorite ? 'text-amber-500' : 'text-slate-100 dark:text-slate-800'} hover:scale-125 transition-transform`}>★</button>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-lg font-black text-red-600">{formatCurrency(p.price)}</p>
-                        <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${p.sellType === 'weight' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>{p.sellType === 'weight' ? 'PESO (KG)' : 'UNIDADE'}</span>
+                        <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${p.sellType === 'weight' ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
+                          {p.unitLabel ? p.unitLabel : (p.sellType === 'weight' ? 'PESO (KG)' : 'UNIDADE')}
+                        </span>
                       </div>
                     </div>
                     <div className="flex gap-1">
