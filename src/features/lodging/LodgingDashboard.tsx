@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RoomState, Tab, Unit, User, SaleItem, generateUniqueId, formatCurrency } from '../../types';
+import { RoomState, Tab, Unit, User, SaleItem, generateUniqueId, formatCurrency, RoomHistoryRecord } from '../../types';
 
 interface LodgingDashboardProps {
   rooms: RoomState[];
   onUpdateRooms: (updater: any) => void;
   onUpdateRoom: (room: RoomState) => void;
+  roomHistory?: RoomHistoryRecord[];
+  onSaveRoomHistoryRecord?: (record: RoomHistoryRecord) => void;
   openTabs: Tab[];
   onSaveTab: (tab: Tab) => Promise<any>;
   activeUnit: Unit | undefined;
@@ -34,6 +36,8 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
   rooms,
   onUpdateRooms,
   onUpdateRoom,
+  roomHistory = [],
+  onSaveRoomHistoryRecord,
   openTabs,
   onSaveTab,
   activeUnit,
@@ -41,6 +45,7 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
   showToast
 }) => {
   const [tick, setTick] = useState(0);
+  const [activeTab, setActiveTab] = useState<'QUARTOS' | 'HISTORICO'>('QUARTOS');
   const [filter, setFilter] = useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'CLEANING'>('ALL');
   
   // Modals state
@@ -68,6 +73,8 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
   const lodgingBillingIncrementMinutes = activeUnit?.lodgingBillingIncrementMinutes || 30;
   const roomPricePerIncrement = activeUnit?.roomPricePerIncrement || 30;
   const lodgingGracePeriodMinutes = activeUnit?.lodgingGracePeriodMinutes !== undefined ? activeUnit.lodgingGracePeriodMinutes : 5;
+  const lodgingLimitWarningMinutes = activeUnit?.lodgingLimitWarningMinutes !== undefined ? activeUnit.lodgingLimitWarningMinutes : 10;
+  const lodgingFreeWarningMinutes = activeUnit?.lodgingFreeWarningMinutes !== undefined ? activeUnit.lodgingFreeWarningMinutes : 5;
 
   const filteredRooms = useMemo(() => {
     return rooms.filter(r => {
@@ -186,8 +193,31 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
 
     const finalPrice = billedBlocks * roomPricePerIncrement;
 
-    // Lançar cobrança na comanda
     const targetTab = openTabs.find(t => t.id === room.tabId);
+    
+    // Registrar início de histórico de limpeza
+    const newHistoryRecord: RoomHistoryRecord = {
+      id: `history-${generateUniqueId()}`,
+      roomId: room.id,
+      roomName: room.name,
+      tabId: room.tabId,
+      tabName: targetTab?.name || 'Comanda Sem Nome',
+      openedAt: room.openedAt,
+      closedAt: Date.now(),
+      stayDurationMinutes: elapsedMinutes,
+      stayAmount: finalPrice,
+      cleaningStartedAt: Date.now(),
+      cleaningFinishedAt: 0,
+      cleaningDurationMinutes: 0,
+      userId: currentUser.id,
+      unitId: activeUnit?.id || 'GLOBAL'
+    };
+
+    if (onSaveRoomHistoryRecord) {
+      onSaveRoomHistoryRecord(newHistoryRecord);
+    }
+
+    // Lançar cobrança na comanda
     if (targetTab) {
       const chargeItem: SaleItem = {
         id: `item-${generateUniqueId()}`,
@@ -233,6 +263,17 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
   };
 
   const handleFinishCleaning = (room: RoomState) => {
+    // Buscar o histórico inacabado para este quarto
+    const unfinishedRecord = roomHistory.find(h => h.roomId === room.id && h.cleaningFinishedAt === 0);
+    if (unfinishedRecord && onSaveRoomHistoryRecord) {
+      const finishedRecord: RoomHistoryRecord = {
+        ...unfinishedRecord,
+        cleaningFinishedAt: Date.now(),
+        cleaningDurationMinutes: Math.max(1, Math.floor((Date.now() - unfinishedRecord.cleaningStartedAt) / 60000))
+      };
+      onSaveRoomHistoryRecord(finishedRecord);
+    }
+
     const updatedRoom: RoomState = {
       ...room,
       status: 'AVAILABLE',
@@ -256,39 +297,58 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Status e faturamento de quartos em tempo real</p>
         </div>
 
-        {/* Estatísticas Rápidas */}
-        <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={() => setFilter('ALL')} 
-            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${filter === 'ALL' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'}`}
+        {/* Abas Principais */}
+        <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-850">
+          <button
+            onClick={() => setActiveTab('QUARTOS')}
+            className={`px-5 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'QUARTOS' ? 'bg-slate-900 dark:bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-350'}`}
           >
-            Todos ({stats.total})
+            Quartos
           </button>
-          <button 
-            onClick={() => setFilter('AVAILABLE')} 
-            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 ${filter === 'AVAILABLE' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 hover:bg-emerald-100'}`}
+          <button
+            onClick={() => setActiveTab('HISTORICO')}
+            className={`px-5 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'HISTORICO' ? 'bg-slate-900 dark:bg-slate-800 text-white shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-350'}`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            Disponível ({stats.available})
-          </button>
-          <button 
-            onClick={() => setFilter('OCCUPIED')} 
-            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 ${filter === 'OCCUPIED' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 hover:bg-indigo-100'}`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-            Ocupado ({stats.occupied})
-          </button>
-          <button 
-            onClick={() => setFilter('CLEANING')} 
-            className={`px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all flex items-center gap-2 ${filter === 'CLEANING' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-amber-50 dark:bg-amber-950/20 text-amber-500 hover:bg-amber-100'}`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-            Limpeza ({stats.cleaning})
+            Histórico ({roomHistory.length})
           </button>
         </div>
       </div>
 
-      {/* Grid de Quartos */}
+      {activeTab === 'QUARTOS' ? (
+        <>
+          {/* Estatísticas Rápidas */}
+          <div className="flex flex-wrap gap-3 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm items-center">
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mr-2">Filtrar por Status:</span>
+            <button 
+              onClick={() => setFilter('ALL')} 
+              className={`px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all ${filter === 'ALL' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'}`}
+            >
+              Todos ({stats.total})
+            </button>
+            <button 
+              onClick={() => setFilter('AVAILABLE')} 
+              className={`px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center gap-1.5 ${filter === 'AVAILABLE' ? 'bg-emerald-600 text-white shadow-lg' : 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 hover:bg-emerald-100'}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Disponível ({stats.available})
+            </button>
+            <button 
+              onClick={() => setFilter('OCCUPIED')} 
+              className={`px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center gap-1.5 ${filter === 'OCCUPIED' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 hover:bg-indigo-100'}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+              Ocupado ({stats.occupied})
+            </button>
+            <button 
+              onClick={() => setFilter('CLEANING')} 
+              className={`px-4 py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center gap-1.5 ${filter === 'CLEANING' ? 'bg-amber-500 text-slate-950 shadow-lg' : 'bg-amber-50 dark:bg-amber-950/20 text-amber-500 hover:bg-amber-100'}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              Limpeza ({stats.cleaning})
+            </button>
+          </div>
+
+          {/* Grid de Quartos */}
       {filteredRooms.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 p-20 text-center shadow-sm">
           <p className="text-sm font-black uppercase text-slate-400 tracking-[0.2em]">Nenhum quarto encontrado</p>
@@ -321,7 +381,7 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
                 const totalLimitMs = totalLimitMinutes * 60000;
                 timeLeftMs = (room.openedAt + totalLimitMs) - Date.now();
                 isOvertime = timeLeftMs <= 0;
-                isEndingSoon = !isOvertime && timeLeftMs <= 10 * 60000; // 10 minutes or less
+                isEndingSoon = !isOvertime && timeLeftMs <= lodgingLimitWarningMinutes * 60000; // Warning minutes or less
                 progress = Math.min(100, ( (Date.now() - room.openedAt) / totalLimitMs ) * 100);
 
                 // For limits, if overtime, we add excess to the price calculation
@@ -337,8 +397,8 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
                 const timeInCurrentPill = elapsedMinutes % lodgingBillingIncrementMinutes;
                 timeToNextPillMin = lodgingBillingIncrementMinutes - timeInCurrentPill;
                 
-                // Warn 5 minutes before charging next pill
-                warnNextPill = timeToNextPillMin <= 5 && timeInCurrentPill > lodgingGracePeriodMinutes;
+                // Warn X minutes before charging next pill
+                warnNextPill = timeToNextPillMin <= lodgingFreeWarningMinutes && timeInCurrentPill > lodgingGracePeriodMinutes;
               }
 
               currentBilledPrice = currentBilledPills * roomPricePerIncrement;
@@ -501,6 +561,83 @@ const LodgingDashboard: React.FC<LodgingDashboardProps> = ({
               </div>
             );
           })}
+        </div>
+      )}
+      </>
+      ) : (
+        /* Aba de Histórico */
+        <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 p-8 shadow-sm space-y-6">
+          <div>
+            <h4 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Registros de Hospedagem & Limpeza</h4>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Histórico completo de estadias passadas e tempos de arrumação</p>
+          </div>
+
+          {roomHistory.length === 0 ? (
+            <div className="text-center py-20 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-3xl">
+              <span className="text-4xl select-none">📋</span>
+              <p className="text-xs font-black uppercase text-slate-400 tracking-widest mt-4">Nenhum registro no histórico</p>
+              <p className="text-[9px] font-medium text-slate-400 uppercase tracking-widest mt-1">Realize check-outs e finalizações de limpeza para ver os dados</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-800">
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 font-sans">Quarto</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 font-sans">Comanda</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 font-sans">Período de Hospedagem</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center font-sans">Duração Estadia</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right font-sans">Valor Pago</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-center font-sans">Duração Limpeza</th>
+                    <th className="pb-4 text-[9px] font-black uppercase tracking-widest text-slate-400 font-sans">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                  {[...roomHistory].sort((a, b) => b.closedAt - a.closedAt).map((record) => {
+                    const cleaningDone = record.cleaningFinishedAt > 0;
+                    
+                    return (
+                      <tr key={record.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
+                        <td className="py-4 text-xs font-black text-slate-800 dark:text-white uppercase tracking-tight">{record.roomName}</td>
+                        <td className="py-4 text-xs font-bold text-slate-500 dark:text-slate-400">{record.tabName}</td>
+                        <td className="py-4 text-xs text-slate-600 dark:text-slate-400 font-mono">
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {new Date(record.openedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {" às "}
+                          <span className="font-semibold text-slate-700 dark:text-slate-300">
+                            {new Date(record.closedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                            {new Date(record.closedAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </td>
+                        <td className="py-4 text-xs font-mono font-bold text-center text-slate-700 dark:text-slate-300">
+                          {record.stayDurationMinutes} min
+                        </td>
+                        <td className="py-4 text-xs font-mono font-black text-right text-slate-800 dark:text-white">
+                          {formatCurrency(record.stayAmount)}
+                        </td>
+                        <td className="py-4 text-xs font-mono font-bold text-center text-slate-700 dark:text-slate-300">
+                          {cleaningDone ? `${record.cleaningDurationMinutes} min` : (
+                            <span className="text-amber-500 animate-pulse font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                              Em limpeza
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-4 text-xs">
+                          <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${cleaningDone ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                            {cleaningDone ? 'Finalizado' : 'Faxina'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 

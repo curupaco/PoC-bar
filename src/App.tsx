@@ -185,7 +185,7 @@ export const App: React.FC = () => {
       case 'settings': return <Settings products={store.products} sales={store.sales} openTabs={store.openTabs} users={store.users} shifts={store.shifts} units={store.units} rooms={store.rooms} onUpdateUnits={store.handleUpdateUnits} onUpdateRooms={store.handleUpdateRooms} onImport={store.handleDataManagement} dbStatus={store.dbStatus} currentUser={currentUser} penduraThreshold={store.penduraThreshold} setPenduraThreshold={store.setPenduraThreshold} longDurationThreshold={store.longDurationThreshold} setLongDurationThreshold={store.setLongDurationThreshold} activeUnitId={store.validatedActiveUnitId} auditLogs={store.auditLogs} pendingSyncCount={store.pendingSyncCount} />;
       case 'help': return <Help />;
       case 'production_monitor': return <ProductionMonitor openTabs={store.openTabs} onUpdateTabItem={store.handleUpdateTabItem} />;
-      case 'lodging': return <LodgingDashboard rooms={store.rooms} onUpdateRooms={store.handleUpdateRooms} onUpdateRoom={store.handleUpdateRoom} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} currentUser={currentUser} showToast={showToast} />;
+      case 'lodging': return <LodgingDashboard rooms={store.rooms} onUpdateRooms={store.handleUpdateRooms} onUpdateRoom={store.handleUpdateRoom} roomHistory={store.roomHistory} onSaveRoomHistoryRecord={store.handleSaveRoomHistoryRecord} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} currentUser={currentUser} showToast={showToast} />;
       default: return null;
     }
   };

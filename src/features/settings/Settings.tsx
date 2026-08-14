@@ -383,6 +383,36 @@ const Settings: React.FC<SettingsProps> = ({
                         className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
                      />
                   </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Aviso de Fim (Minutos antes)</label>
+                     <input 
+                        type="number" 
+                        min={1}
+                        max={60}
+                        value={units.find(u => u.id === unitId)?.lodgingLimitWarningMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingLimitWarningMinutes : 10} 
+                        onChange={e => {
+                           const val = Math.max(1, Math.min(60, Number(e.target.value)));
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingLimitWarningMinutes: val } : u));
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                     />
+                  </div>
+
+                  <div className={`space-y-3 transition-opacity ${units.find(u => u.id === unitId)?.lodgingEnabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Aviso Próx. Bloco (Minutos antes)</label>
+                     <input 
+                        type="number" 
+                        min={1}
+                        max={60}
+                        value={units.find(u => u.id === unitId)?.lodgingFreeWarningMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingFreeWarningMinutes : 5} 
+                        onChange={e => {
+                           const val = Math.max(1, Math.min(60, Number(e.target.value)));
+                           onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingFreeWarningMinutes: val } : u));
+                        }}
+                        className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
+                     />
+                  </div>
                </div>
             </div>
 

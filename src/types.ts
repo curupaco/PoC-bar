@@ -211,6 +211,8 @@ export interface Unit {
   lodgingBillingIncrementMinutes?: number;
   roomPricePerIncrement?: number;
   lodgingGracePeriodMinutes?: number;
+  lodgingLimitWarningMinutes?: number;
+  lodgingFreeWarningMinutes?: number;
 }
 
 export type RoomStatus = 'AVAILABLE' | 'OCCUPIED' | 'CLEANING';
@@ -227,6 +229,23 @@ export interface RoomState {
   additionalMinutes?: number;
   lastStatusChangedAt?: number;
   notes?: string;
+}
+
+export interface RoomHistoryRecord {
+  id: string;
+  roomId: string;
+  roomName: string;
+  tabId?: string;
+  tabName?: string;
+  openedAt: number;
+  closedAt: number;
+  stayDurationMinutes: number;
+  stayAmount: number;
+  cleaningStartedAt: number;
+  cleaningFinishedAt: number;
+  cleaningDurationMinutes: number;
+  userId: string;
+  unitId: string;
 }
 
 export interface Category {
