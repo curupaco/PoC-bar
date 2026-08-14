@@ -12,6 +12,11 @@ const slugify = (str: string) =>
      .replace(/[\s_-]+/g, "-")
      .replace(/^-+|-+$/g, "");
 
+const parseSafeNumber = (val: string, fallback: number = 0): number => {
+  const n = Number(val);
+  return isNaN(n) ? fallback : n;
+};
+
 interface SettingsProps {
   products: Product[];
   sales: Sale[];
@@ -145,7 +150,7 @@ const Settings: React.FC<SettingsProps> = ({
                   <input 
                     type="number" 
                     value={penduraThreshold} 
-                    onChange={e => setPenduraThreshold(Number(e.target.value))} 
+                    onChange={e => setPenduraThreshold(parseSafeNumber(e.target.value, 500))} 
                     className="w-full pl-12 pr-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all" 
                   />
                 </div>
@@ -162,7 +167,7 @@ const Settings: React.FC<SettingsProps> = ({
                   <input 
                     type="number" 
                     value={longDurationThreshold} 
-                    onChange={e => setLongDurationThreshold(Number(e.target.value))} 
+                    onChange={e => setLongDurationThreshold(parseSafeNumber(e.target.value, 4))} 
                     className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all" 
                   />
                 </div>
@@ -210,7 +215,7 @@ const Settings: React.FC<SettingsProps> = ({
                            type="number" 
                            value={units.find(u => u.id === unitId)?.serviceTaxPercentage || 10} 
                            onChange={e => {
-                              const val = Math.max(0, Math.min(100, Number(e.target.value)));
+                              const val = Math.max(0, Math.min(100, parseSafeNumber(e.target.value, 10)));
                               onUpdateUnits(units.map(u => u.id === unitId ? { ...u, serviceTaxPercentage: val } : u));
                            }}
                            className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all" 
@@ -286,7 +291,7 @@ const Settings: React.FC<SettingsProps> = ({
                         max={100}
                         value={units.find(u => u.id === unitId)?.roomsCount || 4} 
                         onChange={e => {
-                           const val = Math.max(1, Math.min(100, Number(e.target.value)));
+                           const val = Math.max(1, Math.min(100, parseSafeNumber(e.target.value, 4)));
                            const activeUnit = units.find(u => u.id === unitId);
                            const prefix = activeUnit?.roomPrefix || 'Quarto';
                            onUpdateUnits(units.map(u => u.id === unitId ? { ...u, roomsCount: val } : u));
@@ -339,7 +344,7 @@ const Settings: React.FC<SettingsProps> = ({
                      <select 
                         value={units.find(u => u.id === unitId)?.lodgingBillingIncrementMinutes || 30} 
                         onChange={e => {
-                           const val = Number(e.target.value);
+                           const val = parseSafeNumber(e.target.value, 30);
                            onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingBillingIncrementMinutes: val } : u));
                         }}
                         className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-lg outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
@@ -361,7 +366,7 @@ const Settings: React.FC<SettingsProps> = ({
                            step="0.01"
                            value={units.find(u => u.id === unitId)?.roomPricePerIncrement || 30} 
                            onChange={e => {
-                              const val = Math.max(0, Number(e.target.value));
+                              const val = Math.max(0, parseSafeNumber(e.target.value, 30));
                               onUpdateUnits(units.map(u => u.id === unitId ? { ...u, roomPricePerIncrement: val } : u));
                            }}
                            className="w-full pl-12 pr-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
@@ -377,7 +382,7 @@ const Settings: React.FC<SettingsProps> = ({
                         max={60}
                         value={units.find(u => u.id === unitId)?.lodgingGracePeriodMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingGracePeriodMinutes : 5} 
                         onChange={e => {
-                           const val = Math.max(0, Math.min(60, Number(e.target.value)));
+                           const val = Math.max(0, Math.min(60, parseSafeNumber(e.target.value, 5)));
                            onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingGracePeriodMinutes: val } : u));
                         }}
                         className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
@@ -392,7 +397,7 @@ const Settings: React.FC<SettingsProps> = ({
                         max={60}
                         value={units.find(u => u.id === unitId)?.lodgingLimitWarningMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingLimitWarningMinutes : 10} 
                         onChange={e => {
-                           const val = Math.max(1, Math.min(60, Number(e.target.value)));
+                           const val = Math.max(1, Math.min(60, parseSafeNumber(e.target.value, 10)));
                            onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingLimitWarningMinutes: val } : u));
                         }}
                         className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 
@@ -407,7 +412,7 @@ const Settings: React.FC<SettingsProps> = ({
                         max={60}
                         value={units.find(u => u.id === unitId)?.lodgingFreeWarningMinutes !== undefined ? units.find(u => u.id === unitId)?.lodgingFreeWarningMinutes : 5} 
                         onChange={e => {
-                           const val = Math.max(1, Math.min(60, Number(e.target.value)));
+                           const val = Math.max(1, Math.min(60, parseSafeNumber(e.target.value, 5)));
                            onUpdateUnits(units.map(u => u.id === unitId ? { ...u, lodgingFreeWarningMinutes: val } : u));
                         }}
                         className="w-full px-5 py-5 rounded-[24px] bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-xl outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all" 

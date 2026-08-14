@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Sale, Product, PaymentMethod, User, Shift, Theme, formatDateToISO, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Unit } from '../../types';
 import { getFirebaseToken, loadFromFirebase } from '../../services/firebaseService'; // Import necessário para Issue 1
+import { safeLocalStorage } from '../../utils/storage';
 import ClosingReport from './components/ClosingReport';
 import FinancialReport from './components/FinancialReport';
 import PenduraReport from './components/PenduraReport';
@@ -34,8 +35,8 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
   const [toast, setToast] = useState<string | null>(null);
 
-  const [startDate, setStartDate] = useState(() => localStorage.getItem('btq_report_start_date') || formatDateToISO(new Date()));
-  const [endDate, setEndDate] = useState(() => localStorage.getItem('btq_report_end_date') || formatDateToISO(new Date()));
+  const [startDate, setStartDate] = useState(() => safeLocalStorage.getItem('btq_report_start_date') || formatDateToISO(new Date()));
+  const [endDate, setEndDate] = useState(() => safeLocalStorage.getItem('btq_report_end_date') || formatDateToISO(new Date()));
 
   const activeUnit = useMemo(() => {
     return units.find(u => u.id === activeUnitId);
@@ -58,12 +59,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     }
     return list;
   }, [isStockEnabled, hasFinancialCostsPermission]);
-  const [periodLabel, setPeriodLabel] = useState(() => localStorage.getItem('btq_report_period_label') || 'HOJE');
+  const [periodLabel, setPeriodLabel] = useState(() => safeLocalStorage.getItem('btq_report_period_label') || 'HOJE');
 
   useEffect(() => {
-    localStorage.setItem('btq_report_start_date', startDate);
-    localStorage.setItem('btq_report_end_date', endDate);
-    localStorage.setItem('btq_report_period_label', periodLabel);
+    safeLocalStorage.setItem('btq_report_start_date', startDate);
+    safeLocalStorage.setItem('btq_report_end_date', endDate);
+    safeLocalStorage.setItem('btq_report_period_label', periodLabel);
   }, [startDate, endDate, periodLabel]);
 
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');

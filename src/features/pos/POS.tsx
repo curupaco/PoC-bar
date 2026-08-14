@@ -123,7 +123,7 @@ export const POS: React.FC<POSProps> = ({
         case 'F1': e.preventDefault(); handleQuickSale(); break;
         case 'F2': e.preventDefault(); setIsAddingTab(true); break;
         case 'Escape': e.preventDefault(); setActiveTabId(null); setIsAddingTab(false); break;
-        case ' ': if (activeTabId && !isClosingTab) { e.preventDefault(); setIsClosingTab(true); } break;
+        case 'F4': if (activeTabId && !isClosingTab) { e.preventDefault(); setIsClosingTab(true); } break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -779,7 +779,7 @@ export const POS: React.FC<POSProps> = ({
                {[
                  { key: 'F1', desc: 'Iniciar Venda Rápida' },
                  { key: 'F2', desc: 'Abrir Mesa' },
-                 { key: 'ESPAÇO', desc: 'Fechar Conta (Tela de Pagamento)' },
+                 { key: 'F4', desc: 'Fechar Conta (Tela de Pagamento)' },
                  { key: 'ESC', desc: 'Cancelar / Voltar' },
                ].map((shortcut, idx) => (
                  <div key={idx} className="flex justify-between items-center p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700">

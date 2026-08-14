@@ -2,6 +2,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Product, formatCurrency } from '../../types';
 import { loadFromFirebase, getFirebaseToken } from '../../services/firebaseService';
+import { safeLocalStorage } from '../../utils/storage';
 
 
 interface MinimalistMenuProps {
@@ -52,7 +53,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   const [unitName, setUnitName] = useState(initialUnitName);
   const [unitId, setUnitId] = useState(initialUnitId);
   const [loading, setLoading] = useState(initialProducts.length === 0 && (!!initialUnitId || !!barName));
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem('btq_menu_theme') as 'light' | 'dark') || 'dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (safeLocalStorage.getItem('btq_menu_theme') as 'light' | 'dark') || 'dark');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'price-asc' | 'price-desc'>('name');
@@ -71,7 +72,7 @@ export const MinimalistMenu: React.FC<MinimalistMenuProps> = ({
   };
 
   useEffect(() => {
-    localStorage.setItem('btq_menu_theme', theme);
+    safeLocalStorage.setItem('btq_menu_theme', theme);
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
     } else {

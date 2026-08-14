@@ -2,6 +2,7 @@
 // @google/genai guidelines: Ensure valid types are exported for synchronization data
 import { Product, Sale, Tab, User, Shift, ModifierGroup } from "../types";
 import { encryptData, decryptData } from "./cryptoService";
+import { safeLocalStorage } from "../utils/storage";
 
 export interface AppFullData {
   products: Product[];
@@ -97,7 +98,7 @@ const touchMetadata = async (url: string, token: string, path: string | undefine
 
 // TEC-02: Implementação de Refresh Token Silencioso
 const refreshAuthToken = async (apiKey: string): Promise<string | null> => {
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  const refreshToken = safeLocalStorage.getItem(REFRESH_TOKEN_KEY);
   if (!refreshToken) return null;
 
   try {
@@ -112,14 +113,14 @@ const refreshAuthToken = async (apiKey: string): Promise<string | null> => {
     if (response.ok && data.id_token) {
       _cachedToken = data.id_token;
       // Atualiza o refresh token também (rotação)
-      if (data.refresh_token) localStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
+      if (data.refresh_token) safeLocalStorage.setItem(REFRESH_TOKEN_KEY, data.refresh_token);
       
       const expiresInSeconds = parseInt(data.expires_in || '3600', 10);
       _tokenExpiration = Date.now() + (expiresInSeconds * 1000);
       return data.id_token;
     } else {
       console.warn("Refresh Token Expired/Invalid:", data.error);
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      safeLocalStorage.removeItem(REFRESH_TOKEN_KEY);
       return null;
     }
   } catch (e) {
@@ -159,7 +160,7 @@ export const getFirebaseToken = async (email: string, pass: string, apiKey: stri
       
       if (response.ok && data.idToken) {
         _cachedToken = data.idToken;
-        if (data.refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        if (data.refreshToken) safeLocalStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
         
         const expiresInSeconds = parseInt(data.expiresIn || '3600', 10);
         _tokenExpiration = Date.now() + (expiresInSeconds * 1000);

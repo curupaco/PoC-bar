@@ -1,7 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
 import { User } from '../types';
 import { hashPassword } from '../services/cryptoService';
-import { safeLocalStorage } from '../utils/storage';
 import { ALL_PERMISSIONS } from '../constants/permissions';
 
 export const useAuth = () => {
@@ -32,10 +31,10 @@ export const useAuth = () => {
 
   const handleLogin = useCallback((u: string, p: string, users: User[]) => {
     setLoginError(null);
-    let found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
+    let found = users.find(user => user.username.toLowerCase() === u.toLowerCase() && (user.password === p || user.password === hashPassword(p)));
     
     // Recovery bypass: se for o admin com a senha correta, permite o login mesmo se a lista local/sync estiver vazia
-    if (!found && u === 'admin' && hashPassword(p) === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9') {
+    if (!found && u.toLowerCase() === 'admin' && hashPassword(p) === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9') {
       found = {
         id: 'admin-recovery',
         username: 'admin',
@@ -49,7 +48,7 @@ export const useAuth = () => {
     if (found) {
       const userToLogin = {
         ...found,
-        permissions: found.username === 'admin' ? ALL_PERMISSIONS : (found.permissions || [])
+        permissions: found.username.toLowerCase() === 'admin' ? ALL_PERMISSIONS : (found.permissions || [])
       };
       setCurrentUser(JSON.parse(JSON.stringify(userToLogin)));
     } else {
