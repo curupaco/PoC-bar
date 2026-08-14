@@ -32,7 +32,20 @@ export const useAuth = () => {
 
   const handleLogin = useCallback((u: string, p: string, users: User[]) => {
     setLoginError(null);
-    const found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
+    let found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
+    
+    // Recovery bypass: se for o admin com a senha correta, permite o login mesmo se a lista local/sync estiver vazia
+    if (!found && u === 'admin' && hashPassword(p) === '240eb5185675271cf0e6fe5757d54df233c0be8f56ef858cb5303df24d7756f7') {
+      found = {
+        id: 'admin-recovery',
+        username: 'admin',
+        password: hashPassword(p),
+        displayName: 'Administrador (Resgate)',
+        permissions: ALL_PERMISSIONS,
+        allowedUnits: []
+      } as any;
+    }
+
     if (found) {
       const userToLogin = {
         ...found,
