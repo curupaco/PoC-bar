@@ -35,7 +35,7 @@ export const useAuth = () => {
     let found = users.find(user => user.username === u && (user.password === p || user.password === hashPassword(p)));
     
     // Recovery bypass: se for o admin com a senha correta, permite o login mesmo se a lista local/sync estiver vazia
-    if (!found && u === 'admin' && hashPassword(p) === '240eb5185675271cf0e6fe5757d54df233c0be8f56ef858cb5303df24d7756f7') {
+    if (!found && u === 'admin' && hashPassword(p) === '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9') {
       found = {
         id: 'admin-recovery',
         username: 'admin',
