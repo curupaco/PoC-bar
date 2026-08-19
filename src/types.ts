@@ -95,6 +95,7 @@ export interface SaleItem {
   costPrice?: number; // v4.7.3: Preço de custo no momento da venda
   modifier?: ModifierOption;
   productionStatus?: 'PENDING' | 'READY';
+  isSubscriptionBenefit?: boolean;
 }
 
 export interface PaymentEntry {
@@ -130,6 +131,8 @@ export interface Tab {
   lastItemAddedAt?: number;
   version?: number;
   eventId?: string;
+  subscriberId?: string;
+  billPrintedAt?: number;
 }
 
 export interface User {
@@ -192,6 +195,38 @@ export interface AuditLog {
   username: string;
   action: string; // 'TAB_OPEN', 'TAB_ITEM_ADD', 'TAB_ITEM_REMOVE', 'TAB_CLOSE', 'SHIFT_OPEN', 'SHIFT_CLOSE', 'PAYMENT'
   details: string;
+  unitId: string;
+}
+
+export interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  products: string[]; // IDs dos produtos incluídos
+  dailyLimit: number;
+}
+
+export interface Subscriber {
+  id: string;
+  name: string;
+  phone: string;
+  cpf: string;
+  planId: string;
+  status: 'active' | 'suspended' | 'expired';
+  createdAt: number;
+  expiresAt: number;
+}
+
+export interface SubscriptionLog {
+  id: string;
+  subscriberId: string;
+  subscriberName: string;
+  planName: string;
+  productId: string;
+  productName: string;
+  timestamp: number;
+  tabId?: string;
+  tabName?: string;
   unitId: string;
 }
 

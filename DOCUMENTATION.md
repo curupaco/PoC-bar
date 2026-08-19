@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.4.0 (Custom Lodging Warnings & Arrumação, Toggleable Bar Modules, Admin Forgotten Password Recovery)
+**Versão:** 5.5.0 (Clube de Assinaturas e Recorrência CRM, Auditoria de Integridade e Score de Operador, F4 Checkout & Fatura Térmica)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -109,6 +109,16 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 1.  **Modal "Esqueci Minha Senha":** Interface no Login que instrui colaboradores a buscar o gerente e permite ao Administrador redefinir sua senha instantaneamente para `admin123` digitando a Senha Master do Firebase.
 2.  **Atalhos Seguros do PDV:** Remapeamento da tecla de checkout de `Espaço` para `F4`, evitando conflitos com inputs e seletores do sistema.
 
+### L. Clube de Assinaturas e Recorrência (v5.5.0)
+1.  **Vinculação Direta:** Integração no painel lateral de comanda do PDV pesquisável por Nome, Telefone e CPF.
+2.  **Consumo e Cota de Itens:** Bloqueia automaticamente a incidência de cobrança (lançamento com valor R$ 0,00) de itens inclusos no plano ativo do associado, respeitando a cota de uso diário.
+3.  **Dashboards Recorrentes (MRR):** Relatório de faturamento recorrente esperado, quantidade de associados ativos/inativos e log de consumo diário no dashboard do proprietário.
+
+### M. Painel de Auditoria & Prevenção de Fraudes (v5.5.0)
+1.  **Score de Risco por Operador:** Pontuação de risco individualizada para operadores, ponderando exclusão de comandas, remoção de itens após pré-conta impressa e quebras de caixa no fechamento de turnos.
+2.  **Travamento de Auditoria de Pré-Conta:** Ao simular a impressão da pré-conta tématica no PDV, o sistema registra `billPrintedAt` e monitora qualquer manipulação posterior na comanda como suspeita.
+3.  **Logs Cromáticos de Segurança:** Centralização de auditoria de segurança com alertas visuais por severidade.
+
 ---
 
 ## 3. Segurança e Sincronização
@@ -132,4 +142,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Agosto de 2026. Botequista System v5.4.0*
+*Documentação atualizada em Agosto de 2026. Botequista System v5.5.0*

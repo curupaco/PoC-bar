@@ -1,4 +1,4 @@
-import { Product, Shift, Category, Tab, SaleItem, Unit, User } from '../types';
+import { Product, Shift, Category, Tab, SaleItem, Unit, User, SubscriptionPlan, Subscriber, SubscriptionLog } from '../types';
 
 export const mockCategories: Category[] = [
   { id: 'cat-1', name: 'CERVEJAS' },
@@ -53,4 +53,20 @@ export const mockOpenTabs: Tab[] = [
     items: [],
     lastItemAddedAt: Date.now() - 500000
   }
+];
+
+export const mockSubscriptionPlans: SubscriptionPlan[] = [
+  { id: 'plan-1', name: 'Clube Chopp Diário', price: 59.90, products: ['p-1', 'p-2'], dailyLimit: 1 },
+  { id: 'plan-2', name: 'Drink Club VIP', price: 99.90, products: ['p-5', 'p-6'], dailyLimit: 2 },
+];
+
+export const mockSubscribers: Subscriber[] = [
+  { id: 'sub-1', name: 'João Silva (Chopp)', phone: '11999998888', cpf: '12345678900', planId: 'plan-1', status: 'active', createdAt: Date.now() - 15 * 24 * 3600 * 1000, expiresAt: Date.now() + 15 * 24 * 3600 * 1000 },
+  { id: 'sub-2', name: 'Maria Souza (Drink)', phone: '11988887777', cpf: '98765432100', planId: 'plan-2', status: 'active', createdAt: Date.now() - 10 * 24 * 3600 * 1000, expiresAt: Date.now() + 20 * 24 * 3600 * 1000 },
+  { id: 'sub-3', name: 'Pedro Oliveira (Inativo)', phone: '11977776666', cpf: '11122233344', planId: 'plan-1', status: 'expired', createdAt: Date.now() - 40 * 24 * 3600 * 1000, expiresAt: Date.now() - 10 * 24 * 3600 * 1000 },
+];
+
+export const mockSubscriptionLogs: SubscriptionLog[] = [
+  { id: 'slog-1', subscriberId: 'sub-1', subscriberName: 'João Silva (Chopp)', planName: 'Clube Chopp Diário', productId: 'p-1', productName: 'Heineken 600ml', timestamp: Date.now() - 2 * 24 * 3600 * 1000, tabId: 'tab-old-1', tabName: 'Mesa 3', unitId: 'unit-demo' },
+  { id: 'slog-2', subscriberId: 'sub-2', subscriberName: 'Maria Souza (Drink)', planName: 'Drink Club VIP', productId: 'p-5', productName: 'Caipirinha de Limão', timestamp: Date.now() - 1 * 24 * 3600 * 1000, tabId: 'tab-old-2', tabName: 'Mesa 8', unitId: 'unit-demo' },
 ];

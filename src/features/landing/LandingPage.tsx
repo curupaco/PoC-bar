@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl">B</div>
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tighter uppercase font-barrio">Botequista</span>
-                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.2.0</span>
+                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.5.0</span>
               </div>
             </div>
             <div className="hidden lg:flex items-center gap-12">
@@ -220,6 +220,8 @@ export const LandingPage: React.FC = () => {
                   <div className="text-center text-red-500 font-black">Botequista Elite</div>
                   <div className="text-center opacity-40">Outros Sistemas</div>
                 </div>
+                <ComparisonRow feature="Clube de Assinaturas e Recorrência (CRM)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Score de Risco & Prevenção de Fraudes" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Previsão de Movimento por Clima & Demanda" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Matriz de Permissionamentos Híbrida" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Perdas & Desperdício (Descarte)" bot={true} trad={false} isNew />

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT, isHappyHourActive, User, ConsignedEvent } from '../../types';
+import { Product, Sale, SaleItem, PaymentMethod, Tab, Shift, Unit, formatCurrency, generateUniqueId, ModifierGroup, ModifierOption, safeFloat, PRODUCT_ID_DEBT_SETTLEMENT, isHappyHourActive, User, ConsignedEvent, Subscriber, SubscriptionPlan, SubscriptionLog } from '../../types';
 import { validateItemName } from '../../utils/wordValidator';
 import WeightModal from './components/modals/WeightModal';
 import UpsellModal from './components/modals/UpsellModal';
@@ -33,6 +33,9 @@ interface POSProps {
   currentUser?: User | null;
   consignedEvents?: ConsignedEvent[];
   drinksEnabled?: boolean;
+  subscribers?: Subscriber[];
+  subscriptionPlans?: SubscriptionPlan[];
+  subscriptionLogs?: SubscriptionLog[];
 }
 
 const formatElapsedTime = (openedAt: number) => {
@@ -68,7 +71,10 @@ export const POS: React.FC<POSProps> = ({
   setIsEventMode: propSetIsEventMode,
   currentUser,
   consignedEvents = [],
-  drinksEnabled = true
+  drinksEnabled = true,
+  subscribers = [],
+  subscriptionPlans = [],
+  subscriptionLogs = []
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [newTabName, setNewTabName] = useState('');
@@ -89,6 +95,19 @@ export const POS: React.FC<POSProps> = ({
   const [, setTick] = useState(0);
 
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [showLinkSubModal, setShowLinkSubModal] = useState(false);
+  const [subSearchQuery, setSubSearchQuery] = useState('');
+
+  const filteredSubscribers = useMemo(() => {
+    if (!subscribers) return [];
+    const query = subSearchQuery.toLowerCase().trim();
+    if (!query) return subscribers.filter(s => s.status === 'active');
+    return subscribers.filter(s => 
+      s.name.toLowerCase().includes(query) ||
+      s.phone.includes(query) ||
+      s.cpf.includes(query)
+    );
+  }, [subscribers, subSearchQuery]);
 
   const activeEvent = useMemo(() => {
     return (consignedEvents || []).find(e => e.id === activeEventId);
@@ -618,6 +637,109 @@ export const POS: React.FC<POSProps> = ({
                  <button onClick={() => { setIsClosingTab(false); setShowMobileCart(false); }} className="p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-all">✕</button>
               </div>
 
+              {/* Painel de Assinante e Pré-Conta */}
+              {!isClosingTab && activeTab && (
+                <div className="bg-slate-100 dark:bg-slate-800/85 px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 shrink-0">
+                  <div className="flex items-center justify-between gap-2">
+                    {activeTab.subscriberId ? (
+                      (() => {
+                        const sub = subscribers?.find(s => s.id === activeTab.subscriberId);
+                        const plan = sub ? subscriptionPlans?.find(p => p.id === sub.planId) : null;
+                        return (
+                          <div className="flex-1 flex items-center justify-between bg-white dark:bg-slate-900 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">👤</span>
+                              <div className="flex flex-col">
+                                <span className="text-[10px] font-black uppercase text-slate-800 dark:text-white truncate max-w-[130px]">{sub?.name}</span>
+                                <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 leading-none">{plan?.name}</span>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={async () => {
+                                await onSaveTab({ ...activeTab, subscriberId: undefined });
+                                showFeedback("Assinante removido da mesa");
+                              }} 
+                              className="text-slate-400 hover:text-red-500 font-bold text-xs p-1"
+                              title="Remover Assinante"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <button 
+                        onClick={() => setShowLinkSubModal(true)} 
+                        className="flex-1 flex items-center justify-center gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 font-black uppercase text-[9px] tracking-widest transition-all active:scale-98"
+                      >
+                        <span>👤</span> Assinante
+                      </button>
+                    )}
+
+                    <button 
+                      onClick={async () => {
+                        await onSaveTab({ ...activeTab, billPrintedAt: Date.now() });
+                        showFeedback("Pré-conta impressa!");
+                        // Simula a impressão física
+                        const printWindow = window.open('', '_blank');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                            <head>
+                              <title>Pre-Conta: ${activeTab.name}</title>
+                              <style>
+                                body { font-family: monospace; padding: 20px; color: #000; font-size: 14px; max-width: 300px; margin: 0 auto; }
+                                h2 { text-align: center; margin: 0; font-size: 18px; }
+                                p { margin: 5px 0; }
+                                .sep { border-bottom: 1px dashed #000; margin: 10px 0; }
+                                .item { display: flex; justify-between; }
+                                .right { text-align: right; margin-left: auto; }
+                                .total { font-weight: bold; font-size: 16px; display: flex; }
+                              </style>
+                            </head>
+                            <body>
+                              <h2>BOTEQUISTA PRO</h2>
+                              <div style="text-align:center; font-size:10px;">CNPJ: 00.000.000/0001-00</div>
+                              <div class="sep"></div>
+                              <p>CONFERENCIA - ${activeTab.name}</p>
+                              <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+                              <div class="sep"></div>
+                              ${tabItems.map(item => `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                  <span>${item.quantity}x ${item.productName}</span>
+                                  <span>${item.isSubscriptionBenefit ? 'Assinatura' : formatCurrency(item.totalPrice)}</span>
+                                </div>
+                              `).join('')}
+                              <div class="sep"></div>
+                              <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:16px;">
+                                <span>TOTAL DO CONSUMO</span>
+                                <span>${formatCurrency(grandTotal)}</span>
+                              </div>
+                              <div class="sep"></div>
+                              <div style="text-align:center; font-size:10px; font-style:italic;">Sem valor fiscal. Obrigado pela preferencia!</div>
+                              <script>
+                                setTimeout(() => { window.print(); window.close(); }, 500);
+                              </script>
+                            </body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                        }
+                      }}
+                      className={`px-4 py-3 rounded-2xl font-black uppercase text-[9px] tracking-widest border transition-all active:scale-98 ${activeTab.billPrintedAt ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-slate-800 hover:bg-slate-700 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 border-transparent'}`}
+                    >
+                      📄 {activeTab.billPrintedAt ? 'Reimprimir' : 'Pré-Conta'}
+                    </button>
+                  </div>
+                  
+                  {activeTab.billPrintedAt && (
+                    <div className="text-[8px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1 leading-none mt-1">
+                      <span>⚠️ PRÉ-CONTA IMPRESSA ÀS {new Date(activeTab.billPrintedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {!isClosingTab ? (
                 <>
                   <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-1.5 no-scrollbar min-h-0">
@@ -790,6 +912,67 @@ export const POS: React.FC<POSProps> = ({
              </div>
              
              <button onClick={() => setShowShortcutsModal(false)} className="w-full mt-8 bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-xl active:scale-95 transition-all">Entendi</button>
+          </div>
+        </div>
+      )}
+      {/* Modal de Vincular Assinante */}
+      {showLinkSubModal && (
+        <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in" onClick={() => setShowLinkSubModal(false)} />
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[40px] p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[80vh]">
+             <div className="flex justify-between items-center mb-6 shrink-0">
+               <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">👤 Vincular Assinante</h3>
+               <button onClick={() => setShowLinkSubModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 transition-colors font-bold">✕</button>
+             </div>
+             
+             <div className="mb-4 shrink-0">
+               <input 
+                 type="text" 
+                 placeholder="Buscar por Nome, Telefone ou CPF..." 
+                 value={subSearchQuery}
+                 onChange={(e) => setSubSearchQuery(e.target.value)}
+                 className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-5 py-4 rounded-2xl text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-red-500 transition-colors"
+               />
+             </div>
+
+             <div className="flex-1 overflow-y-auto space-y-2 pr-1 no-scrollbar min-h-0">
+               {filteredSubscribers.map((sub) => {
+                 const plan = subscriptionPlans?.find(p => p.id === sub.planId);
+                 const isActive = sub.status === 'active';
+                 return (
+                   <div 
+                     key={sub.id} 
+                     onClick={async () => {
+                       if (!isActive) {
+                         showFeedback("ASSINANTE INATIVO OU EXPIRADO!");
+                         return;
+                       }
+                       if (activeTab) {
+                         await onSaveTab({ ...activeTab, subscriberId: sub.id });
+                         showFeedback(`Assinante ${sub.name} vinculado!`);
+                         setShowLinkSubModal(false);
+                         setSubSearchQuery('');
+                       }
+                     }}
+                     className={`p-4 rounded-3xl border text-left cursor-pointer transition-all flex justify-between items-center ${isActive ? 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-850/40 dark:hover:bg-slate-800/70 border-slate-100 dark:border-slate-800 hover:scale-[1.01]' : 'bg-red-50/20 dark:bg-red-950/5 border-red-200/30 opacity-60'}`}
+                   >
+                     <div>
+                       <p className="text-xs font-black uppercase text-slate-800 dark:text-white">{sub.name}</p>
+                       <p className="text-[8px] font-bold text-slate-400 uppercase mt-0.5">CPF: {sub.cpf} | Tel: {sub.phone}</p>
+                       <span className="text-[8px] font-black uppercase text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full mt-1.5 inline-block">{plan?.name}</span>
+                     </div>
+                     <div className="text-right">
+                       <span className={`text-[7px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${isActive ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+                         {isActive ? 'Ativo' : 'Vencido'}
+                       </span>
+                     </div>
+                   </div>
+                 );
+               })}
+               {filteredSubscribers.length === 0 && (
+                 <div className="text-center py-10 text-slate-400 font-bold uppercase text-[9px] tracking-widest italic opacity-40">Nenhum assinante encontrado</div>
+               )}
+             </div>
           </div>
         </div>
       )}

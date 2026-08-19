@@ -425,7 +425,7 @@ const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagno
         <div className="text-center mb-20">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-            Arquitetura & Segurança v5.4.0
+            Arquitetura & Segurança v5.5.0
           </span>
           <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
             Engenharia de Borda & <span className="text-emerald-500 italic">Conectividade</span>
@@ -938,7 +938,7 @@ const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagno
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> CONEXÃO_OK</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> BD_SEGURO</span>
               </div>
-              <div>BOTEQUISTA_SECURITY_v5.4.0</div>
+              <div>BOTEQUISTA_SECURITY_v5.5.0</div>
             </div>
 
           </div>
@@ -1406,6 +1406,8 @@ export const LandingPage2: React.FC = () => {
               'Mapa de horário de pico',
               'Modo Evento / Festas (Novo)',
               'Happy Hour Automático (Novo)',
+              'Clube de Assinaturas e Recorrência CRM (v5.5.0)',
+              'Score de Risco & Prevenção de Fraudes de Atendente (v5.5.0)',
               'Registro de Perda & Desperdício (v5.0.0)',
               'Ativação/Desativação de Módulos (Drinks e Hospedaria) por Bar (v5.4.0)',
               'Redefinição Segura de Senha do Admin via Firebase Master Key (v5.4.0)',
@@ -1796,7 +1798,7 @@ export const LandingPage2: React.FC = () => {
                 </div>
                 <div className="flex gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                   <span className="text-emerald-500/50">root@botequista:</span>
-                  <span>~/architecture_v5.4.0</span>
+                  <span>~/architecture_v5.5.0</span>
                 </div>
               </div>
               <div className="text-[10px] font-black text-emerald-500 animate-pulse tracking-tighter">
@@ -1924,6 +1926,8 @@ export const LandingPage2: React.FC = () => {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
+                      { title: 'CLUBE DE ASSINATURAS (v5.5.0)', desc: 'Clube de fidelização recorrente integrado offline-first por CPF/Telefone no PDV com cota diária inteligente.', icon: '👤' },
+                      { title: 'SCORE DE RISCO ANTIFRAUDE (v5.5.0)', desc: 'Cálculo de índice de integridade por atendente baseado em remoções suspeitas pós-impressão e quebra de caixa.', icon: '🛡️' },
                       { title: 'RBAC HÍBRIDO (v5.2.0)', desc: 'Matriz granular de 27 permissões de nível militar com fallbacks automáticos para contas legadas (anti-lockout).', icon: '🔑' },
                       { title: 'DESATIVAÇÃO DE MÓDULOS (v5.4.0)', desc: 'Interruptores liga-desliga por bar que ocultam dinamicamente seções de consignações e receitas no PDV e Estoque.', icon: '🔌' },
                       { title: 'RECUPERAÇÃO SEGURA (v5.4.0)', desc: 'Bypass de redefinição rápida do admin para admin123 autenticado via chave master do banco Firebase.', icon: '🔐' },
@@ -1955,7 +1959,7 @@ export const LandingPage2: React.FC = () => {
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> SYNC_READY</span>
                 <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> DB_CONNECTED</span>
               </div>
-              <div>BOTEQUISTA_SYSTEM_V5.4.0_STABLE</div>
+              <div>BOTEQUISTA_SYSTEM_V5.5.0_STABLE</div>
             </div>
           </div>
         </div>

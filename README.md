@@ -165,6 +165,16 @@ Habilidade de ligar/desligar módulos por unidade (bar) diretamente nas configur
 - **Auto-Recuperação do Admin:** Permite redefinir a senha do admin para a padrão `admin123` digitando a Senha Master do Firebase no Login.
 - **Remapeamento de Atalho de Checkout:** Atalho global de checkout remapeado de `Espaço` para `F4`, eliminando qualquer conflito com digitação de inputs ou buscas textuais no PDV.
 
+### 13. Clube de Assinaturas e Recorrência (v5.5.0)
+- **Vinculação por Telefone/CPF:** O operador vincula o cliente na mesa e o sistema valida o plano ativo.
+- **Consumo de Cota Diária:** Desconta a cota diária automaticamente ao lançar o produto cortesia da assinatura.
+- **Faturamento Recorrente e CRM:** Painel no Dashboard para simular mensalidades, renovações e estatísticas de faturamento recorrente (MRR).
+
+### 14. Painel de Auditoria & Prevenção de Fraudes (v5.5.0)
+- **Score de Risco de Atendente:** Motor que calcula a taxa de cancelamentos após pré-conta impressa, exclusões e quebras de caixa acima de 5% por operador.
+- **Simulador de Pré-Conta Térmica:** O PDV permite gerar a pré-conta no formato térmico físico em janela pop-up e trava a auditoria para monitorar qualquer exclusão subsequente.
+- **Registro de Alertas Críticos:** Histórico operacional que sinaliza anomalias e erros com marcações cromáticas.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento

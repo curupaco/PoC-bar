@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState, ConsignedEvent, RoomHistoryRecord } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState, ConsignedEvent, RoomHistoryRecord, SubscriptionPlan, Subscriber, SubscriptionLog } from '../types';
 import { useSync } from './useSync';
 import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
 import { safeLocalStorage } from '../utils/storage';
 import { ALL_PERMISSIONS } from '../constants/permissions';
-import { mockProducts, mockCategories, mockUnits, mockUsers, mockShifts, mockOpenTabs } from '../utils/mockData';
+import { mockProducts, mockCategories, mockUnits, mockUsers, mockShifts, mockOpenTabs, mockSubscriptionPlans, mockSubscribers, mockSubscriptionLogs } from '../utils/mockData';
 
 // Helper to programmatically synthesize a crisp, physical service bell ding (🛎️) using Web Audio API
 const playBellChime = () => {
@@ -91,6 +91,9 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [stockTransactions, setStockTransactions] = useState<StockTransaction[]>([]);
   const [consignedEvents, setConsignedEvents] = useState<ConsignedEvent[]>([]);
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(isDemo ? mockSubscriptionPlans : []);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>(isDemo ? mockSubscribers : []);
+  const [subscriptionLogs, setSubscriptionLogs] = useState<SubscriptionLog[]>(isDemo ? mockSubscriptionLogs : []);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
 
@@ -211,6 +214,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
     setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setConsignedEvents, setRoomHistory, setDbStatus,
+    setSubscriptionPlans, setSubscribers, setSubscriptionLogs,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -337,6 +341,31 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
   const handleUpdateTabItem = useCallback(async (tabId: string, item: SaleItem) => {
     try {
+      // Regras de Prevenção de Fraude: Rastrear exclusões ou reduções de itens nas comandas
+      const targetTab = openTabs.find(t => t.id === tabId);
+      if (targetTab) {
+        const currentItems = Array.isArray(targetTab.items) ? targetTab.items : (Object.values(targetTab.items || {}) as SaleItem[]);
+        const existingItem = currentItems.find((i: SaleItem) => i.id === item.id);
+        if (existingItem) {
+          const prevQty = existingItem.quantity;
+          const newQty = item.quantity;
+          const diff = newQty - prevQty;
+          
+          if (diff < 0) {
+            const tabName = targetTab.name || 'Mesa';
+            const changeDesc = newQty <= 0 
+              ? `Excluiu '${item.productName}' (Qtd anterior: ${prevQty}) da comanda '${tabName}'`
+              : `Reduziu '${item.productName}' de ${prevQty} para ${newQty} na comanda '${tabName}'`;
+            
+            if (targetTab.billPrintedAt) {
+              addAuditLog('TAB_ITEM_REMOVE_AFTER_PRINT', `CRÍTICO: ${changeDesc} após impressão de pré-conta.`);
+            } else {
+              addAuditLog('TAB_ITEM_REMOVE', changeDesc);
+            }
+          }
+        }
+      }
+
       setOpenTabs(prev => {
         const nextTabs = prev.map(t => {
           if (t.id === tabId) {
@@ -364,7 +393,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     } catch (e) {
       showToast("Falha ao atualizar item no servidor ou cache local", "error");
     }
-  }, [persist, saveLocalCache, updateLocalTimestamp, showToast]);
+  }, [persist, saveLocalCache, updateLocalTimestamp, showToast, openTabs, addAuditLog]);
 
   const handleDeleteTab = useCallback(async (tabId: string) => {
     try {
@@ -602,6 +631,56 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
 
   const handleCompleteSale = useCallback(async (newSalesList: Sale[], tabIdToClose?: string) => {
     try {
+      // Registrar consumo de cota do Clube de Assinaturas se a comanda/mesa tinha um assinante vinculado
+      let subscriberToUpdateId: string | undefined;
+      if (tabIdToClose) {
+        const tab = openTabs.find(t => t.id === tabIdToClose);
+        if (tab && tab.subscriberId) {
+          subscriberToUpdateId = tab.subscriberId;
+        }
+      }
+
+      if (subscriberToUpdateId) {
+        const sub = subscribers.find(s => s.id === subscriberToUpdateId);
+        const plan = sub ? subscriptionPlans.find(p => p.id === sub.planId) : null;
+        
+        if (sub && plan) {
+          const newLogs: SubscriptionLog[] = [];
+          for (const sale of newSalesList) {
+            if (!sale.items) continue;
+            for (const item of sale.items) {
+              if (item.isSubscriptionBenefit) {
+                const logEntry: SubscriptionLog = {
+                  id: generateUniqueId('slog'),
+                  subscriberId: sub.id,
+                  subscriberName: sub.name,
+                  planName: plan.name,
+                  productId: item.productId,
+                  productName: item.productName,
+                  timestamp: Date.now(),
+                  tabId: tabIdToClose,
+                  tabName: sale.tabName || 'Mesa',
+                  unitId: validatedActiveUnitId || 'all'
+                };
+                newLogs.push(logEntry);
+              }
+            }
+          }
+          
+          if (newLogs.length > 0) {
+            setSubscriptionLogs(prev => {
+              const next = [...newLogs, ...prev].slice(0, 2000);
+              saveLocalCache('subscriptionLogs', next);
+              return next;
+            });
+            updateLocalTimestamp('subscriptionLogs');
+            for (const log of newLogs) {
+              await persist('subscriptionLogs', log, log.id);
+            }
+          }
+        }
+      }
+
       setSales(prev => {
         const next = [...prev, ...newSalesList];
         saveLocalCache('sales', next);
@@ -690,11 +769,114 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     } catch (e) {
       showToast("Falha ao registrar venda ou baixar estoque", "error");
     }
-  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog, units, validatedActiveUnitId, currentUserRef, products, showToast]);
+  }, [persist, handleDeleteTab, updateLocalTimestamp, saveLocalCache, openTabs, addAuditLog, units, validatedActiveUnitId, currentUserRef, products, showToast, subscribers, subscriptionPlans]);
+
+  const handleSaveSubscriptionPlan = useCallback(async (plan: SubscriptionPlan) => {
+    try {
+      setSubscriptionPlans(prev => {
+        const idx = prev.findIndex(p => p.id === plan.id);
+        const next = [...prev];
+        if (idx >= 0) next[idx] = plan;
+        else next.push(plan);
+        saveLocalCache('subscriptionPlans', next);
+        return next;
+      });
+      updateLocalTimestamp('subscriptionPlans');
+      await persist('subscriptionPlans', plan, plan.id);
+      addAuditLog('PLAN_SAVE', `Plano de assinatura salvo: ${plan.name}`);
+    } catch (e) {
+      showToast("Falha ao salvar plano de assinatura", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, addAuditLog, showToast]);
+
+  const handleDeleteSubscriptionPlan = useCallback(async (planId: string) => {
+    try {
+      setSubscriptionPlans(prev => {
+        const next = prev.filter(p => p.id !== planId);
+        saveLocalCache('subscriptionPlans', next);
+        return next;
+      });
+      updateLocalTimestamp('subscriptionPlans');
+      await persist('subscriptionPlans', null, planId);
+      await registerLocalDeletion(planId);
+      addAuditLog('PLAN_DELETE', `Plano de assinatura deletado: ${planId}`);
+    } catch (e) {
+      showToast("Falha ao deletar plano de assinatura", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, registerLocalDeletion, addAuditLog, showToast]);
+
+  const handleSaveSubscriber = useCallback(async (subscriber: Subscriber) => {
+    try {
+      setSubscribers(prev => {
+        const idx = prev.findIndex(s => s.id === subscriber.id);
+        const next = [...prev];
+        if (idx >= 0) next[idx] = subscriber;
+        else next.push(subscriber);
+        saveLocalCache('subscribers', next);
+        return next;
+      });
+      updateLocalTimestamp('subscribers');
+      await persist('subscribers', subscriber, subscriber.id);
+      addAuditLog('SUBSCRIBER_SAVE', `Assinante salvo: ${subscriber.name} (${subscriber.status})`);
+    } catch (e) {
+      showToast("Falha ao salvar assinante", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, addAuditLog, showToast]);
+
+  const handleDeleteSubscriber = useCallback(async (subscriberId: string) => {
+    try {
+      setSubscribers(prev => {
+        const next = prev.filter(s => s.id !== subscriberId);
+        saveLocalCache('subscribers', next);
+        return next;
+      });
+      updateLocalTimestamp('subscribers');
+      await persist('subscribers', null, subscriberId);
+      await registerLocalDeletion(subscriberId);
+      addAuditLog('SUBSCRIBER_DELETE', `Assinante deletado: ${subscriberId}`);
+    } catch (e) {
+      showToast("Falha ao deletar assinante", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, registerLocalDeletion, addAuditLog, showToast]);
+
+  const handleSimulateSubscriptionRenewal = useCallback(async (subscriberId: string) => {
+    try {
+      let subName = '';
+      setSubscribers(prev => {
+        const idx = prev.findIndex(s => s.id === subscriberId);
+        if (idx === -1) return prev;
+        const next = [...prev];
+        const target = next[idx];
+        subName = target.name;
+        next[idx] = {
+          ...target,
+          status: 'active',
+          expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 // mais 30 dias
+        };
+        saveLocalCache('subscribers', next);
+        return next;
+      });
+      updateLocalTimestamp('subscribers');
+      
+      const nextSubscribers = await new Promise<Subscriber[]>(resolve => {
+        setSubscribers(prev => { resolve(prev); return prev; });
+      });
+      const updatedSub = nextSubscribers.find(s => s.id === subscriberId);
+      if (updatedSub) {
+        await persist('subscribers', updatedSub, subscriberId);
+      }
+      
+      addAuditLog('SUBSCRIBER_RENEW', `Assinatura renovada para: ${subName}`);
+      showToast(`Assinatura de ${subName} renovada com sucesso!`, 'success');
+    } catch (e) {
+      showToast("Falha ao renovar assinatura", "error");
+    }
+  }, [persist, saveLocalCache, updateLocalTimestamp, addAuditLog, showToast]);
 
   const handleExportData = useCallback(() => {
     const backupData = {
       products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory,
+      subscriptionPlans, subscribers, subscriptionLogs,
       config: { penduraThreshold, longDurationThreshold },
       meta: { exportedAt: Date.now(), exportedBy: currentUser?.username, systemVersion: '3.9.x' }
     };
@@ -708,7 +890,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory, penduraThreshold, longDurationThreshold, currentUser]);
+  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory, subscriptionPlans, subscribers, subscriptionLogs, penduraThreshold, longDurationThreshold, currentUser]);
 
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') { handleExportData(); return; }
@@ -726,6 +908,11 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       if (data.categories) { setCategories(data.categories); updateLocalTimestamp('categories'); saveLocalCache('categories', data.categories); persist('categories', data.categories); }
       if (data.openTabs) { setOpenTabs(data.openTabs); updateLocalTimestamp('openTabs'); saveLocalCache('openTabs', data.openTabs); persist('openTabs', data.openTabs); }
       if (data.consignedEvents) { setConsignedEvents(data.consignedEvents); updateLocalTimestamp('consignedEvents'); saveLocalCache('consignedEvents', data.consignedEvents); persist('consignedEvents', data.consignedEvents); }
+      
+      if (data.subscriptionPlans) { setSubscriptionPlans(data.subscriptionPlans); saveLocalCache('subscriptionPlans', data.subscriptionPlans); persist('subscriptionPlans', data.subscriptionPlans); }
+      if (data.subscribers) { setSubscribers(data.subscribers); saveLocalCache('subscribers', data.subscribers); persist('subscribers', data.subscribers); }
+      if (data.subscriptionLogs) { setSubscriptionLogs(data.subscriptionLogs); saveLocalCache('subscriptionLogs', data.subscriptionLogs); persist('subscriptionLogs', data.subscriptionLogs); }
+      
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
         if (data.config.longDurationThreshold) setLongDurationThreshold(data.config.longDurationThreshold);
@@ -741,6 +928,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     stockTransactions, setStockTransactions, stockBalances,
     consignedEvents, setConsignedEvents,
     rooms, setRooms, roomHistory, setRoomHistory,
+    subscriptionPlans, setSubscriptionPlans, subscribers, setSubscribers, subscriptionLogs, setSubscriptionLogs,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,
@@ -750,6 +938,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     handleUpdateProducts, handleUpdateCategoryModifiers, handleUpdateShifts,
     handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
     handleUpdateStock, handleUpdateRooms, handleUpdateRoom, handleUpdateRoomHistory, handleSaveRoomHistoryRecord, handleResetAdminPassword,
+    handleSaveSubscriptionPlan, handleDeleteSubscriptionPlan, handleSaveSubscriber, handleDeleteSubscriber, handleSimulateSubscriptionRenewal,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };

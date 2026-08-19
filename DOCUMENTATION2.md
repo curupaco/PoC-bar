@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.4.0 Custom Lodging, Module Switches, F4 Keyboard Shortcut & Admin Forgotten Password.*
+> *Material de apresentação comercial — versão v5.5.0 Clube de Assinaturas, Painel Antifraude & Score de Operador.*
 
 ---
 
@@ -15,7 +15,19 @@ Todo dono de bar já passou por isso:
 - **O grande gargalo:** O cozinheiro grita que o prato está pronto, mas o garçom está longe. O prato esfria, o cliente reclama e a cozinha fica desorganizada.
 - **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
 
-O **Botequista Elite (v5.4.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v5.5.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+
+## Novidades da Versão 5.5.0 Elite 🚀
+
+### 👤 Clube de Assinaturas e Recorrência (CRM) 💎
+- **Fidelização com Recorrência:** Criação de planos de assinatura de bebidas/chope com mensalidade recorrente (projetando MRR).
+- **Consumo de Cota Diária Inteligente:** Vinculação de clientes por CPF/Telefone no PDV. Lançamento automático de cortesia (preço R$ 0,00) respeitando a cota diária do plano.
+- **Histórico e Gestão de Renovação:** Painel gerencial offline no dashboard que simula renovações com 1-clique e exibe o histórico de consumo em tempo real.
+
+### 🛡️ Painel de Auditoria & Prevenção de Fraudes 💎
+- **Score de Risco de Atendente:** Avaliação algorítmica de risco individual por garçom/operador baseado em volume de cancelamentos, exclusões após impressão da conta e diferenças de caixa no turno.
+- **Travamento de Pré-Conta:** Ao solicitar a "Pré-Conta" no PDV, o sistema imprime uma fatura térmica física simulada em janela pop-up e dispara o monitoramento de qualquer exclusão subsequente na comanda, gerando logs de alerta crítico instantaneamente.
+- **Filtro de Incidentes de Segurança:** Logs de segurança organizados por severidade, permitindo ao dono identificar rapidamente anomalias.
 
 ## Novidades da Versão 5.4.0 Elite 🚀
 
