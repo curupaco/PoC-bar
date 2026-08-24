@@ -4,6 +4,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  const firebaseApiKey = env.VITE_FIREBASE_API_KEY || env.FIREBASE_API_KEY || '';
+  const firebaseDbUrl = env.VITE_FIREBASE_DATABASE_URL || env.FIREBASE_URL || '';
+  const firebaseEmail = env.VITE_FIREBASE_EMAIL || env.FIREBASE_EMAIL || '';
+  const firebasePassword = env.VITE_FIREBASE_PASSWORD || env.FIREBASE_PASSWORD || '';
+
   return {
     server: {
       port: 3000,
@@ -13,10 +18,10 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(env.VITE_FIREBASE_API_KEY),
-      'import.meta.env.VITE_FIREBASE_DATABASE_URL': JSON.stringify(env.VITE_FIREBASE_DATABASE_URL),
-      'import.meta.env.VITE_FIREBASE_EMAIL': JSON.stringify(env.VITE_FIREBASE_EMAIL),
-      'import.meta.env.VITE_FIREBASE_PASSWORD': JSON.stringify(env.VITE_FIREBASE_PASSWORD)
+      'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(firebaseApiKey),
+      'import.meta.env.VITE_FIREBASE_DATABASE_URL': JSON.stringify(firebaseDbUrl),
+      'import.meta.env.VITE_FIREBASE_EMAIL': JSON.stringify(firebaseEmail),
+      'import.meta.env.VITE_FIREBASE_PASSWORD': JSON.stringify(firebasePassword)
     },
     resolve: {
       alias: {
