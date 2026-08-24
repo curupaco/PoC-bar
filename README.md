@@ -186,13 +186,18 @@ git clone https://github.com/seu-usuario/botequista.git
 # 2. Instale as dependências
 npm install
 
-# 3. Configure o ambiente
-# Crie um arquivo .env na raiz com as chaves do Firebase
-cp .env.example .env
+# 3. Configure o ambiente local
+# Crie um arquivo .env ou .env.local na raiz com as chaves do Firebase
+cp .env.example .env.local
 
 # 4. Inicie o servidor local
 npm run dev
 ```
+
+> 🔒 **Nota de Segurança & Deploy**:
+> - **Desenvolvimento Local:** Mantenha suas credenciais locais nos arquivos `.env` ou `.env.local` (que são ignorados pelo Git).
+> - **Produção (Vercel / Hosting):** **Nunca envie arquivos `.env` para o repositório.** Cadastre as variáveis de ambiente (`VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_DATABASE_URL`, etc. ou seus fallbacks `FIREBASE_API_KEY`, `FIREBASE_URL`) diretamente no painel da sua plataforma de hospedagem (*Vercel > Project Settings > Environment Variables*).
+
 
 ## 📜 Licença
 

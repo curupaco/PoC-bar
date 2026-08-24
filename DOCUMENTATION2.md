@@ -1,6 +1,79 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.5.0 Clube de Assinaturas, Painel Antifraude & Score de Operador.*
+> *Material de apresentação comercial — versão v5.5.0 Clube de Assinaturas, Painel Antifraude & Score de Operador.*Remediação de Credenciais Expostas
+Proceeded with
+Implementation Plan
+Finalizei com sucesso todo o processo de limpeza e higienização de credenciais do repositório local.
+
+Resumo do que foi feito:
+Desrastreamento de arquivos sensíveis: Removido o .env.production do Git (sem apagar seu arquivo local).
+Atualização do .gitignore: Padrão genérico .env* adicionado para evitar novos vazamentos involuntários.
+Refatoração de código: O arquivo 
+
+fetch_units.js
+ teve sua chave de API hardcoded substituída por variável de ambiente.
+Purga do Histórico do Git: Reescrevemos o histórico de commits utilizando git-filter-repo. O .env.production antigo, as chaves do Firebase e o token do GitHub foram completamente expurgados de todos os commits passados.
+Todas as verificações de histórico e de rastreamento retornaram zero ocorrências de segredos.
+
+Você pode conferir o relatório detalhado no artefato 
+walkthrough.md
+.
+
+TIP
+
+Para atualizar o repositório remoto no GitHub com o histórico limpo, execute no terminal do projeto:
+
+bash
+git push origin main --force
+O saneamento de segurança e a limpeza do histórico foram finalizados com sucesso!
+
+Se precisar de ajuda com a atualização no GitHub via git push origin main --force ou qualquer outra questão, estou à disposição.
+
+Expressions
+Walkthrough
+2:33 PM
+2:42 PM
+O erro ocorreu porque o repositório Git fica dentro da pasta PoC-bar.
+
+Para enviar as alterações para o GitHub, acesse a pasta do projeto primeiro:
+
+bash
+cd PoC-bar
+git push origin main --force
+2:42 PM
+2:43 PM
+O git-filter-repo remove o remoto (origin) por segurança para evitar que alterações no histórico sejam enviadas acidentalmente antes da conferência.
+
+Para adicionar o remoto origin novamente e fazer o push forçado, execute os dois comandos abaixo dentro da pasta PoC-bar:
+
+bash
+git remote add origin https://github.com/curupaco/PoC-bar.git
+git push origin main --force
+(Caso utilize SSH no GitHub em vez de HTTPS, use: git remote add origin git@github.com:curupaco/PoC-bar.git)
+
+2:43 PM
+2:44 PM
+O GitHub bloqueou o force push porque a branch main está configurada como Branch Protegida nas configurações do repositório.
+
+Para concluir o envio do histórico limpo, você tem duas opções rápidas:
+
+Opção 1: Desativar temporariamente a proteção no GitHub (Recomendado)
+Acesse no navegador: https://github.com/curupaco/PoC-bar/settings/branches
+Em Branch protection rules, clique em Edit na regra da branch main.
+Marque a opção "Allow force pushes" (Permitir force push) ou desative a regra temporariamente.
+Clique em Save changes no final da página.
+Execute o comando novamente no seu terminal:
+bash
+git push origin main --force
+Após o envio bem-sucedido, você pode reativar a proteção da branch no GitHub.
+Opção 2: Enviar para uma nova branch limpa
+Se preferir não alterar as regras da branch main agora:
+
+bash
+# 1. Envia a versão limpa para uma nova branch no GitHub chamada 'main-clean'
+git push origin main:main-clean
+# 2. Depois você pode ir no GitHub e definir 'main-clean' como a nova branch padrão ou substituir a 'main'.
+
 
 ---
 
