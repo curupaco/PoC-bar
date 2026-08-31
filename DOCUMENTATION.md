@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.5.0 (Clube de Assinaturas e Recorrência CRM, Auditoria de Integridade e Score de Operador, F4 Checkout & Fatura Térmica)
+**Versão:** 5.6.0 (Design System Base em src/shared/ui/, Padronização Visual Global e Micro-Interações Premium)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -11,6 +11,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 
 ### Diferenciais Técnicos
 *   **Offline-First Real:** Utiliza `idb` (IndexedDB Wrapper) para persistir o estado completo da aplicação localmente.
+*   **Design System & Arquitetura de Interface (v5.6.0):** Implementação de componentes base altamente desacoplados e padronizados em `src/shared/ui/` (`Button`, `Input`, `Card`, `Badge`, `Modal`, `Tabs`), substituindo CSS in-line por um sistema de design *Modern Premium & Clean* com micro-interações táteis e validação estrita TypeScript.
 *   **Venda Expressa:** Fluxo otimizado para giro de balcão com auto-geração de comandas.
 *   **Registro de Auditoria:** Rastreabilidade de eventos críticos para resolução de conflitos de sincronia.
 *   **Segurança de Saída:** Guardas de navegação (`beforeunload`) que impedem o fechamento se houver dados pendentes na sincronização.

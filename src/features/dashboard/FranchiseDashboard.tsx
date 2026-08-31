@@ -71,8 +71,12 @@ const FranchiseDashboard: React.FC<FranchiseDashboardProps> = ({ units, franchis
         // Fallback para cache local se o fetch principal falhar
         const cached = safeLocalStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { data } = JSON.parse(cached);
-          setFranchiseSales(data);
+          try {
+            const { data } = JSON.parse(cached);
+            setFranchiseSales(data);
+          } catch (err) {
+            console.warn("Failed to parse franchise cache", err);
+          }
         }
       } finally {
         setLoading(false);

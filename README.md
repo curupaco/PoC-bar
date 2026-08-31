@@ -23,6 +23,19 @@ Diferente de sistemas web tradicionais, o Botequista trata a nuvem como um "esta
 
 ---
 
+## 🎨 Design System & Arquitetura UI (`src/shared/ui/`)
+
+A partir da versão **v5.6.0**, a interface do Botequista conta com um **Design System nativo reutilizável** baseado no paradigma *Modern Premium & Clean*, trazendo padronização visual completa e garantia de tipos TypeScript:
+
+- **`<Button />`**: Botões padronizados com variantes (`primary`, `secondary`, `dark`, `outline`, `ghost`, `danger`, `success`), suporte nativo a `isLoading` (spinner SVG), tamanhos e micro-interações (`active:scale-95`).
+- **`<Input />`, `<Select />`, `<Textarea />`**: Controles de formulário unificados com labels integrados, validação visual de erro e foco responsivo.
+- **`<Card />`**: Containers com elevação responsiva, suporte a glassmorphism e cabeçalhos/rodapés flexíveis.
+- **`<Badge />`**: Chips semânticos de status (`success`, `warning`, `danger`, `info`, `neutral`) com suporte a ponto indicador (`dot`).
+- **`<Modal />`**: Diálogos modais com overlay de desfoque, bloqueio de rolagem do corpo e fechamento por atalho (`ESC`).
+- **`<Tabs />`**: Navegação por abas em estilos de pílulas e sublinhado.
+
+---
+
 ## 🏛️ Arquitetura Offline & Sync
 
 O coração do sistema é uma **SyncQueue** (Fila de Sincronização) resiliente. O diagrama abaixo ilustra como garantimos que nenhuma venda seja perdida:

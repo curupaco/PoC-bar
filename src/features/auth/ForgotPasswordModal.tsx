@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import Modal from '../../shared/ui/Modal';
+import Button from '../../shared/ui/Button';
+import { Input } from '../../shared/ui/Input';
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;
@@ -15,8 +18,6 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [masterKey, setMasterKey] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
-
-  if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,119 +44,103 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200" 
-        onClick={onClose} 
-      />
-      
-      {/* Modal Card */}
-      <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[32px] shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200 overflow-hidden">
-        {/* Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Recuperação de Senha</h3>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Recupere o acesso ao sistema</p>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Recuperação de Senha"
+      subtitle="Recupere o acesso ao sistema"
+      maxWidth="md"
+    >
+      {status === 'success' ? (
+        <div className="text-center py-6 space-y-4 animate-in zoom-in-95">
+          <span className="text-5xl select-none">🎉</span>
+          <h4 className="text-sm font-black text-emerald-600 uppercase tracking-wider">Redefinição Concluída!</h4>
+          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+            A senha do usuário *admin* foi redefinida com sucesso para:
+          </p>
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 p-4 rounded-2xl">
+            <span className="font-mono text-xl font-black text-emerald-600 tracking-wider">admin123</span>
           </div>
-          <button 
-            type="button"
+          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+            Faça login usando o usuário "admin" com esta nova senha.
+          </p>
+          <Button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-200/50 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold flex items-center justify-center text-xs transition-colors"
+            variant="dark"
+            size="lg"
+            fullWidth
+            className="mt-4"
           >
-            ✕
-          </button>
+            Voltar ao Login
+          </Button>
         </div>
-
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {status === 'success' ? (
-            <div className="text-center py-8 space-y-4 animate-in zoom-in-95">
-              <span className="text-5xl select-none">🎉</span>
-              <h4 className="text-sm font-black text-emerald-600 uppercase tracking-wider">Redefinição Concluída!</h4>
-              <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4">
-                A senha do usuário *admin* foi redefinida com sucesso para:
-              </p>
-              <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 p-4 rounded-2xl mx-6">
-                <span className="font-mono text-xl font-black text-emerald-600 tracking-wider">admin123</span>
-              </div>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                Faça login usando o usuário "admin" com esta nova senha.
-              </p>
-              <button 
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Seletor de Tipo de Usuário */}
+          <div className="space-y-2">
+            <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Quem é você?</label>
+            <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <Button 
                 type="button"
-                onClick={onClose}
-                className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-3.5 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-md mt-6"
+                onClick={() => { setSelectedUser('admin'); setStatus('idle'); }}
+                variant={selectedUser === 'admin' ? 'dark' : 'ghost'}
+                size="sm"
+                fullWidth
+                rounded="xl"
               >
-                Voltar ao Login
-              </button>
+                🛠️ Admin Master
+              </Button>
+              <Button 
+                type="button"
+                onClick={() => { setSelectedUser('colaborador'); setStatus('idle'); }}
+                variant={selectedUser === 'colaborador' ? 'dark' : 'ghost'}
+                size="sm"
+                fullWidth
+                rounded="xl"
+              >
+                👤 Colaborador
+              </Button>
+            </div>
+          </div>
+
+          {selectedUser === 'admin' ? (
+            <div className="space-y-4">
+              <Input
+                label="Chave Master do Projeto"
+                type="password"
+                value={masterKey}
+                onChange={e => { setMasterKey(e.target.value); setStatus('idle'); }}
+                placeholder="Insira a VITE_FIREBASE_API_KEY..."
+                helperText="Dica: É a chave VITE_FIREBASE_API_KEY do seu projeto."
+                error={status === 'error' ? errorMessage : undefined}
+              />
+
+              <Button 
+                type="submit"
+                isLoading={status === 'loading'}
+                variant="primary"
+                size="lg"
+                fullWidth
+              >
+                Redefinir Senha do Admin
+              </Button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Seletor de Tipo de Usuário */}
-              <div className="space-y-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Quem é você?</label>
-                <div className="flex gap-2 p-1 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-850">
-                  <button 
-                    type="button"
-                    onClick={() => { setSelectedUser('admin'); setStatus('idle'); }}
-                    className={`flex-1 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all ${selectedUser === 'admin' ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-400'}`}
-                  >
-                    Administrador (Admin)
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => { setSelectedUser('colaborador'); setStatus('idle'); }}
-                    className={`flex-1 py-3 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all ${selectedUser === 'colaborador' ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-400'}`}
-                  >
-                    Colaborador / Operador
-                  </button>
-                </div>
-              </div>
-
-              {selectedUser === 'colaborador' ? (
-                <div className="bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-850 space-y-3 animate-in fade-in duration-200">
-                  <span className="text-2xl select-none">🔒</span>
-                  <h4 className="text-[11px] font-black text-slate-800 dark:text-white uppercase tracking-wider">Acesso de Colaborador</h4>
-                  <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 leading-relaxed uppercase tracking-wider">
-                    Se você esqueceu sua senha, por favor peça para o Administrador ou Gerente do bar redefinir suas credenciais na tela de *Usuários* dentro das configurações do Botequista.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha Master do Firebase (VITE_FIREBASE_PASSWORD)</label>
-                    <input 
-                      type="password"
-                      value={masterKey}
-                      onChange={e => { setMasterKey(e.target.value); setStatus('idle'); }}
-                      placeholder="••••••••••••"
-                      className="w-full px-4 py-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-xs outline-none focus:ring-2 focus:ring-slate-500"
-                    />
-                    <p className="text-[8px] font-medium text-slate-400 uppercase tracking-widest ml-1">
-                      *Apenas o proprietário do bar possui acesso a esta chave.
-                    </p>
-                  </div>
-
-                  {status === 'error' && (
-                    <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30 p-4 rounded-xl text-center">
-                      <p className="text-[9px] font-black text-red-600 dark:text-red-400 uppercase tracking-widest">{errorMessage}</p>
-                    </div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-md active:scale-95 disabled:opacity-50"
-                  >
-                    {status === 'loading' ? 'Verificando...' : 'Redefinir Senha do Admin'}
-                  </button>
-                </div>
-              )}
-            </form>
+            <div className="text-center py-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl p-6 space-y-3">
+              <span className="text-3xl select-none">🔑</span>
+              <h4 className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">Acesso de Colaborador</h4>
+              <p className="text-[11px] font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
+                As senhas de garçons e caixas são gerenciadas diretamente pelo **Administrador Master**.
+              </p>
+              <p className="text-[10px] font-medium text-slate-400">
+                Peça ao gerente ou admin para redefinir sua senha no menu "Gestão de Equipe".
+              </p>
+            </div>
           )}
-        </div>
-      </div>
-    </div>
+        </form>
+      )}
+    </Modal>
   );
 };
+
+export default ForgotPasswordModal;

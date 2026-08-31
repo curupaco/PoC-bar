@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl">B</div>
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tighter uppercase font-barrio">Botequista</span>
-                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.5.0</span>
+                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.6.0</span>
               </div>
             </div>
             <div className="hidden lg:flex items-center gap-12">

@@ -1,6 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.5.0 Clube de Assinaturas, Painel Antifraude & Score de Operador.*Remediação de Credenciais Expostas
+> *Material de apresentação comercial — versão v5.6.0 Design System Base (src/shared/ui/), Padronização Visual Global e Micro-Interações Premium.*
 Proceeded with
 Implementation Plan
 Finalizei com sucesso todo o processo de limpeza e higienização de credenciais do repositório local.

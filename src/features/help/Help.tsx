@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-            Inteligência Botequista & AI Insights v5.3.0
+            Inteligência Botequista, Design System & AI Insights v5.6.0
           </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️

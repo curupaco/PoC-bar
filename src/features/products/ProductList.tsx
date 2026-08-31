@@ -7,6 +7,7 @@ import ModifierGroupsTab from './components/ModifierGroupsTab';
 import CategoryLinksTab from './components/CategoryLinksTab';
 import CategoriesTab from './components/CategoriesTab';
 import ModifierGroupModal from './components/ModifierGroupModal';
+import { Tabs, ConfirmationModal } from '../../shared/ui';
 
 interface ProductListProps {
   products: Product[];
@@ -270,13 +271,17 @@ const ProductList: React.FC<ProductListProps> = ({
       )}
 
       {/* NAVEGAÇÃO DE ABAS */}
-      <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
-        <button onClick={() => setActiveTab('ITEMS')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'ITEMS' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Produtos</button>
-        <button onClick={() => setActiveTab('GROUPS')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'GROUPS' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Adicionais</button>
-        <button onClick={() => setActiveTab('LINKS')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'LINKS' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Vínculos</button>
-        {setCategories && (
-          <button onClick={() => setActiveTab('CATEGORIES_MANAGE')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'CATEGORIES_MANAGE' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Categorias</button>
-        )}
+      <div className="mb-8">
+        <Tabs 
+          items={[
+            { id: 'ITEMS', label: 'Produtos' },
+            { id: 'GROUPS', label: 'Adicionais' },
+            { id: 'LINKS', label: 'Vínculos' },
+            ...(setCategories ? [{ id: 'CATEGORIES_MANAGE', label: 'Categorias' }] : [])
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as any)}
+        />
       </div>
 
       {activeTab === 'ITEMS' && (
@@ -606,17 +611,16 @@ const ProductList: React.FC<ProductListProps> = ({
 
       {/* CONFIRMAÇÃO DE EXCLUSÃO */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setDeleteConfirmId(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Excluir Item?</h3>
-             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a remover <strong className="text-slate-800 dark:text-white">"{deleteConfirmId.name}"</strong> do cadastro.</p>
-             <div className="flex flex-col gap-3">
-                <button onClick={confirmDelete} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all">Sim, Excluir</button>
-                <button onClick={() => setDeleteConfirmId(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
-             </div>
-          </div>
-        </div>
+        <ConfirmationModal
+          isOpen={true}
+          title="Excluir Item?"
+          message={`Você está prestes a remover "${deleteConfirmId.name}" do cadastro.`}
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirmId(null)}
+          confirmLabel="Sim, Excluir"
+          cancelLabel="Cancelar"
+          isDanger
+        />
       )}
     </div>
   );

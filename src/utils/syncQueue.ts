@@ -58,7 +58,7 @@ export const SyncQueue = {
     
     const newItem: QueueItem = {
       ...item,
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 11),
       timestamp: Date.now(),
       retryCount: 0
     };

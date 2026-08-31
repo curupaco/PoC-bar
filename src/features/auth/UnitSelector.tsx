@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Unit, Franchise } from '../../types';
-import ConfirmationModal from '../../shared/ui/ConfirmationModal';
+import { ConfirmationModal, Button, Card } from '../../shared/ui';
 
 interface UnitSelectorProps {
   visibleUnits: Unit[];
@@ -30,7 +30,6 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
   const groups = useMemo(() => {
     const map: Record<string, { name: string; units: Unit[] }> = {};
     
-    // Inicializa grupos de franquias conhecidas (com check de array)
     if (Array.isArray(franchises)) {
       franchises.forEach(f => {
         if (f && f.id) map[f.id] = { name: f.name, units: [] };
@@ -70,14 +69,16 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {group.units.map(unit => (
-                  <button
+                  <Card
                     key={unit.id}
+                    hoverEffect
+                    padding="lg"
                     onClick={() => onSelectUnit(unit.id)}
-                    className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left"
+                    className="cursor-pointer group hover:border-red-500 text-left"
                   >
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
                     <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors leading-tight">{unit.name}</h4>
-                  </button>
+                  </Card>
                 ))}
               </div>
             </div>
@@ -94,29 +95,40 @@ export const UnitSelector: React.FC<UnitSelectorProps> = ({
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {groups.independent.map(unit => (
-                  <button
+                  <Card
                     key={unit.id}
+                    hoverEffect
+                    padding="lg"
                     onClick={() => onSelectUnit(unit.id)}
-                    className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-2 border-slate-200 dark:border-slate-800 shadow-sm hover:border-red-500 hover:shadow-2xl transition-all group text-left"
+                    className="cursor-pointer group hover:border-red-500 text-left"
                   >
                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Unidade</span>
                     <h4 className="text-xl font-black text-slate-800 dark:text-white uppercase group-hover:text-red-600 transition-colors leading-tight">{unit.name}</h4>
-                  </button>
+                  </Card>
                 ))}
               </div>
             </div>
           )}
 
           {visibleUnits.length === 0 && (
-            <div className="text-center py-20 bg-slate-100 dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800">
+            <Card padding="lg" className="text-center py-20">
               <p className="text-slate-500 font-bold uppercase text-xs">Nenhuma unidade disponível para seu perfil.</p>
               <p className="text-slate-400 text-[10px] mt-2">Contate o administrador.</p>
-            </div>
+            </Card>
           )}
         </div>
 
-        <button onClick={requestLogout} className="mt-16 w-full py-4 text-[10px] font-black uppercase text-slate-400 hover:text-red-500 transition-colors tracking-widest">Sair do Sistema</button>
+        <Button
+          onClick={requestLogout}
+          variant="ghost"
+          size="md"
+          fullWidth
+          className="mt-16 text-slate-400 hover:text-red-500"
+        >
+          Sair do Sistema
+        </Button>
       </div>
+      
       <ConfirmationModal
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}

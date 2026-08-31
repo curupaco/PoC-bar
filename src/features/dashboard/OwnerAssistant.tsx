@@ -268,6 +268,15 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
     };
   }, [simulatedCost]);
 
+  const priceProjections = useMemo(() => {
+    if (!simulatedPricingResults) return [];
+    return [
+      { target: 50, price: simulatedPricingResults.margin50.price, profit: simulatedPricingResults.margin50.profit, cmv: 50 },
+      { target: 60, price: simulatedPricingResults.margin60.price, profit: simulatedPricingResults.margin60.profit, cmv: 40 },
+      { target: 70, price: simulatedPricingResults.margin70.price, profit: simulatedPricingResults.margin70.profit, cmv: 30 }
+    ];
+  }, [simulatedPricingResults]);
+
   // ----------------------------------------------------
   // 4. RANKING DE UPSELL DA EQUIPE
   // ----------------------------------------------------
@@ -642,7 +651,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
             )}
 
             {/* Inserção de Custos CMV em Lote */}
-            {missingCostProducts.length > 0 && (
+            {pendingCostProducts.length > 0 && (
               <div className="bg-red-50/20 dark:bg-red-950/5 border border-red-500/30 p-6 rounded-3xl space-y-4">
                 <div>
                   <h4 className="text-xs font-black uppercase text-red-600 dark:text-red-400 leading-none">⚠️ Produtos Sem Preço de Custo (CMV)</h4>
@@ -650,7 +659,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {missingCostProducts.slice(0, 6).map(p => (
+                  {pendingCostProducts.slice(0, 6).map(p => (
                     <div key={p.id} className="bg-white dark:bg-[#0B1120] p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center justify-between">
                       <span className="text-xs font-black uppercase text-slate-700 dark:text-white truncate max-w-[130px]">{p.name}</span>
                       <div className="flex items-center gap-1.5 max-w-[90px]">
@@ -668,7 +677,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
                 </div>
 
                 <button 
-                  onClick={handleSaveMissingCosts}
+                  onClick={handleSavePendingCosts}
                   disabled={isSavingCosts || Object.keys(editingCosts).length === 0}
                   className="bg-red-600 text-white font-black uppercase text-[9px] tracking-widest px-6 py-4 rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-50"
                 >

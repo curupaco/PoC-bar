@@ -59,7 +59,7 @@ const playBellChime = () => {
 interface AppStoreProps {
   currentUser: User | null;
   currentUserRef: React.MutableRefObject<User | null>;
-  showToast: (msg: string, type?: 'info' | 'error') => void;
+  showToast: (msg: string, type?: 'info' | 'error' | 'success') => void;
 }
 
 export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStoreProps) => {

@@ -67,8 +67,8 @@ describe('POS Component', () => {
     const openTabBtn = screen.getByText(/Abrir Mesa/i);
     fireEvent.click(openTabBtn);
 
-    // Digita o nome da mesa
-    const input = screen.getByPlaceholderText(/NOME OU NÚMERO DA MESA/i);
+    // Aguarda o modal abrir e busca o campo de texto
+    const input = await screen.findByPlaceholderText(/NOME OU NÚMERO DA MESA/i);
     fireEvent.change(input, { target: { value: 'MESA 10' } });
     
     // Clica em confirmar
@@ -80,7 +80,7 @@ describe('POS Component', () => {
     }));
   });
 
-  it('deve calcular corretamente a taxa de serviço no resumo da comanda', () => {
+  it('deve calcular corretamente a taxa de serviço no resumo da comanda', async () => {
     const openTabs = [
       { 
         id: 'tab-1', 
@@ -109,15 +109,11 @@ describe('POS Component', () => {
     // Clica na mesa para abrir o carrinho
     fireEvent.click(screen.getByText('MESA 01'));
 
-    // Verifica se o total consumido é R$ 20,00
-    // O texto no componente é formatado como moeda. 
-    // Como o locale pode variar no ambiente de teste, vamos buscar pelo valor.
     expect(screen.getAllByText(/20,00/).length).toBeGreaterThan(0);
     
-    // Se clicarmos em "Fechar Conta", ele deve levar ao painel de pagamento com a taxa calculada
+    // Clica em "Fechar Conta"
     fireEvent.click(screen.getByText(/Fechar Conta/i));
     
-    // Na tela de pagamento, deve aparecer a taxa de serviço (R$ 2,00) e o total (R$ 22,00)
     expect(screen.getAllByText(/2,00/).length).toBeGreaterThan(0); // Taxa
     expect(screen.getAllByText(/22,00/).length).toBeGreaterThan(0); // Total final
   });

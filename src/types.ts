@@ -293,7 +293,7 @@ export interface Category {
 export const PRODUCT_ID_DEBT_SETTLEMENT = 'quitacao';
 
 export const generateUniqueId = (prefix: string = 'id'): string => {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 };
 
 export const formatCurrency = (value: number) => {

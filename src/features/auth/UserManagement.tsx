@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { User, UserPermission, Unit } from '../../types';
 import { hashPassword } from '../../services/cryptoService';
 import { validateItemName } from '../../utils/wordValidator';
+import { ConfirmationModal } from '../../shared/ui';
 
 interface UserManagementProps {
   users: User[];
@@ -368,25 +369,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
       </div>
 
       {userToDelete && (
-        <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setUserToDelete(null)} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 text-center">
-             <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase mb-4 italic">Remover da Equipe?</h3>
-             <p className="text-sm text-slate-500 mb-8 leading-relaxed">Você está prestes a revogar o acesso de <strong className="text-slate-800 dark:text-white">"{userToDelete.displayName}"</strong> permanentemente.</p>
-             <div className="flex flex-col gap-3">
-                <button 
-                  onClick={() => {
-                    onUpdateUsers(users.filter(u => u.id !== userToDelete.id));
-                    setUserToDelete(null);
-                  }} 
-                  className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all"
-                >
-                  Sim, Confirmar
-                </button>
-                <button onClick={() => setUserToDelete(null)} className="w-full py-4 text-slate-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
-             </div>
-          </div>
-        </div>
+        <ConfirmationModal
+          isOpen={true}
+          title="Remover da Equipe?"
+          message={`Você está prestes a revogar o acesso de "${userToDelete.displayName}" permanentemente.`}
+          onConfirm={() => {
+            onUpdateUsers(users.filter(u => u.id !== userToDelete.id));
+            setUserToDelete(null);
+          }}
+          onCancel={() => setUserToDelete(null)}
+          confirmLabel="Sim, Confirmar"
+          cancelLabel="Cancelar"
+          isDanger
+        />
       )}
     </div>
   );
