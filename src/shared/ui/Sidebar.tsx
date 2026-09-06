@@ -20,6 +20,7 @@ interface SidebarProps {
   theme: Theme;
   pendingKitchenCount?: number;
   lodgingEnabled?: boolean;
+  drinksEnabled?: boolean;
 }
 
 // Restauração do Ícone Vetorial (Tampinha) para a Sidebar
@@ -53,6 +54,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   theme,
   pendingKitchenCount = 0,
   lodgingEnabled = false,
+  drinksEnabled = false,
 }) => {
   
   const hasPermission = (perm: UserPermission) => {
@@ -239,6 +241,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             perm="inventory_view" 
             icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>} 
           />
+          {drinksEnabled && (
+            <NavItem 
+              view="drinks" 
+              label="Drinks & Bar" 
+              perm="products" 
+              icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 4h18l-7 8v5h-4v-5L3 4z" /></svg>} 
+            />
+          )}
           <NavItem 
             view="users" 
             label="Equipe" 

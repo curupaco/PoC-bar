@@ -12,7 +12,7 @@ const Help: React.FC = () => {
       {/* Header */}
       <div className="text-center space-y-6">
         <div className="inline-block bg-gradient-to-r from-red-600 to-red-800 text-white px-6 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-2 shadow-xl shadow-red-500/20 animate-pulse">
-            Inteligência Botequista, Design System & AI Insights v5.6.0
+            Inteligência Botequista, Coquetelaria 2.0 & AI Insights v5.7.0
           </div>
         <h2 className="text-6xl md:text-7xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">
           GUIA <span className="text-red-600">BOTEQUISTA</span> ELITE 🛡️
@@ -279,6 +279,22 @@ const Help: React.FC = () => {
           </div>
         </section>
 
+        {/* 20. Coquetelaria, Batches & CMV (v5.7.0) */}
+        <section className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-indigo-200 dark:border-indigo-900/30 shadow-sm space-y-6 flex flex-col h-full hover:border-indigo-500/50 transition-all group">
+          <div className="flex items-center gap-4 text-indigo-600">
+            <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-2xl font-black">🍸</span>
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tight italic">Coquetelaria & Batches</h3>
+          </div>
+          <div className="space-y-4 text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed flex-1">
+            <p>• <span className="text-indigo-600 font-black italic">CMV AO VIVO:</span> Ao criar ou editar qualquer drink, a ficha técnica calcula na hora o Custo Total dos insumos, o CMV (%) e o Lucro Bruto real.</p>
+            <p>• <span className="text-indigo-600 font-black italic">PRECIFICAÇÃO 1-CLIQUE:</span> Use os atalhos de margem alvo (60%, 70% ou 80%) para preencher o preço sugerido ideal de venda imediatamente.</p>
+            <p>• <span className="text-purple-600 font-black italic">SUB-PREPAROS & BATCHES:</span> Cadastre xaropes, premixes e infusões com rendimento e validade. Produza lotes em 1 clique consumindo os insumos base e gerando etiquetas com contagem regressiva de validade.</p>
+            <p>• <span className="text-rose-600 font-black italic">DESCARTE DE BALCÃO:</span> Registre quebras de garrafas, perdas e degustações para apurar o prejuízo financeiro real em R$.</p>
+          </div>
+        </section>
+
       </div>
 
       {/* Seção FAQ */}
@@ -367,6 +383,24 @@ const Help: React.FC = () => {
                Este módulo offline-first consolida faturamento, CMV e lucros reais, exibe a matriz BCG de cardápio, sugere preços ideais para margens de 50%/60%/70% e audita anomalias (mesas abertas inativas, cancelamentos excessivos de funcionários e diferenças de caixa).
              </p>
           </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-indigo-600">Como funciona o Módulo de Drinks e Insumos Fracionados?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Ao ativar o módulo em **Ajustes &gt; Unidades**, a barra lateral ganha o menu **Drinks &amp; Bar**. Você pode cadastrar garrafas de destilados (ex: 750ml por R$ 85,00) que se convertem automaticamente para custos por ml e doses de 50ml, montar fichas técnicas com CMV ao vivo e produzir lotes de xaropes artesanais.
+             </p>
+          </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-purple-600">Como funcionam os Sub-preparos e Batches?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Um sub-preparo é um insumo artesanal feito no bar (como xarope de gengibre ou sour mix). Ao clicar em **Produzir Lote**, o Botequista baixa os insumos base do estoque (açúcar, água, gengibre), adiciona o volume produzido no estoque do xarope, calcula o custo médio herdado e controla a validade refrigerada com alertas de vencimento.
+             </p>
+          </div>
+          <div className="space-y-3">
+             <h4 className="text-lg font-black uppercase italic text-emerald-600">O que acontece se minha unidade não vender coquetéis?</h4>
+             <p className="text-slate-600 dark:text-slate-400 text-sm font-medium leading-relaxed">
+               Graças ao **Princípio Zero Complexidade**, basta manter o módulo desativado nas configurações daquela unidade. O menu de drinks fica 100% invisível e o cadastro de produtos permanece ultra simples e leve, sem nenhuma sobrecarga operacional.
+             </p>
+          </div>
         </div>
       </div>
 
@@ -378,9 +412,9 @@ const Help: React.FC = () => {
             <h3 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3 italic">
               <span className="text-red-500 text-5xl">★</span> Mandamentos Operacionais
             </h3>
-            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v5.3.0 Elite</p>
+            <p className="text-slate-400 text-sm font-bold uppercase tracking-widest pl-12">Protocolo de Segurança v5.7.0 Elite</p>
           </div>
-          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v5.3.0</div>
+          <div className="bg-red-600 px-8 py-3 rounded-full font-black text-xs uppercase tracking-[0.2em] shadow-lg shadow-red-500/20">Elite v5.7.0</div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-xs font-black uppercase tracking-[0.1em] opacity-90 relative z-10">

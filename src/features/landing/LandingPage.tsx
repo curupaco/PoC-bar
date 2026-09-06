@@ -89,7 +89,7 @@ export const LandingPage: React.FC = () => {
               <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl">B</div>
               <div className="flex flex-col">
                 <span className="text-xl font-black tracking-tighter uppercase font-barrio">Botequista</span>
-                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.6.0</span>
+                <span className="text-[8px] font-black tracking-[0.4em] uppercase text-red-600 -mt-1 italic">Powerhouse v5.7.0</span>
               </div>
             </div>
             <div className="hidden lg:flex items-center gap-12">
@@ -199,6 +199,83 @@ export const LandingPage: React.FC = () => {
            </div>
         </section>
 
+        {/* SHOWCASE COQUETELARIA & DRINKS 2.0 */}
+        <section id="coquetelaria" className="py-32 px-6 bg-gradient-to-b from-transparent via-amber-500/5 to-transparent">
+           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
+              <div className="space-y-8 reveal">
+                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-[0.3em]">
+                    🍸 Coquetelaria & Drinks 2.0
+                 </div>
+                 <h2 className="text-4xl md:text-6xl font-black italic uppercase tracking-tighter">MARGEM DE <span className="text-amber-400">80% NO DRINK.</span></h2>
+                 <p className="text-slate-400 text-xl font-medium leading-relaxed">
+                    Vender cerveja de lata é fácil, mas o lucro real mora na coquetelaria. O Botequista Elite calcula doses fracionadas em mililitros, gerencia **sub-preparos e batches caseiros** (xaropes, infusões) com validade e estanca o desperdício no balcão.
+                 </p>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <div className="p-6 bg-slate-900/60 border border-white/5 rounded-3xl">
+                       <h4 className="font-black uppercase text-[10px] text-amber-400 mb-2">CMV ao Vivo & Preço Alvo</h4>
+                       <p className="text-slate-400 text-xs">Custo fracionado por dose (50ml) e sugestões de precificação com margem de 60%, 70% ou 80%.</p>
+                    </div>
+                    <div className="p-6 bg-slate-900/60 border border-white/5 rounded-3xl">
+                       <h4 className="font-black uppercase text-[10px] text-amber-400 mb-2">Batches com 1 Clique</h4>
+                       <p className="text-slate-400 text-xs">Produza xaropes simples ou premixes abatendo insumos brutos do estoque e controlando a validade refrigerada.</p>
+                    </div>
+                    <div className="p-6 bg-slate-900/60 border border-white/5 rounded-3xl">
+                       <h4 className="font-black uppercase text-[10px] text-amber-400 mb-2">Prevenção de Quebras</h4>
+                       <p className="text-slate-400 text-xs">Auditoria de garrafas quebradas, sobras e lotes vencidos com cálculo imediato do prejuízo em R$.</p>
+                    </div>
+                    <div className="p-6 bg-slate-900/60 border border-white/5 rounded-3xl">
+                       <h4 className="font-black uppercase text-[10px] text-amber-400 mb-2">Princípio Zero Complexidade</h4>
+                       <p className="text-slate-400 text-xs">Configurável por unidade. Se seu boteco tradicional não vende drinks, as telas ficam 100% limpas.</p>
+                    </div>
+                 </div>
+              </div>
+              <div className="p-8 md:p-12 rounded-[40px] bg-slate-950/80 border border-amber-500/20 shadow-2xl space-y-6">
+                 <div className="flex items-center justify-between pb-6 border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                       <span className="text-4xl">🍸</span>
+                       <div>
+                          <div className="text-xs font-black uppercase tracking-widest text-amber-400">Engenharia de Cardápio</div>
+                          <div className="text-lg font-black text-white uppercase">Negroni da Casa</div>
+                       </div>
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase">
+                       Margem: 81.9%
+                    </div>
+                 </div>
+                 
+                 <div className="space-y-3">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ficha Técnica Fracionada (Doses):</div>
+                    {[
+                       { item: 'Gin London Dry', dose: '30 ml', cost: 'R$ 3,40' },
+                       { item: 'Vermute Rosso', dose: '30 ml', cost: 'R$ 2,20' },
+                       { item: 'Campari Bitter', dose: '30 ml', cost: 'R$ 2,27' },
+                       { item: 'Laranja Bahia & Gelo Especial', dose: '1 porção', cost: 'R$ 0,60' },
+                    ].map((d, i) => (
+                       <div key={i} className="p-3 bg-slate-900/60 rounded-xl border border-white/5 flex justify-between items-center text-xs">
+                          <span className="text-slate-300 font-medium">{d.item}</span>
+                          <span className="text-slate-500">{d.dose} <strong className="text-white ml-2">{d.cost}</strong></span>
+                       </div>
+                    ))}
+                 </div>
+
+                 <div className="p-6 bg-slate-900/90 rounded-2xl border border-white/5 grid grid-cols-3 gap-4 text-center">
+                    <div>
+                       <div className="text-[9px] font-black uppercase text-slate-400">Custo Total</div>
+                       <div className="text-base font-black text-amber-400">R$ 8,47</div>
+                    </div>
+                    <div>
+                       <div className="text-[9px] font-black uppercase text-slate-400">Preço Venda</div>
+                       <div className="text-base font-black text-white">R$ 38,00</div>
+                    </div>
+                    <div>
+                       <div className="text-[9px] font-black uppercase text-slate-400">Lucro Líquido</div>
+                       <div className="text-base font-black text-emerald-400">R$ 29,53</div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </section>
+
         {/* MESA OCIOSA HIGHLIGHT */}
         <section className="py-32 px-6 bg-red-600/5 border-y border-red-600/10 mb-20">
            <div className="max-w-5xl mx-auto text-center space-y-8">
@@ -220,6 +297,9 @@ export const LandingPage: React.FC = () => {
                   <div className="text-center text-red-500 font-black">Botequista Elite</div>
                   <div className="text-center opacity-40">Outros Sistemas</div>
                 </div>
+                <ComparisonRow feature="Drinks, Batches & CMV ao Vivo (v5.7.0)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Produção de Lotes com Validade (v5.7.0)" bot={true} trad={false} isNew />
+                <ComparisonRow feature="Isolamento de Recursos por Bar (v5.7.0)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Clube de Assinaturas e Recorrência (CRM)" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Score de Risco & Prevenção de Fraudes" bot={true} trad={false} isNew />
                 <ComparisonRow feature="Previsão de Movimento por Clima & Demanda" bot={true} trad={false} isNew />
@@ -249,7 +329,7 @@ export const LandingPage: React.FC = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <PlanCard title="Startup" price="0" badge="GRÁTIS" features={['1 Unidade', 'PDV Offline', 'Recibos via WhatsApp', 'Estoque Básico']} />
-                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Curva ABC Full', 'Radar de Prejuízo (v5.2.0)', 'Smart Stock Híbrido (v5.2.0)', 'Atalhos Profissionais', 'Suporte Prioritário']} />
+                <PlanCard title="Elite Powerhouse" highlight price="0" badge="O MAIS POPULAR" features={['Unidades Ilimitadas', 'Coquetelaria & Batches (v5.7.0)', 'CMV ao Vivo & Margem Alvo', 'Curva ABC Full', 'Radar de Prejuízo', 'Smart Stock Híbrido', 'Atalhos Profissionais', 'Suporte Prioritário']} />
                 <PlanCard title="Enterprise" price="0" badge="ESCALA" features={['Controle de Franquias', 'White Label (Sob consulta)', 'Consultoria de Fluxo', 'API Dedicada']} />
               </div>
               <div className="mt-16 p-8 rounded-[40px] bg-white/5 border border-white/10 max-w-2xl mx-auto text-center italic">

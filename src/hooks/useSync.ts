@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback, useRef, useState } from 'react';
 import { loadFromFirebase, getFirebaseToken, saveToFirebase, saveItemToFirebase } from '../services/firebaseService';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, StockTransaction, Franchise, AuditLog, ConsignedEvent, RoomHistoryRecord, SubscriptionPlan, Subscriber, SubscriptionLog } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Unit, Category, StockTransaction, Franchise, AuditLog, ConsignedEvent, RoomHistoryRecord, SubscriptionPlan, Subscriber, SubscriptionLog, BatchProduction, WasteLog } from '../types';
 import { SyncQueue, QueueItem } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
 import { diagnosticLogger } from '../utils/diagnosticLogger';
@@ -25,6 +25,8 @@ interface SyncProps {
   setSubscriptionPlans: (data: any) => void;
   setSubscribers: (data: any) => void;
   setSubscriptionLogs: (data: any) => void;
+  setBatchProductions: (data: any) => void;
+  setWasteLogs: (data: any) => void;
   setDbStatus: (status: 'idle' | 'loading' | 'success' | 'error' | 'offline') => void;
   activeUnitId: string | null;
   config: { url: string; key: string; email: string; pass: string; allPerms: any[]; isDemo?: boolean; }
@@ -44,7 +46,7 @@ export const useSync = (props: SyncProps) => {
   const {
     setProducts, setModifierGroups, setCategoryModifiers, setSales, setOpenTabs,
     setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setConsignedEvents, setRoomHistory, setDbStatus, activeUnitId, config,
-    setSubscriptionPlans, setSubscribers, setSubscriptionLogs
+    setSubscriptionPlans, setSubscribers, setSubscriptionLogs, setBatchProductions, setWasteLogs
   } = props;
 
   const ensureArray = (data: any): any[] => {
@@ -222,6 +224,8 @@ export const useSync = (props: SyncProps) => {
         { key: 'subscriptionPlans', setter: setSubscriptionPlans },
         { key: 'subscribers', setter: setSubscribers },
         { key: 'subscriptionLogs', setter: setSubscriptionLogs },
+        { key: 'batchProductions', setter: setBatchProductions },
+        { key: 'wasteLogs', setter: setWasteLogs },
       ];
 
       if (!initialLoadDone.current) {
@@ -333,7 +337,7 @@ export const useSync = (props: SyncProps) => {
     } finally {
       isFetching.current = false;
     }
-  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setRooms, setConsignedEvents, setRoomHistory, setDbStatus, setAuditLogs, setStockTransactions]);
+  }, [activeUnitId, config, processQueue, smartMerge, getPersistedBlacklist, setProducts, setSales, setShifts, setModifierGroups, setCategories, setCategoryModifiers, setOpenTabs, setUsers, setRooms, setConsignedEvents, setRoomHistory, setDbStatus, setAuditLogs, setStockTransactions, setBatchProductions, setWasteLogs]);
 
   const fetchGlobal = useCallback(async () => {
     if (config.isDemo) return;

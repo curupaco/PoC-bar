@@ -74,8 +74,30 @@ const ProductList: React.FC<ProductListProps> = ({
   const [hhStart, setHhStart] = useState('');
   const [hhEnd, setHhEnd] = useState('');
 
+  // Embalagem & Insumos Fracionados (Drinks Module)
+  const [packageVolume, setPackageVolume] = useState('');
+  const [packageUnit, setPackageUnit] = useState('ml');
+  const [packageCostPrice, setPackageCostPrice] = useState('');
+  const [isSubRecipe, setIsSubRecipe] = useState(false);
+  const [yieldQuantity, setYieldQuantity] = useState('');
+  const [shelfLifeDays, setShelfLifeDays] = useState('7');
+
   const canEdit = currentUser.username === 'admin' || currentUser.permissions.includes('edit_product');
   const canDelete = currentUser.username === 'admin' || currentUser.permissions.includes('delete_product');
+
+  // Cálculo ao vivo de CMV e Margem da Ficha Técnica
+  const currentRecipeCost = useMemo(() => {
+    if (!recipe || recipe.length === 0) return 0;
+    return recipe.reduce((sum, item) => {
+      const ing = products.find(p => p.id === item.productId);
+      return sum + ((ing?.lastCostPrice || 0) * item.quantity);
+    }, 0);
+  }, [recipe, products]);
+
+  const currentPriceNumeric = useMemo(() => parseCurrencyValue(price) || 0, [price]);
+  const currentCmvPercent = currentPriceNumeric > 0 ? (currentRecipeCost / currentPriceNumeric) * 100 : 0;
+  const currentGrossProfit = currentPriceNumeric - currentRecipeCost;
+  const currentGrossMargin = currentPriceNumeric > 0 ? (currentGrossProfit / currentPriceNumeric) * 100 : 0;
 
   // Limpa o toast automaticamente
   useEffect(() => {
@@ -110,6 +132,16 @@ const ProductList: React.FC<ProductListProps> = ({
     const isDuplicate = products.some(p => p.id !== editingId && p.name.toUpperCase().trim() === finalName);
     if (isDuplicate) { setError("Já existe um produto com este nome."); return; }
 
+    const parsedPkgVol = parseFloat(packageVolume.replace(',', '.'));
+    const parsedPkgCost = parseCurrencyValue(packageCostPrice);
+    const parsedYield = parseFloat(yieldQuantity.replace(',', '.'));
+    const parsedShelf = parseInt(shelfLifeDays, 10);
+
+    // Se tiver receita definida, o custo do produto pode herdar a soma dos insumos
+    const effectiveCost = (currentRecipeCost > 0 && !isRawMaterial) 
+      ? currentRecipeCost 
+      : (parseCurrencyValue(cost) || undefined);
+
     if (editingId) {
       setProducts(prev => prev.map(p => p.id === editingId ? {
         ...p,
@@ -118,15 +150,21 @@ const ProductList: React.FC<ProductListProps> = ({
         category: finalCategory,
         sellType,
         modifierGroupId: modGroupId || undefined,
-        trackStock,
-        lastCostPrice: parseCurrencyValue(cost) || undefined,
+        trackStock: (recipe.length > 0 && !isRawMaterial) ? false : trackStock,
+        lastCostPrice: effectiveCost,
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
         happyHourEnd: hhEnd || undefined,
         toKitchen,
         isRawMaterial,
         unitLabel: unitLabel.trim() || undefined,
-        recipe: isRawMaterial ? undefined : recipe
+        packageVolume: !isNaN(parsedPkgVol) && parsedPkgVol > 0 ? parsedPkgVol : undefined,
+        packageUnit: packageUnit || undefined,
+        packageCostPrice: parsedPkgCost > 0 ? parsedPkgCost : undefined,
+        isSubRecipe: isRawMaterial ? isSubRecipe : undefined,
+        yieldQuantity: !isNaN(parsedYield) && parsedYield > 0 ? parsedYield : undefined,
+        shelfLifeDays: !isNaN(parsedShelf) && parsedShelf > 0 ? parsedShelf : undefined,
+        recipe: (isRawMaterial && !isSubRecipe) ? undefined : recipe
       } : p));
       showFeedback("PRODUTO ATUALIZADO!");
     } else {
@@ -138,15 +176,21 @@ const ProductList: React.FC<ProductListProps> = ({
         sellType,
         isFavorite: false,
         modifierGroupId: modGroupId || undefined,
-        trackStock,
-        lastCostPrice: parseCurrencyValue(cost) || undefined,
+        trackStock: (recipe.length > 0 && !isRawMaterial) ? false : trackStock,
+        lastCostPrice: effectiveCost,
         happyHourPrice: numericHhPrice > 0 ? numericHhPrice : undefined,
         happyHourStart: hhStart || undefined,
         happyHourEnd: hhEnd || undefined,
         toKitchen,
         isRawMaterial,
         unitLabel: unitLabel.trim() || undefined,
-        recipe: isRawMaterial ? undefined : recipe
+        packageVolume: !isNaN(parsedPkgVol) && parsedPkgVol > 0 ? parsedPkgVol : undefined,
+        packageUnit: packageUnit || undefined,
+        packageCostPrice: parsedPkgCost > 0 ? parsedPkgCost : undefined,
+        isSubRecipe: isRawMaterial ? isSubRecipe : undefined,
+        yieldQuantity: !isNaN(parsedYield) && parsedYield > 0 ? parsedYield : undefined,
+        shelfLifeDays: !isNaN(parsedShelf) && parsedShelf > 0 ? parsedShelf : undefined,
+        recipe: (isRawMaterial && !isSubRecipe) ? undefined : recipe
       };
       setProducts(prev => [...prev, newProduct]);
       showFeedback("PRODUTO CADASTRADO!");
@@ -194,6 +238,12 @@ const ProductList: React.FC<ProductListProps> = ({
     setToKitchen(p.toKitchen ?? false);
     setIsRawMaterial(p.isRawMaterial ?? false);
     setUnitLabel(p.unitLabel || '');
+    setPackageVolume(p.packageVolume ? String(p.packageVolume) : '');
+    setPackageUnit(p.packageUnit || 'ml');
+    setPackageCostPrice(p.packageCostPrice ? p.packageCostPrice.toFixed(2).replace('.', ',') : '');
+    setIsSubRecipe(p.isSubRecipe ?? false);
+    setYieldQuantity(p.yieldQuantity ? String(p.yieldQuantity) : '');
+    setShelfLifeDays(p.shelfLifeDays ? String(p.shelfLifeDays) : '7');
     setRecipe(p.recipe || []);
     setShowModal(true);
   };
@@ -214,6 +264,12 @@ const ProductList: React.FC<ProductListProps> = ({
     setToKitchen(false);
     setIsRawMaterial(false);
     setUnitLabel('');
+    setPackageVolume('');
+    setPackageUnit('ml');
+    setPackageCostPrice('');
+    setIsSubRecipe(false);
+    setYieldQuantity('');
+    setShelfLifeDays('7');
     setRecipe([]);
     setTempIngId('');
     setTempIngQty('');
@@ -432,6 +488,140 @@ const ProductList: React.FC<ProductListProps> = ({
                 </button>
               </div>
 
+              {/* MÓDULO DE DRINKS: CONVERSÃO DE EMBALAGEM / VOLUME DO INSUMO */}
+              {isRawMaterial && drinksEnabled && (
+                <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-900/40 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-400 tracking-widest flex items-center gap-2">
+                      <span>📦</span> Embalagem de Compra & Fracionamento
+                    </h4>
+                    <span className="text-[8px] font-black uppercase bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full">Auto-Cálculo</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Preço Embalagem (R$)</label>
+                      <input 
+                        type="text" 
+                        inputMode="decimal" 
+                        placeholder="Ex: 85,00"
+                        value={packageCostPrice} 
+                        onChange={e => {
+                          const val = sanitizeCurrencyInput(e.target.value);
+                          setPackageCostPrice(val);
+                          const numPkgCost = parseCurrencyValue(val);
+                          const numVol = parseFloat(packageVolume.replace(',', '.'));
+                          if (numPkgCost > 0 && numVol > 0) {
+                            const unitCost = (numPkgCost / numVol).toFixed(4).replace('.', ',');
+                            setCost(unitCost);
+                          }
+                        }} 
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Volume / Conteúdo</label>
+                      <input 
+                        type="text" 
+                        inputMode="decimal" 
+                        placeholder="Ex: 750"
+                        value={packageVolume} 
+                        onChange={e => {
+                          const val = sanitizeCurrencyInput(e.target.value);
+                          setPackageVolume(val);
+                          const numVol = parseFloat(val.replace(',', '.'));
+                          const numPkgCost = parseCurrencyValue(packageCostPrice);
+                          if (numPkgCost > 0 && numVol > 0) {
+                            const unitCost = (numPkgCost / numVol).toFixed(4).replace('.', ',');
+                            setCost(unitCost);
+                          }
+                        }} 
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-bold text-slate-500 uppercase">Unidade Medida</label>
+                      <select 
+                        value={packageUnit} 
+                        onChange={e => {
+                          setPackageUnit(e.target.value);
+                          setUnitLabel(e.target.value);
+                        }}
+                        className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-black outline-none focus:border-indigo-500 uppercase"
+                      >
+                        <option value="ml">ML (Mililitros)</option>
+                        <option value="g">G (Gramas)</option>
+                        <option value="un">UN (Unidade / Fatia)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const numPkgCost = parseCurrencyValue(packageCostPrice);
+                    const numVol = parseFloat(packageVolume.replace(',', '.'));
+                    if (numPkgCost > 0 && numVol > 0) {
+                      const costPerUnit = numPkgCost / numVol;
+                      const doseCost = costPerUnit * 50;
+                      return (
+                        <p className="text-[9px] font-bold text-indigo-700 dark:text-indigo-300 bg-white/70 dark:bg-slate-900/70 p-2 rounded-xl border border-indigo-100 dark:border-indigo-900/30 flex items-center justify-between">
+                          <span>📊 Custo Fracionado: <strong>R$ {costPerUnit.toFixed(4)} / {packageUnit}</strong></span>
+                          {packageUnit === 'ml' && (
+                            <span className="text-emerald-600 dark:text-emerald-400">Dose (50ml): <strong>R$ {doseCost.toFixed(2)}</strong></span>
+                          )}
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Toggle de Sub-preparo / Batch */}
+                  <div className="pt-2 border-t border-indigo-100 dark:border-indigo-900/30">
+                    <button 
+                      type="button"
+                      onClick={() => setIsSubRecipe(!isSubRecipe)}
+                      className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${isSubRecipe ? 'bg-purple-100/50 border-purple-300 dark:bg-purple-900/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}
+                    >
+                      <div className="text-left">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-purple-700 dark:text-purple-300">É um Sub-preparo / Batch Artesanal? (Xarope, Infusão, Premix)</p>
+                        <p className="text-[8px] text-slate-400">Permite registrar receita própria e gerar ordens de produção com validade</p>
+                      </div>
+                      <div className={`w-10 h-5 rounded-full p-0.5 transition-colors ${isSubRecipe ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-700'}`}>
+                        <div className={`w-4 h-4 bg-white rounded-full transition-transform ${isSubRecipe ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </div>
+                    </button>
+
+                    {isSubRecipe && (
+                      <div className="grid grid-cols-2 gap-3 mt-3 animate-in fade-in">
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-bold text-slate-500 uppercase">Rendimento Padrão do Lote</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: 1000"
+                            value={yieldQuantity}
+                            onChange={e => setYieldQuantity(sanitizeCurrencyInput(e.target.value))}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-purple-300 dark:border-purple-800 text-xs font-black outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-bold text-slate-500 uppercase">Validade Refrigerada (Dias)</label>
+                          <input 
+                            type="number" 
+                            min="1"
+                            max="365"
+                            placeholder="Ex: 7"
+                            value={shelfLifeDays}
+                            onChange={e => setShelfLifeDays(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-purple-300 dark:border-purple-800 text-xs font-black outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* RENDERIZADOR DE UNIDADE DE MEDIDA PERSONALIZADA */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -454,20 +644,34 @@ const ProductList: React.FC<ProductListProps> = ({
                 </div>
               </div>
 
-              {/* FICHA TÉCNICA */}
-              {!isRawMaterial && drinksEnabled && (
+              {/* FICHA TÉCNICA (Disponível para Drinks finais OU Sub-preparos) */}
+              {((!isRawMaterial && drinksEnabled) || (isRawMaterial && isSubRecipe && drinksEnabled)) && (
                 <div className="p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
-                  <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
-                    <span>🍸</span> Ficha Técnica (Ingredientes)
-                  </h4>
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-[10px] font-black uppercase text-slate-500 tracking-widest flex items-center gap-2">
+                      <span>🍸</span> Ficha Técnica ({isSubRecipe ? 'Ingredientes do Lote' : 'Ingredientes do Drink'})
+                    </h4>
+                    {currentRecipeCost > 0 && (
+                      <span className="text-[9px] font-black uppercase bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-md">
+                        Custo: {formatCurrency(currentRecipeCost)}
+                      </span>
+                    )}
+                  </div>
                   
                   {recipe.length > 0 ? (
                     <div className="space-y-2 max-h-40 overflow-y-auto no-scrollbar pr-1">
                       {recipe.map((rItem, idx) => {
                         const ing = products.find(p => p.id === rItem.productId);
+                        const ingTotalCost = (ing?.lastCostPrice || 0) * rItem.quantity;
                         return (
-                          <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold uppercase">
-                            <span className="text-slate-800 dark:text-white">{ing?.name || 'Item Desconhecido'}</span>
+                          <div key={idx} className="flex justify-between items-center bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold uppercase">
+                            <div className="flex flex-col">
+                              <span className="text-slate-800 dark:text-white flex items-center gap-1.5">
+                                {ing?.isSubRecipe && <span className="text-[8px] bg-purple-100 dark:bg-purple-900/30 text-purple-700 px-1 py-0.2 rounded font-black">BATCH</span>}
+                                {ing?.name || 'Item Desconhecido'}
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-normal">Custo: {formatCurrency(ingTotalCost)}</span>
+                            </div>
                             <div className="flex items-center gap-2">
                               <span className="text-red-600 font-black">{rItem.quantity} {ing?.unitLabel || 'un'}</span>
                               <button 
@@ -492,12 +696,12 @@ const ProductList: React.FC<ProductListProps> = ({
                       onChange={e => setTempIngId(e.target.value)}
                       className="flex-1 p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold text-[10px] uppercase outline-none"
                     >
-                      <option value="">Selecionar Insumo...</option>
+                      <option value="">Selecionar Insumo / Sub-preparo...</option>
                       {products
-                        .filter(p => p.isRawMaterial && !recipe.some(r => r.productId === p.id))
+                        .filter(p => (p.isRawMaterial || p.isSubRecipe) && p.id !== editingId && !recipe.some(r => r.productId === p.id))
                         .map(p => (
                           <option key={p.id} value={p.id}>
-                            {p.name} {p.unitLabel ? `(${p.unitLabel})` : ''}
+                            {p.isSubRecipe ? '🧪 [BATCH] ' : ''}{p.name} {p.unitLabel ? `(${p.unitLabel})` : ''} {p.lastCostPrice ? `• R$ ${p.lastCostPrice.toFixed(2)}` : ''}
                           </option>
                         ))}
                     </select>
@@ -524,6 +728,60 @@ const ProductList: React.FC<ProductListProps> = ({
                       +
                     </button>
                   </div>
+
+                  {/* WIDGET FINANCEIRO: CMV & SIMULADOR DE MARGEM ALVO (Apenas para Drinks Finais) */}
+                  {!isRawMaterial && currentRecipeCost > 0 && (
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">CMV (%)</p>
+                          <p className={`text-sm font-black ${currentCmvPercent <= 30 ? 'text-emerald-600' : currentCmvPercent <= 45 ? 'text-amber-600' : 'text-rose-600'}`}>
+                            {currentCmvPercent.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Lucro Bruto</p>
+                          <p className={`text-sm font-black ${currentGrossProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {formatCurrency(currentGrossProfit)}
+                          </p>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Margem Bruta</p>
+                          <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">
+                            {currentGrossMargin.toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Atalhos de Precificação Alvo */}
+                      <div className="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/30">
+                        <p className="text-[8px] font-black uppercase text-indigo-700 dark:text-indigo-300 tracking-wider mb-1.5 flex items-center justify-between">
+                          <span>💡 Sugestão de Preço por Margem Alvo:</span>
+                          <span className="text-[7px] text-slate-400">(Clique para aplicar)</span>
+                        </p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[
+                            { label: '60% Margem', divisor: 0.40 },
+                            { label: '70% Margem', divisor: 0.30 },
+                            { label: '80% Margem', divisor: 0.20 }
+                          ].map(sug => {
+                            const sugPrice = (currentRecipeCost / sug.divisor);
+                            return (
+                              <button
+                                key={sug.label}
+                                type="button"
+                                onClick={() => setPrice(sugPrice.toFixed(2).replace('.', ','))}
+                                className="px-2 py-1.5 bg-white dark:bg-slate-900 hover:bg-indigo-600 hover:text-white rounded-lg border border-indigo-200 dark:border-indigo-800 text-[9px] font-black text-slate-700 dark:text-slate-200 transition-all flex flex-col items-center"
+                              >
+                                <span className="text-[7px] opacity-70">{sug.label}</span>
+                                <span>{formatCurrency(sugPrice)}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

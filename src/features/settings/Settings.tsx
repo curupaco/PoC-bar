@@ -421,19 +421,19 @@ const Settings: React.FC<SettingsProps> = ({
                </div>
             </div>
 
-            {/* MÓDULO DE DRINKS E ESTOQUE CONSIGNADO */}
+            {/* MÓDULO DE DRINKS E COQUETELARIA FRACIONADA (POR UNIDADE) */}
             <div className="mt-12 pt-10 border-t border-slate-100 dark:border-slate-800">
                <div className="flex items-center gap-4 mb-8">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                  <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center text-xl">
+                     🍸
                   </div>
                   <div>
                      <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">Módulo de Drinks & Insumos Fracionados</h4>
-                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Habilita o controle de receitas fracionadas e eventos consignados (Open Bar)</p>
+                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Configuração exclusiva desta unidade (Bar)</p>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <button 
                      onClick={() => {
                         const activeUnit = units.find(u => u.id === unitId);
@@ -444,15 +444,21 @@ const Settings: React.FC<SettingsProps> = ({
                           drinksEnabled: next 
                         } : u));
                         
-                        showToast(next ? "MÓDULO DE DRINKS ATIVADO" : "MÓDULO DE DRINKS DESATIVADO");
+                        showToast(next ? "MÓDULO DE DRINKS ATIVADO NESTA UNIDADE" : "MÓDULO DE DRINKS DESATIVADO NESTA UNIDADE");
                      }}
-                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-emerald-50 border-emerald-600 dark:bg-emerald-900/20' : 'bg-slate-50 border-transparent dark:bg-slate-950 opacity-60'}`}
+                     className={`flex items-center justify-between p-6 rounded-3xl border-2 transition-all text-left ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-indigo-50/50 border-indigo-600 dark:bg-indigo-950/30' : 'bg-slate-50 border-slate-200 dark:border-slate-800 dark:bg-slate-950 opacity-75'}`}
                   >
-                     <div className="text-left">
-                        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${units.find(u => u.id === unitId)?.drinksEnabled ? 'text-emerald-600' : 'text-slate-500'}`}>Status do Módulo</p>
-                        <p className="text-[12px] font-black text-slate-800 dark:text-white uppercase">{units.find(u => u.id === unitId)?.drinksEnabled ? 'Módulo Ativo' : 'Módulo Inativo'}</p>
+                     <div className="space-y-1 pr-4">
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${units.find(u => u.id === unitId)?.drinksEnabled ? 'text-indigo-600' : 'text-slate-500'}`}>
+                           {units.find(u => u.id === unitId)?.drinksEnabled ? '✓ MÓDULO ATIVADO NESTA UNIDADE' : '✕ MÓDULO DESATIVADO'}
+                        </p>
+                        <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                           {units.find(u => u.id === unitId)?.drinksEnabled 
+                              ? 'Exibe a Central de Coquetelaria, Fichas Técnicas, Batches e CMV em tempo real no menu.' 
+                              : 'Mantém a unidade 100% enxuta para operação simples (sem abas ou campos extras de drinks).'}
+                        </p>
                      </div>
-                     <div className={`w-12 h-6 rounded-full p-1 transition-colors ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
+                     <div className={`w-12 h-6 rounded-full p-1 shrink-0 transition-colors ${units.find(u => u.id === unitId)?.drinksEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-800'}`}>
                         <div className={`w-4 h-4 bg-white rounded-full transition-transform ${units.find(u => u.id === unitId)?.drinksEnabled ? 'translate-x-6' : 'translate-x-0'}`} />
                      </div>
                   </button>

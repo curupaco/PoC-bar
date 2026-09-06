@@ -101,6 +101,7 @@ const screenshots = [
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe', desc: 'Cada funcinário com seu nível de acesso: quem pode cancelar, quem pode fechar o caixa' },
   { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Um log que mostra quem fez o quê, quando. Se algo estranho acontecer, você rastreia.' },
   { src: '/landing_assets/assets/dashboard_real.png', label: 'Cozinha', desc: 'Fila de pedidos touch-screen para os cozinheiros, totalmente integrada com alarmes sonoros em tempo real.' },
+  { src: '/landing_assets/assets/reports_real.png', label: 'Drinks & Batches', desc: 'Central de coquetelaria: CMV automático, margem alvo, produção de xaropes artesanais e controle de quebras.' },
 ];
 
 const ScreenshotGallery: React.FC = () => {
@@ -266,6 +267,615 @@ const WhatsAppSimulation: React.FC = () => (
     </div>
   </div>
 );
+
+// ─── INTERACTIVE COCKTAIL LAB SHOWCASE ───
+const CocktailLabShowcase: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'calculator' | 'subrecipes' | 'waste' | 'zeroComplex'>('calculator');
+  const [selectedDrinkKey, setSelectedDrinkKey] = useState<'negroni' | 'gintonic' | 'sour' | 'mule'>('negroni');
+  const [sellingPrice, setSellingPrice] = useState<number>(36);
+  const [monthlyVolume, setMonthlyVolume] = useState<number>(180);
+  const [batchSimulated, setBatchSimulated] = useState<boolean>(false);
+  const [unitMode, setUnitMode] = useState<'traditional' | 'cocktail'>('cocktail');
+
+  const drinksData = {
+    negroni: {
+      name: 'Negroni Clássico',
+      icon: '🍸',
+      badge: 'Margem de Elite (Alta)',
+      desc: 'Ícone da coquetelaria mundial com proporção equilibrada 1:1:1. O controle por mililitro elimina a perda oculta de doses livres no balcão.',
+      defaultPrice: 36,
+      ingredients: [
+        { name: 'Gin London Dry', package: 'Garrafa 750ml (R$ 85,00)', dose: '30 ml', cost: 3.40 },
+        { name: 'Vermute Rosso', package: 'Garrafa 750ml (R$ 55,00)', dose: '30 ml', cost: 2.20 },
+        { name: 'Campari Bitter', package: 'Garrafa 900ml (R$ 68,00)', dose: '30 ml', cost: 2.27 },
+        { name: 'Laranja Bahia & Gelo Cristal', package: 'Insumos Frescos', dose: '1 fatia + cubo', cost: 0.60 }
+      ]
+    },
+    gintonic: {
+      name: 'Gin Tônica Botânica',
+      icon: '🌿',
+      badge: 'Giro Rápido',
+      desc: 'O mais consumido nas noites de casa cheia. Cada 15ml a mais servidos "no olho" pelo bartender queimam 18% do seu lucro líquido por garrafa.',
+      defaultPrice: 38,
+      ingredients: [
+        { name: 'Gin Premium Botânico', package: 'Garrafa 750ml (R$ 95,00)', dose: '50 ml', cost: 6.33 },
+        { name: 'Água Tônica Artesanal', package: 'Lata 200ml (R$ 4,50)', dose: '1 un (200ml)', cost: 4.50 },
+        { name: 'Zimbro, Alecrim & Especiarias', package: 'Insumos Secos', dose: '1 porção', cost: 0.80 },
+        { name: 'Gelo Cristal Transparente', package: 'Gelo Especial', dose: '1 copo', cost: 0.40 }
+      ]
+    },
+    sour: {
+      name: 'Whiskey Sour Artesanal',
+      icon: '🥃',
+      badge: 'Sub-preparo da Casa',
+      desc: 'Combina Bourbon whiskey com Xarope Simples 2:1 produzido na própria cozinha, reduzindo o custo do açúcar e premix em mais de 65%.',
+      defaultPrice: 42,
+      ingredients: [
+        { name: 'Bourbon Whiskey', package: 'Garrafa 750ml (R$ 130,00)', dose: '60 ml', cost: 10.40 },
+        { name: 'Xarope Simples 2:1 (Sub-preparo)', package: 'Batch da Casa (R$ 4,50/L)', dose: '25 ml', cost: 0.11 },
+        { name: 'Suco de Limão Siciliano', package: 'Kg Fresco (R$ 14,00/kg)', dose: '30 ml', cost: 0.84 },
+        { name: 'Albumina & Angostura', package: 'Frascos Dosadores', dose: '3 gotas', cost: 0.65 }
+      ]
+    },
+    mule: {
+      name: 'Moscow Mule com Espuma',
+      icon: '🍺',
+      badge: 'Alto Valor Percebido',
+      desc: 'A espuma de gengibre artesanal no sifão custa centavos no lote e transforma uma caneca de R$ 9,00 de custo em um ticket de R$ 39,00.',
+      defaultPrice: 39,
+      ingredients: [
+        { name: 'Vodka Standard', package: 'Garrafa 1.000ml (R$ 65,00)', dose: '50 ml', cost: 3.25 },
+        { name: 'Suco de Limão Tahiti', package: 'Kg Fresco (R$ 8,00/kg)', dose: '25 ml', cost: 0.50 },
+        { name: 'Xarope de Gengibre (Sub-preparo)', package: 'Batch da Casa (R$ 8,50/L)', dose: '25 ml', cost: 0.21 },
+        { name: 'Espuma de Gengibre (Sifão Batch)', package: 'Lote Sifão 1L (R$ 14,00)', dose: '1 dose', cost: 1.40 }
+      ]
+    }
+  };
+
+  const currentDrink = drinksData[selectedDrinkKey];
+  const recipeCost = currentDrink.ingredients.reduce((acc, i) => acc + i.cost, 0);
+  const grossProfit = Math.max(0, sellingPrice - recipeCost);
+  const marginPercent = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
+  const cmvPercent = sellingPrice > 0 ? (recipeCost / sellingPrice) * 100 : 0;
+  const monthlyProfit = grossProfit * monthlyVolume;
+
+  const targetPrice60 = Math.ceil(recipeCost / (1 - 0.60));
+  const targetPrice70 = Math.ceil(recipeCost / (1 - 0.70));
+  const targetPrice80 = Math.ceil(recipeCost / (1 - 0.80));
+
+  const handleSelectDrink = (key: 'negroni' | 'gintonic' | 'sour' | 'mule') => {
+    setSelectedDrinkKey(key);
+    setSellingPrice(drinksData[key].defaultPrice);
+  };
+
+  return (
+    <section id="coquetelaria" className="py-32 px-6 relative overflow-hidden bg-gradient-to-b from-[#020617] via-slate-950 to-[#020617]">
+      {/* Background glow */}
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-amber-500/5 blur-[160px] rounded-full pointer-events-none"></div>
+
+      <div className="max-w-6xl mx-auto relative z-10">
+        <div className="text-center mb-16 scroll-reveal">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">
+            <span>🍸</span> Módulo de Drinks & Insumos Fracionados 2.0
+          </div>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+            O Lucro Real Mora na <span className="text-amber-400 italic">Coquetelaria</span>.
+          </h2>
+          <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">
+            Vender cerveja de lata dá giro, mas o drink artesanal entrega margens de <strong className="text-white">75% a 85%</strong>. O Botequista calcula cada mililitro, gerencia batches caseiros e estanca o ralo invisível do seu balcão.
+          </p>
+
+          {/* Tab Navigation */}
+          <div className="flex flex-wrap justify-center gap-3 mt-10">
+            {[
+              { id: 'calculator', label: '🍹 Simulador de Ficha & CMV', icon: '📊' },
+              { id: 'subrecipes', label: '🧪 Sub-preparos & Batches', icon: '⚡' },
+              { id: 'waste', label: '🛡️ Prevenção de Perdas', icon: '🚨' },
+              { id: 'zeroComplex', label: '⚙️ Princípio Zero Complexidade', icon: '✨' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 ${
+                  activeTab === tab.id
+                    ? 'bg-amber-500 text-slate-950 shadow-xl shadow-amber-500/20 scale-105'
+                    : 'bg-slate-900/80 text-slate-400 border border-white/5 hover:border-amber-500/30 hover:text-white'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── TAB 1: CALCULATOR & REAL-TIME CMV ─── */}
+        {activeTab === 'calculator' && (
+          <div className="scroll-reveal bg-slate-900/60 backdrop-blur-xl border border-amber-500/20 rounded-[40px] p-8 md:p-12 shadow-2xl space-y-10 animate-in fade-in duration-500">
+            {/* Drink Selector Pills */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/5">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 block mb-1">Escolha um Coquetel do Cardápio</span>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight">Simulação de Engenharia de Cardápio</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(Object.keys(drinksData) as (keyof typeof drinksData)[]).map((key) => {
+                  const item = drinksData[key];
+                  const isSelected = selectedDrinkKey === key;
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleSelectDrink(key)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                        isSelected
+                          ? 'bg-white text-slate-950 shadow-lg'
+                          : 'bg-slate-950/60 text-slate-400 border border-white/5 hover:border-white/20 hover:text-white'
+                      }`}
+                    >
+                      <span className="text-base">{item.icon}</span>
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Drink Details & Financial Engine */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+              {/* Left Column: Ingredients breakdown */}
+              <div className="lg:col-span-7 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{currentDrink.icon}</span>
+                    <div>
+                      <h4 className="text-lg font-black text-white uppercase">{currentDrink.name}</h4>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400">{currentDrink.badge}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block">Custo Total (CMV)</span>
+                    <span className="text-xl font-black text-amber-400">R$ {recipeCost.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <p className="text-slate-400 text-xs leading-relaxed italic bg-slate-950/40 p-3.5 rounded-2xl border border-white/5">
+                  "{currentDrink.desc}"
+                </p>
+
+                {/* Ingredients List */}
+                <div className="space-y-2.5">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 flex justify-between">
+                    <span>Insumo Fracionado</span>
+                    <span>Dose & Custo na Taça</span>
+                  </div>
+                  {currentDrink.ingredients.map((ing, idx) => (
+                    <div key={idx} className="bg-slate-950/50 p-3.5 rounded-2xl border border-white/5 flex items-center justify-between hover:border-amber-500/20 transition-colors">
+                      <div className="space-y-0.5">
+                        <div className="text-xs font-bold text-white flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                          {ing.name}
+                        </div>
+                        <div className="text-[10px] text-slate-500">{ing.package}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-black text-white">{ing.dose}</div>
+                        <div className="text-[10px] font-bold text-amber-400">R$ {ing.cost.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Target pricing buttons */}
+                <div className="pt-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5 flex items-center gap-1.5">
+                    <span>🎯</span> Sugestão de Preço por Margem Alvo (1 Clique):
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <button
+                      onClick={() => setSellingPrice(targetPrice60)}
+                      className="p-3 bg-slate-950/70 border border-white/10 hover:border-amber-500/50 rounded-2xl text-center group transition-all"
+                    >
+                      <div className="text-[9px] font-black uppercase text-slate-400 group-hover:text-amber-400">Alvo 60%</div>
+                      <div className="text-sm font-black text-white">R$ {targetPrice60},00</div>
+                    </button>
+                    <button
+                      onClick={() => setSellingPrice(targetPrice70)}
+                      className="p-3 bg-slate-950/70 border border-amber-500/30 hover:border-amber-400 rounded-2xl text-center group transition-all"
+                    >
+                      <div className="text-[9px] font-black uppercase text-amber-400">Alvo 70% (Top)</div>
+                      <div className="text-sm font-black text-white">R$ {targetPrice70},00</div>
+                    </button>
+                    <button
+                      onClick={() => setSellingPrice(targetPrice80)}
+                      className="p-3 bg-slate-950/70 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl text-center group transition-all"
+                    >
+                      <div className="text-[9px] font-black uppercase text-emerald-400">Alvo 80% (Master)</div>
+                      <div className="text-sm font-black text-white">R$ {targetPrice80},00</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Live Financial HUD */}
+              <div className="lg:col-span-5 bg-slate-950/80 border border-white/10 p-6 md:p-8 rounded-3xl space-y-6">
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+                      Preço de Venda Praticado
+                    </label>
+                    <span className="text-2xl font-black text-amber-400">R$ {sellingPrice},00</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={Math.ceil(recipeCost) + 5}
+                    max={75}
+                    step={1}
+                    value={sellingPrice}
+                    onChange={(e) => setSellingPrice(Number(e.target.value))}
+                    className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  <div className="flex justify-between text-[9px] text-slate-500 mt-1 font-bold">
+                    <span>Mín: R$ {Math.ceil(recipeCost) + 5}</span>
+                    <span>Máx: R$ 75</span>
+                  </div>
+                </div>
+
+                {/* Scorecards */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="bg-slate-900/90 p-4 rounded-2xl border border-white/5">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Lucro por Taça</div>
+                    <div className="text-2xl font-black text-emerald-400">R$ {grossProfit.toFixed(2)}</div>
+                    <div className="text-[9px] text-slate-500 font-bold mt-0.5">líquido de produto</div>
+                  </div>
+                  <div className="bg-slate-900/90 p-4 rounded-2xl border border-white/5">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">CMV (%)</div>
+                    <div className={`text-2xl font-black ${cmvPercent <= 25 ? 'text-emerald-400' : cmvPercent <= 35 ? 'text-amber-400' : 'text-red-400'}`}>
+                      {cmvPercent.toFixed(1)}%
+                    </div>
+                    <div className="text-[9px] text-slate-500 font-bold mt-0.5">
+                      {cmvPercent <= 25 ? '🟢 Excelente' : cmvPercent <= 35 ? '🟡 Saudável' : '🔴 Crítico'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Margin Progress Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                    <span className="text-slate-400">Margem Bruta</span>
+                    <span className="text-emerald-400">{marginPercent.toFixed(1)}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.max(0, marginPercent))}%` }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Monthly Volume Simulator */}
+                <div className="pt-4 border-t border-white/10 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Volume Mensal Vendido</span>
+                    <span className="text-sm font-black text-white">{monthlyVolume} drinks</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={30}
+                    max={600}
+                    step={10}
+                    value={monthlyVolume}
+                    onChange={(e) => setMonthlyVolume(Number(e.target.value))}
+                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  <div className="bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-2xl text-center">
+                    <div className="text-[9px] font-black uppercase tracking-widest text-emerald-400 mb-1">
+                      Lucro Líquido Real no Seu Bolso / Mês
+                    </div>
+                    <div className="text-3xl font-black text-emerald-400 tracking-tight">
+                      R$ {monthlyProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-1">Gerado exclusivamente com {currentDrink.name}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 2: SUB-RECIPES & BATCH PRODUCTION ─── */}
+        {activeTab === 'subrecipes' && (
+          <div className="scroll-reveal bg-slate-900/60 backdrop-blur-xl border border-amber-500/20 rounded-[40px] p-8 md:p-12 shadow-2xl space-y-10 animate-in fade-in duration-500">
+            <div className="max-w-3xl">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 block mb-2">Engenharia de Pré-Preparo</span>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none mb-4">
+                Sub-preparos & Produção de Batches com <span className="text-amber-400">1 Clique</span>
+              </h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Comprar xarope industrializado pronto custa R$ 50,00 o litro. Fazer no seu bar custa R$ 4,50. 
+                O Botequista calcula os insumos básicos, dá baixa no estoque e cria o produto artesanal com lote, custo exato e validade refrigerada.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              {/* Batch card */}
+              <div className="bg-slate-950/80 border border-white/10 p-8 rounded-3xl space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-2xl">🍯</div>
+                    <div>
+                      <h4 className="text-base font-black text-white uppercase">Xarope Simples 2:1 Artesanal</h4>
+                      <span className="text-[9px] font-bold text-amber-400 uppercase tracking-widest">Receita de Sub-preparo</span>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase">
+                    Rendimento: 1.200 ml
+                  </span>
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Insumos Necessários por Lote:</div>
+                  <div className="p-3 bg-slate-900/70 rounded-xl border border-white/5 flex justify-between items-center text-xs">
+                    <span className="text-slate-300">Açúcar Cristal Refinado</span>
+                    <span className="font-bold text-white">800 g <span className="text-slate-500 font-normal">(R$ 3,60)</span></span>
+                  </div>
+                  <div className="p-3 bg-slate-900/70 rounded-xl border border-white/5 flex justify-between items-center text-xs">
+                    <span className="text-slate-300">Água Filtrada Mineral</span>
+                    <span className="font-bold text-white">500 ml <span className="text-slate-500 font-normal">(R$ 0,50)</span></span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+                  <span className="text-slate-400">Custo Total de Produção:</span>
+                  <span className="font-black text-amber-400 text-base">R$ 4,10 / litro</span>
+                </div>
+
+                <button
+                  onClick={() => setBatchSimulated(!batchSimulated)}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-xs uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-amber-500/20 flex items-center justify-center gap-2"
+                >
+                  <span>⚡</span>
+                  <span>{batchSimulated ? 'Lote Produzido! (Clique para resetar)' : 'Simular Ordem de Produção de Lote'}</span>
+                </button>
+              </div>
+
+              {/* Simulation Result */}
+              <div className="space-y-4">
+                {batchSimulated ? (
+                  <div className="bg-emerald-950/30 border border-emerald-500/30 p-8 rounded-3xl space-y-6 animate-in zoom-in-95 duration-300">
+                    <div className="flex items-center gap-3 text-emerald-400">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-xl">✅</div>
+                      <div>
+                        <div className="text-xs font-black uppercase tracking-widest">Ordem de Produção Executada</div>
+                        <div className="text-[10px] text-slate-400">Movimentação instantânea no estoque</div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-red-400">
+                        <span>🔻</span>
+                        <span>Baixa automática: <strong>800g de Açúcar</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-red-400">
+                        <span>🔻</span>
+                        <span>Baixa automática: <strong>500ml de Água</strong></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                        <span>📦</span>
+                        <span>Entrada de estoque: <strong>+1.200ml de Xarope Simples 2:1</strong></span>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-950/80 rounded-2xl border border-white/10 space-y-1.5">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">Etiqueta & Validade do Lote</div>
+                      <div className="text-xs font-mono text-amber-400 font-bold">LOTE #089 • Custo: R$ 0,0034 / ml</div>
+                      <div className="text-[11px] text-slate-300">Validade: 15 dias refrigerado • <span className="text-emerald-400 font-bold">Ativo e Fresco (14 dias restantes)</span></div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 rounded-3xl border border-dashed border-white/10 bg-slate-950/40 text-center space-y-3">
+                    <div className="text-4xl opacity-40">🧪</div>
+                    <h5 className="text-sm font-black uppercase text-slate-300 tracking-wider">Aperte o botão para simular</h5>
+                    <p className="text-slate-500 text-xs leading-relaxed max-w-sm mx-auto">
+                      Veja na prática como o sistema desconta os grãos de açúcar e garrafas de base e registra o produto acabado pronto para uso nos coquetéis.
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+                    <div className="text-amber-400 text-xl font-black mb-1">-70%</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-400">Custo de Xaropes & Infusões</div>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/5">
+                    <div className="text-emerald-400 text-xl font-black mb-1">Zero</div>
+                    <div className="text-[10px] font-bold uppercase text-slate-400">Lotes Vencidos Esquecidos</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 3: WASTE PREVENTION & CRITICAL AUDIT ─── */}
+        {activeTab === 'waste' && (
+          <div className="scroll-reveal bg-slate-900/60 backdrop-blur-xl border border-amber-500/20 rounded-[40px] p-8 md:p-12 shadow-2xl space-y-10 animate-in fade-in duration-500">
+            <div className="max-w-3xl">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 block mb-2">Proteção de Margem & Auditoria</span>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none mb-4">
+                O Furo Misterioso de <span className="text-red-500">Inventário</span> Acabou
+              </h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Em bares sem controle de coquetelaria, <strong className="text-white">8% a 15% das garrafas evaporam</strong> em doses desreguladas, quebra de garrafas no gelo e sobras de coqueteleira descartadas.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Scenario Without */}
+              <div className="bg-red-950/20 border border-red-500/20 p-8 rounded-3xl space-y-6">
+                <div className="flex items-center gap-3 text-red-400">
+                  <div className="w-10 h-10 rounded-2xl bg-red-500/20 flex items-center justify-center text-xl">❌</div>
+                  <div>
+                    <h4 className="text-base font-black uppercase">No Bar Tradicional (Sem Botequista)</h4>
+                    <span className="text-[9px] text-red-400/80 font-bold uppercase">Prejuízo Invisível</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-3.5 text-xs text-slate-300">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-500 font-black">✕</span>
+                    <span>O bartender despeja 70ml ao invés de 50ml na correria: <strong>4 drinks a menos por garrafa</strong> de whisky ou gin.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-500 font-black">✕</span>
+                    <span>Uma garrafa de licor importado de R$ 180,00 cai no chão e quebra: ninguém anota, vira "furo de estoque".</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-red-500 font-black">✕</span>
+                    <span>Xarope de morango artesanal azeda na geladeira porque ninguém sabe quando foi preparado.</span>
+                  </li>
+                </ul>
+
+                <div className="pt-4 border-t border-red-500/20 text-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-400 block mb-1">Perda Média Estimada</span>
+                  <span className="text-3xl font-black text-red-500">R$ 2.800,00 / mês</span>
+                </div>
+              </div>
+
+              {/* Scenario With Botequista */}
+              <div className="bg-emerald-950/20 border border-emerald-500/30 p-8 rounded-3xl space-y-6">
+                <div className="flex items-center gap-3 text-emerald-400">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-xl">🛡️</div>
+                  <div>
+                    <h4 className="text-base font-black uppercase">Com o Botequista Drinks 2.0</h4>
+                    <span className="text-[9px] text-emerald-400/80 font-bold uppercase">Blindagem Financeira</span>
+                  </div>
+                </div>
+
+                <ul className="space-y-3.5 text-xs text-slate-300">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 font-black">✓</span>
+                    <span><strong>Baixa Atômica Fracionada:</strong> cada drink lançado no PDV abate exatamente os ml correspondentes no estoque de insumos.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 font-black">✓</span>
+                    <span><strong>Registro de Perda em 2 Toques:</strong> selecione a garrafa, o motivo (quebra, sobra, vencimento) e o sistema calcula o valor em R$ do prejuízo.</span>
+                  </li>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-emerald-400 font-black">✓</span>
+                    <span><strong>Radar de Validade:</strong> alertas visuais de lotes refrigerados garantem que tudo seja utilizado antes de estragar.</span>
+                  </li>
+                </ul>
+
+                <div className="pt-4 border-t border-emerald-500/20 text-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block mb-1">Economia Preservada</span>
+                  <span className="text-3xl font-black text-emerald-400">+ R$ 33.600,00 / ano</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── TAB 4: ZERO COMPLEXITY PRINCIPLE ─── */}
+        {activeTab === 'zeroComplex' && (
+          <div className="scroll-reveal bg-slate-900/60 backdrop-blur-xl border border-amber-500/20 rounded-[40px] p-8 md:p-12 shadow-2xl space-y-10 animate-in fade-in duration-500">
+            <div className="max-w-3xl">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 block mb-2">Princípio Zero Complexidade</span>
+              <h3 className="text-3xl font-black text-white uppercase tracking-tight leading-none mb-4">
+                Ative Apenas se <span className="text-amber-400">Fizer Sentido</span> para Sua Operação
+              </h3>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                Você gerencia um boteco raiz focado em cerveja de garrafa, pastel e chopp? Você <strong>não vê nenhum campo extra</strong>, nenhuma aba de coquetelaria e nenhum cálculo desnecessário. Tem uma unidade de coquetelaria? Ative em 1 clique em Ajustes.
+              </p>
+            </div>
+
+            {/* Interactive Unit Switcher Preview */}
+            <div className="bg-slate-950/80 border border-white/10 p-6 md:p-8 rounded-3xl space-y-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/5">
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Simule a Configuração de Unidade:</div>
+                  <div className="text-lg font-black text-white uppercase mt-0.5">Configurável por Filial / Bar</div>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-white/5">
+                  <button
+                    onClick={() => setUnitMode('traditional')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${
+                      unitMode === 'traditional'
+                        ? 'bg-red-600 text-white shadow-lg'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🍺 Boteco Tradicional
+                  </button>
+                  <button
+                    onClick={() => setUnitMode('cocktail')}
+                    className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all ${
+                      unitMode === 'cocktail'
+                        ? 'bg-amber-500 text-slate-950 shadow-lg'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    🍸 Bar de Coquetelaria
+                  </button>
+                </div>
+              </div>
+
+              {/* Dynamic Mock View */}
+              {unitMode === 'traditional' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Modo Simples (Zero Complexidade): Telas 100% limpas</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-white/5 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500">Barra Lateral</div>
+                      <div className="text-sm font-bold text-white">PDV, Comandas, Estoque, Caixa</div>
+                      <div className="text-[10px] text-slate-500">O menu "Drinks & Bar" fica totalmente oculto.</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-white/5 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500">Cadastro de Produtos</div>
+                      <div className="text-sm font-bold text-white">Nome, Preço de Custo, Venda e Quantidade</div>
+                      <div className="text-[10px] text-slate-500">Zero campos de volume, mililitros ou receitas.</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-white/5 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-slate-500">Velocidade no Caixa</div>
+                      <div className="text-sm font-bold text-emerald-400">100% Direto ao Ponto</div>
+                      <div className="text-[10px] text-slate-500">Giro ultrarrápido sem burocracia.</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 animate-in fade-in duration-300">
+                  <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span>Módulo de Drinks Ativado: Poder de Gestão Completo</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-amber-500/20 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-amber-400">Barra Lateral</div>
+                      <div className="text-sm font-bold text-white">🍹 Hub de Coquetelaria Liberado</div>
+                      <div className="text-[10px] text-slate-400">Acesso a Engenharia de Cardápio, Batches e Perdas.</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-amber-500/20 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-amber-400">Fichas & Insumos</div>
+                      <div className="text-sm font-bold text-white">Garrafa ➔ Custo por Dose (50ml)</div>
+                      <div className="text-[10px] text-slate-400">Conversor automático e sugestão de preço alvo ao vivo.</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-slate-900/60 border border-amber-500/20 space-y-2">
+                      <div className="text-[9px] font-black uppercase tracking-widest text-amber-400">Controle de Batches</div>
+                      <div className="text-sm font-bold text-white">Xaropes, Premixes e Validades</div>
+                      <div className="text-[10px] text-slate-400">Ordens de produção com 1 clique e baixa de ingredientes.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
 
 // ─── INTERACTIVE TECH SECTION ───
 const TechSection: React.FC<{ onOpenDiagnostics: () => void }> = ({ onOpenDiagnostics }) => {
@@ -1114,9 +1724,12 @@ export const LandingPage2: React.FC = () => {
               <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Simplicidade & Inteligência de Balcão</span>
             </div>
           </div>
-          <div className="hidden lg:flex items-center gap-10">
+          <div className="hidden lg:flex items-center gap-8">
             <button onClick={() => scrollToSection('problema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">O Problema</button>
             <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
+            <button onClick={() => scrollToSection('coquetelaria')} className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+              <span>🍸</span> Coquetelaria
+            </button>
             <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
             <button onClick={() => setIsTechConsoleModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
@@ -1134,6 +1747,9 @@ export const LandingPage2: React.FC = () => {
           <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
             <button onClick={() => scrollToSection('problema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">O Problema</button>
             <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
+            <button onClick={() => scrollToSection('coquetelaria')} className="text-xl font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 flex items-center gap-2">
+              <span>🍸</span> Coquetelaria & Drinks
+            </button>
             <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
             <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
             <button onClick={() => { setIsTechConsoleModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
@@ -1408,6 +2024,10 @@ export const LandingPage2: React.FC = () => {
               'Happy Hour Automático (Novo)',
               'Clube de Assinaturas e Recorrência CRM (v5.5.0)',
               'Score de Risco & Prevenção de Fraudes de Atendente (v5.5.0)',
+              'Módulo de Drinks & Insumos Fracionados 2.0 (v5.7.0)',
+              'Engenharia de Cardápio com CMV ao Vivo & Margem Alvo (v5.7.0)',
+              'Sub-preparos & Batches Artesanais com Validade (v5.7.0)',
+              'Auditoria e Prevenção de Perdas de Bar em R$ (v5.7.0)',
               'Registro de Perda & Desperdício (v5.0.0)',
               'Ativação/Desativação de Módulos (Drinks e Hospedaria) por Bar (v5.4.0)',
               'Redefinição Segura de Senha do Admin via Firebase Master Key (v5.4.0)',
@@ -1476,6 +2096,9 @@ export const LandingPage2: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ─── COQUETELARIA & DRINKS 2.0 SHOWCASE ─── */}
+      <CocktailLabShowcase />
 
       {/* ─── QR CODE MENU SECTION ─── */}
       <section className="py-32 px-6 relative overflow-hidden bg-slate-950/20">

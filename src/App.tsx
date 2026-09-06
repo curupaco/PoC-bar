@@ -33,6 +33,7 @@ import { MinimalistMenu } from './features/landing/MinimalistMenu';
 import { TodoViewer } from './features/todo/TodoViewer';
 import OwnerAssistant from './features/dashboard/OwnerAssistant';
 import LodgingDashboard from './features/lodging/LodgingDashboard';
+import DrinksManagement from './features/drinks/DrinksManagement';
 
 
 export const App: React.FC = () => {
@@ -187,6 +188,7 @@ export const App: React.FC = () => {
       case 'help': return <Help />;
       case 'production_monitor': return <ProductionMonitor openTabs={store.openTabs} onUpdateTabItem={store.handleUpdateTabItem} />;
       case 'lodging': return <LodgingDashboard rooms={store.rooms} onUpdateRooms={store.handleUpdateRooms} onUpdateRoom={store.handleUpdateRoom} roomHistory={store.roomHistory} onSaveRoomHistoryRecord={store.handleSaveRoomHistoryRecord} openTabs={store.openTabs} onSaveTab={store.handleSaveTab} activeUnit={store.units.find(u => u.id === store.validatedActiveUnitId)} currentUser={currentUser} showToast={showToast} />;
+      case 'drinks': return <DrinksManagement products={store.products} onUpdateProducts={store.handleUpdateProducts} batchProductions={store.batchProductions} wasteLogs={store.wasteLogs} stockBalances={store.stockBalances} onProduceBatch={store.handleProduceBatch} onRegisterWaste={store.handleRegisterWaste} currentUser={currentUser} onViewChange={setActiveView} activeUnitId={store.validatedActiveUnitId} />;
       default: return null;
     }
   };

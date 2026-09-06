@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState, ConsignedEvent, RoomHistoryRecord, SubscriptionPlan, Subscriber, SubscriptionLog } from '../types';
+import { Product, Sale, Tab, User, Shift, ModifierGroup, Category, Unit, AuditLog, generateUniqueId, SaleItem, PRODUCT_ID_DEBT_SETTLEMENT, StockTransaction, Franchise, RoomState, ConsignedEvent, RoomHistoryRecord, SubscriptionPlan, Subscriber, SubscriptionLog, BatchProduction, WasteLog } from '../types';
 import { useSync } from './useSync';
 import { SyncQueue } from '../utils/syncQueue';
 import { idb } from '../utils/idb';
@@ -94,6 +94,8 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
   const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(isDemo ? mockSubscriptionPlans : []);
   const [subscribers, setSubscribers] = useState<Subscriber[]>(isDemo ? mockSubscribers : []);
   const [subscriptionLogs, setSubscriptionLogs] = useState<SubscriptionLog[]>(isDemo ? mockSubscriptionLogs : []);
+  const [batchProductions, setBatchProductions] = useState<BatchProduction[]>([]);
+  const [wasteLogs, setWasteLogs] = useState<WasteLog[]>([]);
   const [penduraThreshold, setPenduraThreshold] = useState(500);
   const [longDurationThreshold, setLongDurationThreshold] = useState(4);
 
@@ -214,7 +216,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     setProducts, setModifierGroups, setCategoryModifiers, setSales,
     setOpenTabs: handleSetOpenTabs,
     setUsers, setShifts, setUnits, setFranchises, setCategories, setAuditLogs, setStockTransactions, setRooms, setConsignedEvents, setRoomHistory, setDbStatus,
-    setSubscriptionPlans, setSubscribers, setSubscriptionLogs,
+    setSubscriptionPlans, setSubscribers, setSubscriptionLogs, setBatchProductions, setWasteLogs,
     activeUnitId: validatedActiveUnitId,
     config: syncConfig
   });
@@ -717,8 +719,9 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
             if (!product) continue;
 
             // 1. Processa a Ficha Técnica Híbrida se houver receita
-            if (product.recipe && product.recipe.length > 0) {
-              for (const recipeItem of product.recipe) {
+            const hasRecipe = Boolean(product.recipe && product.recipe.length > 0);
+            if (hasRecipe) {
+              for (const recipeItem of product.recipe!) {
                 const ingredient = products.find(p => p.id === recipeItem.productId);
                 if (ingredient && ingredient.trackStock !== false) {
                   const transaction: StockTransaction = {
@@ -736,8 +739,8 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
               }
             }
 
-            // 2. Processa o produto principal se estiver com controle de estoque ativo
-            if (product.trackStock !== false) {
+            // 2. Processa o produto principal se NÃO tiver receita e estiver com controle de estoque ativo
+            if (!hasRecipe && product.trackStock !== false) {
               const transaction: StockTransaction = {
                 id: generateUniqueId('stk'),
                 productId: item.productId,
@@ -873,10 +876,172 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     }
   }, [persist, saveLocalCache, updateLocalTimestamp, addAuditLog, showToast]);
 
+  const handleProduceBatch = useCallback(async (
+    subRecipeId: string,
+    quantityProduced: number,
+    customShelfLifeDays?: number
+  ) => {
+    if (!validatedActiveUnitId) return;
+    const subRecipe = products.find(p => p.id === subRecipeId);
+    if (!subRecipe || !subRecipe.recipe || subRecipe.recipe.length === 0) {
+      showToast('Receita não encontrada para este sub-preparo', 'error');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const userId = currentUserRef.current?.id;
+    const batchTrans: StockTransaction[] = [];
+    
+    const baseYield = subRecipe.yieldQuantity && subRecipe.yieldQuantity > 0 ? subRecipe.yieldQuantity : 1;
+    const ratio = quantityProduced / baseYield;
+
+    let totalBatchCost = 0;
+
+    for (const item of subRecipe.recipe) {
+      const ing = products.find(p => p.id === item.productId);
+      const consumedQty = item.quantity * ratio;
+      const ingCost = (ing?.lastCostPrice || 0) * consumedQty;
+      totalBatchCost += ingCost;
+
+      batchTrans.push({
+        id: generateUniqueId('stk'),
+        productId: item.productId,
+        unitId: validatedActiveUnitId,
+        quantity: -consumedQty,
+        type: 'OUT',
+        reason: `Produção Lote: ${subRecipe.name}`,
+        timestamp,
+        userId
+      });
+    }
+
+    batchTrans.push({
+      id: generateUniqueId('stk'),
+      productId: subRecipe.id,
+      unitId: validatedActiveUnitId,
+      quantity: quantityProduced,
+      type: 'IN',
+      reason: `Lote Produzido (${quantityProduced} ${subRecipe.unitLabel || 'ml'})`,
+      timestamp,
+      userId
+    });
+
+    const unitCost = quantityProduced > 0 ? totalBatchCost / quantityProduced : 0;
+    const shelfDays = customShelfLifeDays || subRecipe.shelfLifeDays || 7;
+    const expiresAt = new Date(Date.now() + shelfDays * 86400000).toISOString();
+
+    const newBatch: BatchProduction = {
+      id: generateUniqueId('bat'),
+      unitId: validatedActiveUnitId,
+      subRecipeId: subRecipe.id,
+      subRecipeName: subRecipe.name,
+      quantityProduced,
+      producedAt: new Date(timestamp).toISOString(),
+      expiresAt,
+      totalCost: totalBatchCost,
+      unitCost,
+      status: 'ACTIVE',
+      userId
+    };
+
+    if (unitCost > 0) {
+      const nextProducts = products.map(p => p.id === subRecipe.id ? { ...p, lastCostPrice: unitCost } : p);
+      setProducts(nextProducts);
+      saveLocalCache('products', nextProducts);
+      persist('products', nextProducts);
+    }
+
+    setStockTransactions(prev => {
+      const next = [...batchTrans, ...prev].slice(0, 5000);
+      saveLocalCache('stockTransactions', next);
+      return next;
+    });
+    for (const t of batchTrans) {
+      persist('stockTransactions', t, t.id);
+    }
+
+    setBatchProductions(prev => {
+      const next = [newBatch, ...prev];
+      saveLocalCache('batchProductions', next);
+      return next;
+    });
+    persist('batchProductions', newBatch, newBatch.id);
+
+    addAuditLog('BATCH_PRODUCTION', `Produzido lote de ${quantityProduced} ${subRecipe.unitLabel || 'ml'} de ${subRecipe.name}. Custo: R$ ${totalBatchCost.toFixed(2)}`);
+    showToast(`LOTE DE ${subRecipe.name.toUpperCase()} PRODUZIDO COM SUCESSO!`, 'success');
+  }, [validatedActiveUnitId, products, currentUserRef, persist, saveLocalCache, addAuditLog, showToast]);
+
+  const handleRegisterWaste = useCallback(async (
+    productId: string,
+    quantity: number,
+    reason: 'EXPIRED' | 'SPILL_BREAK' | 'TASTING' | 'OTHER',
+    notes?: string
+  ) => {
+    if (!validatedActiveUnitId) return;
+    const product = products.find(p => p.id === productId);
+    if (!product) {
+      showToast('Produto não encontrado', 'error');
+      return;
+    }
+
+    const timestamp = Date.now();
+    const userId = currentUserRef.current?.id;
+    const unitCost = product.lastCostPrice || 0;
+    const totalCost = unitCost * quantity;
+
+    const reasonLabels: Record<string, string> = {
+      EXPIRED: 'Vencimento',
+      SPILL_BREAK: 'Quebra / Derramamento',
+      TASTING: 'Degustação / Cortesia',
+      OTHER: 'Outro'
+    };
+
+    const wasteTrans: StockTransaction = {
+      id: generateUniqueId('stk'),
+      productId: product.id,
+      unitId: validatedActiveUnitId,
+      quantity: -quantity,
+      type: 'OUT',
+      reason: `Descarte/Perda: ${reasonLabels[reason] || reason}${notes ? ` (${notes})` : ''}`,
+      timestamp,
+      userId
+    };
+
+    const newWaste: WasteLog = {
+      id: generateUniqueId('wst'),
+      unitId: validatedActiveUnitId,
+      productId: product.id,
+      productName: product.name,
+      quantity,
+      cost: totalCost,
+      reason,
+      notes,
+      timestamp: new Date(timestamp).toISOString(),
+      userId
+    };
+
+    setStockTransactions(prev => {
+      const next = [wasteTrans, ...prev].slice(0, 5000);
+      saveLocalCache('stockTransactions', next);
+      return next;
+    });
+    persist('stockTransactions', wasteTrans, wasteTrans.id);
+
+    setWasteLogs(prev => {
+      const next = [newWaste, ...prev];
+      saveLocalCache('wasteLogs', next);
+      return next;
+    });
+    persist('wasteLogs', newWaste, newWaste.id);
+
+    addAuditLog('WASTE_LOG', `Descarte de ${quantity} ${product.unitLabel || 'un'} de ${product.name}. Prejuízo: R$ ${totalCost.toFixed(2)}`);
+    showToast(`DESCARTE REGISTRADO COM SUCESSO!`, 'success');
+  }, [validatedActiveUnitId, products, currentUserRef, persist, saveLocalCache, addAuditLog, showToast]);
+
   const handleExportData = useCallback(() => {
     const backupData = {
       products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory,
-      subscriptionPlans, subscribers, subscriptionLogs,
+      subscriptionPlans, subscribers, subscriptionLogs, batchProductions, wasteLogs,
       config: { penduraThreshold, longDurationThreshold },
       meta: { exportedAt: Date.now(), exportedBy: currentUser?.username, systemVersion: '3.9.x' }
     };
@@ -890,7 +1055,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory, subscriptionPlans, subscribers, subscriptionLogs, penduraThreshold, longDurationThreshold, currentUser]);
+  }, [products, sales, users, shifts, openTabs, modifierGroups, categoryModifiers, categories, units, rooms, consignedEvents, roomHistory, subscriptionPlans, subscribers, subscriptionLogs, batchProductions, wasteLogs, penduraThreshold, longDurationThreshold, currentUser]);
 
   const handleDataManagement = useCallback((data: any) => {
     if (data === 'EXPORT_NOW') { handleExportData(); return; }
@@ -912,6 +1077,8 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
       if (data.subscriptionPlans) { setSubscriptionPlans(data.subscriptionPlans); saveLocalCache('subscriptionPlans', data.subscriptionPlans); persist('subscriptionPlans', data.subscriptionPlans); }
       if (data.subscribers) { setSubscribers(data.subscribers); saveLocalCache('subscribers', data.subscribers); persist('subscribers', data.subscribers); }
       if (data.subscriptionLogs) { setSubscriptionLogs(data.subscriptionLogs); saveLocalCache('subscriptionLogs', data.subscriptionLogs); persist('subscriptionLogs', data.subscriptionLogs); }
+      if (data.batchProductions) { setBatchProductions(data.batchProductions); saveLocalCache('batchProductions', data.batchProductions); persist('batchProductions', data.batchProductions); }
+      if (data.wasteLogs) { setWasteLogs(data.wasteLogs); saveLocalCache('wasteLogs', data.wasteLogs); persist('wasteLogs', data.wasteLogs); }
       
       if (data.config) {
         if (data.config.penduraThreshold) setPenduraThreshold(data.config.penduraThreshold);
@@ -929,6 +1096,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     consignedEvents, setConsignedEvents,
     rooms, setRooms, roomHistory, setRoomHistory,
     subscriptionPlans, setSubscriptionPlans, subscribers, setSubscribers, subscriptionLogs, setSubscriptionLogs,
+    batchProductions, setBatchProductions, wasteLogs, setWasteLogs,
     penduraThreshold, setPenduraThreshold, longDurationThreshold, setLongDurationThreshold,
     dbStatus, setDbStatus, lastSyncTime, pendingSyncCount, validatedActiveUnitId, visibleUnits,
     setRawActiveUnitId, syncConfig,
@@ -939,6 +1107,7 @@ export const useAppStore = ({ currentUser, currentUserRef, showToast }: AppStore
     handleUpdateUsers, handleUpdateUnits, handleUpdateFranchises, handleCompleteSale, handleDataManagement, handleExportData,
     handleUpdateStock, handleUpdateRooms, handleUpdateRoom, handleUpdateRoomHistory, handleSaveRoomHistoryRecord, handleResetAdminPassword,
     handleSaveSubscriptionPlan, handleDeleteSubscriptionPlan, handleSaveSubscriber, handleDeleteSubscriber, handleSimulateSubscriptionRenewal,
+    handleProduceBatch, handleRegisterWaste,
     persist, persistGlobal, saveLocalCache, addAuditLog, refresh, serverHealth
   };
 };

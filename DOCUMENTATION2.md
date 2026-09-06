@@ -1,79 +1,6 @@
 # 🍺 Botequista Elite — Gestão de Alta Performance para o Bar da Nova Era
 
-> *Material de apresentação comercial — versão v5.6.0 Design System Base (src/shared/ui/), Padronização Visual Global e Micro-Interações Premium.*
-Proceeded with
-Implementation Plan
-Finalizei com sucesso todo o processo de limpeza e higienização de credenciais do repositório local.
-
-Resumo do que foi feito:
-Desrastreamento de arquivos sensíveis: Removido o .env.production do Git (sem apagar seu arquivo local).
-Atualização do .gitignore: Padrão genérico .env* adicionado para evitar novos vazamentos involuntários.
-Refatoração de código: O arquivo 
-
-fetch_units.js
- teve sua chave de API hardcoded substituída por variável de ambiente.
-Purga do Histórico do Git: Reescrevemos o histórico de commits utilizando git-filter-repo. O .env.production antigo, as chaves do Firebase e o token do GitHub foram completamente expurgados de todos os commits passados.
-Todas as verificações de histórico e de rastreamento retornaram zero ocorrências de segredos.
-
-Você pode conferir o relatório detalhado no artefato 
-walkthrough.md
-.
-
-TIP
-
-Para atualizar o repositório remoto no GitHub com o histórico limpo, execute no terminal do projeto:
-
-bash
-git push origin main --force
-O saneamento de segurança e a limpeza do histórico foram finalizados com sucesso!
-
-Se precisar de ajuda com a atualização no GitHub via git push origin main --force ou qualquer outra questão, estou à disposição.
-
-Expressions
-Walkthrough
-2:33 PM
-2:42 PM
-O erro ocorreu porque o repositório Git fica dentro da pasta PoC-bar.
-
-Para enviar as alterações para o GitHub, acesse a pasta do projeto primeiro:
-
-bash
-cd PoC-bar
-git push origin main --force
-2:42 PM
-2:43 PM
-O git-filter-repo remove o remoto (origin) por segurança para evitar que alterações no histórico sejam enviadas acidentalmente antes da conferência.
-
-Para adicionar o remoto origin novamente e fazer o push forçado, execute os dois comandos abaixo dentro da pasta PoC-bar:
-
-bash
-git remote add origin https://github.com/curupaco/PoC-bar.git
-git push origin main --force
-(Caso utilize SSH no GitHub em vez de HTTPS, use: git remote add origin git@github.com:curupaco/PoC-bar.git)
-
-2:43 PM
-2:44 PM
-O GitHub bloqueou o force push porque a branch main está configurada como Branch Protegida nas configurações do repositório.
-
-Para concluir o envio do histórico limpo, você tem duas opções rápidas:
-
-Opção 1: Desativar temporariamente a proteção no GitHub (Recomendado)
-Acesse no navegador: https://github.com/curupaco/PoC-bar/settings/branches
-Em Branch protection rules, clique em Edit na regra da branch main.
-Marque a opção "Allow force pushes" (Permitir force push) ou desative a regra temporariamente.
-Clique em Save changes no final da página.
-Execute o comando novamente no seu terminal:
-bash
-git push origin main --force
-Após o envio bem-sucedido, você pode reativar a proteção da branch no GitHub.
-Opção 2: Enviar para uma nova branch limpa
-Se preferir não alterar as regras da branch main agora:
-
-bash
-# 1. Envia a versão limpa para uma nova branch no GitHub chamada 'main-clean'
-git push origin main:main-clean
-# 2. Depois você pode ir no GitHub e definir 'main-clean' como a nova branch padrão ou substituir a 'main'.
-
+> *Material de apresentação comercial — versão v5.7.0 Módulo de Drinks & Insumos Fracionados 2.0, Batches com Validade, CMV em Tempo Real e Isolamento por Bar.*
 
 ---
 
@@ -86,9 +13,27 @@ Todo dono de bar já passou por isso:
 - O sistema travou exatamente na hora do rush da sexta.
 - A internet caiu e as vendas pararam.
 - **O grande gargalo:** O cozinheiro grita que o prato está pronto, mas o garçom está longe. O prato esfria, o cliente reclama e a cozinha fica desorganizada.
-- **Dúvida cruel:** Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais cerveja para não faltar no sábado?
+- **Dúvida cruel:** Quanto custa fazer aquele drink autoral? Qual é o CMV real da minha caipirinha ou gin tônica? Quanto estou perdendo com chorinho de bartender ou garrafas quebradas?
+- Qual garçom realmente está trazendo lucro? Quais produtos estão apenas ocupando espaço no estoque? Quando exatamente devo comprar mais insumos para não faltar no sábado?
 
-O **Botequista Elite (v5.5.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+O **Botequista Elite (v5.7.0)** foi construído para resolver cada um desses problemas — com tecnologia de ponta e inteligência de dados que você só encontraria em softwares de multinacionais.
+
+## Novidades da Versão 5.7.0 Elite 🚀
+
+### 🍸 Módulo de Drinks & Insumos Fracionados 2.0 💎
+- **Central Dedicada de Coquetelaria (`DrinksManagement`):** Visão executiva completa com CMV médio da casa, margem bruta média dos coquetéis, drink campeão de lucratividade e alerta para itens com margem crítica.
+- **Engenharia de Cardápio com CMV ao Vivo:** Tabela dinâmica que analisa cada drink cadastrado com discriminação detalhada dos custos de insumos e classificação automática (*Estrela*, *Saudável*, *Margem Baixa*).
+- **Simulador de Margem Alvo em 1 Clique:** No cadastro do drink, o sistema calcula o custo dos ingredientes em tempo real e oferece botões rápidos de precificação sugerida para margens de 60%, 70% e 80%.
+- **Cadastro com Embalagem & Volume (Garrafas -> Doses):** O dono informa o preço e tamanho da embalagem fechada (ex: Garrafa de 750ml por R$ 85,00) e o Botequista converte automaticamente para o custo exato por ml/g e estima o custo por dose de 50ml.
+- **Sub-preparos & Ordens de Produção de Batches:** Criação de receitas para xaropes, infusões e pré-misturas com rendimento pré-definido e prazo de validade refrigerada. Com 1 clique, o sistema consome os insumos base, credita o volume produzido no estoque com custo herdado e gera etiquetas de vencimento.
+- **Prevenção de Perdas & Descarte com Valor em R$:** Ferramenta ágil para registrar quebras de balcão, sobras e vencimentos, calculando o prejuízo financeiro acumulado.
+- **Isolamento Estrito por Bar (Princípio Zero Complexidade):** Configurável individualmente por unidade em Ajustes. Para unidades que não vendem coquetelaria, o sistema oculta 100% dos menus e campos avançados, mantendo a tela ultra leve e simples.
+
+## Novidades da Versão 5.6.0 Elite 🚀
+
+### 🎨 Design System Nativo & Micro-Interações Premium 💎
+- **Componentes Desacoplados (`src/shared/ui/`):** Biblioteca unificada com `Button`, `Input`, `Card`, `Badge`, `Modal` e `Tabs`.
+- **Micro-interações Táteis:** Animações responsivas com escala tátil (`active:scale-95`), transições suaves e dark mode impecável.
 
 ## Novidades da Versão 5.5.0 Elite 🚀
 

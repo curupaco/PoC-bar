@@ -1,5 +1,5 @@
 # 🍺 Botequista Pro - Documentação do Sistema
-**Versão:** 5.6.0 (Design System Base em src/shared/ui/, Padronização Visual Global e Micro-Interações Premium)
+**Versão:** 5.7.0 (Módulo de Drinks & Insumos Fracionados 2.0, Batches com Validade, CMV em Tempo Real e Isolamento por Bar)
 **Framework:** React 19 + TypeScript + Vite
 **Backend:** Firebase RTDB + Vercel Serverless Functions
 **Arquitetura:** Offline-First (IndexedDB+SyncQueue)
@@ -12,6 +12,8 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 ### Diferenciais Técnicos
 *   **Offline-First Real:** Utiliza `idb` (IndexedDB Wrapper) para persistir o estado completo da aplicação localmente.
 *   **Design System & Arquitetura de Interface (v5.6.0):** Implementação de componentes base altamente desacoplados e padronizados em `src/shared/ui/` (`Button`, `Input`, `Card`, `Badge`, `Modal`, `Tabs`), substituindo CSS in-line por um sistema de design *Modern Premium & Clean* com micro-interações táteis e validação estrita TypeScript.
+*   **Módulo de Drinks & Insumos Fracionados 2.0 (v5.7.0):** Central de coquetelaria completa com cálculo instantâneo de CMV, precificador dinâmico por margens alvo (60%, 70%, 80%), cadastro de insumos por embalagem/volume (garrafas -> ml e doses), produção de sub-preparos/batches com rendimento e validade refrigerada, e auditoria de perdas e quebras em R$.
+*   **Isolamento Estrito por Unidade (v5.7.0):** Princípio Zero Complexidade. Bares sem o módulo ativo mantêm operação e telas 100% convencionais e enxutas.
 *   **Venda Expressa:** Fluxo otimizado para giro de balcão com auto-geração de comandas.
 *   **Registro de Auditoria:** Rastreabilidade de eventos críticos para resolução de conflitos de sincronia.
 *   **Segurança de Saída:** Guardas de navegação (`beforeunload`) que impedem o fechamento se houver dados pendentes na sincronização.
@@ -31,7 +33,7 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 *   **Previsão de Movimento por Clima & Demanda (v5.2.0):** Previsão matemática offline que cruza médias do dia da semana e geolocalização do clima local (API Open-Meteo) com simulador de clima e checklist dinâmico.
 *   **Matriz de Permissionamentos Híbrida & Retrocompatível (v5.2.0):** Camada de heranças dinâmicas que concede acessos a contas legadas a partir de permissões pai, implementando controle granular individualizado (Modo Evento, ajustes/perdas de estoque, lembretes de WhatsApp, CMV/lucro bruto).
 *   **Hospedaria Temporária com Alertas Customizados (v5.4.0):** Ciclos de estadia e faxina cronometrados para controle de quartos e histórico permanente.
-*   **Controle de Ativação de Módulos (v5.4.0):** Permite ligar/desligar os módulos de Hospedaria e Drinks por bar, ocultando seções em tempo de execução.
+*   **Controle de Ativação de Módulos (v5.4.0 / v5.7.0):** Permite ligar/desligar os módulos de Hospedaria e Drinks por bar, ocultando seções em tempo de execução.
 *   **Recuperação de Senha Mestre do Admin (v5.4.0):** Modal de redefinição rápida com chave do banco Firebase e remapeamento do atalho de checkout de Espaço para F4.
 
 ---
@@ -120,13 +122,21 @@ O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta 
 2.  **Travamento de Auditoria de Pré-Conta:** Ao simular a impressão da pré-conta tématica no PDV, o sistema registra `billPrintedAt` e monitora qualquer manipulação posterior na comanda como suspeita.
 3.  **Logs Cromáticos de Segurança:** Centralização de auditoria de segurança com alertas visuais por severidade.
 
+### N. Central de Coquetelaria & Drinks Fracionados 2.0 (v5.7.0)
+1.  **Engenharia de Cardápio com CMV ao Vivo:** Tabela analítica com cálculo em tempo real do custo da receita, CMV (%) e margem bruta por drink, categorizando cada item em Estrela (&ge;70%), Saudável (55-70%) ou Margem Baixa (&lt;55%).
+2.  **Precificador de Margem Alvo Dinâmico:** No cadastro de qualquer drink com ficha técnica, o sistema sugere instantaneamente o preço ideal de venda para atingir 60%, 70% ou 80% de margem com 1 clique.
+3.  **Cadastro Inteligente com Conversão de Embalagem:** Para insumos fracionados (vodka, gin, xaropes), o gestor cadastra o custo da garrafa/embalagem (ex: 750ml por R$ 85,00) e o sistema calcula automaticamente o custo fracionado por ml/g e por dose padrão de 50ml.
+4.  **Sub-preparos & Ordens de Produção de Batches:** Suporte a receitas artesanais produzidas no bar (xarope de gengibre, premixes, infusões). Ao executar uma ordem de produção, os insumos base são baixados proporcionalmente, o lote entra no estoque com custo médio herdado e recebe etiqueta de validade refrigerada cronometrada.
+5.  **Auditoria de Perdas e Descarte de Bar:** Interface ágil para registrar quebras de garrafas, sobras e lotes vencidos, calculando o impacto financeiro em R$ e registrando transações auditáveis de estoque.
+6.  **Princípio Zero Complexidade por Bar:** Se a unidade desativa o módulo em Ajustes, a navegação de Drinks e todos os campos avançados de ficha técnica são 100% ocultados.
+
 ---
 
 ## 3. Segurança e Sincronização
 
 ### Registro de Auditoria
 O sistema registra automaticamente ações críticas para evitar "perda de dados" aparente entre dispositivos.
-*   **Eventos Rastreados:** `SHIFT_OPEN/CLOSE`, `TAB_OPEN/CLOSE/DELETE`, `ITEM_ADD/DELETE`, etc.
+*   **Eventos Rastreados:** `SHIFT_OPEN/CLOSE`, `TAB_OPEN/CLOSE/DELETE`, `ITEM_ADD/DELETE`, `BATCH_PRODUCTION`, `WASTE_LOG`, etc.
 
 ### Controle de Acesso (RBAC) (Híbrido & Retrocompatível v5.2.0)
 *   **Camada de Herança Dinâmica:** Garante estabilidade retrocompatível total. Usuários cadastrados no banco legado herdam automaticamente os novos acessos granulares a partir de suas permissões raiz (ex: `inventory_view` e `inventory_manage` herdam de `products`, `toggle_event_mode` herda de `pos`, `view_financial_costs` herda de `dashboard`/`reports`, e `manage_debt_reminders` herda de `clear_fiado`/`reports`).
@@ -143,4 +153,4 @@ O sistema registra automaticamente ações críticas para evitar "perda de dados
 
 ---
 
-*Documentação atualizada em Agosto de 2026. Botequista System v5.5.0*
+*Documentação atualizada em Setembro de 2026. Botequista System v5.7.0*

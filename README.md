@@ -188,6 +188,16 @@ Habilidade de ligar/desligar módulos por unidade (bar) diretamente nas configur
 - **Simulador de Pré-Conta Térmica:** O PDV permite gerar a pré-conta no formato térmico físico em janela pop-up e trava a auditoria para monitorar qualquer exclusão subsequente.
 - **Registro de Alertas Críticos:** Histórico operacional que sinaliza anomalias e erros com marcações cromáticas.
 
+### 15. Módulo de Drinks & Insumos Fracionados 2.0 (v5.7.0) 🍸
+Módulo avançado de coquetelaria, controle fracionado de insumos e rentabilidade máxima:
+- **Central Dedicada de Coquetelaria (`DrinksManagement`):** Hub completo com KPIs financeiros (CMV médio da casa, margem bruta média, drink campeão de lucro e total de perdas em R$), acessível via menu lateral quando ativo.
+- **Cadastro Inteligente de Insumos com Embalagem & Volume:** Permite informar a embalagem de compra (ex: Garrafa de 750ml por R$ 85,00) e converte automaticamente para o custo unitário fracionado por ml/g com cálculo do custo de dose padrão de 50ml.
+- **Ficha Técnica com CMV e Margem Alvo em Tempo Real:** Ao montar o drink com insumos e sub-preparos, calcula instantaneamente o Custo Total, CMV (%) e Lucro Bruto (R$), oferecendo atalhos rápidos de precificação para margens alvo de 60%, 70% e 80%.
+- **Sub-preparos & Produção de Batches com Validade:** Criação de receitas de xaropes, infusões e premixes artesanais. Ordem de produção em 1-clique que debita os insumos base proporcionalmente, credita o volume produzido no estoque, herda o custo real e monitora prazos de validade refrigerada.
+- **Prevenção de Perdas & Auditoria de Descarte:** Registro rápido de perdas no balcão com categorização (Vencimento, Quebra/Derramamento, Degustação/Cortesia) e cálculo financeiro do prejuízo acumulado.
+- **Baixa Inteligente no PDV:** O drink vendido consome os insumos da receita sem gerar saldo negativo fictício no produto final.
+- **Isolamento Estrito por Unidade (Zero Complexidade):** Unidades com o módulo desligado mantêm o cardápio, estoque e PDV 100% leves e sem nenhum campo ou menu extra.
+
 ---
 
 ## 🔧 Instalação e Desenvolvimento

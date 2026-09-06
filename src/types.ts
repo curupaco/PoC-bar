@@ -1,4 +1,4 @@
-export type View = 'pos' | 'products' | 'shifts' | 'cash' | 'users' | 'dashboard' | 'history' | 'reports' | 'settings' | 'help' | 'franchise_dashboard' | 'inventory' | 'production_monitor' | 'assistant' | 'lodging';
+export type View = 'pos' | 'products' | 'shifts' | 'cash' | 'users' | 'dashboard' | 'history' | 'reports' | 'settings' | 'help' | 'franchise_dashboard' | 'inventory' | 'production_monitor' | 'assistant' | 'lodging' | 'drinks';
 export type UserPermission = 'dashboard' | 'pos' | 'products' | 'history' | 'reports' | 'settings' | 'users_admin' | 'shifts_admin' | 'cash_admin' | 'open_shift' | 'close_shift' | 'delete_sale' | 'delete_product' | 'edit_product' | 'export_report' | 'clear_fiado' | 'full_reset' | 'manage_backup' | 'help_view' | 'manage_units' | 'view_audit_logs' | 'franchise_admin' | 'toggle_event_mode' | 'inventory_view' | 'inventory_manage' | 'view_financial_costs' | 'manage_debt_reminders';
 export type Theme = 'light' | 'dark';
 export type SellType = 'unit' | 'weight';
@@ -48,6 +48,39 @@ export interface Product {
   isRawMaterial?: boolean;
   recipe?: RecipeItem[];
   unitLabel?: string;
+  packageVolume?: number; // Volume total da embalagem (ex: 750ml, 1000g)
+  packageUnit?: string;   // 'ml' | 'g' | 'un'
+  packageCostPrice?: number; // Custo de compra da embalagem fechada (ex: R$ 85,00)
+  isSubRecipe?: boolean;  // Se é um sub-preparo artesanal (ex: xarope, premix, infusão)
+  yieldQuantity?: number; // Rendimento padrão do lote (ex: 1000ml)
+  shelfLifeDays?: number; // Dias de validade refrigerada após produção (ex: 7 dias)
+}
+
+export interface BatchProduction {
+  id: string;
+  unitId: string;
+  subRecipeId: string;
+  subRecipeName: string;
+  quantityProduced: number;
+  producedAt: string;
+  expiresAt: string;
+  totalCost: number;
+  unitCost: number;
+  status: 'ACTIVE' | 'DEPLETED' | 'EXPIRED' | 'DISCARDED';
+  userId?: string;
+}
+
+export interface WasteLog {
+  id: string;
+  unitId: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  cost: number;
+  reason: 'EXPIRED' | 'SPILL_BREAK' | 'TASTING' | 'OTHER';
+  notes?: string;
+  timestamp: string;
+  userId?: string;
 }
 
 export interface EventStockItem {
