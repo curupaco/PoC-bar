@@ -202,7 +202,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
   return (
     <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in pb-20">
       {/* HEADER PRINCIPAL */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[32px] shadow-2xl border border-indigo-900/30">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[32px] shadow-2xl border border-indigo-900/30">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <span className="text-3xl sm:text-4xl">🍸</span>
@@ -217,7 +217,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0">
           <button
             onClick={() => {
               if (subRecipes.length === 0) {
@@ -229,7 +229,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
               setCustomShelfDays(String(subRecipes[0].shelfLifeDays || 7));
               setIsProduceModalOpen(true);
             }}
-            className="flex-1 md:flex-initial h-12 flex items-center justify-center gap-2 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
+            className="w-full sm:w-48 h-12 flex items-center justify-center gap-2 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all border border-transparent"
           >
             <span>⚡</span>
             <span>Produzir Lote</span>
@@ -239,7 +239,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
             onClick={() => {
               setIsWasteModalOpen(true);
             }}
-            className="flex-1 md:flex-initial h-12 flex items-center justify-center gap-2 px-5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 active:scale-95 transition-all"
+            className="w-full sm:w-48 h-12 flex items-center justify-center gap-2 px-5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 active:scale-95 transition-all"
           >
             <span>🗑️</span>
             <span>Registrar Perda</span>

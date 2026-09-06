@@ -346,16 +346,16 @@ const Inventory: React.FC<InventoryProps> = ({
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão transacional de mercadorias</p>
         </div>
         {canManageStock && (
-          <div className="flex gap-2.5 w-full md:w-auto">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto">
                <button 
                   onClick={() => { setSelectedProduct(null); setShowEntryModal(true); }}
-                  className="flex-1 md:flex-none h-11 sm:h-12 bg-emerald-600 hover:bg-emerald-500 text-white px-5 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial sm:w-36 h-11 sm:h-12 bg-emerald-600 hover:bg-emerald-500 text-white px-4 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                >
                   <span>+</span> <span>Entrada</span>
                </button>
                <button 
                   onClick={() => { setSelectedProduct(null); setShowLossModal(true); }}
-                  className="flex-1 md:flex-none h-11 sm:h-12 bg-red-600 hover:bg-red-500 text-white px-5 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 sm:flex-initial sm:w-36 h-11 sm:h-12 bg-red-600 hover:bg-red-500 text-white px-4 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                >
                   <span>-</span> <span>Perda</span>
                </button>

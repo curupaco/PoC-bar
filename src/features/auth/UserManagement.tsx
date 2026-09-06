@@ -283,9 +283,19 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
               )}
             </div>
 
-            <div className="flex gap-4 pt-8">
-              <button onClick={resetForm} className="px-12 bg-slate-100 dark:bg-slate-800 text-slate-500 py-6 rounded-3xl font-black uppercase text-xs tracking-widest active:scale-95 transition-all">Descartar</button>
-              <button onClick={handleSave} className="flex-1 bg-red-600 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-red-600/30 hover:bg-red-700 active:scale-95 transition-all">Salvar Perfil Operacional</button>
+            <div className="flex items-center gap-3 pt-6">
+              <button 
+                onClick={resetForm} 
+                className="w-1/3 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase text-xs tracking-wider transition-all"
+              >
+                Descartar
+              </button>
+              <button 
+                onClick={handleSave} 
+                className="flex-1 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-red-600/30 active:scale-95 transition-all"
+              >
+                Salvar Perfil Operacional
+              </button>
             </div>
           </div>
         </div>
@@ -302,7 +312,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
           }
 
           return (
-          <div key={user.id} className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-red-500/20 transition-all flex flex-col justify-between h-64">
+          <div key={user.id} className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm group hover:border-red-500/20 transition-all flex flex-col justify-between h-64">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
                  <div className="w-14 h-14 bg-slate-100 dark:bg-slate-950 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-red-600 font-black text-lg transition-colors border border-slate-200 dark:border-slate-800">
@@ -318,7 +328,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Login: @{user.username}</p>
                  </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                  <button onClick={() => {
                     setEditingUser(user);
                     setUsername(user.username);
@@ -330,13 +340,14 @@ const UserManagement: React.FC<UserManagementProps> = ({ users, units = [], onUp
                     setTimeout(() => {
                       topRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }, 100);
-                 }} className="p-3 text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all">
+                 }} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all" title="Editar Usuário">
                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                  </button>
                  {user.username !== 'admin' && (
                     <button 
                       onClick={() => setUserToDelete(user)} 
-                      className="p-3 text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all"
+                      className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-red-500 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 transition-all"
+                      title="Excluir Usuário"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>

@@ -177,8 +177,19 @@ const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({ isOpen, onClose
           </div>
         </div>
 
-        <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-20">
-          <button onClick={handleConfirm} className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">
+        <div className="pt-4 sm:pt-6 mt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-900 z-20 flex items-center gap-3">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="w-1/3 h-12 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-black uppercase text-xs tracking-wider transition-all"
+          >
+            Cancelar
+          </button>
+          <button 
+            type="button" 
+            onClick={handleConfirm} 
+            className="flex-1 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+          >
             Salvar Menu
           </button>
         </div>

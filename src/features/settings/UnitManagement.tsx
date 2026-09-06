@@ -78,13 +78,15 @@ const UnitManagement: React.FC<UnitManagementProps> = ({ units, onUpdateUnits, o
            {isAdding ? (
              <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-red-200 dark:border-red-900/30 animate-in slide-in-from-top-2">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome da Nova Unidade</label>
-                <div className="flex gap-4 mt-2">
+                <div className="flex flex-col sm:flex-row gap-3 mt-2">
                    <input 
                      autoFocus value={name} onChange={e => setName(e.target.value)} placeholder="EX: BAR DA PRAIA" 
-                     className="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-slate-950 font-black uppercase text-sm border-2 border-transparent focus:border-red-500 outline-none"
+                     className="flex-1 px-4 h-12 rounded-2xl bg-white dark:bg-slate-950 font-black uppercase text-sm border-2 border-transparent focus:border-red-500 outline-none"
                    />
-                   <button onClick={handleCreate} className="bg-red-600 text-white px-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-red-700">Criar</button>
-                   <button onClick={() => setIsAdding(false)} className="text-slate-400 font-bold uppercase text-xs px-4">Cancelar</button>
+                   <div className="flex items-center gap-2">
+                     <button onClick={handleCreate} className="h-12 bg-red-600 hover:bg-red-700 text-white px-6 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center">Criar</button>
+                     <button onClick={() => setIsAdding(false)} className="h-12 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 px-4 rounded-2xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center">Cancelar</button>
+                   </div>
                 </div>
              </div>
            ) : (
