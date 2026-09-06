@@ -445,7 +445,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
 
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto space-y-8 sm:space-y-10 animate-in fade-in duration-300 pb-20">
       {/* Toast Alert */}
       {toastMessage && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-8 py-4 rounded-full font-black uppercase text-[10px] tracking-widest shadow-2xl animate-bounce border border-slate-200 dark:border-slate-800">
@@ -456,7 +456,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
       {/* Título Principal */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic text-left">Assistente do Dono</h2>
+          <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic text-left">Assistente do Dono</h2>
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 text-left">
             Módulo Premium • Consultoria Financeira e Inteligência Local
           </p>
@@ -476,7 +476,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex flex-col items-start px-6 py-4 rounded-3xl transition-all shrink-0 text-left ${activeTab === tab.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xl shadow-slate-950/10' : 'text-slate-400 hover:text-slate-650 hover:bg-slate-105 dark:hover:bg-slate-800/30'}`}
+            className={`flex flex-col items-start px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl sm:rounded-3xl transition-all shrink-0 text-left ${activeTab === tab.id ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-950 shadow-xl shadow-slate-950/10' : 'text-slate-400 hover:text-slate-650 hover:bg-slate-105 dark:hover:bg-slate-800/30'}`}
           >
             <span className="text-xs font-black uppercase tracking-wider">{tab.label}</span>
             <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest mt-1">{tab.desc}</span>
@@ -485,33 +485,33 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
       </div>
 
       {activeTab === 'insights' && (
-        <div className="space-y-10 animate-in fade-in duration-300">
+        <div className="space-y-8 sm:space-y-10 animate-in fade-in duration-300">
           {/* 1. CARDS DE RESUMO FINANCEIRO */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[35px] border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="bg-white dark:bg-[#0B1120] p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Faturamento Consumido</p>
-              <p className="text-3xl font-black italic tracking-tighter text-slate-800 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-black italic tracking-tighter text-slate-800 dark:text-white">
                 {formatCurrency(financialStats.consumedRevenue)}
               </p>
               <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Exclui 10% de taxa de serviço</p>
             </div>
-            <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[35px] border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
+            <div className="bg-white dark:bg-[#0B1120] p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">CMV (Custo de Vendas)</p>
-              <p className="text-3xl font-black italic tracking-tighter text-red-500">
+              <p className="text-2xl sm:text-3xl font-black italic tracking-tighter text-red-500">
                 {formatCurrency(financialStats.totalCMV)}
               </p>
               <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Gasto histórico em insumos</p>
             </div>
-            <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[35px] border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
+            <div className="bg-white dark:bg-[#0B1120] p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Lucro Bruto Real</p>
-              <p className="text-3xl font-black italic tracking-tighter text-emerald-600">
+              <p className="text-2xl sm:text-3xl font-black italic tracking-tighter text-emerald-600">
                 {formatCurrency(financialStats.grossProfit)}
               </p>
               <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Sobra após custo de CMV</p>
             </div>
-            <div className="bg-white dark:bg-[#0B1120] p-6 rounded-[35px] border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
+            <div className="bg-white dark:bg-[#0B1120] p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800/80 shadow-sm text-left">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Margem Média Geral</p>
-              <p className="text-3xl font-black italic tracking-tighter text-indigo-500">
+              <p className="text-2xl sm:text-3xl font-black italic tracking-tighter text-indigo-500">
                 {financialStats.consolidatedMargin.toFixed(1)}%
               </p>
               <p className="text-[8px] font-bold text-slate-500 mt-1 uppercase">Meta recomendada: &gt; 55%</p>
@@ -519,7 +519,7 @@ export const OwnerAssistant: React.FC<OwnerAssistantProps> = ({
           </div>
 
           {/* 2. ENGENHARIA DE CARDÁPIO (MATRIZ BCG 2x2) */}
-          <div className="bg-white dark:bg-[#0B1120] p-8 rounded-[40px] border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-6 text-left">
+          <div className="bg-white dark:bg-[#0B1120] p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[36px] border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-6 text-left">
             <div>
               <h3 className="text-lg font-black uppercase italic tracking-tight text-slate-800 dark:text-white leading-none">Matriz de Engenharia de Cardápio (BCG)</h3>
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1.5">

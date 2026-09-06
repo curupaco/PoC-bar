@@ -346,43 +346,43 @@ const Inventory: React.FC<InventoryProps> = ({
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gestão transacional de mercadorias</p>
         </div>
         {canManageStock && (
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex gap-2.5 w-full md:w-auto">
                <button 
                   onClick={() => { setSelectedProduct(null); setShowEntryModal(true); }}
-                  className="flex-1 md:flex-none bg-emerald-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
+                  className="flex-1 md:flex-none h-11 sm:h-12 bg-emerald-600 hover:bg-emerald-500 text-white px-5 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                >
-                  + Entrada
+                  <span>+</span> <span>Entrada</span>
                </button>
                <button 
                   onClick={() => { setSelectedProduct(null); setShowLossModal(true); }}
-                  className="flex-1 md:flex-none bg-red-600 text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all"
+                  className="flex-1 md:flex-none h-11 sm:h-12 bg-red-600 hover:bg-red-500 text-white px-5 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest shadow-lg shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                >
-                  - Perda
+                  <span>-</span> <span>Perda</span>
                </button>
           </div>
         )}
       </div>
 
-      <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
-        <button onClick={() => setActiveTab('STOCK')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'STOCK' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Saldo Atual</button>
-        <button onClick={() => setActiveTab('SUGGESTION')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'SUGGESTION' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Reposição Inteligente</button>
+      <div className="flex overflow-x-auto no-scrollbar gap-2 mb-8 bg-white dark:bg-slate-900 p-2 rounded-2xl sm:rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <button onClick={() => setActiveTab('STOCK')} className={`flex-1 min-w-[120px] h-11 sm:h-12 rounded-xl sm:rounded-2xl font-black uppercase text-[10px] sm:text-[11px] tracking-widest transition-all flex items-center justify-center ${activeTab === 'STOCK' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Saldo Atual</button>
+        <button onClick={() => setActiveTab('SUGGESTION')} className={`flex-1 min-w-[120px] h-11 sm:h-12 rounded-xl sm:rounded-2xl font-black uppercase text-[10px] sm:text-[11px] tracking-widest transition-all flex items-center justify-center ${activeTab === 'SUGGESTION' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Reposição Inteligente</button>
         {drinksEnabled && (
-          <button onClick={() => setActiveTab('CONSIGNMENT')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'CONSIGNMENT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Consignações</button>
+          <button onClick={() => setActiveTab('CONSIGNMENT')} className={`flex-1 min-w-[120px] h-11 sm:h-12 rounded-xl sm:rounded-2xl font-black uppercase text-[10px] sm:text-[11px] tracking-widest transition-all flex items-center justify-center ${activeTab === 'CONSIGNMENT' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Consignações</button>
         )}
-        <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 min-w-[120px] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all ${activeTab === 'HISTORY' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Movimentações</button>
+        <button onClick={() => setActiveTab('HISTORY')} className={`flex-1 min-w-[120px] h-11 sm:h-12 rounded-xl sm:rounded-2xl font-black uppercase text-[10px] sm:text-[11px] tracking-widest transition-all flex items-center justify-center ${activeTab === 'HISTORY' ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>Movimentações</button>
       </div>
 
       {activeTab === 'STOCK' ? (
         <div className="space-y-6">
-           <div className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-4">
-             <div className="flex-1 flex items-center gap-3 w-full">
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+           <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row items-center gap-3 sm:gap-4">
+             <div className="flex-1 flex items-center gap-3 w-full px-2">
+                <svg className="w-5 h-5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 <input 
                     type="text" 
                     placeholder="BUSCAR PRODUTO OU CATEGORIA..." 
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full bg-transparent p-2 font-black uppercase text-xs outline-none text-slate-800 dark:text-white"
+                    className="w-full bg-transparent py-2.5 font-black uppercase text-xs outline-none text-slate-800 dark:text-white"
                     aria-label="Buscar produto ou categoria"
                 />
              </div>
@@ -391,10 +391,10 @@ const Inventory: React.FC<InventoryProps> = ({
 
              <button 
                 onClick={() => setShowOnlyDeadProducts(!showOnlyDeadProducts)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-2xl transition-all ${showOnlyDeadProducts ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 border border-orange-200 dark:border-orange-800/50' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                className={`w-full md:w-auto h-11 sm:h-12 flex items-center justify-center gap-2 px-4 rounded-2xl transition-all ${showOnlyDeadProducts ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 border border-orange-200 dark:border-orange-800/50' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-transparent'}`}
                 aria-label="Filtrar produtos sem giro"
              >
-                <div className={`w-2 h-2 rounded-full ${deadProductIds.size > 0 ? 'bg-orange-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                <div className={`w-2 h-2 rounded-full shrink-0 ${deadProductIds.size > 0 ? 'bg-orange-500 animate-pulse' : 'bg-slate-300'}`}></div>
                 <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Itens Parados ({deadProductIds.size})</span>
              </button>
            </div>

@@ -34,14 +34,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const statusLabel = isOnline ? 'SINCRONIZADO' : dbStatus === 'success' ? 'ERRO API' : isPending ? 'PENDENTE' : 'OFFLINE';
 
   return (
-    <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 p-3 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[32px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
+    <header className="shrink-0 flex justify-between items-center bg-white dark:bg-slate-900/80 px-4 py-3.5 md:p-6 mx-0 md:mx-10 mt-0 md:mt-8 rounded-none md:rounded-[32px] border-b md:border border-slate-200 dark:border-slate-800 shadow-md backdrop-blur-xl z-40">
       <div className="flex items-center gap-3 md:gap-4">
         <Button
           onClick={() => setIsSidebarOpen(true)}
           variant="secondary"
           size="xs"
           rounded="xl"
-          className="md:hidden !p-2.5"
+          className="md:hidden w-10 h-10 !p-0 flex items-center justify-center shrink-0"
           aria-label="Abrir menu lateral"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,37 +60,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             <div className="flex items-center gap-2 mt-1 md:mt-1.5">
               <button
                 onClick={visibleUnits.length > 1 ? handleSwitchUnit : undefined}
-                className={`bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2.5 py-1 rounded-lg text-[8px] md:text-[9px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1 active:scale-95 transition-all`}
+                className={`h-7 bg-red-600 ${visibleUnits.length > 1 ? 'hover:bg-red-700 cursor-pointer' : 'cursor-default'} text-white px-2.5 rounded-lg text-[9px] font-black uppercase tracking-wider shadow-sm inline-flex items-center gap-1.5 active:scale-95 transition-all`}
                 aria-label={visibleUnits.length > 1 ? "Trocar unidade do bar" : `Unidade atual: ${activeUnitName}`}
               >
-                {activeUnitName}
+                <span>{activeUnitName}</span>
                 {visibleUnits.length > 1 && (
-                  <svg className="w-2.5 h-2.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-2.5 h-2.5 opacity-80 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>
                 )}
               </button>
               {visibleUnits.length > 1 && (
-                <Button 
+                <button 
                   onClick={handleSwitchUnit} 
-                  variant="secondary"
-                  size="xs"
-                  rounded="lg"
-                  className="hidden md:inline-flex"
+                  className="hidden md:inline-flex h-7 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[9px] font-black uppercase tracking-wider items-center transition-colors"
                   aria-label="Trocar unidade do bar"
                 >
                   Trocar Unidade
-                </Button>
+                </button>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-5">
+      <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={() => setStatusModalOpen(true)}
-          className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 transition-all hover:scale-[1.02]"
+          className="h-10 flex items-center gap-2 px-3 md:px-4 rounded-xl md:rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-800 transition-all hover:scale-[1.02] shrink-0"
           aria-label="Ver status de sincronização e rede"
         >
           <div className="hidden sm:flex flex-col items-end">
@@ -103,13 +100,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </div>
         </button>
 
-        <div className="flex gap-1.5 md:gap-2 border-l border-slate-100 dark:border-slate-800 pl-2 md:pl-5">
-          <Button
+        <div className="flex items-center gap-1.5 md:gap-2 border-l border-slate-100 dark:border-slate-800 pl-2 md:pl-4">
+          <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            variant="ghost"
-            size="xs"
-            rounded="xl"
-            className="!p-2.5 text-slate-500 dark:text-slate-400 hover:text-red-500"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
             aria-label={`Alternar para tema ${theme === 'dark' ? 'claro' : 'escuro'}`}
           >
             {theme === 'dark' ? (
@@ -121,20 +115,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" strokeWidth={2.5} />
               </svg>
             )}
-          </Button>
+          </button>
 
-          <Button
+          <button
             onClick={() => setFeedbackOpen(true)}
-            variant="ghost"
-            size="xs"
-            rounded="xl"
-            className="!p-2.5 text-slate-500 dark:text-slate-400 hover:text-blue-500"
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
             aria-label="Enviar feedback ou reportar erro"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
-          </Button>
+          </button>
         </div>
       </div>
     </header>

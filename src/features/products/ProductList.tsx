@@ -393,15 +393,15 @@ const ProductList: React.FC<ProductListProps> = ({
 
       {/* MODAL DE PRODUTO */}
       {showModal && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={closeModal} />
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[40px] p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl sm:rounded-3xl md:rounded-[36px] p-5 sm:p-7 md:p-8 shadow-2xl relative z-10 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col max-h-[90vh]">
             
-            <div className="flex justify-between items-center mb-8 shrink-0">
-              <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
+            <div className="flex justify-between items-center mb-6 sm:mb-8 shrink-0">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
                 {editingId ? 'Editar Produto' : 'Novo Produto'}
               </h3>
-              <button onClick={closeModal} className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold" aria-label="Fechar modal de produto">✕</button>
+              <button onClick={closeModal} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all font-bold text-sm" aria-label="Fechar modal de produto">✕</button>
             </div>
 
             <div className="space-y-6 overflow-y-auto no-scrollbar p-1">
@@ -422,14 +422,14 @@ const ProductList: React.FC<ProductListProps> = ({
                 <div className="space-y-2">
                   <label htmlFor="product-price-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Preço Venda</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs sm:text-sm">R$</span>
                     <input 
                       id="product-price-input"
                       type="text" 
                       inputMode="decimal"
                       value={price} 
                       onChange={e => setPrice(sanitizeCurrencyInput(e.target.value))} 
-                      className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-lg outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                      className="w-full pl-12 pr-4 py-3.5 sm:py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-base sm:text-lg outline-none focus:ring-2 focus:ring-red-500 transition-all" 
                       placeholder="0,00" 
                     />
                   </div>
@@ -437,14 +437,14 @@ const ProductList: React.FC<ProductListProps> = ({
                 <div className="space-y-2">
                   <label htmlFor="product-cost-input" className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Custo (CMV)</label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">R$</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs sm:text-sm">R$</span>
                     <input 
                       id="product-cost-input"
                       type="text" 
                       inputMode="decimal"
                       value={cost} 
                       onChange={e => setCost(sanitizeCurrencyInput(e.target.value))} 
-                      className="w-full pl-10 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all" 
+                      className="w-full pl-12 pr-4 py-3.5 sm:py-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-black text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all" 
                       placeholder="0,00" 
                     />
                   </div>
@@ -858,8 +858,19 @@ const ProductList: React.FC<ProductListProps> = ({
               )}
             </div>
 
-            <div className="pt-6 mt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3 shrink-0">
-              <button onClick={handleSaveProduct} className="w-full bg-red-600 hover:bg-red-700 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all">
+            <div className="pt-4 sm:pt-6 mt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-3 shrink-0">
+              <button 
+                type="button" 
+                onClick={closeModal} 
+                className="w-1/3 py-3.5 sm:py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-black uppercase text-xs tracking-wider transition-all"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                onClick={handleSaveProduct} 
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3.5 sm:py-4 rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-red-600/20 active:scale-95 transition-all"
+              >
                 Salvar Produto
               </button>
             </div>

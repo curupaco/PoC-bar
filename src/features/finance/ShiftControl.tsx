@@ -210,37 +210,43 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
       <div className="max-w-6xl mx-auto space-y-8 pb-32 relative">
          {activeShift ? (
             <div className="space-y-6 animate-in fade-in duration-500">
-               <div className="bg-white dark:bg-slate-900 p-10 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800">
-                  <div className="flex justify-between items-start mb-10">
+               <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 md:p-10 rounded-2xl sm:rounded-3xl md:rounded-[36px] shadow-2xl border border-slate-200 dark:border-slate-800">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-10">
                      <div>
-                        <h2 className="text-3xl font-black uppercase tracking-tighter italic">Monitor de Turno</h2>
+                        <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter italic">Monitor de Turno</h2>
                         <div className="flex items-center gap-2 mt-1">
                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                            <p className="text-[10px] font-bold uppercase text-slate-400 tracking-widest">Responsável: @{activeShift.openedBy} • Aberto às {new Date(activeShift.startTime).toLocaleTimeString()}</p>
                         </div>
                      </div>
-                     <button onClick={() => setShowConferral(true)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg active:scale-95" aria-label="Iniciar fechamento de turno">Fechar Turno</button>
+                     <button 
+                        onClick={() => setShowConferral(true)} 
+                        className="h-11 sm:h-12 px-6 sm:px-8 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2" 
+                        aria-label="Iniciar fechamento de turno"
+                     >
+                        Fechar Turno
+                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                     <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-3xl border border-slate-100 dark:border-slate-800">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                     <div className="p-5 sm:p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800">
                         <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Faturamento Bruto</p>
-                        <p className="text-3xl font-black text-slate-800 dark:text-white">{formatCurrency(totalSoldInShift)}</p>
+                        <p className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">{formatCurrency(totalSoldInShift)}</p>
                         <p className="text-[9px] font-bold text-slate-500 mt-1 uppercase italic">{shiftStats.ticketCount} tickets emitidos</p>
                      </div>
-                     <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-3xl border border-emerald-100 dark:border-emerald-900/20">
+                     <div className="p-5 sm:p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-2xl sm:rounded-3xl border border-emerald-100 dark:border-emerald-900/20">
                         <p className="text-[9px] font-black text-emerald-600 uppercase mb-2">Entradas Dinheiro</p>
-                        <p className="text-3xl font-black text-emerald-700 dark:text-emerald-400">{formatCurrency(cashMovements.sales)}</p>
+                        <p className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-400">{formatCurrency(cashMovements.sales)}</p>
                         <p className="text-[9px] font-bold text-emerald-600/60 mt-1 uppercase italic">Gaveta Física</p>
                      </div>
-                     <div className="p-6 bg-blue-50 dark:bg-blue-900/10 rounded-3xl border border-blue-100 dark:border-blue-900/20">
+                     <div className="p-5 sm:p-6 bg-blue-50 dark:bg-blue-900/10 rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/20">
                         <p className="text-[9px] font-black text-blue-600 uppercase mb-2">Esperado Gaveta</p>
-                        <p className="text-3xl font-black text-blue-700 dark:text-blue-400">{formatCurrency(expectedCashInDrawer)}</p>
+                        <p className="text-2xl sm:text-3xl font-black text-blue-700 dark:text-blue-400">{formatCurrency(expectedCashInDrawer)}</p>
                         <p className="text-[9px] font-bold text-blue-600/60 mt-1 uppercase italic">Fundo + Vendas</p>
                      </div>
-                     <div className="p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-900/20">
+                     <div className="p-5 sm:p-6 bg-indigo-50 dark:bg-indigo-900/10 rounded-2xl sm:rounded-3xl border border-indigo-100 dark:border-indigo-900/20">
                         <p className="text-[9px] font-black text-indigo-600 uppercase mb-2">Itens Lançados</p>
-                        <p className="text-3xl font-black text-indigo-700 dark:text-indigo-400">{shiftStats.totalItems}</p>
+                        <p className="text-2xl sm:text-3xl font-black text-indigo-700 dark:text-indigo-400">{shiftStats.totalItems}</p>
                         <p className="text-[9px] font-bold text-indigo-600/60 mt-1 uppercase italic">Volume de saída</p>
                      </div>
                   </div>
@@ -249,7 +255,7 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
          ) : (
             <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
                {/* Item 1: Container "Card Físico" Sólido e Arredondado */}
-               <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800">
+               <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl md:rounded-[36px] shadow-2xl border border-slate-200 dark:border-slate-800">
 
                   <div className="text-center mb-10">
                      <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mb-3">Abertura de Turno</h2>
@@ -329,9 +335,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
          )}
 
          {showConferral && activeShift && (
-            <div className="fixed inset-0 z-[700] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[700] flex items-center justify-center p-3 sm:p-4">
                <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl animate-in fade-in" onClick={() => setShowConferral(false)} />
-                <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[40px] p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-8 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl sm:rounded-3xl md:rounded-[36px] p-5 sm:p-7 md:p-8 shadow-2xl relative z-[710] border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 flex flex-col md:flex-row gap-6 md:gap-8 overflow-hidden">
                    
                    {/* Dica de Segurança Blind Mode */}
                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
@@ -416,19 +422,19 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                            </div>
                         </div>
 
-                           {/* Diferença Oculta (Blind Mode) */}
+                            {/* Diferença Oculta (Blind Mode) */}
                          <div className={`p-4 rounded-2xl flex flex-col items-center justify-center border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20`}>
                             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1">Status de Conferência</span>
                             <span className="text-[10px] font-black uppercase text-slate-500 italic">🔒 Modo Cego Ativado</span>
                          </div>
-       
+        
                      </div>
 
                      <div className="mt-8 flex flex-col gap-3">
                         <button
                            onClick={handleConfirmClose}
                            disabled={isProcessing}
-                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-6 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-50"
+                           className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 sm:py-6 rounded-2xl sm:rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 transition-all disabled:opacity-50"
                            aria-label="Confirmar fechamento definitivo do turno"
                         >
                            {isProcessing ? 'PROCESSANDO...' : 'Confirmar Fechamento'}
@@ -443,9 +449,9 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
 
          {/* ITEM 9: MODAL DE BACKUP AUTOMÁTICO */}
          {showBackupPrompt && (
-            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-3 sm:p-4">
                <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md animate-in fade-in" onClick={() => setShowBackupPrompt(false)} />
-               <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-[40px] p-10 shadow-2xl relative z-10 border border-emerald-500/30 animate-in zoom-in-95 text-center">
+               <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl sm:rounded-3xl md:rounded-[36px] p-6 sm:p-8 md:p-10 shadow-2xl relative z-10 border border-emerald-500/30 animate-in zoom-in-95 text-center">
                   <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                      <span className="text-4xl">🛡️</span>
                   </div>

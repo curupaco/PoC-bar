@@ -244,7 +244,7 @@ export const App: React.FC = () => {
           setFeedbackOpen={setFeedbackOpen} 
         />
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-10 w-full max-w-[1750px] mx-auto">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 md:p-8 w-full max-w-7xl mx-auto">
           {renderActiveView()}
         </div>
 

@@ -381,13 +381,13 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-24 relative">
+    <div className="space-y-8 max-w-7xl mx-auto pb-24 relative">
       {toast && <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[300] bg-slate-900 text-white px-8 py-4 rounded-full font-black uppercase text-xs shadow-2xl animate-in slide-in-from-top-4">{toast}</div>}
 
       <div className="flex flex-col items-center gap-6">
-        <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+        <div className="flex bg-white dark:bg-slate-900 p-1.5 rounded-2xl sm:rounded-[24px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-x-auto no-scrollbar max-w-full">
           {(['HOJE', 'ONTEM', 'SEMANA', 'MÊS'] as const).map(type => (
-            <button key={type} onClick={() => setPreset(type)} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${periodLabel === type ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{type}</button>
+            <button key={type} onClick={() => setPreset(type)} className={`px-5 sm:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${periodLabel === type ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{type}</button>
           ))}
         </div>
         <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-slate-900 px-6 py-2.5 rounded-full border border-slate-200 dark:border-slate-800 italic">
@@ -404,11 +404,11 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
           {/* Sombra de desbotamento à direita para indicar scroll no mobile */}
           <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent pointer-events-none z-10 md:hidden"></div>
 
-          <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-2 rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
+          <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-2xl sm:rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
             {categoriesList.map(cat => {
               const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
               return (
-                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>
+                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>
                   {isAlert && <span>⚠️</span>} {cat}
                 </button>
               );

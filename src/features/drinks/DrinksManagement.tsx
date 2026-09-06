@@ -200,24 +200,24 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
   };
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in">
+    <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in pb-20">
       {/* HEADER PRINCIPAL */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-[32px] shadow-2xl border border-indigo-900/30">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[32px] shadow-2xl border border-indigo-900/30">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">🍸</span>
+            <span className="text-3xl sm:text-4xl">🍸</span>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight italic">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-tight italic">
                 Coquetelaria & Insumos Fracionados
               </h1>
-              <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest">
+              <p className="text-[10px] sm:text-xs font-bold text-indigo-300 uppercase tracking-widest">
                 Gestão Financeira, CMV, Produção de Batches & Fichas Técnicas
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2.5 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <button
             onClick={() => {
               if (subRecipes.length === 0) {
@@ -229,7 +229,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
               setCustomShelfDays(String(subRecipes[0].shelfLifeDays || 7));
               setIsProduceModalOpen(true);
             }}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
+            className="flex-1 md:flex-initial h-12 flex items-center justify-center gap-2 px-5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-2xl font-black text-xs uppercase tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
           >
             <span>⚡</span>
             <span>Produzir Lote</span>
@@ -239,7 +239,7 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
             onClick={() => {
               setIsWasteModalOpen(true);
             }}
-            className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 active:scale-95 transition-all"
+            className="flex-1 md:flex-initial h-12 flex items-center justify-center gap-2 px-5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-2xl font-black text-xs uppercase tracking-wider border border-slate-700 active:scale-95 transition-all"
           >
             <span>🗑️</span>
             <span>Registrar Perda</span>
@@ -680,20 +680,20 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
 
       {/* MODAL: PRODUZIR LOTE */}
       {isProduceModalOpen && activeSubRecipe && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl sm:rounded-3xl md:rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 md:p-8 space-y-6">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[8px] font-black uppercase text-purple-600 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded-md">
                   Ordem de Produção
                 </span>
-                <h3 className="text-xl font-black uppercase text-slate-800 dark:text-white mt-1">
+                <h3 className="text-lg sm:text-xl font-black uppercase text-slate-800 dark:text-white mt-1">
                   Produzir {activeSubRecipe.name}
                 </h3>
               </div>
               <button
                 onClick={() => setIsProduceModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-black"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold text-sm"
               >
                 ✕
               </button>
@@ -752,18 +752,18 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
               </div>
             )}
 
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setIsProduceModalOpen(false)}
-                className="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold uppercase text-xs"
+                className="flex-1 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase text-xs transition-all"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmProduce}
-                className="flex-1 py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
+                className="flex-1 h-12 flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-purple-600/30 active:scale-95 transition-all"
               >
                 Confirmar Produção
               </button>
@@ -774,20 +774,20 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
 
       {/* MODAL: REGISTRAR DESCARTE / PERDA */}
       {isWasteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl sm:rounded-3xl md:rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-2xl p-5 sm:p-7 md:p-8 space-y-6">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[8px] font-black uppercase text-rose-600 bg-rose-100 dark:bg-rose-900/30 px-2 py-0.5 rounded-md">
                   Controle de Desperdício
                 </span>
-                <h3 className="text-xl font-black uppercase text-slate-800 dark:text-white mt-1">
+                <h3 className="text-lg sm:text-xl font-black uppercase text-slate-800 dark:text-white mt-1">
                   Registrar Quebra / Descarte
                 </h3>
               </div>
               <button
                 onClick={() => setIsWasteModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-black"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all font-bold text-sm"
               >
                 ✕
               </button>
@@ -856,18 +856,18 @@ export const DrinksManagement: React.FC<DrinksManagementProps> = ({
               )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setIsWasteModalOpen(false)}
-                className="flex-1 py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold uppercase text-xs"
+                className="flex-1 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-2xl font-black uppercase text-xs transition-all"
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={handleConfirmWaste}
-                className="flex-1 py-3.5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-rose-600/30 active:scale-95 transition-all"
+                className="flex-1 h-12 flex items-center justify-center bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black uppercase text-xs tracking-wider shadow-lg shadow-rose-600/30 active:scale-95 transition-all"
               >
                 Confirmar Descarte
               </button>

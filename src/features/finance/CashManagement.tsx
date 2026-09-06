@@ -188,7 +188,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
         <div className="lg:col-span-2 space-y-6">
             
             {/* GAVETA DE TROCO (ESTILO CARTEIRA/DINÂMICO) */}
-            <div className={`relative p-8 rounded-[40px] border-2 transition-all duration-500 group overflow-hidden ${isDrawerOverflowing ? 'bg-orange-50 border-orange-300 dark:bg-orange-900/10 dark:border-orange-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
+            <div className={`relative p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[36px] border-2 transition-all duration-500 group overflow-hidden ${isDrawerOverflowing ? 'bg-orange-50 border-orange-300 dark:bg-orange-900/10 dark:border-orange-500/30' : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
                <div className="flex justify-between items-start relative z-10">
                   <div className="flex items-center gap-4">
                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${isDrawerOverflowing ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 dark:bg-slate-800 text-slate-400'}`}>
@@ -200,7 +200,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className={`text-4xl font-black tracking-tighter ${isDrawerOverflowing ? 'text-orange-600 animate-pulse' : 'text-slate-800 dark:text-white'}`}>
+                     <p className={`text-3xl sm:text-4xl font-black tracking-tighter ${isDrawerOverflowing ? 'text-orange-600 animate-pulse' : 'text-slate-800 dark:text-white'}`}>
                         {formatCurrency(currentDrawerBalance)}
                      </p>
                   </div>
@@ -209,7 +209,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                <div className="mt-8 flex gap-4 relative z-10">
                   <button 
                     onClick={() => { setOperation('SANGRIA'); setKeypadValue(''); }}
-                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-600/20 active:scale-95 transition-all flex items-center justify-center gap-2"
                     aria-label="Realizar Sangria (Gaveta para Cofre)"
                   >
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
@@ -219,7 +219,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
             </div>
 
             {/* COFRE PRINCIPAL (ESTILO FORTE/SEGURO) */}
-            <div className="bg-slate-900 text-white p-8 rounded-[40px] shadow-2xl relative overflow-hidden group w-full border border-slate-800">
+            <div className="bg-slate-900 text-white p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[36px] shadow-2xl relative overflow-hidden group w-full border border-slate-800">
                <div className="flex justify-between items-start relative z-10">
                   <div className="flex items-center gap-4">
                      <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center text-2xl text-slate-400 shadow-inner">🔒</div>
@@ -229,14 +229,14 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className="text-4xl font-black tracking-tighter text-white">{formatCurrency(activeShift.cashPrimary)}</p>
+                     <p className="text-3xl sm:text-4xl font-black tracking-tighter text-white">{formatCurrency(activeShift.cashPrimary)}</p>
                   </div>
                </div>
                
                <div className="mt-8 relative z-10">
                   <button 
                     onClick={() => { setOperation('SUPPLY'); setKeypadValue(''); }}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
                     aria-label="Enviar Suprimento (Cofre para Gaveta)"
                   >
                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
@@ -248,7 +248,7 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
         </div>
 
         {/* COLUNA 3: TIMELINE DE AUDITORIA */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[500px] lg:h-auto">
+        <div className="bg-white dark:bg-slate-900 p-5 sm:p-6 rounded-2xl sm:rounded-3xl md:rounded-[36px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-[500px] lg:h-auto">
            <div className="mb-6 px-2">
               <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">Últimas Movimentações</h3>
               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Feed de Auditoria em Tempo Real</p>
@@ -288,14 +288,14 @@ const CashManagement: React.FC<CashManagementProps> = ({ shifts, onUpdateShifts,
       {/* MODAL / TECLADO NUMÉRICO ESTILO ATM */}
       {operation && (
          <div className="fixed inset-0 z-[500] bg-slate-950/90 backdrop-blur-md flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 w-full sm:max-w-sm rounded-t-[40px] sm:rounded-[40px] p-6 sm:p-8 shadow-2xl animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl md:rounded-[36px] p-5 sm:p-7 shadow-2xl animate-in slide-in-from-bottom-10 zoom-in-95 duration-300 border border-slate-200 dark:border-slate-800">
                
-               <div className="flex justify-between items-center mb-8">
+               <div className="flex justify-between items-center mb-6 sm:mb-8">
                   <div>
                      <h3 className={`text-xl font-black uppercase tracking-tighter italic ${getOperationColor(operation)}`}>{getOperationLabel(operation)}</h3>
                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Digite o valor da operação</p>
                   </div>
-                  <button onClick={() => { setOperation(null); setKeypadValue(''); }} className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors font-bold" aria-label="Fechar terminal de tesouraria">✕</button>
+                  <button onClick={() => { setOperation(null); setKeypadValue(''); }} className="w-9 h-9 sm:w-10 sm:h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-500 hover:text-red-500 transition-colors font-bold text-sm" aria-label="Fechar terminal de tesouraria">✕</button>
                </div>
 
                {/* VISOR */}

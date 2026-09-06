@@ -395,20 +395,20 @@ export const POS: React.FC<POSProps> = ({
 
       {!activeTabId ? (
         <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-6 animate-in fade-in p-1">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-6">
+          <div className="bg-white dark:bg-slate-900 p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl md:rounded-[36px] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
             <div className="flex justify-between items-center w-full sm:w-auto">
-              <h2 className="text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Vendas</h2>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none">Vendas</h2>
               <button 
                 onClick={() => setShowShortcutsModal(true)} 
-                className="sm:hidden flex items-center gap-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[9px] tracking-widest transition-colors"
+                className="sm:hidden flex items-center gap-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[9px] tracking-widest transition-colors h-8 px-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800"
               >
-                <span className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center font-black">?</span>
+                <span className="w-4 h-4 rounded-full border border-current flex items-center justify-center font-black text-[8px]">?</span>
                 <span>Atalhos</span>
               </button>
             </div>
-            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3 items-end sm:items-center">
+            <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-3 items-stretch sm:items-center">
               {drinksEnabled && consignedEvents.filter(e => e.status === 'PENDING').length > 0 && (
-                <div className="w-full sm:w-auto flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950">
+                <div className="w-full sm:w-auto flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 h-12">
                   <span className="text-sm">🍸</span>
                   <select
                     value={activeEventId || ''}
@@ -426,12 +426,12 @@ export const POS: React.FC<POSProps> = ({
                   </select>
                 </div>
               )}
-              <div className="grid grid-cols-3 gap-2 w-full sm:flex sm:w-auto sm:items-center sm:gap-3">
+              <div className={`grid ${drinksEnabled ? 'grid-cols-3' : 'grid-cols-2'} gap-2 w-full sm:flex sm:w-auto sm:items-center sm:gap-2.5`}>
                 <button 
                   onClick={() => setShowShortcutsModal(true)} 
-                  className="hidden sm:flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[10px] tracking-widest transition-colors mr-2"
+                  className="hidden sm:flex items-center gap-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold uppercase text-[10px] tracking-widest transition-colors h-12 px-3"
                 >
-                  <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center font-black">?</span>
+                  <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center font-black text-[9px]">?</span>
                   <span>Atalhos</span>
                 </button>
                 
@@ -445,7 +445,7 @@ export const POS: React.FC<POSProps> = ({
                       }
                       setIsEventMode(!isEventMode);
                     }}
-                    className={`flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 px-3 py-3 sm:px-4 sm:py-4 rounded-2xl font-black uppercase tracking-wider transition-all border-2 text-center
+                    className={`h-12 flex items-center justify-center gap-2 px-4 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-wider transition-all border-2 text-center
                        ${(() => {
                          const hasEventModePermission = !currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos');
                          if (!hasEventModePermission) return 'opacity-40 cursor-not-allowed border-slate-200 dark:border-slate-800 text-slate-400';
@@ -453,38 +453,38 @@ export const POS: React.FC<POSProps> = ({
                        })()}`}
                     title={(!currentUser || currentUser.username === 'admin' || currentUser.permissions.includes('toggle_event_mode') || currentUser.permissions.includes('pos')) ? 'Alternar Modo Evento' : 'Acesso restrito à gerência'}
                   >
-                    <span className="text-base sm:text-sm">🎉</span>
-                    <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Modo Evento</span>
+                    <span className="text-sm">🎉</span>
+                    <span className="whitespace-nowrap">Modo Evento</span>
                   </button>
                 )}
 
                 <button 
                   onClick={handleQuickSale} 
-                  className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-3 sm:px-8 sm:py-4 rounded-2xl font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all text-center"
+                  className="h-12 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-wider shadow-lg active:scale-95 transition-all text-center"
                 >
-                  <span className="text-base sm:text-xs">⚡</span>
-                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Venda Rápida</span>
+                  <span className="text-sm">⚡</span>
+                  <span className="whitespace-nowrap">Venda Rápida</span>
                 </button>
 
                 <button 
                   onClick={() => setIsAddingTab(true)} 
-                  className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-3 sm:px-10 sm:py-4 rounded-2xl font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all text-center"
+                  className="h-12 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 sm:px-6 rounded-2xl font-black uppercase text-[10px] sm:text-xs tracking-wider shadow-lg active:scale-95 transition-all text-center"
                 >
-                  <span className="text-base sm:text-xs">🪑</span>
-                  <span className="text-[8px] sm:text-xs tracking-tight leading-tight sm:leading-normal">Abrir Mesa</span>
+                  <span className="text-sm">🪑</span>
+                  <span className="whitespace-nowrap">Abrir Mesa</span>
                 </button>
               </div>
             </div>
           </div>
           
           {isAddingTab && (
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[40px] border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-4 animate-in zoom-in-95">
+            <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl sm:rounded-[36px] border-2 sm:border-4 border-red-500 shadow-2xl flex flex-col md:flex-row gap-3 sm:gap-4 animate-in zoom-in-95">
               <input 
                 autoFocus 
                 value={newTabName} 
                 onChange={e => setNewTabName(e.target.value)} 
                 placeholder="NOME OU NÚMERO DA MESA..." 
-                className="flex-1 px-8 py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-xl outline-none" 
+                className="flex-1 px-5 sm:px-8 py-3.5 sm:py-5 rounded-2xl bg-slate-50 dark:bg-slate-950 font-black uppercase text-base sm:text-xl outline-none border border-slate-200 dark:border-slate-800 focus:border-red-500 transition-colors" 
                 onKeyDown={async e => {
                   if (e.key === 'Enter' && newTabName) {
                     const finalName = newTabName.toUpperCase().trim();
@@ -498,7 +498,7 @@ export const POS: React.FC<POSProps> = ({
                   }
                 }} 
               />
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button 
                   onClick={async () => { 
                     const finalName = newTabName.toUpperCase().trim();
@@ -510,11 +510,16 @@ export const POS: React.FC<POSProps> = ({
                       setIsAddingTab(false); 
                     } 
                   }} 
-                  className="flex-1 bg-red-600 text-white px-10 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"
+                  className="flex-1 sm:flex-none h-12 md:h-16 bg-red-600 hover:bg-red-700 text-white px-6 sm:px-8 rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-md active:scale-95"
                 >
                   Confirmar
                 </button>
-                <button onClick={() => { setIsAddingTab(false); setNewTabName(''); }} className="px-6 py-4 rounded-2xl font-black uppercase text-xs text-slate-400">Cancelar</button>
+                <button 
+                  onClick={() => { setIsAddingTab(false); setNewTabName(''); }} 
+                  className="h-12 md:h-16 px-5 sm:px-6 rounded-2xl font-black uppercase text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-100 dark:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
           )}

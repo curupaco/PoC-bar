@@ -190,9 +190,9 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto">
       <div className="flex flex-col items-center gap-4">
         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Relatório de Performance</p>
-        <div className="flex p-1.5 border shadow-sm w-fit bg-white dark:bg-slate-900 rounded-[24px] border-slate-200 dark:border-slate-800">
+        <div className="max-w-full overflow-x-auto no-scrollbar flex p-1 sm:p-1.5 border shadow-sm bg-white dark:bg-slate-900 rounded-2xl sm:rounded-[24px] border-slate-200 dark:border-slate-800">
           {(['HOJE', 'ONTEM', 'SEMANA', 'MÊS', 'ANO'] as Period[]).map(p => (
-            <button key={p} onClick={() => setActivePeriod(p)} className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${activePeriod === p ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{p}</button>
+            <button key={p} onClick={() => setActivePeriod(p)} className={`px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all ${activePeriod === p ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}>{p}</button>
           ))}
         </div>
       </div>
@@ -223,7 +223,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-12">
-        <div className="p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+        <div className="p-5 sm:p-7 md:p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl md:rounded-[36px] border-slate-200 dark:border-slate-800">
           <h3 className="font-black text-[10px] uppercase tracking-[0.2em] mb-8 text-slate-500">Curva ABC (Top 5 Produtos)</h3>
           <div className="h-[300px]">
             {barData.length > 0 ? (
@@ -242,7 +242,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
           </div>
         </div>
 
-        <div className="p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+        <div className="p-5 sm:p-7 md:p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl md:rounded-[36px] border-slate-200 dark:border-slate-800">
           <h3 className="font-black text-[10px] uppercase tracking-[0.2em] mb-8 text-slate-500">Ranking de Atendimento</h3>
           <div className="h-[300px]">
              {garcomData.length > 0 ? (
@@ -261,7 +261,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
           </div>
         </div>
 
-        <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+        <div className="xl:col-span-2 p-5 sm:p-7 md:p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl md:rounded-[36px] border-slate-200 dark:border-slate-800">
            <h3 className="font-black text-[10px] uppercase tracking-[0.2em] mb-8 text-slate-500">Mapa de Calor (Horário de Pico)</h3>
            <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -286,7 +286,7 @@ const Dashboard: React.FC<DashboardProps> = ({ sales = [], products = [], users 
           <AIInsights products={products} sales={sales} stockBalances={stockBalances} />
         )}
 
-        <div className="xl:col-span-2 p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-[40px] border-slate-200 dark:border-slate-800">
+        <div className="xl:col-span-2 p-5 sm:p-7 md:p-8 border shadow-sm bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl md:rounded-[36px] border-slate-200 dark:border-slate-800">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
               <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-slate-500">🔥 Insights de Venda: Combos Populares</h3>
               <p className="text-[10px] font-black text-slate-400 uppercase italic tracking-widest">Baseado em itens vendidos juntos</p>

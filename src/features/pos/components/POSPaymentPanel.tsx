@@ -316,28 +316,28 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         </div>
                      )}
 
-                     <div className="space-y-2 mt-auto">
-                        {!isQuickSale && (
-                           <button 
-                              onClick={() => {
-                                 const text = `*BOTEQUISTA - COMPROVANTE*%0AValor: *${formatCurrency(tabTotal)}*%0AStatus: PAGO%0AData: ${new Date().toLocaleString()}`;
-                                 window.open(`https://wa.me/?text=${text}`, '_blank');
-                              }}
-                              className="w-full py-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl font-black uppercase text-[9px] tracking-widest flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800"
-                           >
-                              <span>📱</span> WhatsApp
-                           </button>
-                        )}
-                        <button
-                           onClick={handleFinishSale}
-                           disabled={(!isQuickSale && remainingBalance > 0.05) || isProcessing}
-                           className={`w-full py-6 rounded-[25px] font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center gap-0.5 
-                           ${isProcessing ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isQuickSale ? 'bg-emerald-600 text-white' : (remainingBalance <= 0.05 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50')}`}
-                        >
-                           <span className="text-[10px]">{isProcessing ? 'PROCESSANDO...' : isQuickSale ? 'FECHAR BALCÃO' : 'FINALIZAR CONTA'}</span>
-                           <span className="text-[11px] opacity-90 italic tracking-normal font-bold uppercase">{formatCurrency(tabTotal)}</span>
-                        </button>
-                     </div>
+                   <div className="space-y-2 mt-auto pt-2">
+                      {!isQuickSale && (
+                         <button 
+                            onClick={() => {
+                               const text = `*BOTEQUISTA - COMPROVANTE*%0AValor: *${formatCurrency(tabTotal)}*%0AStatus: PAGO%0AData: ${new Date().toLocaleString()}`;
+                               window.open(`https://wa.me/?text=${text}`, '_blank');
+                            }}
+                            className="w-full h-11 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 border border-emerald-200 dark:border-emerald-800 transition-colors shadow-sm"
+                         >
+                            <span>📱</span> WhatsApp
+                         </button>
+                      )}
+                      <button
+                         onClick={handleFinishSale}
+                         disabled={(!isQuickSale && remainingBalance > 0.05) || isProcessing}
+                         className={`w-full py-4 sm:py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-all flex flex-col items-center justify-center gap-1 
+                         ${isProcessing ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : isQuickSale ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : (remainingBalance <= 0.05 ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-50')}`}
+                      >
+                         <span className="text-[11px] leading-none">{isProcessing ? 'PROCESSANDO...' : isQuickSale ? 'FECHAR BALCÃO' : 'FINALIZAR CONTA'}</span>
+                         <span className="text-xs opacity-90 italic tracking-normal font-bold uppercase leading-none">{formatCurrency(tabTotal)}</span>
+                      </button>
+                   </div>
                   </div>
                </div>
 
