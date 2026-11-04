@@ -11,6 +11,7 @@ import ProductReport from './components/ProductReport';
 import OperationalReport from './components/OperationalReport';
 import InventoryReport from './components/InventoryReport';
 import AuditReport from './components/AuditReport';
+import { RedeConciliation } from '../finance/RedeConciliation';
 import { AuditLog } from '../../types';
 
 interface ReportsProps {
@@ -29,7 +30,7 @@ interface ReportsProps {
   units?: Unit[];
 }
 
-type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA' | 'ESTOQUE';
+type ReportCategory = 'FECHAMENTO' | 'FINANCEIRO' | 'CONCILIACAO_REDE' | 'PENDURAS' | 'EQUIPE' | 'OPERACIONAL' | 'PRODUTOS' | 'AUDITORIA' | 'ESTOQUE';
 
 const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = [], shifts = [], auditLogs = [], stockTransactions = [], currentUser, onQuitarPendura, theme, penduraThreshold = 500, activeUnitId, syncConfig, units = [] }) => {
   const [activeCategory, setActiveCategory] = useState<ReportCategory>('FECHAMENTO');
@@ -50,12 +51,12 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     currentUser.permissions.includes('reports');
 
   const categoriesList = useMemo<ReportCategory[]>(() => {
-    let list: ReportCategory[] = ['FECHAMENTO', 'FINANCEIRO', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'];
+    let list: ReportCategory[] = ['FECHAMENTO', 'FINANCEIRO', 'CONCILIACAO_REDE', 'PENDURAS', 'EQUIPE', 'OPERACIONAL', 'PRODUTOS', 'ESTOQUE', 'AUDITORIA'];
     if (!isStockEnabled) {
       list = list.filter(cat => cat !== 'ESTOQUE');
     }
     if (!hasFinancialCostsPermission) {
-      list = list.filter(cat => cat !== 'FINANCEIRO');
+      list = list.filter(cat => cat !== 'FINANCEIRO' && cat !== 'CONCILIACAO_REDE');
     }
     return list;
   }, [isStockEnabled, hasFinancialCostsPermission]);
@@ -354,7 +355,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
       );
     }
 
-    if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO' && activeCategory !== 'AUDITORIA') {
+    if (filteredSales.length === 0 && activeCategory !== 'PENDURAS' && activeCategory !== 'FECHAMENTO' && activeCategory !== 'AUDITORIA' && activeCategory !== 'CONCILIACAO_REDE') {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 font-black uppercase tracking-[0.3em] border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[40px] animate-in fade-in italic">
           <svg className="w-16 h-16 mb-4 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth={2} /></svg>
@@ -366,6 +367,7 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
     switch (activeCategory) {
       case 'FECHAMENTO': return <ClosingReport shifts={shifts} selectedShiftId={selectedShiftId} setSelectedShiftId={setSelectedShiftId} reportData={reportData} canExport={canExport} showToast={showToast} theme={theme} />;
       case 'FINANCEIRO': return <FinancialReport reportData={reportData} />;
+      case 'CONCILIACAO_REDE': return <RedeConciliation sales={filteredSales} />;
       case 'PENDURAS': return <PenduraReport reportData={reportData} onQuitarPendura={onQuitarPendura} canSettle={canSettle} />;
       case 'EQUIPE': return <TeamReport reportData={reportData} />;
       case 'PRODUTOS': return <ProductReport reportData={reportData} />;
@@ -407,9 +409,10 @@ const Reports: React.FC<ReportsProps> = ({ sales = [], products = [], users = []
           <div className="flex overflow-x-auto no-scrollbar bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-2xl sm:rounded-[28px] border border-slate-200 dark:border-slate-800 shadow-sm gap-1 max-w-full mx-auto">
             {categoriesList.map(cat => {
               const isAlert = cat === 'PENDURAS' && totalPenduraDebt > penduraThreshold;
+              const label = cat === 'CONCILIACAO_REDE' ? '💳 REDE (EXTRATO)' : cat;
               return (
                 <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${activeCategory === cat ? 'bg-red-600 text-white shadow-md shadow-red-500/20' : isAlert ? 'bg-orange-50 text-orange-600 border border-orange-200 animate-pulse' : 'text-slate-500 hover:text-red-500'}`}>
-                  {isAlert && <span>⚠️</span>} {cat}
+                  {isAlert && <span>⚠️</span>} {label}
                 </button>
               );
             })}

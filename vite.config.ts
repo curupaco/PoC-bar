@@ -13,6 +13,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      proxy: {
+        '/api/rede-proxy': {
+          target: 'https://rl7-sandbox-api.useredecloud.com.br',
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api\/rede-proxy/, ''),
+        },
+      },
     },
     plugins: [react()],
     define: {

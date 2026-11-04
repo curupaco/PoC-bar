@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Shift, User, Sale, formatCurrency, PaymentMethod, sanitizeCurrencyInput, parseCurrencyValue, generateUniqueId } from '../../types';
+import { redeService } from '../../services/redeService';
 
 interface ShiftControlProps {
    shifts: Shift[];
@@ -19,6 +20,19 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
    const [valPrimary, setValPrimary] = useState('');
    const [valChange, setValChange] = useState('');
    const [actualCountedInput, setActualCountedInput] = useState('');
+
+   const [redeCheck, setRedeCheck] = useState<{ loading: boolean; total?: number; count?: number; error?: string } | null>(null);
+
+   const handleCheckRede = async () => {
+      setRedeCheck({ loading: true });
+      try {
+         const today = new Date().toISOString().split('T')[0];
+         const res = await redeService.getSales(today, today);
+         setRedeCheck({ loading: false, total: res.totalAmount, count: res.totalTransactions });
+      } catch (err: any) {
+         setRedeCheck({ loading: false, error: 'Falha na conexão' });
+      }
+   };
 
    const [isProcessing, setIsProcessing] = useState(false);
    const [openError, setOpenError] = useState<string | null>(null);
@@ -390,6 +404,34 @@ const ShiftControl: React.FC<ShiftControlProps> = ({ shifts = [], onUpdateShifts
                          <span className="text-xs font-black text-slate-600 dark:text-slate-400">
                             {revealSystem ? formatCurrency(totalSoldInShift - cashMovements.total) : 'R$ •••,••'}
                          </span>
+                      </div>
+
+                      {/* Auditoria Direta da Maquininha REDE */}
+                      <div className="p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-orange-500/30 flex items-center justify-between text-xs">
+                         <div className="flex items-center gap-2">
+                            <span className="text-base">💳</span>
+                            <div>
+                               <span className="text-[9px] font-black uppercase text-orange-500 block">Maquininha Rede</span>
+                               <span className="text-[10px] text-slate-400">Captura em tempo real</span>
+                            </div>
+                         </div>
+                         {!redeCheck ? (
+                            <button
+                               onClick={handleCheckRede}
+                               className="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold text-[9px] uppercase tracking-wider transition-all cursor-pointer shadow-md shadow-orange-600/20"
+                            >
+                               Conferir
+                            </button>
+                         ) : redeCheck.loading ? (
+                            <span className="text-slate-400 text-[10px] font-mono animate-pulse">Consultando...</span>
+                         ) : redeCheck.error ? (
+                            <span className="text-red-400 text-[10px] font-bold">{redeCheck.error}</span>
+                         ) : (
+                            <div className="text-right">
+                               <div className="font-black text-white text-xs">{formatCurrency(redeCheck.total || 0)}</div>
+                               <div className="text-[9px] text-emerald-400 font-semibold">{redeCheck.count} comprovantes</div>
+                            </div>
+                         )}
                       </div>
 
                       {currentUser.username === 'admin' && !revealSystem && (
