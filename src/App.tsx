@@ -139,7 +139,13 @@ export const App: React.FC = () => {
   };
 
   // Guardas de Roteamento/Estado
-  if (window.location.pathname.startsWith('/landing2') || window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
+  if (
+    window.location.pathname.startsWith('/landing2') || 
+    window.location.pathname.startsWith('/landing') ||
+    window.location.pathname.startsWith('/conheca')
+  ) {
+    return <LandingPage2 />;
+  }
   const menuMatch = window.location.pathname.match(/^\/menu\/([^\/]+)/);
   if (menuMatch || window.location.pathname.startsWith('/menu')) {
     const barName = menuMatch ? decodeURIComponent(menuMatch[1]) : null;
