@@ -80,13 +80,18 @@ const BrowserFrame: React.FC<{ src?: string; alt?: string; label?: string; callo
         </div>
       </div>
       <div className="relative aspect-video overflow-hidden bg-slate-950 rounded-b-2xl">
-        {children ? (
-          children
-        ) : (
+        {src ? (
           <>
-            <img src={src} alt={alt || label || 'Tela do Botequista'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" loading="lazy" />
+            <img 
+              src={src} 
+              alt={alt || label || 'Tela do Botequista'} 
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" 
+              loading="eager"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent pointer-events-none"></div>
           </>
+        ) : (
+          children
         )}
       </div>
     </div>
@@ -240,13 +245,11 @@ const ScreenshotGallery: React.FC = () => {
       </div>
 
       <div className="max-w-5xl mx-auto">
-        <BrowserFrame
-          src={current.src}
-          alt={current.label}
-          label={current.label}
-          callout={current.callout}
-        >
-          {current.customType === 'kitchen' && (
+        {current.customType === 'kitchen' ? (
+          <BrowserFrame
+            label={current.label}
+            callout={current.callout}
+          >
             <div className="w-full h-full bg-slate-950 p-4 sm:p-8 flex flex-col justify-between text-left overflow-y-auto">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
@@ -309,9 +312,12 @@ const ScreenshotGallery: React.FC = () => {
                 <span>Zero comandas de papel perdidas</span>
               </div>
             </div>
-          )}
-
-          {current.customType === 'drinks' && (
+          </BrowserFrame>
+        ) : current.customType === 'drinks' ? (
+          <BrowserFrame
+            label={current.label}
+            callout={current.callout}
+          >
             <div className="w-full h-full bg-slate-950 p-4 sm:p-8 flex flex-col justify-between text-left overflow-y-auto">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3">
@@ -369,8 +375,15 @@ const ScreenshotGallery: React.FC = () => {
                 <span className="text-amber-400 font-bold">Role para baixo e teste a Calculadora de Drinks ↓</span>
               </div>
             </div>
-          )}
-        </BrowserFrame>
+          </BrowserFrame>
+        ) : (
+          <BrowserFrame
+            src={current.src}
+            alt={current.label}
+            label={current.label}
+            callout={current.callout}
+          />
+        )}
 
         <div className="mt-6 p-6 rounded-3xl bg-slate-900/60 border border-white/10 max-w-3xl mx-auto text-center">
           <p className="text-slate-200 text-sm sm:text-base font-medium leading-relaxed">{current.desc}</p>
