@@ -26,7 +26,6 @@ import { useTheme } from './hooks/useTheme';
 import { useAuth, AuthContext } from './hooks/useAuth';
 import { useAppStore } from './hooks/useAppStore';
 import { safeLocalStorage } from './utils/storage';
-import { LandingPage } from './features/landing/LandingPage';
 import { LandingPage2 } from './features/landing/LandingPage2';
 import FranchiseDashboard from './features/dashboard/FranchiseDashboard';
 import { MinimalistMenu } from './features/landing/MinimalistMenu';
@@ -140,8 +139,7 @@ export const App: React.FC = () => {
   };
 
   // Guardas de Roteamento/Estado
-  if (window.location.pathname.startsWith('/landing2')) return <LandingPage />;
-  if (window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
+  if (window.location.pathname.startsWith('/landing2') || window.location.pathname.startsWith('/landing')) return <LandingPage2 />;
   const menuMatch = window.location.pathname.match(/^\/menu\/([^\/]+)/);
   if (menuMatch || window.location.pathname.startsWith('/menu')) {
     const barName = menuMatch ? decodeURIComponent(menuMatch[1]) : null;
@@ -211,7 +209,7 @@ export const App: React.FC = () => {
         {isDemo && (
           <div className="bg-amber-500 text-slate-900 px-4 py-2 text-center text-xs font-black uppercase tracking-widest shadow-md z-50 flex justify-center items-center gap-4">
             <span>⚠️ Você está testando o sistema. Nenhuma alteração será salva.</span>
-            <button onClick={() => { safeLocalStorage.removeItem('_demo_mode'); window.location.href = '/landing2'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
+            <button onClick={() => { safeLocalStorage.removeItem('_demo_mode'); window.location.href = '/landing'; }} className="bg-slate-900 text-white px-3 py-1 rounded-lg text-[10px] hover:bg-slate-800">Sair do Demo</button>
           </div>
         )}
         {isEventMode && (

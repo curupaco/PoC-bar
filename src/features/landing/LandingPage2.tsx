@@ -48,91 +48,332 @@ const useScrollReveal = () => {
 };
 
 // ─── Browser Frame ───
-const BrowserFrame: React.FC<{ src: string; alt: string; label?: string }> = ({ src, alt, label }) => (
+const BrowserFrame: React.FC<{ src?: string; alt?: string; label?: string; callout?: string; children?: React.ReactNode }> = ({ src, alt, label, callout, children }) => (
   <div className="relative group w-full max-w-full mx-auto scroll-reveal">
-    {label && (
-      <div className="absolute -top-8 left-4 flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full z-20">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500">{label}</span>
-      </div>
-    )}
-    <div className="rounded-2xl bg-slate-800/80 p-1.5 shadow-2xl shadow-black/40 border border-white/5 overflow-hidden w-full backdrop-blur-sm">
-      <div className="bg-slate-900 h-7 flex items-center px-4 gap-2 rounded-t-xl">
-        <div className="flex gap-1">
-          <div className="w-2 h-2 rounded-full bg-red-500/40"></div>
-          <div className="w-2 h-2 rounded-full bg-amber-500/40"></div>
-          <div className="w-2 h-2 rounded-full bg-emerald-500/40"></div>
+    <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-2">
+      {label && (
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">{label}</span>
         </div>
-        <div className="flex-1 max-w-[140px] mx-auto bg-slate-950/50 h-4 rounded-full border border-white/5 flex items-center px-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/40 mr-2"></div>
-          <span className="text-[7px] font-mono text-slate-400 truncate">botequista.app</span>
+      )}
+      {callout && (
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full">
+          <span className="text-[10px]">🍺</span>
+          <span className="text-[9px] font-black uppercase tracking-wider text-amber-400">{callout}</span>
+        </div>
+      )}
+    </div>
+    <div className="rounded-3xl bg-slate-800/90 p-1.5 sm:p-2 shadow-2xl shadow-black/60 border border-white/10 overflow-hidden w-full backdrop-blur-sm">
+      <div className="bg-slate-900 h-8 flex items-center px-4 gap-2 rounded-t-2xl border-b border-white/5">
+        <div className="flex gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-red-500/60"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60"></div>
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60"></div>
+        </div>
+        <div className="flex-1 max-w-[200px] mx-auto bg-slate-950/70 h-5 rounded-full border border-white/5 flex items-center px-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></div>
+          <span className="text-[8px] font-mono text-slate-400 truncate">botequista.app • modo_balcao</span>
+        </div>
+        <div className="hidden sm:flex items-center gap-1.5 text-[8px] font-mono text-emerald-400 font-bold">
+          <span>●</span> OFFLINE-READY
         </div>
       </div>
-      <div className="relative aspect-video overflow-hidden">
-        <img src={src} alt={alt} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]" loading="lazy" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent pointer-events-none"></div>
+      <div className="relative aspect-video overflow-hidden bg-slate-950 rounded-b-2xl">
+        {children ? (
+          children
+        ) : (
+          <>
+            <img src={src} alt={alt || label || 'Tela do Botequista'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]" loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent pointer-events-none"></div>
+          </>
+        )}
       </div>
     </div>
   </div>
 );
 
 // ─── Feature Card ───
-const FeatureCard: React.FC<{ icon: string; title: string; desc: string; accent?: string }> = ({ icon, title, desc, accent = 'red' }) => {
-  const isRed = accent === 'red';
+const FeatureCard: React.FC<{ icon: string; title: string; desc: string; tag?: string; accent?: 'red' | 'emerald' | 'amber' }> = ({ icon, title, desc, tag, accent = 'emerald' }) => {
+  const accentStyles = {
+    red: 'hover:border-red-500/40 hover:shadow-red-900/15 bg-gradient-to-b from-red-950/10 to-slate-900/50',
+    emerald: 'hover:border-emerald-500/40 hover:shadow-emerald-900/15 bg-gradient-to-b from-emerald-950/10 to-slate-900/50',
+    amber: 'hover:border-amber-500/40 hover:shadow-amber-900/15 bg-gradient-to-b from-amber-950/10 to-slate-900/50',
+  }[accent];
+
+  const iconBg = {
+    red: 'bg-red-600/15 text-red-400 border-red-500/20',
+    emerald: 'bg-emerald-600/15 text-emerald-400 border-emerald-500/20',
+    amber: 'bg-amber-500/15 text-amber-400 border-amber-500/20',
+  }[accent];
+
+  const tagColor = {
+    red: 'text-red-400 bg-red-500/10 border-red-500/20',
+    emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+  }[accent];
+
   return (
-    <div className={`scroll-reveal group p-8 rounded-3xl bg-slate-900/40 border border-white/5 ${isRed ? 'hover:border-red-500/30 hover:shadow-red-900/10' : 'hover:border-emerald-500/30 hover:shadow-emerald-900/10'} transition-all duration-500 hover:-translate-y-1 hover:shadow-xl`}>
-      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform ${isRed ? 'bg-red-600/10' : 'bg-emerald-600/10'}`}>
-        {icon}
+    <div className={`scroll-reveal group p-7 rounded-3xl border border-white/10 ${accentStyles} transition-all duration-500 hover:-translate-y-1.5 hover:shadow-2xl flex flex-col justify-between`}>
+      <div>
+        <div className="flex items-center justify-between gap-3 mb-5">
+          <div className={`w-13 h-13 rounded-2xl border flex items-center justify-center text-2xl group-hover:scale-110 transition-transform ${iconBg}`}>
+            {icon}
+          </div>
+          {tag && (
+            <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border ${tagColor}`}>
+              {tag}
+            </span>
+          )}
+        </div>
+        <h3 className="text-white font-black text-base uppercase tracking-tight mb-2.5">{title}</h3>
+        <p className="text-slate-300 text-sm leading-relaxed">{desc}</p>
       </div>
-      <h3 className="text-white font-black text-sm uppercase tracking-wide mb-3">{title}</h3>
-      <p className="text-slate-300 text-sm leading-relaxed">{desc}</p>
     </div>
   );
 };
 
-// ─── Screenshot Gallery with Tabs ───
+// ─── Screenshot Gallery with Tabs & Interactive Previews ───
 const screenshots = [
-  { src: '/landing_assets/assets/pos_real.png', label: 'Tela de Vendas', desc: 'Seus produtos favoritos no topo, busca instantânea e a comanda atualizada em tempo real' },
-  { src: '/landing_assets/assets/dashboard_real.png', label: 'Suas Mesas', desc: 'Cada mesa com sua cor: verde tá bebendo, amarelo tá demorando, vermelho cuidado' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png', label: 'Fechamento', desc: 'Dinheiro, Pix, Cartão ou fiado tudo junto na mesma tela' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png', label: 'Conferência Cega', desc: 'O garçom conta o dinheiro sem ver quanto deveria ter. Você descobre a verdade.' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png', label: 'Caixa', desc: 'Sangria, suprimento e controle do cofre. Como um caixa eletrônico, só digita e confirma.' },
-  { src: '/landing_assets/assets/reports_real.png', label: 'Relatórios', desc: 'Sete tipos de relatório: financeiro, produtos, equipe, tudo organizado por turno' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png', label: 'Equipe', desc: 'Cada funcinário com seu nível de acesso: quem pode cancelar, quem pode fechar o caixa' },
-  { src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png', label: 'Auditoria', desc: 'Um log que mostra quem fez o quê, quando. Se algo estranho acontecer, você rastreia.' },
-  { src: '/landing_assets/assets/dashboard_real.png', label: 'Cozinha', desc: 'Fila de pedidos touch-screen para os cozinheiros, totalmente integrada com alarmes sonoros em tempo real.' },
-  { src: '/landing_assets/assets/reports_real.png', label: 'Drinks & Batches', desc: 'Central de coquetelaria: CMV automático, margem alvo, produção de xaropes artesanais e controle de quebras.' },
+  {
+    src: '/landing_assets/assets/pos_real.png',
+    label: '🍺 Balcão & PDV',
+    callout: 'Lança uma rodada em menos de 2 segundos',
+    desc: 'As brejas e porções que mais saem ficam grudadas no topo. Tem botão "Repetir Saideira" pra mandar mais duas na Mesa 4 com um toque só.'
+  },
+  {
+    src: '/landing_assets/assets/dashboard_real.png',
+    label: '🪑 Mapa de Mesas',
+    callout: 'Bateu o olho, sabe quem tá com sede',
+    desc: 'Salão inteiro na mão: verde tá consumindo bonito, amarelo já deu uma parada, vermelho é mesa moscando — hora do garçom encostar e oferecer a saideira.'
+  },
+  {
+    src: '/landing_assets/assets/Screenshot_2026-03-03_21-28-56.png',
+    label: '🧮 Racha a Conta',
+    callout: 'Sem calculadora e sem fila no caixa',
+    desc: 'Um pagou no Pix, outro no débito, o terceiro deixou pendurado? Divide por cabeça ou por item na mesma tela, com os 10% do garçom já separados.'
+  },
+  {
+    src: '/landing_assets/assets/Screenshot_2026-03-03_21-29-40.png',
+    label: '🕵️ Fechamento no Escuro',
+    callout: 'Acabou o "acerto criativo" às 2h da manhã',
+    desc: 'Conferência Cega de verdade: quem fecha o caixa digita quanto contou na gaveta sem ver quanto o sistema espera. Você vê na lata se sobrou ou faltou.'
+  },
+  {
+    src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-06.png',
+    label: '💵 Gaveta & Sangria',
+    callout: 'Pagou o gelo ou o limão com dinheiro do caixa?',
+    desc: 'Sangria, reforço de troco e retirada pro cofre em dois cliques. Fica tudo carimbado pra ninguém esquecer pra onde foram aqueles R$ 50 da tarde.'
+  },
+  {
+    src: '/landing_assets/assets/reports_real.png',
+    label: '📊 Raio-X do Turno',
+    callout: 'Sete relatórios mastigados sem juridiquês',
+    desc: 'Lucro líquido real (descontando custo), Curva ABC de produtos, ranking de garçom que mais puxa venda e resumo pronto pra mandar no Zap do sócio.'
+  },
+  {
+    src: '/landing_assets/assets/Screenshot_2026-03-03_21-30-54.png',
+    label: '🔑 Crachá Digital',
+    callout: 'Cada um no seu quadrado',
+    desc: 'Cada funcionário tem seu login e nível de acesso: você escolhe no detalhe quem pode cancelar item, quem pode dar desconto e quem só lança pedido.'
+  },
+  {
+    src: '/landing_assets/assets/Screenshot_2026-03-03_21-32-39.png',
+    label: '🛡️ Dedo-Duro (Auditoria)',
+    callout: 'Caixa preta do seu boteco',
+    desc: 'Apagaram uma porção depois que a conta já tinha ido pra mesa? O sistema grava quem fez, a que horas e de qual aparelho. Zero ponto cego.'
+  },
+  {
+    customType: 'kitchen',
+    label: '🍳 Cozinha (Ding! 🛎️)',
+    callout: 'Tela Touch na cozinha + campainha no salão',
+    desc: 'Acabou o grito no balcão e a comanda suja de óleo. O pedido cai na tela da cozinha na hora; quando o cozinheiro aperta "Pronto", apita no celular do garçom.'
+  },
+  {
+    customType: 'drinks',
+    label: '🍸 Coquetelaria & Lotes',
+    callout: 'Controle por mililitro e xaropes da casa',
+    desc: 'Ficha técnica fracionada em ml, cálculo de CMV ao vivo, produção de batches/xaropes artesanais com etiqueta de validade e baixa de quebra de garrafa.'
+  },
 ];
 
 const ScreenshotGallery: React.FC = () => {
   const [active, setActive] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [readyOrders, setReadyOrders] = useState<number[]>([2]);
 
   useEffect(() => {
+    if (isPaused) return;
     const interval = setInterval(() => {
       setActive(prev => (prev + 1) % screenshots.length);
-    }, 5000);
+    }, 6500);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused]);
+
+  const current = screenshots[active] as any;
+
+  const toggleOrderReady = (id: number) => {
+    setReadyOrders(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
 
   return (
-    <div className="scroll-reveal">
+    <div
+      className="scroll-reveal"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Category Pills on Top for immediate clarity */}
+      <div className="flex justify-center gap-2 mb-8 flex-wrap max-w-4xl mx-auto">
+        {screenshots.map((s, i) => (
+          <button
+            key={i}
+            onClick={() => { setActive(i); setIsPaused(true); }}
+            className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+              i === active
+                ? 'bg-red-600 text-white shadow-lg shadow-red-600/30 scale-105 border border-red-400/40'
+                : 'bg-slate-900/90 text-slate-300 hover:text-white border border-white/10 hover:border-white/20'
+            }`}
+          >
+            {s.label}
+          </button>
+        ))}
+      </div>
+
       <div className="max-w-5xl mx-auto">
-        <BrowserFrame src={screenshots[active].src} alt={screenshots[active].label} label={screenshots[active].label} />
-        <p className="text-center text-slate-300 text-sm mt-6 font-medium">{screenshots[active].desc}</p>
-        <div className="flex justify-center gap-2 mt-6 flex-wrap">
-          {screenshots.map((s, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
-                i === active
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-600/30'
-                  : 'bg-slate-900/80 text-slate-300 hover:text-white border border-white/5 hover:border-white/10'
-              }`}
-            >
-              {s.label.split('·')[0].trim()}
-            </button>
-          ))}
+        <BrowserFrame
+          src={current.src}
+          alt={current.label}
+          label={current.label}
+          callout={current.callout}
+        >
+          {current.customType === 'kitchen' && (
+            <div className="w-full h-full bg-slate-950 p-4 sm:p-8 flex flex-col justify-between text-left overflow-y-auto">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🍳</span>
+                  <div>
+                    <div className="text-xs sm:text-sm font-black uppercase text-white tracking-wider">Monitor de Produção — Chapa & Fritadeira</div>
+                    <div className="text-[10px] text-emerald-400 font-bold">● Sincronizado em Tempo Real • Campainha Sonora Ativa</div>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase">
+                  Clique em "Bater Campainha" para testar 👇
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-auto py-4">
+                {[
+                  { id: 1, table: 'Mesa 04 (Calçada)', time: 'há 3 min', item: '1x Porção Coxinha da Asa (12 un)', obs: 'Bem fritinha + molho de pimenta à parte', waiter: 'Galego' },
+                  { id: 2, table: 'Mesa 11 (Salão)', time: 'há 7 min', item: '2x Pastel Misto (Carne/Queijo)', obs: 'Cortar no meio pra dividir', waiter: 'Beto' },
+                  { id: 3, table: 'Balcão • Seu Jorge', time: 'há 1 min', item: '1x Calabresa Acebolada no Tacho', obs: 'Capricha no pão francês', waiter: 'Galego' },
+                ].map((order) => {
+                  const isDone = readyOrders.includes(order.id);
+                  return (
+                    <div
+                      key={order.id}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                        isDone
+                          ? 'bg-emerald-950/30 border-emerald-500/40'
+                          : 'bg-slate-900/90 border-amber-500/30'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-black uppercase text-white">{order.table}</span>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                            {isDone ? '🛎️ Garçom Avisado!' : `⏳ ${order.time}`}
+                          </span>
+                        </div>
+                        <div className="text-sm font-black text-white mb-1">{order.item}</div>
+                        <div className="text-[11px] text-amber-300/90 italic bg-slate-950/60 p-2 rounded-lg border border-white/5 mb-3">
+                          "{order.obs}"
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => toggleOrderReady(order.id)}
+                        className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                          isDone
+                            ? 'bg-slate-800 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20'
+                        }`}
+                      >
+                        {isDone ? '✓ Pedido Entregue (Reabrir)' : '🛎️ Bater Campainha (Pronto!)'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="text-[10px] text-slate-400 flex justify-between items-center pt-2 border-t border-white/5">
+                <span>Tempo médio de saída hoje: <strong className="text-emerald-400">6m 40s</strong></span>
+                <span>Zero comandas de papel perdidas</span>
+              </div>
+            </div>
+          )}
+
+          {current.customType === 'drinks' && (
+            <div className="w-full h-full bg-slate-950 p-4 sm:p-8 flex flex-col justify-between text-left overflow-y-auto">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🍸</span>
+                  <div>
+                    <div className="text-xs sm:text-sm font-black uppercase text-white tracking-wider">Central de Coquetelaria, Batches & Quebras</div>
+                    <div className="text-[10px] text-amber-400 font-bold">● Baixa Automática em Mililitros (ml) • Validade de Xaropes</div>
+                  </div>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black uppercase">
+                  Margem Média do Bar: 79,4%
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 my-auto py-4">
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-amber-500/20 space-y-2.5">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-amber-400">🍹 Ficha Fracionada (50ml)</div>
+                  <div className="text-sm font-black text-white">Rabo de Galo da Casa</div>
+                  <div className="space-y-1 text-[11px] text-slate-300">
+                    <div className="flex justify-between"><span>Cachaça Envelhecida (50ml)</span><span className="text-white font-bold">R$ 2,80</span></div>
+                    <div className="flex justify-between"><span>Vermute Tinto (25ml)</span><span className="text-white font-bold">R$ 1,85</span></div>
+                    <div className="flex justify-between"><span>Cynar + Casca Laranja (15ml)</span><span className="text-white font-bold">R$ 1,20</span></div>
+                  </div>
+                  <div className="pt-2 border-t border-white/10 flex justify-between items-center text-xs">
+                    <span className="text-slate-400">Custo: <strong className="text-amber-400">R$ 5,85</strong></span>
+                    <span className="text-emerald-400 font-black">Venda: R$ 28,00</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/20 space-y-2.5">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-emerald-400">🍯 Batch Caseiro Ativo</div>
+                  <div className="text-sm font-black text-white">Xarope de Gengibre #L14</div>
+                  <div className="text-[11px] text-slate-300 leading-relaxed">
+                    Produzido na terça • Abateu <strong className="text-white">1kg Açúcar + 400g Gengibre</strong> do estoque bruto.
+                  </div>
+                  <div className="p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-[10px] text-emerald-300 font-bold">
+                    ✓ Fresco na Geladeira (Vence em 11 dias) • Custo: R$ 6,20/L
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-900/90 border border-red-500/20 space-y-2.5">
+                  <div className="text-[9px] font-black uppercase tracking-widest text-red-400">🚨 Auditoria de Quebra/Perda</div>
+                  <div className="text-sm font-black text-white">Garrafas & Doses Vigia</div>
+                  <div className="text-[11px] text-slate-300 leading-relaxed">
+                    Cada drink vendido no PDV desconta os ml exatos da garrafa aberta. Se cair no chão, registra a perda em 2 toques.
+                  </div>
+                  <div className="p-2 rounded-xl bg-red-950/30 border border-red-500/20 text-[10px] text-red-300 font-bold">
+                    Zero "evaporação misteriosa" de Gin e Whisky no fim de semana
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-[10px] text-slate-400 flex justify-between items-center pt-2 border-t border-white/5">
+                <span>Boteco tradicional só de litrão? <strong className="text-white">Desligue este módulo em 1 clique</strong></span>
+                <span className="text-amber-400 font-bold">Role para baixo e teste a Calculadora de Drinks ↓</span>
+              </div>
+            </div>
+          )}
+        </BrowserFrame>
+
+        <div className="mt-6 p-6 rounded-3xl bg-slate-900/60 border border-white/10 max-w-3xl mx-auto text-center">
+          <p className="text-slate-200 text-sm sm:text-base font-medium leading-relaxed">{current.desc}</p>
         </div>
       </div>
     </div>
@@ -141,61 +382,99 @@ const ScreenshotGallery: React.FC = () => {
 
 
 const ROICalculator: React.FC = () => {
-  const [revenue, setRevenue] = useState(30000);
+  const [revenue, setRevenue] = useState(45000);
   const [leakage, setLeakage] = useState(5); // % de perda estimada
 
-  const monthlySavings = (revenue * (leakage / 100));
+  const monthlySavings = Math.round(revenue * (leakage / 100));
   const yearlySavings = monthlySavings * 12;
 
   return (
-    <div className="scroll-reveal p-8 md:p-12 rounded-[40px] bg-slate-900/50 border border-white/5 shadow-2xl relative overflow-hidden group">
-      <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent pointer-events-none"></div>
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="space-y-8">
+    <div className="scroll-reveal p-8 md:p-12 rounded-[40px] bg-slate-900/60 border border-white/10 shadow-2xl relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-600/10 via-transparent to-emerald-600/5 pointer-events-none"></div>
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="lg:col-span-7 space-y-8">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2 block">Simulador de Impacto</span>
-            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none mb-4">Quanto seu bar está <span className="text-red-500 italic">perdendo</span> hoje?</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">Pequenos erros de caixa, comandas esquecidas e fiados não pagos parecem pouco, mas no fim do ano viram um rombo.</p>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-400 mb-2 block">🍺 Calculadora do Ralo Invisível</span>
+            <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-none mb-4">
+              Quanto dinheiro <span className="text-red-500 italic">escorre pelo ralo</span> do seu balcão todo mês?
+            </h3>
+            <p className="text-slate-300 text-sm leading-relaxed">
+              Duas long necks que saem sem anotar na correria de sexta, uma porção esquecida na comanda de papel, um troco errado às 2h da manhã e aquele fiado que nunca mais voltou. Parece troco de bala, mas no fim do ano dá o preço de uma reforma no bar.
+            </p>
+          </div>
+
+          {/* Presets */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: '🍺 Boteco de Esquina (R$ 25k)', rev: 25000, leak: 5 },
+              { label: '🍻 Bar Movimento (R$ 55k)', rev: 55000, leak: 6 },
+              { label: '🔥 Casa Lotada (R$ 110k)', rev: 110000, leak: 6 },
+            ].map((preset, idx) => (
+              <button
+                key={idx}
+                onClick={() => { setRevenue(preset.rev); setLeakage(preset.leak); }}
+                className={`px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all cursor-pointer ${
+                  revenue === preset.rev
+                    ? 'bg-red-600 text-white border-red-500 shadow-lg shadow-red-600/20'
+                    : 'bg-slate-950/60 text-slate-300 border-white/10 hover:border-white/25'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
 
           <div className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Faturamento Mensal</label>
-                <span className="text-lg font-black text-white">R$ {revenue.toLocaleString('pt-BR')}</span>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Faturamento Bruto do Mês</label>
+                <span className="text-xl font-black text-white">R$ {revenue.toLocaleString('pt-BR')}</span>
               </div>
               <input 
-                type="range" min="5000" max="200000" step="1000" 
+                type="range" min="10000" max="200000" step="2500" 
                 value={revenue} onChange={(e) => setRevenue(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+                className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
               />
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex justify-between items-end">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Estimativa de Perda (Erro/Fuga)</label>
-                <span className="text-lg font-black text-red-500">{leakage}%</span>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-300">Ralo Estimado (Esquecimento + Fiado + Quebra de Caixa)</label>
+                <span className="text-xl font-black text-red-400">{leakage}%</span>
               </div>
               <input 
                 type="range" min="1" max="15" step="1" 
                 value={leakage} onChange={(e) => setLeakage(Number(e.target.value))}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
+                className="w-full h-2.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-red-600"
               />
-              <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest italic text-right">*Média do mercado: 4% a 8%</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest italic text-right">*Média real em bares no papel/planilha: 4% a 8%</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-950/50 p-10 rounded-3xl border border-white/5 flex flex-col items-center justify-center text-center relative">
-          <div className="absolute -top-4 bg-emerald-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20">Economia Potencial</div>
-          <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Você deixaria de perder</div>
-          <div className="text-5xl md:text-6xl font-black text-emerald-500 tracking-tighter mb-2">R$ {monthlySavings.toLocaleString('pt-BR')}</div>
-          <div className="text-slate-500 text-[10px] font-black uppercase tracking-widest">por mês</div>
-          
-          <div className="mt-8 pt-8 border-t border-white/5 w-full">
-            <div className="text-3xl font-black text-white tracking-tighter mb-1">R$ {yearlySavings.toLocaleString('pt-BR')}</div>
-            <div className="text-slate-400 text-[9px] font-black uppercase tracking-widest italic">por ano no seu bolso</div>
+        <div className="lg:col-span-5 bg-slate-950/80 p-8 md:p-10 rounded-3xl border border-emerald-500/20 flex flex-col items-center justify-center text-center relative shadow-2xl">
+          <div className="absolute -top-4 bg-emerald-500 text-slate-950 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+            Dinheiro que Fica no Bolso
           </div>
+          <div className="text-slate-400 text-[10px] font-black uppercase tracking-[0.25em] mb-3 mt-2">Estancando esse ralo você recupera</div>
+          <div className="text-5xl md:text-6xl font-black text-emerald-400 tracking-tighter mb-1">
+            R$ {monthlySavings.toLocaleString('pt-BR')}
+          </div>
+          <div className="text-slate-400 text-[10px] font-black uppercase tracking-widest">todo santo mês</div>
+          
+          <div className="my-6 pt-6 border-t border-white/10 w-full">
+            <div className="text-3xl md:text-4xl font-black text-white tracking-tighter mb-1">
+              R$ {yearlySavings.toLocaleString('pt-BR')}
+            </div>
+            <div className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">no seu bolso em 1 ano</div>
+          </div>
+
+          <a
+            href="/?demo=true"
+            className="w-full py-3.5 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500 hover:text-slate-950 text-emerald-400 border border-emerald-500/30 text-xs font-black uppercase tracking-widest transition-all"
+          >
+            Ver como o caixa blindado funciona →
+          </a>
         </div>
       </div>
     </div>
@@ -218,55 +497,111 @@ const Typewriter: React.FC<{ text: string; delay?: number }> = ({ text, delay = 
   return <>{currentText}</>;
 };
 
-const WhatsAppSimulation: React.FC = () => (
-  <div className="scroll-reveal max-w-md mx-auto bg-[#075e54]/5 rounded-[40px] p-8 border border-white/5 shadow-2xl relative overflow-hidden group">
-    <div className="absolute inset-0 bg-gradient-to-b from-[#25d366]/5 to-transparent pointer-events-none"></div>
-    
-    {/* WhatsApp Header Mockup */}
-    <div className="flex items-center gap-3 mb-8 border-b border-white/10 pb-4">
-      <div className="w-12 h-12 rounded-full bg-[#25d366] flex items-center justify-center text-white text-xl shadow-lg shadow-[#25d366]/20">
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+const WhatsAppSimulation: React.FC = () => {
+  const [zapMode, setZapMode] = useState<'turno' | 'pendura'>('turno');
+
+  return (
+    <div className="scroll-reveal max-w-md mx-auto bg-[#075e54]/10 rounded-[40px] p-6 sm:p-8 border border-[#25d366]/20 shadow-2xl relative overflow-hidden group">
+      <div className="absolute inset-0 bg-gradient-to-b from-[#25d366]/10 to-transparent pointer-events-none"></div>
+
+      {/* Mode Switcher */}
+      <div className="relative z-10 grid grid-cols-2 gap-2 p-1.5 bg-slate-950/80 rounded-2xl border border-white/10 mb-6">
+        <button
+          onClick={() => setZapMode('turno')}
+          className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+            zapMode === 'turno'
+              ? 'bg-[#25d366] text-slate-950 shadow-lg'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          📊 Resumo pro Sócio
+        </button>
+        <button
+          onClick={() => setZapMode('pendura')}
+          className={`py-2.5 px-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+            zapMode === 'pendura'
+              ? 'bg-[#25d366] text-slate-950 shadow-lg'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          🤝 Cobrar Pendura
+        </button>
       </div>
-      <div>
-        <div className="text-xs font-black uppercase text-white tracking-widest">Seu Bar no WhatsApp</div>
-        <div className="text-[9px] text-[#25d366] font-bold uppercase tracking-widest flex items-center gap-1.5">
-          Relatório de Turno
+      
+      {/* WhatsApp Header Mockup */}
+      <div className="relative z-10 flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+        <div className="w-11 h-11 rounded-full bg-[#25d366] flex items-center justify-center text-slate-950 text-xl shadow-lg shadow-[#25d366]/20 font-black">
+          {zapMode === 'turno' ? '📊' : '🍻'}
+        </div>
+        <div>
+          <div className="text-xs font-black uppercase text-white tracking-wider">
+            {zapMode === 'turno' ? 'Grupo dos Sócios • Bar do Galego' : 'Marcão (Freguês da Sexta)'}
+          </div>
+          <div className="text-[10px] text-[#25d366] font-bold uppercase tracking-widest flex items-center gap-1.5">
+            {zapMode === 'turno' ? 'Fechamento de Caixa Automático' : 'Régua de Cobrança Sem Climão'}
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Messages */}
-    <div className="space-y-6">
-      <div className="bg-[#1f2c34] p-5 rounded-2xl rounded-tl-none border border-white/5 max-w-[90%] shadow-xl relative group-hover:scale-[1.02] transition-transform">
-        <p className="text-sm text-slate-200 leading-relaxed font-mono">
-          *📊 RESUMO DE TURNO* <br/><br/>
-          📅 *Data:* 02/05/2026 <br/>
-          👤 *Operador:* Galego <br/>
-          ⏰ *Fechamento:* 22:45 <br/><br/>
-          💰 *Faturamento:* R$ 4.280,00 <br/>
-          🎫 *Tickets:* 42 <br/>
-          📈 *Ticket Médio:* R$ 101,90 <br/><br/>
-          _Gerado via Botequista System_
-        </p>
-        <span className="text-[9px] text-slate-500 block mt-2 text-right">22:45</span>
-      </div>
+      {/* Messages */}
+      {zapMode === 'turno' ? (
+        <div className="relative z-10 space-y-5 animate-in fade-in duration-300">
+          <div className="bg-[#1f2c34] p-5 rounded-2xl rounded-tl-none border border-white/10 max-w-[92%] shadow-xl">
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-mono">
+              *📊 RÉGUA PASSADA — FECHAMENTO DE TURNO* <br/><br/>
+              📅 *Sexta-feira:* 01:40h <br/>
+              👤 *Caixa:* Galego (Conferência Cega ✅) <br/><br/>
+              💰 *Total Vendido:* R$ 4.890,00 <br/>
+              🟢 *Pix:* R$ 2.410,00 | 💳 *Cartão:* R$ 1.830,00 <br/>
+              💵 *Gaveta (Dinheiro):* R$ 650,00 _(Bateu cravado!)_ <br/>
+              🍺 *Campeão da Noite:* Original 600ml (114 un) <br/>
+              📈 *Ticket Médio:* R$ 108,60 (+14%)
+            </p>
+            <span className="text-[9px] text-slate-400 block mt-2 text-right">01:41</span>
+          </div>
 
-      <div className="bg-[#054740] p-5 rounded-2xl rounded-tr-none border border-[#25d366]/20 max-w-[90%] ml-auto shadow-xl relative group-hover:scale-[1.02] transition-transform">
-        <p className="text-sm text-white leading-relaxed font-bold italic">
-          "Recebido! O faturamento hoje superou a meta."
-        </p>
-        <div className="flex justify-end items-center gap-1 mt-2">
-          <span className="text-[9px] text-slate-400">22:47</span>
-          <span className="text-[#34b7f1]">✓✓</span>
+          <div className="bg-[#054740] p-4 rounded-2xl rounded-tr-none border border-[#25d366]/30 max-w-[88%] ml-auto shadow-xl">
+            <p className="text-xs sm:text-sm text-white leading-relaxed font-bold italic">
+              "Coisa linda! Gaveta batendo na vírgula e sexta que vem já sabemos que precisa pedir mais 10 caixas de Original 🍻"
+            </p>
+            <div className="flex justify-end items-center gap-1 mt-1.5">
+              <span className="text-[9px] text-slate-300">01:42</span>
+              <span className="text-[#34b7f1] text-xs">✓✓</span>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="relative z-10 space-y-5 animate-in fade-in duration-300">
+          <div className="bg-[#054740] p-5 rounded-2xl rounded-tr-none border border-[#25d366]/30 max-w-[92%] ml-auto shadow-xl">
+            <p className="text-xs sm:text-sm text-slate-100 leading-relaxed font-mono">
+              Fala *Marcão*, beleza meu querido? 🍻<br/><br/>
+              Passando só pra organizar o caderninho da semana aqui no *Bar do Galego*:<br/>
+              • Quinta (02/11): 4x Heineken 600ml + 1x Panceta = *R$ 98,00*<br/><br/>
+              Quando puder mandar naquele Pix da casa (*11966989160*), me dá um toque que já dou baixa aqui! Tamo junto! 👊
+            </p>
+            <div className="flex justify-end items-center gap-1 mt-1.5">
+              <span className="text-[9px] text-slate-300">14:15</span>
+              <span className="text-[#34b7f1] text-xs">✓✓</span>
+            </div>
+          </div>
+
+          <div className="bg-[#1f2c34] p-4 rounded-2xl rounded-tl-none border border-white/10 max-w-[88%] shadow-xl">
+            <p className="text-xs sm:text-sm text-white leading-relaxed font-bold italic">
+              "Opa Galego! Ainda bem que mandou, tinha até esquecido de quinta. Acabei de fazer o Pix aí, guarda minha mesa hoje!"
+            </p>
+            <span className="text-[9px] text-slate-400 block mt-1.5 text-right">14:17</span>
+          </div>
+        </div>
+      )}
+
+      <div className="relative z-10 mt-6 text-center">
+        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-emerald-400">
+          ↑ Alterne acima para ver os 2 disparos automáticos em 1 clique
+        </span>
       </div>
     </div>
-
-    <div className="mt-8 text-center">
-      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Exemplo de Compartilhamento via WhatsApp</span>
-    </div>
-  </div>
-);
+  );
+};
 
 // ─── INTERACTIVE COCKTAIL LAB SHOWCASE ───
 const CocktailLabShowcase: React.FC = () => {
@@ -1569,16 +1904,17 @@ export const LandingPage2: React.FC = () => {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
   const [faqSearch, setFaqSearch] = useState('');
   const [isTechConsoleModalOpen, setIsTechConsoleModalOpen] = useState(false);
+  const [activePillar, setActivePillar] = useState<'salao' | 'gaveta' | 'cozinha' | 'dono'>('salao');
 
   const faqs = [
-    { q: 'É grátis mesmo?', a: 'Sim. Zero mensalidade. Zero contrato. Zero cartão. Enquanto você for parceiro fundador, é de graça pra sempre.' },
-    { q: 'Funciona offline?', a: 'Sim. Vende sem internet. Os dados ficam no dispositivo e sincronizam quando a conexão voltar via SyncQueue.' },
-    { q: 'Quanto tempo pra começar?', a: '15 minutos. Você cadastra o cardápio e já pode vender. Sem ajuda técnica necessária.' },
-    { q: 'Onde meus dados ficam?', a: 'Ficam no seu navegador (IndexedDB) e na nuvem Google (Firebase). Você também pode exportar para o GitHub.' },
-    { q: 'Precisa baixar aplicativo?', a: 'Não. É um PWA. Funciona direto no navegador do celular ou PC, mas você pode "Instalar" na tela inicial.' },
-    { q: 'Posso usar em mais de um celular?', a: 'Sim. O sistema sincroniza múltiplas telas em tempo real. O garçom lança, o caixa vê.' },
-    { q: 'E se o celular quebrar?', a: 'Seus dados estão na nuvem. Basta logar em outro aparelho e tudo volta instantaneamente.' },
-    { q: 'Tem suporte?', a: 'Sim, suporte prioritário via WhatsApp para todos os bares parceiros.' },
+    { q: 'Qual é a pegadinha? É na faixa mesmo?', a: 'Papo reto: zero mensalidade, zero contrato de fidelidade e não pede cartão de crédito. Os primeiros bares parceiros que entrarem com a gente têm acesso vitalício na faixa em troca de feedback real de balcão.' },
+    { q: 'E se a internet cair na sexta-feira às 21h?', a: 'O bar nem pisca. Toda venda e comanda fica gravada na hora na memória do aparelho (celular, tablet ou PC). Quando o Wi-Fi ou 4G voltar, o sistema sobe tudo pra nuvem sozinho, sem perder uma jujuba.' },
+    { q: 'Preciso comprar computador novo ou maquininha cara?', a: 'Nada disso. Roda direto no navegador daquele celular Android, tablet ou notebook que já fica no caixa. Se quiser, você instala na tela inicial com 1 clique igual aplicativo.' },
+    { q: 'Quanto tempo demora pra botar pra rodar?', a: 'O tempo de tomar um café: 15 minutos. Você cadastra as brejas, porções e doses (ou a gente te ajuda pelo Zap) e já abre o turno.' },
+    { q: 'Meus garçons vão apanhar pra aprender?', a: 'Zero chance. A tela foi feita pra quem tá na correria: botões grandes, favoritos no topo e botão "Repetir Saideira". Em 5 minutos qualquer garçom já tá voando.' },
+    { q: 'Funciona com mais de um garçom lançando ao mesmo tempo?', a: 'Sim! O garçom lança na calçada pelo celular dele, o pedido já apita na tela da cozinha ("Ding! 🛎️") e o caixa no balcão vê a mesa atualizada na mesma hora.' },
+    { q: 'Como funciona a Conferência Cega no fechamento?', a: 'Na hora de passar a régua, quem tá no caixa digita quanto contou em dinheiro, Pix e cartão sem ver quanto o sistema esperava. Acaba na hora aquele "acerto criativo" de fim de noite.' },
+    { q: 'Meu boteco é raiz, só vende litrão e porção. Vou ver um monte de tela complicada?', a: 'De jeito nenhum! Pelo Princípio Zero Complexidade, módulos avançados (como Coquetelaria em ml ou Hospedaria) ficam 100% escondidos se você não usar. Seu sistema fica limpo e direto ao ponto.' },
   ];
 
   const filteredFAQs = faqs.filter(f => 
@@ -1593,35 +1929,100 @@ export const LandingPage2: React.FC = () => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const pillarsData = {
+    salao: {
+      badge: '🍺 Pilar 01 • No Salão & no Balcão',
+      title: 'Atendimento em Tempo de Gole',
+      subtitle: 'Chega de fila no caixa e garçom perdido fazendo conta de cabeça na sexta lotada.',
+      accent: 'emerald' as const,
+      features: [
+        { icon: '⚡', tag: 'VELOCIDADE', title: 'Venda em 3 Toques + Repetir Saideira', desc: 'As cervejas e porções que mais giram ficam no topo. O cliente pediu "traz mais duas"? Um clique no botão Repetir Saideira e já tá na comanda.' },
+        { icon: '🧮', tag: 'SEM CALCULADORA', title: 'Racha a Conta sem Estresse', desc: 'Divide a mesa por cabeça ou por item específico em 2 cliques. Aceita Pix, dinheiro, cartão e pendura na mesma conta, já separando os 10% da equipe.' },
+        { icon: '🪑', tag: 'GIRO DE SALÃO', title: 'Radar de Mesa Moscando', desc: 'Bateu o olho no mapa, sabe tudo: mesa verde tá bebendo, amarela deu uma freada, vermelha parou de pedir. O sistema avisa pro garçom chegar junto.' },
+        { icon: '🎉', tag: 'DIA DE JOGO', title: 'Modo Evento & Ficha Expressa', desc: 'Lotou a calçada em dia de jogo ou samba? Ligue o Modo Evento com 1 clique: o sistema ignora mesas e vira uma máquina ultrarrápida de venda de balcão.' },
+        { icon: '🍻', tag: 'PILOTO AUTOMÁTICO', title: 'Happy Hour que Vira Sozinho', desc: 'Configure o horário promocional uma única vez. Deu 17h, o chopp entra na promoção sozinho; deu 20h, volta pro preço normal sem ninguém esquecer.' },
+        { icon: '📱', tag: 'ZERO ATRITO', title: 'Cardápio QR Code Ao Vivo', desc: 'O cliente lê o QR na mesa e vê o cardápio atualizado. Acabou a coxinha na cozinha? Some do celular do cliente no mesmo segundo.' },
+      ]
+    },
+    gaveta: {
+      badge: '💰 Pilar 02 • Na Gaveta & no Fiado',
+      title: 'Caixa que Bate na Vírgula',
+      subtitle: 'Estanque o ralo invisível do bar, aposente o caderninho engordurado e durma em paz.',
+      accent: 'red' as const,
+      features: [
+        { icon: '🕵️', tag: 'FIM DO CHUTE', title: 'Fechamento no Escuro (Conferência Cega)', desc: 'Quem fecha o turno conta as notas da gaveta e digita no sistema sem saber quanto deveria ter. Acabou o "deu certinho, patrão" no olhômetro.' },
+        { icon: '📓', tag: 'ADEUS CADERNINHO', title: 'Pendura Profissional + Régua no Zap', desc: 'Histórico completo do que o freguês consumiu e disparo de cobrança educada em 1 clique no WhatsApp com sua chave Pix. Receba sem perder o amigo.' },
+        { icon: '🛡️', tag: 'OLHO VIVO', title: 'Dedo-Duro Anti-Espertinho (Score)', desc: 'Cancelaram item depois de imprimir a conta? O sistema bloqueia ou exige senha e dá uma nota de confiabilidade pra cada operador do caixa.' },
+        { icon: '💵', tag: 'GAVETA LIMPA', title: 'Sangria & Troco Carimbados', desc: 'Tirou R$ 40 do caixa pra pagar o gelo ou o limão? Lança a sangria em 5 segundos igual caixa eletrônico e o fechamento da madrugada não fura.' },
+        { icon: '🔑', tag: 'CADA UM NO SEU QUADRADO', title: 'Crachá Digital com 27 Permissões', desc: 'Garçom lança pedido, cozinheiro vê a fila, caixa fecha conta e só o dono vê o lucro líquido. Você trava o que cada um pode mexer.' },
+        { icon: '📲', tag: 'NO SEU BOLSO', title: 'Resumo do Turno no Zap do Sócio', desc: 'Passou a régua na noite? Com 1 clique o relatório mastigado (faturamento, ticket médio e diferenças) vai direto pro WhatsApp dos donos.' },
+      ]
+    },
+    cozinha: {
+      badge: '🍸 Pilar 03 • Na Cozinha, no Copo & no Estoque',
+      title: 'Sem Papel Sujo e Sem Falta de Breja',
+      subtitle: 'Da porção saindo quentinha na chapa até o último mililitro da garrafa de Gin.',
+      accent: 'amber' as const,
+      features: [
+        { icon: '🛎️', tag: 'DING! TÁ PRONTO', title: 'Monitor de Cozinha com Campainha', desc: 'O pedido entra na tela touch da cozinha com observações claras ("sem cebola", "bem passado"). Quando fica pronto, apita na hora no celular do garçom.' },
+        { icon: '🍸', tag: 'MARGEM DE 80%', title: 'Coquetelaria & Drinks Fracionados', desc: 'Ficha técnica em mililitros (ml). Cada Negroni ou Caipirinha vendida desconta a dose exata da garrafa no estoque e mostra seu CMV ao vivo.' },
+        { icon: '🍯', tag: 'PRODUÇÃO DA CASA', title: 'Xaropes & Batches com Validade', desc: 'Produza xaropes, infusões e premixes caseiros em 1 clique: o sistema abate o açúcar e as frutas e controla a validade na geladeira.' },
+        { icon: '🚨', tag: 'ESTOQUE ESPERTO', title: 'Alerta de Breja Acabando em Horas', desc: 'Nada de deixar faltar Heineken às 22h de sexta. O sistema mede a velocidade dos pedidos e avisa: "Atenção: estoque dura só mais 3 horas nesse ritmo".' },
+        { icon: '🛒', tag: 'COMPRA CERTA', title: 'Lista de Reposição pro Fornecedor', desc: 'Baseado no que realmente girou nos últimos 7 dias, o Botequista monta sua lista de compras da semana pronta pra encaminhar no WhatsApp.' },
+        { icon: '📉', tag: 'ZERO FURO', title: 'Registro de Quebra & Consignação', desc: 'Garrafa caiu no chão ou chopp azedou? Registra a perda em 2 toques sabendo o custo em R$. Pegou bebida consignada pra evento? Controle o acerto exato.' },
+      ]
+    },
+    dono: {
+      badge: '🧠 Pilar 04 • Na Cabeça do Dono',
+      title: 'Sua Consultoria de Boteco no Bolso',
+      subtitle: 'Descubra onde mora o lucro real do seu cardápio e crie receita recorrente até em terça chuvosa.',
+      accent: 'emerald' as const,
+      features: [
+        { icon: '💎', tag: 'LUCRO LÍQUIDO', title: 'Engenharia de Cardápio (Vacas vs. Abacaxis)', desc: 'Cruza volume de vendas com custo real (CMV) pra te mostrar quais itens são suas "Vacas Leiteiras" e quais são "Abacaxis" que dão trabalho e pouco lucro.' },
+        { icon: '📈', tag: 'PRECIFICADOR', title: 'Radar de Prejuízo & Preço Alvo', desc: 'Subiu o preço do fornecedor e sua margem caiu de 30%? O Radar apita na hora e sugere o novo preço de cardápio pra manter seu lucro saudável.' },
+        { icon: '🌤️', tag: 'OLHO NO TEMPO', title: 'Previsão de Movimento por Clima', desc: 'Cruza o histórico do seu bar com a previsão do tempo da sua rua: "Sexta de 31°C em SP = movimento ALTO, gela mais 5 caixas e reforça o gelo".' },
+        { icon: '🏆', tag: 'TREINO DE EQUIPE', title: 'Ranking de Garçom Esperto (Upsell)', desc: 'Descubra quem é o garçom que só tira pedido e quem é o craque que oferece porção, adicional e bebida melhor, puxando seu ticket médio pra cima.' },
+        { icon: '👑', tag: 'CAIXA GARANTIDO', title: 'Clube do Chopp & Assinaturas', desc: 'Crie planos mensais pros clientes fiéis (ex: 1 chopp por dia). O freguês vem buscar o chopp do clube na terça-feira e já pede uma porção pra acompanhar.' },
+        { icon: '⚙️', tag: 'SOB MEDIDA', title: 'Multi-Unidades & Zero Complexidade', desc: 'Tem mais de um bar ou pousada/quartos junto? Gerencie tudo num lugar só, ligando ou desligando módulos extras (Drinks, Hospedaria) por unidade.' },
+      ]
+    }
+  };
+
+  const currentPillar = pillarsData[activePillar];
+
   return (
     <div className="min-h-screen bg-[#020617] text-white font-sans selection:bg-red-500/30 overflow-x-hidden">
       {/* ─── CSS ─── */}
       <style>{`
         .scroll-reveal {
           opacity: 0;
-          transform: translateY(40px);
-          transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+          transform: translateY(32px);
+          transition: all 0.75s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .scroll-reveal.is-visible {
           opacity: 1;
           transform: translateY(0);
         }
         .hero-gradient {
-          background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(185, 28, 28, 0.15), transparent),
-                      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(16, 185, 129, 0.08), transparent);
+          background: radial-gradient(ellipse 80% 55% at 50% -5%, rgba(220, 38, 38, 0.18), transparent),
+                      radial-gradient(ellipse 55% 45% at 15% 40%, rgba(245, 158, 11, 0.08), transparent),
+                      radial-gradient(ellipse 60% 40% at 85% 95%, rgba(16, 185, 129, 0.10), transparent);
         }
         .cta-glow {
-          box-shadow: 0 0 60px rgba(37, 211, 102, 0.2), 0 0 120px rgba(37, 211, 102, 0.05);
+          box-shadow: 0 0 50px rgba(37, 211, 102, 0.25), 0 0 100px rgba(37, 211, 102, 0.08);
         }
         .cta-glow:hover {
-          box-shadow: 0 0 80px rgba(37, 211, 102, 0.35), 0 0 160px rgba(37, 211, 102, 0.1);
+          box-shadow: 0 0 70px rgba(37, 211, 102, 0.4), 0 0 140px rgba(37, 211, 102, 0.15);
         }
         .float-anim {
           animation: gentleFloat 6s ease-in-out infinite;
         }
+        .float-anim-delayed {
+          animation: gentleFloat 6s ease-in-out 2s infinite;
+        }
         @keyframes gentleFloat {
           0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-12px); }
+          50% { transform: translateY(-10px); }
         }
         .pulse-border {
           animation: pulseBorder 2s ease-in-out infinite;
@@ -1715,133 +2116,207 @@ export const LandingPage2: React.FC = () => {
       `}</style>
 
       {/* ─── NAVIGATION ─── */}
-      <nav className="sticky top-0 z-50 bg-[#020617]/85 backdrop-blur-2xl border-b border-white/5">
+      <nav className="sticky top-0 z-50 bg-[#020617]/85 backdrop-blur-2xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-xl shadow-lg shadow-red-600/20">B</div>
+            <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center font-barrio text-2xl shadow-lg shadow-red-600/30 border border-red-400/30">B</div>
             <div className="flex flex-col">
-              <span className="text-lg font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
-              <span className="text-[7px] font-black tracking-[0.4em] uppercase text-red-500 italic">Simplicidade & Inteligência de Balcão</span>
+              <span className="text-xl font-black tracking-tighter uppercase font-barrio leading-none">Botequista</span>
+              <span className="text-[8px] font-black tracking-[0.25em] uppercase text-amber-400 italic mt-0.5">Gestão de Balcão • Sem Frescura</span>
             </div>
           </div>
-          <div className="hidden lg:flex items-center gap-8">
-            <button onClick={() => scrollToSection('problema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">O Problema</button>
-            <button onClick={() => scrollToSection('solucao')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Solução</button>
-            <button onClick={() => scrollToSection('coquetelaria')} className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
-              <span>🍸</span> Coquetelaria
+          <div className="hidden lg:flex items-center gap-7">
+            <button onClick={() => scrollToSection('perrengue')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors cursor-pointer">O Sufoco</button>
+            <button onClick={() => scrollToSection('pilares')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors cursor-pointer">O Que Faz</button>
+            <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors cursor-pointer">Telas Reais</button>
+            <button onClick={() => scrollToSection('coquetelaria')} className="text-[10px] font-black uppercase tracking-[0.15em] text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1.5 bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/25 cursor-pointer">
+              <span>🍸</span> Drinks 2.0
             </button>
-            <button onClick={() => scrollToSection('sistema')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Sistema</button>
-            <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Preço</button>
-            <button onClick={() => setIsTechConsoleModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">🤓 Tech</button>
-            <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors">Ver Demo</a>
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/30">
-              WhatsApp
+            <button onClick={() => scrollToSection('preco')} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-white transition-colors cursor-pointer">Parceria R$ 0</button>
+            <button onClick={() => setIsTechConsoleModalOpen(true)} className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer">🤓 Papo de Nerd</button>
+            <a href="/?demo=true" className="text-[10px] font-black uppercase tracking-[0.15em] text-white bg-slate-900 hover:bg-slate-800 border border-white/15 px-4 py-2.5 rounded-xl transition-all">
+              🍺 Abrir Demo
+            </a>
+            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="bg-[#16a34a] hover:bg-[#15803d] text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-emerald-900/40">
+              Chamar no Zap
             </a>
           </div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden text-white p-2">
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden text-white p-2" aria-label="Menu">
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16m-7 6h7"} /></svg>
           </button>
         </div>
         {/* Mobile Menu */}
-        <div className={`fixed inset-0 z-50 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}`}>
-          <div className="flex flex-col items-center justify-center h-full gap-8 p-4">
-            <button onClick={() => scrollToSection('problema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">O Problema</button>
-            <button onClick={() => scrollToSection('solucao')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Solução</button>
+        <div className={`fixed inset-0 z-50 lg:hidden bg-[#020617]/98 backdrop-blur-2xl transition-all duration-500 ${isMenuOpen ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+          <div className="flex flex-col items-center justify-center h-full gap-7 p-6">
+            <button onClick={() => scrollToSection('perrengue')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">O Sufoco vs. A Paz</button>
+            <button onClick={() => scrollToSection('pilares')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Os 4 Pilares do Bar</button>
+            <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Telas Reais</button>
             <button onClick={() => scrollToSection('coquetelaria')} className="text-xl font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 flex items-center gap-2">
               <span>🍸</span> Coquetelaria & Drinks
             </button>
-            <button onClick={() => scrollToSection('sistema')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Sistema</button>
-            <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Preço</button>
-            <button onClick={() => { setIsTechConsoleModalOpen(true); setIsMenuOpen(false); }} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">🤓 Tech</button>
-            <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Ver Demo</a>
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full max-w-xs bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-lg font-black uppercase tracking-tight shadow-xl">
-              Falar no WhatsApp
-            </a>
+            <button onClick={() => scrollToSection('preco')} className="text-xl font-black uppercase tracking-widest text-slate-200 hover:text-white">Parceria Grátis</button>
+            <button onClick={() => { setIsTechConsoleModalOpen(true); setIsMenuOpen(false); }} className="text-lg font-black uppercase tracking-widest text-slate-400 hover:text-emerald-400">🤓 Papo de Nerd (Tech)</button>
+            <div className="flex flex-col w-full max-w-xs gap-3 pt-4">
+              <a href="/?demo=true" onClick={() => setIsMenuOpen(false)} className="w-full bg-slate-900 border border-white/15 text-white px-8 py-4 rounded-2xl text-center text-base font-black uppercase tracking-tight">
+                🍺 Testar Demo no Celular
+              </a>
+              <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="w-full bg-[#16a34a] text-white px-8 py-4 rounded-2xl text-center text-base font-black uppercase tracking-tight shadow-xl">
+                Chamar no WhatsApp
+              </a>
+            </div>
           </div>
         </div>
       </nav>
 
       <main>
       {/* ─── HERO ─── */}
-      <section className="hero-gradient relative pt-16 pb-20 px-6">
+      <section className="hero-gradient relative pt-14 pb-24 px-6">
         <div className="max-w-6xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-red-600/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.3em] mb-10 scroll-reveal animate-pulse">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                       Programa parceiro: Primeiros 10 bares GRÁTIS
+          <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-black uppercase tracking-[0.25em] mb-8 scroll-reveal">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            🍻 Parceria de Balcão • 100% na faixa pros primeiros bares
           </div>
 
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.85] mb-8 uppercase scroll-reveal">
-            <span className="text-gradient block">Tão simples quanto seu</span>
-            <span className="text-emerald-500 block italic">caderninho</span>
-            <span className="text-gradient block">tão inteligente quanto você precisa</span>
+          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter leading-[0.88] mb-8 uppercase scroll-reveal">
+            <span className="block text-white">Fácil igual seu</span>
+            <span className="text-amber-400 block italic">caderninho.</span>
+            <span className="block text-emerald-400">Esperto igual dono de bar.</span>
           </h1>
 
           <p className="text-lg sm:text-xl md:text-2xl text-slate-200 mb-10 leading-relaxed font-medium max-w-3xl mx-auto scroll-reveal">
-            Abandone a calculadora e o papel. O Botequista traz a <span className="text-white font-bold">clareza total</span> do seu lucro e a <span className="text-emerald-400 font-bold">paz de espírito</span> no fechamento do caixa. Tudo <span className="text-white font-bold">grátis</span>, offline e direto no seu celular.
+            Aposente a comanda engordurada e a calculadora no balcão. O Botequista <span className="text-white font-bold">fecha seu caixa na vírgula</span>, avisa qual mesa tá moscando, controla a <span className="text-amber-400 font-bold">pendura sem climão</span> e <span className="text-emerald-400 font-bold">não trava nem se o Wi-Fi cair</span> no pico de sexta-feira.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-16 scroll-reveal">
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow flex items-center gap-3 bg-[#16a34a] text-white px-10 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 shadow-2xl">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Falar no WhatsApp
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 scroll-reveal">
+            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow flex items-center justify-center gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white px-9 py-5 rounded-2xl text-base sm:text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 shadow-2xl w-full sm:w-auto">
+              <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Chamar no Zap e Liberar Meu Bar
             </a>
-            <a href="/?demo=true" className="px-10 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all bg-slate-900 border border-white/10 hover:border-white/20 hover:bg-slate-800 text-white shadow-xl">
-              Testar Demo Agora
+            <a href="/?demo=true" className="flex items-center justify-center gap-2 px-9 py-5 rounded-2xl text-base sm:text-lg font-black uppercase tracking-tight transition-all bg-slate-900/90 border border-white/15 hover:border-amber-400/50 hover:bg-slate-800 text-white shadow-xl w-full sm:w-auto">
+              <span>🍺</span> Mexer no Sistema Agora (Demo)
             </a>
           </div>
 
-          {/* Trust Badges */}
-          <div className="flex flex-wrap justify-center gap-8 mb-16 scroll-reveal">
-            <div className="flex items-center gap-2 text-slate-300">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 font-black text-xs">3</div>
-              <span className="text-xs">bares usando agora</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <span className="text-xs">Nota 4.9/5.0</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-300">
-              <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
-              <span className="text-xs">Funciona offline</span>
-            </div>
+          {/* Quick Boteco Proof Badges */}
+          <div className="flex flex-wrap justify-center gap-3 sm:gap-6 mb-14 scroll-reveal">
+            {[
+              { icon: '⚡', text: 'Pedido lançado em 2s' },
+              { icon: '📶', text: 'Funciona 100% sem Wi-Fi' },
+              { icon: '🕵️', text: 'Conferência Cega de Gaveta' },
+              { icon: '💳', text: 'Sem cartão • Sem mensalidade' },
+            ].map((badge, idx) => (
+              <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/70 border border-white/10 text-slate-200 text-xs font-bold">
+                <span>{badge.icon}</span>
+                <span>{badge.text}</span>
+              </div>
+            ))}
           </div>
 
-          {/* Hero Image */}
-          <div className="max-w-5xl mx-auto scroll-reveal">
+          {/* Hero Image + Floating Live Bar Notifications */}
+          <div className="relative max-w-5xl mx-auto scroll-reveal">
+            {/* Floating Live Badge 1 (Desktop) */}
+            <div className="hidden lg:flex items-center gap-3 absolute -left-8 top-14 z-30 bg-slate-900/95 border border-amber-500/40 px-4 py-3 rounded-2xl shadow-2xl float-anim">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-lg">🍺</div>
+              <div className="text-left">
+                <div className="text-[10px] font-black uppercase text-amber-400">Botão Repetir Saideira</div>
+                <div className="text-xs font-bold text-white">+2 Original 600ml na Mesa 07 (1.2s)</div>
+              </div>
+            </div>
+
+            {/* Floating Live Badge 2 (Desktop) */}
+            <div className="hidden lg:flex items-center gap-3 absolute -right-8 top-24 z-30 bg-slate-900/95 border border-emerald-500/40 px-4 py-3 rounded-2xl shadow-2xl float-anim-delayed">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-lg">🛎️</div>
+              <div className="text-left">
+                <div className="text-[10px] font-black uppercase text-emerald-400">Cozinha Apitou (Ding!)</div>
+                <div className="text-xs font-bold text-white">Porção de Panceta pronta • Mesa 12</div>
+              </div>
+            </div>
+
+            {/* Floating Live Badge 3 (Desktop) */}
+            <div className="hidden lg:flex items-center gap-3 absolute -bottom-6 right-12 z-30 bg-slate-900/95 border border-red-500/40 px-4 py-3 rounded-2xl shadow-2xl float-anim">
+              <div className="w-9 h-9 rounded-xl bg-red-500/20 flex items-center justify-center text-lg">⏰</div>
+              <div className="text-left">
+                <div className="text-[10px] font-black uppercase text-red-400">Radar de Salão</div>
+                <div className="text-xs font-bold text-white">Mesa 03 moscando há 42 min • Oferecer rodada</div>
+              </div>
+            </div>
+
             <BrowserFrame
               src="/landing_assets/assets/dashboard_real.png"
               alt="Painel de Vendas Real do Botequista"
-              label="Sistema em Produção"
+              label="Tela Real de Produção • Zero Photoshop"
+              callout="Roda liso no celular, tablet ou PC do caixa"
             />
           </div>
         </div>
       </section>
 
-      {/* ─── WHATSAPP REPORTS ─── */}
-      <section className="py-24 px-6 bg-[#020617] relative">
+      {/* ─── SEXTA-FEIRA 21H: O SUFOCO VS A PAZ (THE PROBLEM / CONTRAST) ─── */}
+      <section id="perrengue" className="py-28 px-6 bg-slate-950/60 border-y border-white/5">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="order-2 lg:order-1">
-              <WhatsAppSimulation />
-            </div>
-            <div className="order-1 lg:order-2 space-y-8 scroll-reveal">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Gestão Prática</span>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-                Relatórios Prontos para <span className="text-emerald-500 italic">Compartilhar</span>.
-              </h2>
-              <p className="text-slate-300 text-lg leading-relaxed">
-                Ao fechar o turno, o Botequista gera um resumo formatado que você pode compartilhar com sócios ou gerentes via WhatsApp com um clique. Tenha os números do dia sempre à mão, sem complicação.
-              </p>
+          <div className="text-center mb-16 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-red-500 mb-3 block">Papo Reto de Balcão</span>
+            <h2 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter leading-[0.92] uppercase">
+              Sexta-feira, 21h, casa cheia. <br/>
+              <span className="text-red-500 italic">Você conhece esse sufoco.</span>
+            </h2>
+            <p className="mt-5 text-slate-300 text-base sm:text-lg max-w-2xl mx-auto">
+              Quem toca bar em São Paulo sabe onde o sapato aperta quando o movimento engrossa. Veja o que muda no primeiro fim de semana com o Botequista:
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Coluna 1: O Sufoco */}
+            <div className="scroll-reveal p-8 sm:p-10 rounded-[36px] bg-red-950/15 border border-red-500/20 space-y-6">
+              <div className="flex items-center gap-3 pb-4 border-b border-red-500/20">
+                <div className="w-11 h-11 rounded-2xl bg-red-500/20 flex items-center justify-center text-xl">🥵</div>
+                <div>
+                  <h3 className="text-lg font-black uppercase text-white">No Papel ou Sistema Travado</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Onde o lucro vai embora pelo ralo</span>
+                </div>
+              </div>
+
               <div className="space-y-4">
                 {[
-                  'Resumo de turno formatado',
-                  'Compartilhamento via link WhatsApp',
-                  'Conferência de caixa simplificada',
-                  'Sem necessidade de integrações pagas'
+                  { title: 'Wi-Fi caiu na chuva de sexta = Bar travado', desc: 'A internet oscila, o sistema tradicional congela e forma fila de cliente bravo querendo pagar no balcão.' },
+                  { title: '2h da manhã e faltam R$ 150 na gaveta', desc: 'Todo mundo exausto, ninguém sabe se foi troco errado, sangria pro gelo sem anotar ou "acerto no olhômetro".' },
+                  { title: '"Marca no caderninho aí que quinta eu acerto"', desc: 'A folha molha de cerveja, a letra fica ilegível ou bate aquela vergonha de cobrar o freguês antigo.' },
+                  { title: 'Garçom gritando pedido e mesa esquecida', desc: 'Porção que sai errada na cozinha e mesa ocupando 4 cadeiras há uma hora sem ninguém encostar pra vender mais uma.' },
                 ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm font-bold uppercase tracking-widest text-slate-300">{item}</span>
+                  <div key={i} className="p-4 rounded-2xl bg-slate-950/60 border border-red-500/10 flex gap-3.5 items-start">
+                    <span className="text-red-500 font-black text-base mt-0.5">✕</span>
+                    <div>
+                      <div className="text-sm font-black text-white mb-1">{item.title}</div>
+                      <p className="text-xs text-slate-400 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Coluna 2: No Botequista */}
+            <div className="scroll-reveal p-8 sm:p-10 rounded-[36px] bg-emerald-950/15 border border-emerald-500/30 space-y-6 shadow-2xl shadow-emerald-950/20">
+              <div className="flex items-center gap-3 pb-4 border-b border-emerald-500/20">
+                <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-xl">🍻</div>
+                <div>
+                  <h3 className="text-lg font-black uppercase text-white">No Botequista (Régua Passada)</h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Operação azeitada e bolso protegido</span>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {[
+                  { title: 'Caiu a internet? O garçom nem fica sabendo', desc: 'Grava tudo no aparelho em 2 milissegundos. A noite corre solta e, quando o sinal volta, sobe tudo pra nuvem sozinho.' },
+                  { title: 'Fechamento no Escuro (Conferência Cega)', desc: 'O caixa digita o que contou na gaveta sem ver o valor esperado. Bateu, bateu; se deu diferença, você descobre na hora.' },
+                  { title: 'Pendura Digital + Lembrete Amigável no Zap', desc: 'Ficha limpa de cada cliente e mensagem pronta com sua chave Pix pra cobrar no WhatsApp sem perder a amizade.' },
+                  { title: 'Campainha na Cozinha + Alerta de Mesa Moscando', desc: 'O cozinheiro aperta um botão e o celular do garçom apita ("Ding!"). E se a mesa parar de beber, fica vermelha no mapa.' },
+                ].map((item, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-slate-950/60 border border-emerald-500/20 flex gap-3.5 items-start">
+                    <span className="text-emerald-400 font-black text-base mt-0.5">✓</span>
+                    <div>
+                      <div className="text-sm font-black text-white mb-1">{item.title}</div>
+                      <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1850,81 +2325,105 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-
-
-      {/* ─── THE PROBLEM ─── */}
-      <section id="problema" className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12 scroll-reveal">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-[0.9] uppercase">
-              O sistema que não te deixa na mão e o caixa que finalmente <span className="text-red-500 italic">bate</span>.
+      {/* ─── OS 4 PILARES DO BOTEQUISTA (CLAREZA TOTAL DE FUNCIONALIDADES) ─── */}
+      <section id="pilares" className="py-32 px-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-950/10 to-transparent pointer-events-none"></div>
+        <div className="max-w-6xl mx-auto relative z-10">
+          <div className="text-center mb-14 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400 mb-3 block">Tudo o que seu bar precisa, sem ponta solta</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+              Os 4 Pilares da <span className="text-emerald-400 italic">Noite Perfeita</span>.
             </h2>
+            <p className="mt-5 text-slate-300 text-lg max-w-2xl mx-auto">
+              Navegue pelas 4 áreas do seu boteco abaixo e veja exatamente como cada ferramenta resolve a vida real do balcão:
+            </p>
           </div>
 
-          <div className="space-y-4">
+          {/* Interactive Pillar Selector Tabs */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-12 scroll-reveal">
             {[
-              { text: 'Caixa nunca fecha certo. Sempre falta ou sobra dinheiro.' },
-              { text: 'Internet cai = bar fecha. Perde venda na sexta-feira.' },
-              { text: 'Fiado vira dívida. Cliente some sem pagar.' },
-              { text: 'Não sabe quem vendeu o quê. Funcionários sem métricas?' },
-            ].map((p, i) => (
-              <div key={i} className="scroll-reveal flex items-center gap-4 p-5 rounded-2xl bg-red-950/10 border border-red-900/20">
-                <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0"></div>
-                <span className="text-slate-200 text-sm">{p.text}</span>
-              </div>
+              { id: 'salao', icon: '🍺', title: '1. Salão & Balcão', sub: 'Velocidade no Pico' },
+              { id: 'gaveta', icon: '💰', title: '2. Gaveta & Fiado', sub: 'Caixa Blindado' },
+              { id: 'cozinha', icon: '🍸', title: '3. Cozinha & Copo', sub: 'Estoque & Drinks' },
+              { id: 'dono', icon: '🧠', title: '4. Cabeça do Dono', sub: 'Lucro & Consultoria' },
+            ].map((tab) => {
+              const isSelected = activePillar === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActivePillar(tab.id as any)}
+                  className={`p-5 rounded-3xl border text-left transition-all duration-300 cursor-pointer flex items-center gap-3.5 ${
+                    isSelected
+                      ? 'bg-gradient-to-br from-emerald-500/20 to-slate-900 border-emerald-400/60 shadow-xl shadow-emerald-950/40 scale-[1.02]'
+                      : 'bg-slate-900/60 border-white/10 hover:border-white/25 opacity-80 hover:opacity-100'
+                  }`}
+                >
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 ${isSelected ? 'bg-emerald-500 text-slate-950' : 'bg-slate-950 text-white'}`}>
+                    {tab.icon}
+                  </div>
+                  <div>
+                    <div className="text-xs sm:text-sm font-black uppercase text-white leading-tight">{tab.title}</div>
+                    <div className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 ${isSelected ? 'text-emerald-400' : 'text-slate-400'}`}>{tab.sub}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Pillar Header */}
+          <div className="mb-10 p-6 sm:p-8 rounded-3xl bg-slate-900/80 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400 block mb-1">{currentPillar.badge}</span>
+              <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">{currentPillar.title}</h3>
+              <p className="text-slate-300 text-sm mt-1">{currentPillar.subtitle}</p>
+            </div>
+            <a
+              href="/?demo=true"
+              className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white text-white hover:text-slate-950 text-xs font-black uppercase tracking-widest transition-all text-center flex-shrink-0"
+            >
+              Testar isso no Demo →
+            </a>
+          </div>
+
+          {/* Active Pillar 6 Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {currentPillar.features.map((f, idx) => (
+              <FeatureCard
+                key={`${activePillar}-${idx}`}
+                icon={f.icon}
+                tag={f.tag}
+                title={f.title}
+                desc={f.desc}
+                accent={currentPillar.accent}
+              />
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* ─── THE SOLUTION ─── */}
-      <section id="solucao" className="py-32 px-6 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-950/5 to-transparent pointer-events-none"></div>
-        <div className="max-w-6xl mx-auto relative z-10">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">A Solução Definitiva</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-              O sistema que <span className="text-emerald-500 italic">nunca para</span>.
-            </h2>
-            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Projetado para o bar da vida real com internet instável, sexta-feira lotada e clientes exigentes e apressados</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard icon="📶" title="Funciona Sem Internet" desc="Cada venda fica salva no celular na hora. Quando a internet voltar, o sistema sincroniza sozinho. Seu bar não para." accent="emerald" />
-            <FeatureCard icon="⚡" title="Venda em 3 Cliques" desc="Você coloca o produto, o cliente paga, pronto. Os favoritos ficam no topo e a interface é otimizada para velocidade." accent="emerald" />
-             <FeatureCard icon="🕵️" title="Conferência Cega" desc="O garçom conta o dinheiro sem ver o valor do sistema. Não tem como 'bater o caixa' na sorte ou na má fé." accent="emerald" />
-            <FeatureCard icon="🛡️" title="Segurança de Dados" desc="Backup fácil e regras de segurança que garantem que seus dados de faturamento e estoque estejam sempre protegidos." accent="emerald" />
-            <FeatureCard icon="📱" title="Interface Adaptativa" desc="Funciona perfeitamente em celulares, tablets ou computadores. Layout otimizado para telas pequenas no balcão." accent="emerald" />
-            <FeatureCard icon="🚨" title="Velocidade de Estoque" desc="O sistema calcula a velocidade de venda e avisa se um produto corre risco de acabar nas próximas horas." accent="emerald" />
-            <FeatureCard icon="📊" title="Lista de Compras" desc="Gere sua lista de reposição baseada no giro real dos últimos 7 dias e compartilhe pelo WhatsApp em um clique." accent="emerald" />
-            <FeatureCard icon="⏰" title="Detector de Mesa Travada" desc="O sistema identifica mesas ociosas e alerta o garçom para oferecer uma nova rodada, otimizando o giro do seu bar." accent="emerald" />
-            <FeatureCard icon="🍳" title="Monitor de Cozinha" desc="Fila touch reativa para cozinheiros com som de campainha sincronizado em tempo real nos aparelhos dos garçons." accent="emerald" />
-            <FeatureCard icon="🧠" title="Assistente do Dono (Premium)" desc="Painel offline de inteligência de negócios com faturamento, CMV, Lucro Real, Matriz BCG de cardápio, simulador de preços e auditoria de riscos operacionais." accent="emerald" />
-          </div>
-
-          {/* Highlight: Offline */}
-          <div className="mt-20 p-10 md:p-16 rounded-[40px] bg-emerald-950/20 border border-emerald-900/30 scroll-reveal">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-4">Exclusividade Botequista</div>
-                <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-6">
-                  A internet pode<span className="text-emerald-500"> cair</span>.
+          {/* Highlight: Offline Resilience */}
+          <div className="mt-20 p-8 sm:p-14 rounded-[40px] bg-gradient-to-br from-emerald-950/30 via-slate-900/60 to-slate-950 border border-emerald-500/30 scroll-reveal">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+              <div className="lg:col-span-8 space-y-6">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">
+                  📶 Blindagem Contra Operadora Ruim
+                </div>
+                <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.92]">
+                  Choveu em São Paulo e o Wi-Fi caiu? <span className="text-emerald-400 italic">Seu balcão nem pisca.</span>
                 </h3>
-                <p className="text-slate-200 text-lg leading-relaxed mb-8">
-                  O Botequista salva os dados primeiro no celular do garçom, e depois na nuvem. Se a internet cair, a venda continua. Quando voltar, tudo se sincroniza. Sem precisar de TI, sem dor de cabeça.
+                <p className="text-slate-200 text-base sm:text-lg leading-relaxed">
+                  Sistemas comuns travam na tela de carregamento quando a internet oscila. O Botequista grava cada cerveja, porção e fechamento direto no aparelho em milissegundos e sincroniza sozinho em segundo plano quando o sinal volta.
                 </p>
-                <div className="flex flex-wrap gap-3">
-                  {['Funciona Offline', 'Sincroniza Sozinho', 'Dados Protegidos', 'Sem Servidor'].map(tag => (
-                    <span key={tag} className="px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest">{tag}</span>
+                <div className="flex flex-wrap gap-2.5">
+                  {['Zero Comanda Perdida', 'Sincroniza Sozinho', 'Sem Servidor Caro no Bar', 'Backup na Nuvem + GitHub'].map(tag => (
+                    <span key={tag} className="px-4 py-2 rounded-full bg-slate-950/80 border border-emerald-500/25 text-emerald-300 text-[10px] font-black uppercase tracking-wider">{tag}</span>
                   ))}
                 </div>
               </div>
-              <div className="text-center">
-                <div className="inline-flex flex-col items-center gap-4 p-10 rounded-3xl bg-slate-950/50 border border-emerald-500/10">
-                  <div className="text-6xl float-anim">📶</div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Disponibilidade</div>
-                  <div className="text-7xl font-black text-white"><AnimatedCounter target={99} suffix="%" /></div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Mesmo sem internet</div>
+              <div className="lg:col-span-4 text-center">
+                <div className="inline-flex flex-col items-center gap-3 p-8 rounded-3xl bg-slate-950/80 border border-emerald-500/20 w-full">
+                  <div className="text-5xl float-anim">⚡</div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">Tempo de Resposta no Balcão</div>
+                  <div className="text-5xl sm:text-6xl font-black text-white">0,002s</div>
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mesmo com o cabo de rede puxado</div>
                 </div>
               </div>
             </div>
@@ -1932,57 +2431,150 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── HIGHLIGHT: RELIABILITY ─── */}
-      <section className="py-24 px-6 bg-[#020617] relative">
+      {/* ─── REAL SCREENSHOTS & INTERACTIVE PREVIEWS ─── */}
+      <section id="sistema" className="py-28 px-6 bg-slate-950/40 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
-          <div className="p-12 rounded-[40px] bg-slate-900/30 border border-white/5 flex flex-col items-center text-center scroll-reveal">
-            <div className="w-20 h-20 rounded-3xl bg-red-600/10 flex items-center justify-center text-4xl mb-8 animate-pulse">🎯</div>
-            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter mb-6">Foco total no <span className="text-red-500 italic">Caderninho</span></h3>
-            <p className="text-slate-300 text-lg max-w-2xl leading-relaxed">
-              O Botequista não foi feito para competir com sistemas gigantes e caros. Foi feito para você que hoje usa o papel, a caneta ou a memória e precisa de organização sem burocracia.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── REAL SCREENSHOTS ─── */}
-      <section id="sistema" className="py-32 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Veja com seus olhos</span>
+          <div className="text-center mb-14 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-amber-400 mb-3 block">Sem maquiagem • Do jeito que roda no balcão</span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-              Zero Photoshop. <span className="text-red-600 italic">Tudo Real.</span>
+              Veja a Cara do <span className="text-red-500 italic">Sistema Real.</span>
             </h2>
-            <p className="mt-6 text-slate-300 text-lg max-w-2xl mx-auto">Capturas de tela reais do sistema em produção. O Botequista é exatamente assim sem filtro, sem photoshop.</p>
+            <p className="mt-5 text-slate-300 text-lg max-w-2xl mx-auto">
+              Clique nas abas abaixo para passear pelas 10 telas do Botequista — do lançamento da breja até a campainha da cozinha e o fechamento cego:
+            </p>
           </div>
 
           <ScreenshotGallery />
         </div>
       </section>
 
-      {/* ─── HOW IT WORKS ─── */}
-      <section className="py-32 px-6 bg-white/[0.01]">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">3 passos simples</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Funciona em <span className="text-emerald-500">15 minutos</span></h2>
+      {/* ─── WHATSAPP REPORTS & PENDURA COLLECTION ─── */}
+      <section className="py-28 px-6 bg-[#020617] relative border-t border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="order-2 lg:order-1">
+              <WhatsAppSimulation />
+            </div>
+            <div className="order-1 lg:order-2 space-y-7 scroll-reveal">
+              <span className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400 block">📲 O Bar Inteiro no Seu Zap</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+                Feche o Turno e Cobre o Fiado <span className="text-emerald-400 italic">em 1 Clique</span>.
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Ninguém merece ficar preenchendo planilha de madrugada ou passar vergonha cobrando amigo. O Botequista já monta o texto formatado e abre seu WhatsApp pronto pra disparar:
+              </p>
+              <div className="space-y-4">
+                {[
+                  { title: 'Resumo de Fechamento pro Sócio', desc: 'Total vendido, Pix, Cartão, Dinheiro na gaveta, ticket médio e produto campeão da noite.' },
+                  { title: 'Régua de Cobrança Educada (Pendura)', desc: 'Manda o extrato certinho pro freguês com sua chave Pix num tom parceiro e sem climão.' },
+                  { title: 'Lista de Compras da Semana', desc: 'Envia direto pro distribuidor quantas caixas de cerveja e insumos precisam ser repostos.' },
+                ].map((item, i) => (
+                  <div key={i} className="p-4 rounded-2xl bg-slate-900/50 border border-white/10 flex items-start gap-3.5">
+                    <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs font-black flex-shrink-0 mt-0.5">✓</div>
+                    <div>
+                      <div className="text-sm font-black uppercase text-white">{item.title}</div>
+                      <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-0">
-            {[
-              { step: '01', title: 'Fale conosco pelo WhatsApp', desc: 'Criamos sua conta gratuitamente e configuramos sua primeira unidade.', icon: '💬' },
-              { step: '02', title: 'Cadastre seu cardápio', desc: 'Interface intuitiva com categorias, adicionais e preços. 15 minutos e já está vendendo.', icon: '📋' },
-              { step: '03', title: 'Comece a faturar com controle', desc: 'PDV pronto. Relatórios ativos. Conferência cega desde o primeiro dia.', icon: '🚀' },
-            ].map((s, i) => (
-              <div key={i} className="scroll-reveal flex gap-8 items-start group py-10 border-b border-white/5 last:border-0">
-                <div className="flex-shrink-0">
-                  <div className="w-16 h-16 rounded-2xl bg-slate-900/80 border border-white/5 flex items-center justify-center text-3xl group-hover:scale-110 group-hover:border-red-500/30 transition-all">
-                    {s.icon}
+      {/* ─── COQUETELARIA & DRINKS 2.0 SHOWCASE ─── */}
+      <CocktailLabShowcase />
+
+      {/* ─── QR CODE MENU SECTION (WITH LIVE CLICKABLE LINK TO /menu) ─── */}
+      <section className="py-28 px-6 relative overflow-hidden bg-slate-950/40 border-y border-white/5">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8 scroll-reveal">
+              <span className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400 block">📱 Cardápio de Mesa Inteligente</span>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
+                Acabou na Cozinha? <span className="text-emerald-400 italic">Some do Cardápio na Hora.</span>
+              </h2>
+              <p className="text-slate-300 text-lg leading-relaxed">
+                Sabe aquele constrangimento do cliente escolher uma porção, chamar o garçom e ouvir <em>"Ih chefia, essa acabou faz meia hora"</em>? No Botequista, quando a última unidade sai no PDV, o cardápio QR Code da mesa se atualiza sozinho no mesmo segundo.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="p-6 bg-slate-900/60 border border-white/10 rounded-3xl">
+                  <h4 className="font-black uppercase text-xs text-emerald-400 mb-2">🍺 Fim do "Ih, Acabou!"</h4>
+                  <p className="text-slate-300 text-xs leading-relaxed">Sincronizado ao vivo com o estoque do balcão. O cliente só vê na tela o que realmente tem gelado pra sair.</p>
+                </div>
+                <div className="p-6 bg-slate-900/60 border border-white/10 rounded-3xl">
+                  <h4 className="font-black uppercase text-xs text-amber-400 mb-2">⚡ Mudou o Preço, Tá Valendo</h4>
+                  <p className="text-slate-300 text-xs leading-relaxed">Sem gastar com gráfica ou adesivo em cima de cardápio plastificado. Alterou no caixa, mudou em todas as mesas.</p>
+                </div>
+              </div>
+              <div className="pt-2">
+                <a
+                  href="/menu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-7 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-emerald-500/20"
+                >
+                  <span>📱</span>
+                  <span>Abrir Cardápio Digital Ao Vivo (/menu) →</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="relative group scroll-reveal">
+              <div className="absolute -inset-10 bg-emerald-500/10 blur-[100px] rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+              <a
+                href="/menu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block relative bg-slate-900 p-4 rounded-[56px] border border-white/15 hover:border-emerald-500/50 shadow-2xl max-w-[290px] mx-auto transform -rotate-2 group-hover:rotate-0 transition-all duration-500 cursor-pointer"
+                aria-label="Abrir Cardápio Digital Ao Vivo"
+              >
+                <div className="bg-slate-950 rounded-[46px] aspect-[9/19] overflow-hidden border border-white/10 relative">
+                  <img src="/landing_assets/assets/Screenshot_2026-03-03_21-32-14.png" alt="Cardápio Digital Botequista" className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                  <div className="absolute bottom-8 left-0 right-0 text-center px-4">
+                    <div className="text-xs font-black text-white uppercase tracking-widest mb-1">Cardápio da Mesa</div>
+                    <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-[0.2em]">Clique para abrir ao vivo ↗</div>
                   </div>
                 </div>
+                <div className="absolute -right-6 sm:-right-10 top-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500 hover:bg-emerald-400 rounded-full flex flex-col items-center justify-center text-slate-950 text-center shadow-2xl shadow-emerald-500/30 rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500">
+                  <div className="text-2xl mb-0.5">📱</div>
+                  <div className="text-[8px] font-black uppercase leading-tight">Clique e<br/>Teste Agora</div>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── COMO FUNCIONA (3 PASSOS RÁPIDOS) ─── */}
+      <section className="py-28 px-6 bg-white/[0.01]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-amber-400 mb-3 block">Sem técnico de informática • Sem chá de cadeira</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+              Do Zero ao Primeiro Chopp em <span className="text-emerald-400 italic">15 Minutos</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { step: '01', title: 'Dá um Alô no Zap', desc: 'Chama a gente no WhatsApp. Liberamos seu acesso de Parceiro Fundador na hora, sem pedir cartão nem burocracia.', icon: '💬' },
+              { step: '02', title: 'Sobe o Cardápio da Casa', desc: 'Cadastra suas brejas, doses e porções (ou manda foto do cardápio que ajudamos a subir). Tudo separado por categoria.', icon: '📋' },
+              { step: '03', title: 'Abre o Turno e Passa a Régua', desc: 'Pronto! Garçom lançando pelo celular, cozinha apitando pedido pronto e gaveta batendo na vírgula já na primeira noite.', icon: '🍻' },
+            ].map((s, i) => (
+              <div key={i} className="scroll-reveal p-8 rounded-3xl bg-slate-900/60 border border-white/10 hover:border-emerald-500/30 transition-all flex flex-col justify-between">
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500 mb-2">Passo {s.step}</div>
-                  <h3 className="text-xl font-black uppercase tracking-tight mb-2">{s.title}</h3>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-white/10 flex items-center justify-center text-3xl">
+                      {s.icon}
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.25em] text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                      Passo {s.step}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-black uppercase tracking-tight mb-3 text-white">{s.title}</h3>
                   <p className="text-slate-300 text-sm leading-relaxed">{s.desc}</p>
                 </div>
               </div>
@@ -1991,197 +2583,135 @@ export const LandingPage2: React.FC = () => {
         </div>
       </section>
 
-      {/* ─── WHAT'S INCLUDED ─── */}
-      <section className="py-32 px-6">
+      {/* ─── BENTO GRID: TUDO NO ESQUEMA (REPLACING THE 53-LINE RAW CHANGELOG) ─── */}
+      <section className="py-28 px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Nada escondido</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Tudo isso <span className="text-red-600">incluído</span></h2>
+          <div className="text-center mb-16 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-400 mb-3 block">Pacote Completo • Zero Mensalidade Escondida</span>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+              Tudo Isso Vem <span className="text-red-500 italic">no Esquema</span>
+            </h2>
+            <p className="mt-4 text-slate-300 text-base max-w-2xl mx-auto">
+              Não cobramos "módulo extra" pra liberar função importante. Entrou como bar parceiro, leva a caixa de ferramentas inteira:
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 scroll-reveal">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 scroll-reveal">
             {[
-              'Tela de vendas com modo rápido',
-              'Gestão de mesas e comandas',
-              'Cardápio com categorias e adicionais',
-              'Detector de Mesa Travada (Premium)',
-              'Contador de Tempo de Mesa',
-              'Ticket Médio com Tendência',
-              'Caixa: sangria e suprimento',
-              'Conferência cega de fechamento',
-              '7 tipos de relatório',
-              'Controle de acesso por funcionário',
-              'Gestão de fiado (pendura)',
-              'Suporte a várias lojas',
-              'Log de auditoria',
-              'Backup automático',
-              'Modo noturno (tela escura)',
-              'Recibo via WhatsApp',
-              'Curva ABC de produtos',
-              'Análise de Giro de Estoque',
-              'Reposição Inteligente (WhatsApp)',
-              'Mapa de horário de pico',
-              'Modo Evento / Festas (Novo)',
-              'Happy Hour Automático (Novo)',
-              'Clube de Assinaturas e Recorrência CRM (v5.5.0)',
-              'Score de Risco & Prevenção de Fraudes de Atendente (v5.5.0)',
-              'Módulo de Drinks & Insumos Fracionados 2.0 (v5.7.0)',
-              'Engenharia de Cardápio com CMV ao Vivo & Margem Alvo (v5.7.0)',
-              'Sub-preparos & Batches Artesanais com Validade (v5.7.0)',
-              'Auditoria e Prevenção de Perdas de Bar em R$ (v5.7.0)',
-              'Registro de Perda & Desperdício (v5.0.0)',
-              'Ativação/Desativação de Módulos (Drinks e Hospedaria) por Bar (v5.4.0)',
-              'Redefinição Segura de Senha do Admin via Firebase Master Key (v5.4.0)',
-              'Remapeamento do Atalho do PDV de Espaço para F4 (v5.4.0)',
-              'Hospedaria de Quartos & Ciclos de Limpeza Cronometrados (v5.4.0)',
-              'API Rate Limiting e Proteção de Borda Vercel Edge (v5.3.0)',
-              'Isolamento de Namespace do LocalStorage com safeLocalStorage (v5.3.0)',
-              'Centralização do Controle de Admin via React Context e useIsAdmin() (v5.3.0)',
-              'Radar de Prejuízo (Margem < 30%) (v4.9.0)',
-              'Smart Stock Híbrido & Hot Items (v4.9.0)',
-              'Previsão de Movimento por Clima & Demanda (v5.2.0)',
-              'Matriz de Permissionamentos Híbrida & Retrocompatível (v5.2.0)',
-              'Detector de Garçom Esperto por Ticket Médio (v5.1.0)',
-              'Badge Mobile da Unidade Ativa no Header (v5.1.0)',
-              'Régua de Cobrança com 1 Clique no WhatsApp (v5.1.0)',
-              'Monitor de Cozinha Touch Sincronizado (v4.9.5)',
-              'Campainha de Balcão & Toasts Reativos (v4.9.5)',
-              'Travas de Segurança para Contas Fechadas (v4.9.5)',
-              'Validação Anti-Erro (v4.7.3)',
-              'Confirmação Segura (v4.7.2)',
-              'Admin & Logout Guard (v4.7.3)',
-              'Interface Mobile XS (v4.7.1)',
-              'Funciona no celular, tablet ou PC',
-              'Funciona sem internet',
-            ].map((f, i) => (
-              <div key={i} className="flex items-center gap-3 py-3 px-5 rounded-xl hover:bg-white/[0.02] transition-colors group">
-                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                <span className="text-sm font-medium text-slate-300">{f}</span>
+              {
+                category: '🍺 Balcão, Mesas & Atendimento',
+                color: 'border-emerald-500/25 bg-emerald-950/10',
+                badgeColor: 'text-emerald-400',
+                items: [
+                  'PDV Rápido com Favoritos no Topo e Atalho F4',
+                  'Botão "Repetir Saideira" (repete rodada em 1 toque)',
+                  'Mapa Visual de Mesas com Contador de Tempo',
+                  'Radar de Mesa Moscando (alerta de ociosidade)',
+                  'Racha-Conta por Pessoa ou por Item Consumido',
+                  'Modo Evento / Dia de Jogo (venda expressa sem mesa)',
+                  'Happy Hour Automático com Virada de Preço na Hora',
+                  'Cardápio Digital QR Code Sincronizado com Estoque',
+                ]
+              },
+              {
+                category: '💰 Caixa, Fiado & Blindagem Anti-Furto',
+                color: 'border-red-500/25 bg-red-950/10',
+                badgeColor: 'text-red-400',
+                items: [
+                  'Conferência Cega de Caixa (fechamento no escuro)',
+                  'Sangria, Suprimento e Controle de Troco/Cofre',
+                  'Taxa de Serviço Opcional (10%) Separada por Garçom',
+                  'Módulo Pendura (Fiado) com Histórico Completo',
+                  'Régua de Cobrança Educada em 1 Clique no WhatsApp',
+                  'Score de Risco Anti-Fraude por Operador de Caixa',
+                  'Trava de Segurança pós-impressão de Comanda',
+                  'Crachá Digital com 27 Permissões Sob Medida',
+                ]
+              },
+              {
+                category: '🍸 Cozinha, Coquetelaria & Estoque',
+                color: 'border-amber-500/25 bg-amber-950/10',
+                badgeColor: 'text-amber-400',
+                items: [
+                  'Monitor de Cozinha Touch com Campainha Sonora ("Ding! 🛎️")',
+                  'Fichas Técnicas de Drinks Fracionadas em Mililitros (ml)',
+                  'Produção de Xaropes & Batches Caseiros com Validade',
+                  'Alerta de Ruptura: Avisa em Quantas Horas a Breja Acaba',
+                  'Lista de Compras da Semana Gerada pro WhatsApp',
+                  'Auditoria de Garrafas Quebradas, Sobras e Vencimentos',
+                  'Controle de Bebidas Consignadas para Festas e Eventos',
+                  'Validador Inteligente (evita cadastros bagunçados no PDV)',
+                ]
+              },
+              {
+                category: '🧠 Inteligência do Dono & Expansão',
+                color: 'border-blue-500/25 bg-blue-950/10',
+                badgeColor: 'text-blue-400',
+                items: [
+                  'Assistente do Dono: Faturamento, CMV e Lucro Líquido Real',
+                  'Matriz BCG de Cardápio (Estrelas, Vacas Leiteiras e Abacaxis)',
+                  'Radar de Prejuízo (alerta itens com margem abaixo de 30%)',
+                  'Previsão de Movimento do Dia cruzando Histórico + Clima',
+                  'Clube do Chopp / Assinaturas Recorrentes por CPF/Celular',
+                  'Ranking de Garçom Esperto por Ticket Médio e Upsell',
+                  'Painel Multi-Unidades / Franquias + Módulo de Hospedaria',
+                  'Operação 100% Offline-First com Backup Nuvem e GitHub',
+                ]
+              }
+            ].map((group, idx) => (
+              <div key={idx} className={`p-8 rounded-[32px] border ${group.color} space-y-5`}>
+                <h3 className={`text-base font-black uppercase tracking-wider ${group.badgeColor}`}>
+                  {group.category}
+                </h3>
+                <ul className="space-y-3">
+                  {group.items.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-slate-200 font-medium">
+                      <svg className={`w-5 h-5 ${group.badgeColor} flex-shrink-0 mt-0.5`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── BUSINESS INTELLIGENCE SECTION ─── */}
-      <section className="py-32 px-6 bg-emerald-600/5 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Gestão Ativa</span>
-            <h2 className="text-4xl md:text-5xl font-black tracking-tighter uppercase leading-none">Sua <span className="text-white italic">Consultoria de Bolso</span></h2>
-            <p className="mt-6 text-slate-400 text-lg max-w-2xl mx-auto">Módulos inteligentes que não apenas registram vendas, mas mostram como aumentar seu lucro real todo dia.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { title: 'Lucro Real & CMV', desc: 'Saiba exatamente quanto ganha em cada item descontando o custo real da mercadoria cadastrado por você.', icon: '💰', tag: 'FINANCEIRO' },
-              { title: 'Taxa de Serviço (10%)', desc: 'Ative a gratificação opcional no PDV. O sistema calcula e separa o valor automaticamente para evitar confusão no fim do turno.', icon: '🤝', tag: 'EQUIPE' },
-              { title: 'Detector de Mesa Travada', desc: 'O sistema avisa quais mesas estão ocupando espaço sem consuming. Sugestão visual de saideira para aumentar o giro.', icon: '⏰', tag: 'OPERACIONAL' },
-              { title: 'Radar de Prejuízo', desc: 'Cruza custos e vendas, alertando se a margem de algum item de alto giro cair abaixo de 30% para você precificar melhor.', icon: '📈', tag: 'INTELIGÊNCIA' },
-              { title: 'Smart Stock Híbrido', desc: 'Estoque crítico estimado em horas de consumo para itens controlados, e alertas de Alta Demanda (Hot Items) para produtos comuns.', icon: '⏳', tag: 'ESTOQUE' },
-              { title: 'Cardápio Digital QR', desc: 'Gere um link para os clientes visualizarem seu menu atualizado direto no celular, sem baixar nada.', icon: '📱', tag: 'ATENDIMENTO' },
-              { title: 'Blindagem Anti-Fraude', desc: 'Proteção visual e funcional da conta mestre. Log de auditoria que registra cada fechamento de caixa.', icon: '🛡️', tag: 'SEGURANÇA' },
-              { title: 'Gestão de Fiado (Pendura)', desc: 'Histórico de consumo de cada cliente. Régua de cobrança educada para reaver valores pendentes com organização.', icon: '📋', tag: 'GESTÃO' },
-              { title: 'Controle de Desperdício', desc: 'Registre perdas por validade, quebra ou consumo da equipe. Acompanhe gráficos dinâmicos de ralo de caixa e proteja suas margens.', icon: '🚨', tag: 'ESTOQUE' },
-              { title: 'Previsão de Movimento', desc: 'Cruza histórico do dia da semana e tempo real do clima via geolocalização para checklist inteligente de insumos.', icon: '🌤️', tag: 'OPERAÇÃO' },
-              { title: 'Matriz de Direitos Híbrida', desc: 'Permissões granulares de acesso com camada de retrocompatibilidade para contas legadas herdarem direitos sem lockout.', icon: '🔑', tag: 'SEGURANÇA' },
-            ].map((f, i) => (
-              <div key={i} className="scroll-reveal p-10 rounded-[40px] bg-slate-900/50 border border-white/5 hover:border-emerald-500/20 transition-all group relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-6 text-4xl opacity-10 group-hover:opacity-20 group-hover:scale-110 transition-all">{f.icon}</div>
-                <div className="text-[8px] font-black text-emerald-500 mb-4 tracking-[0.3em] uppercase">{f.tag}</div>
-                <h3 className="text-xl font-black uppercase tracking-tight mb-4">{f.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── COQUETELARIA & DRINKS 2.0 SHOWCASE ─── */}
-      <CocktailLabShowcase />
-
-      {/* ─── QR CODE MENU SECTION ─── */}
-      <section className="py-32 px-6 relative overflow-hidden bg-slate-950/20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-            <div className="space-y-8 scroll-reveal">
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Experiência do Cliente</span>
-              <h2 className="text-4xl md:text-6xl font-black tracking-tighter leading-[0.9] uppercase">
-                Cardápio Digital <span className="text-emerald-500 italic">Sincronizado</span>
-              </h2>
-              <p className="text-slate-300 text-lg leading-relaxed">
-                Chega de cliente pedindo o que não tem. Com o Sincronismo Atômico do Botequista, se o estoque acaba no seu PDV, o item some do celular do cliente na mesma hora.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all">
-                  <h4 className="font-black uppercase text-[10px] text-emerald-500 mb-2">Zero Frustração</h4>
-                  <p className="text-slate-500 text-xs leading-relaxed">O cardápio reflete a realidade do balcão em milissegundos. Evite o "Ih, acabou" na frente do cliente.</p>
-                </div>
-                <div className="p-6 bg-slate-900/50 border border-white/5 rounded-3xl group hover:border-emerald-500/30 transition-all">
-                  <h4 className="font-black uppercase text-[10px] text-emerald-500 mb-2">Auto-Gerenciável</h4>
-                  <p className="text-slate-500 text-xs leading-relaxed">Atualize preços e fotos no sistema e veja mudar na mesa do cliente instantaneamente.</p>
-                </div>
-              </div>
-            </div>
-            <div className="relative group scroll-reveal">
-              <div className="absolute -inset-10 bg-emerald-500/5 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-              <div className="relative bg-slate-900 p-4 rounded-[60px] border border-white/10 shadow-2xl max-w-[280px] mx-auto transform -rotate-2 group-hover:rotate-0 transition-transform duration-700">
-                <div className="bg-slate-950 rounded-[50px] aspect-[9/19] overflow-hidden border border-white/10 relative">
-                  <img src="/landing_assets/assets/Screenshot_2026-03-03_21-32-14.png" alt="Cardápio Digital" className="w-full h-full object-cover opacity-80" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-                  <div className="absolute bottom-10 left-0 right-0 text-center">
-                    <div className="text-[10px] font-black text-white uppercase tracking-widest mb-1">Menu Digital</div>
-                    <div className="text-[8px] text-emerald-500 font-bold uppercase tracking-[0.3em]">Live Sync</div>
-                  </div>
-                </div>
-                <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-24 h-24 bg-emerald-500 rounded-full flex flex-col items-center justify-center text-white text-center shadow-2xl shadow-emerald-500/20 rotate-12 group-hover:rotate-0 transition-all duration-700">
-                  <div className="text-2xl mb-1">📱</div>
-                  <div className="text-[8px] font-black uppercase leading-tight">Teste no<br/>Celular</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
       {/* ─── COMPARISON ─── */}
-      <section className="py-32 px-6 bg-white/[0.01]">
+      <section className="py-28 px-6 bg-white/[0.01] border-t border-white/5">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Botequista vs. <span className="text-red-600 italic">Resto do Mercado</span></h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-red-500 mb-3 block">Compare sem medo</span>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+              Botequista vs. <span className="text-red-500 italic">Sistemas Caretas</span>
+            </h2>
           </div>
-          <div className="scroll-reveal bg-slate-950/80 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+          <div className="scroll-reveal bg-slate-950/90 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
             <div className="grid grid-cols-3 py-5 bg-white/5 px-6 font-black uppercase text-[11px] tracking-wider border-b border-white/10">
-              <div className="text-slate-200">Funcionalidade</div>
-              <div className="text-center text-emerald-500">Botequista</div>
-              <div className="text-center text-slate-400">Outros</div>
+              <div className="text-slate-200">No Dia a Dia do Balcão</div>
+              <div className="text-center text-emerald-400">🍻 Botequista</div>
+              <div className="text-center text-slate-400">Sistemas Comuns</div>
             </div>
             {[
-              { f: 'Venda Offline (PWA)', b: true, t: false },
-              { f: 'Conferência Cega de Caixa', b: true, t: false },
-              { f: 'Detector de Mesa Travada', b: true, t: false },
-              { f: 'Relatório via WhatsApp', b: true, t: true },
-              { f: 'Gestão de Fiado Integrada', b: true, t: true },
-              { f: 'Análise de Giro de Estoque', b: true, t: false },
-              { f: 'Ticket Médio com Tendência', b: true, t: false },
-              { f: 'Curva ABC por Lucro', b: true, t: false },
-              { f: 'Funciona em Qualquer Aparelho', b: true, t: false },
-              { f: 'Engenharia de Lucro Real (CMV)', b: true, t: false },
-              { f: 'Taxa de Serviço Automática', b: true, t: false },
-              { f: 'Happy Hour Automático', b: true, t: false },
-              { f: 'Modo Evento (Venda Expressa)', b: true, t: false },
-              { f: 'Cardápio Digital QR Sync', b: true, t: false },
-              { f: 'Radar de Prejuízo (CMV/Giro)', b: true, t: false },
-              { f: 'Smart Stock Híbrido & Hot Items', b: true, t: false },
-              { f: 'Régua de Cobrança (Pendura)', b: true, t: false },
-              { f: 'Monitor de Cozinha Reativo (Ding! 🛎️)', b: true, t: false },
-              { f: 'Controle de Perdas & Desperdício', b: true, t: false },
-              { f: 'Grátis', b: true, t: false },
+              { f: 'Continua vendendo se o Wi-Fi cair na sexta à noite', b: true, t: false },
+              { f: 'Conferência Cega (caixa conta sem ver o esperado)', b: true, t: false },
+              { f: 'Radar de Mesa Moscando + Botão Repetir Saideira', b: true, t: false },
+              { f: 'Ficha de Drinks em ml + Batches Caseiros com Validade', b: true, t: false },
+              { f: 'Régua de Cobrança de Fiado (Pendura) no WhatsApp', b: true, t: false },
+              { f: 'Monitor de Cozinha Touch com Campainha ("Ding! 🛎️")', b: true, t: false },
+              { f: 'Alerta de Cerveja Acabando em Horas (Smart Stock)', b: true, t: false },
+              { f: 'Lucro Líquido Real (CMV) + Matriz Vaca Leiteira / Abacaxi', b: true, t: false },
+              { f: 'Previsão de Movimento por Clima da Semana', b: true, t: false },
+              { f: 'Clube de Assinaturas / Recorrência pro Freguês', b: true, t: false },
+              { f: 'Modo Evento (Venda Expressa) + Happy Hour Automático', b: true, t: false },
+              { f: 'Roda em qualquer Celular, Tablet ou PC sem instalar nada', b: true, t: false },
+              { f: 'Resumo de Fechamento de Turno no WhatsApp', b: true, t: true },
+              { f: '100% Grátis pros Bares Parceiros Fundadores', b: true, t: false },
             ].map((row, i) => (
               <div key={i} className="grid grid-cols-3 py-4 border-b border-white/5 items-center px-6 hover:bg-white/[0.02] transition-colors text-sm">
-                <div className="text-slate-200 font-semibold text-xs">{row.f}</div>
-                <div className="text-center">{row.b ? <span className="text-emerald-500 font-black">✓</span> : <span className="text-red-500">✗</span>}</div>
-                <div className="text-center opacity-40">{row.t ? <span className="text-emerald-500 font-black">✓</span> : <span className="text-red-500">✗</span>}</div>
+                <div className="text-slate-200 font-semibold text-xs sm:text-sm pr-2">{row.f}</div>
+                <div className="text-center">{row.b ? <span className="inline-flex items-center gap-1 text-emerald-400 font-black text-xs bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">✓ TEM</span> : <span className="text-red-500">✗</span>}</div>
+                <div className="text-center opacity-50">{row.t ? <span className="text-emerald-500 font-black text-xs">✓ Alguns</span> : <span className="text-red-400 font-bold text-xs">✗ Não tem</span>}</div>
               </div>
             ))}
           </div>
@@ -2226,35 +2756,39 @@ export const LandingPage2: React.FC = () => {
       )}
 
       {/* ─── TESTIMONIALS ─── */}
-      <section className="py-32 px-6">
+      <section className="py-28 px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300 mb-4 block">Quem já usa, aprova</span>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">Depoimentos <span className="text-red-600 italic">Reais</span></h2>
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-amber-400 mb-3 block">Quem tá atrás do balcão aprova</span>
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter uppercase">
+              Papo de <span className="text-red-500 italic">Dono pra Dono</span>
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
             {[
-              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes eu perdia R$200 por semana em caixa furado. Depois da conferência cega, o caixa bate 100% dos dias. É impressionante.', role: 'Proprietário', stars: 5, color: 'from-amber-500/10', img: '/landing_assets/testimonials/ricardo.png' },
-              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Curva ABC me mostrou que eu estava perdendo margem com uma cerveja que eu achava que era a melhor. Mudei o cardápio e meu lucro subiu 18%.', role: 'Gerente', stars: 5, color: 'from-indigo-500/10', img: '/landing_assets/testimonials/mariana.png' },
-              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Gerencio minhas 3 unidades de casa. O sistema funciona até quando meu garçom deixa o tablet sem Wi-Fi. Paz de espírito total.', role: 'Franqueador', stars: 5, color: 'from-emerald-500/10', img: '/landing_assets/testimonials/ozzy.png' },
-              { name: 'Cláudio', bar: 'Espeto Real', quote: 'O Smart Stock me avisou que o carvão ia acabar num feriado. Comprei antes e não perdi o giro. Esse sistema se paga sozinho.', role: 'Dono', stars: 5, color: 'from-red-500/10', img: '/landing_assets/testimonials/claudio.png' },
-              { name: 'Ana', bar: 'Vila Madalena House', quote: 'O relatório de equipe acabou com as discussões sobre a caixinha. Tudo automático e transparente. Meus garçons amam.', role: 'Gerente', stars: 5, color: 'from-blue-500/10', img: '/landing_assets/testimonials/ana.png' },
+              { name: 'Ricardo', bar: 'Bar do Galego', quote: 'Antes toda segunda-feira era dor de cabeça com R$ 200 sumindo no caixa da semana. Depois que ligamos a Conferência Cega, a gaveta bate cravado todo santo dia.', role: 'Dono do Bar', stars: 5, color: 'from-amber-500/10', img: '/landing_assets/testimonials/ricardo.png' },
+              { name: 'Mariana', bar: 'Sunset Lounge', quote: 'A Matriz de Cardápio me abriu o olho: uma cerveja que eu jurava que dava dinheiro era na verdade um "Abacaxi" com margem pífia. Ajustei o preço e o lucro líquido subiu 18%.', role: 'Sócia-Gerente', stars: 5, color: 'from-indigo-500/10', img: '/landing_assets/testimonials/mariana.png' },
+              { name: 'Ozzy', bar: 'Botequim Gourmet', quote: 'Toco 3 casas e acompanho o fechamento pelo Zap deitado no sofá. Mesmo quando o garçom vai atender na calçada onde o Wi-Fi não pega, não perde um pedido.', role: 'Franqueador', stars: 5, color: 'from-emerald-500/10', img: '/landing_assets/testimonials/ozzy.png' },
+              { name: 'Cláudio', bar: 'Espeto Real', quote: 'Véspera de feriado às 19h e o alerta de estoque avisou que o carvão e a Original iam zerar antes das 22h. Corri atrás a tempo e salvei a melhor noite do mês.', role: 'Proprietário', stars: 5, color: 'from-red-500/10', img: '/landing_assets/testimonials/claudio.png' },
+              { name: 'Ana', bar: 'Vila Madalena House', quote: 'Acabou a briga na divisão dos 10% e a gritaria na janela da cozinha. O cozinheiro toca a campainha na tela e já apita no celular do garçom.', role: 'Gerente de Salão', stars: 5, color: 'from-blue-500/10', img: '/landing_assets/testimonials/ana.png' },
             ].map((t, i) => (
-              <div key={i} className={`scroll-reveal p-10 rounded-[40px] bg-gradient-to-br ${t.color} to-transparent border border-white/5 hover:border-white/10 transition-all duration-500 hover:-translate-y-2 group relative overflow-hidden`}>
-                <div className="absolute top-0 right-0 p-8 text-6xl opacity-[0.03] group-hover:opacity-[0.07] transition-all">"</div>
-                <div className="flex gap-1 mb-8">
-                  {Array.from({ length: t.stars }).map((_, j) => (
-                    <svg key={j} className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                  ))}
+              <div key={i} className={`scroll-reveal p-9 rounded-[36px] bg-gradient-to-br ${t.color} to-slate-900/40 border border-white/10 hover:border-white/20 transition-all duration-500 hover:-translate-y-1.5 group relative overflow-hidden flex flex-col justify-between`}>
+                <div>
+                  <div className="absolute top-0 right-0 p-8 text-6xl opacity-[0.04] group-hover:opacity-[0.08] transition-all">"</div>
+                  <div className="flex gap-1 mb-6">
+                    {Array.from({ length: t.stars }).map((_, j) => (
+                      <svg key={j} className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    ))}
+                  </div>
+                  <p className="text-slate-200 text-sm sm:text-base leading-relaxed mb-8 font-medium italic relative z-10">"{t.quote}"</p>
                 </div>
-                <p className="text-slate-200 text-base leading-relaxed mb-10 font-medium italic relative z-10">"{t.quote}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 group-hover:border-white/20 transition-all">
+                <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/15 group-hover:border-amber-400/40 transition-all">
                     <img src={t.img} alt={t.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
                   </div>
                   <div>
                     <div className="text-white font-black text-sm uppercase tracking-tight">{t.name}</div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.role} • {t.bar}</div>
+                    <div className="text-[10px] text-amber-400/90 font-bold uppercase tracking-widest">{t.role} • {t.bar}</div>
                   </div>
                 </div>
               </div>
@@ -2264,81 +2798,93 @@ export const LandingPage2: React.FC = () => {
       </section>
 
       {/* ─── ROI CALCULATOR ─── */}
-      <section className="py-24 px-6 bg-slate-950/50">
+      <section className="py-24 px-6 bg-slate-950/60 border-t border-white/5">
         <div className="max-w-6xl mx-auto">
           <ROICalculator />
         </div>
       </section>
 
       {/* ─── PRICING ─── */}
-      <section id="preco" className="py-32 px-6">
+      <section id="preco" className="py-28 px-6 border-t border-white/5">
         <div className="max-w-3xl mx-auto text-center">
           <div className="scroll-reveal">
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-emerald-500 mb-4 block">Preço Transparente</span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
-              É <span className="text-emerald-500">Grátis</span> De Verdade
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-emerald-400 mb-3 block">Parceria Honesta • Sem Pegadinha</span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] mb-5">
+              É <span className="text-emerald-400 italic">Na Faixa</span> De Verdade
             </h2>
-            <p className="text-slate-300 text-lg max-w-xl mx-auto mb-16">Estamos construindo o melhor sistema de bar do Brasil. Nossos primeiros parceiros usam tudo sem pagar nada.</p>
+            <p className="text-slate-300 text-lg max-w-xl mx-auto mb-14">
+              Estamos selecionando bares parceiros para crescer junto com a gente. Enquanto os outros cobram R$ 200+ por mês mais taxa de implantação, você entra como Parceiro Fundador pagando zero.
+            </p>
           </div>
 
-          <div className="scroll-reveal p-10 md:p-14 rounded-[40px] bg-slate-900/50 border border-emerald-500/20 relative overflow-hidden shine">
-            <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-8 py-2 rounded-b-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/30">Acesso Total Early Adopter</div>
+          <div className="scroll-reveal p-8 sm:p-14 rounded-[40px] bg-slate-900/60 border border-emerald-500/30 relative overflow-hidden shine shadow-2xl shadow-emerald-950/30">
+            <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 px-8 py-2 rounded-b-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/30">
+              🍻 Vaga de Parceiro Fundador
+            </div>
 
             <div className="pt-8 mb-10">
               <div className="flex items-baseline justify-center gap-2 mb-2">
                 <span className="text-slate-400 text-2xl font-bold line-through">R$ 197</span>
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">/mês</span>
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">/mês nos concorrentes</span>
               </div>
               <div className="flex items-baseline justify-center gap-2">
                 <span className="text-7xl md:text-8xl font-black text-white">R$ 0</span>
                 <span className="text-xl font-bold text-slate-300">/mês</span>
               </div>
-              <p className="text-emerald-400 font-bold text-sm mt-3">100% gratuito para parceiros fundadores.</p>
+              <p className="text-emerald-400 font-bold text-sm mt-3">100% liberado para os primeiros bares parceiros.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-left mb-10 bg-slate-950/60 p-6 rounded-3xl border border-white/5">
               {[
-                'PDV Completo + Venda Expressa',
-                'Conferência Cega + Auditoria',
-                'Relatórios + Curva ABC',
-                'Controle de Equipe (+20 perm.)',
-                'Multi-Unidades',
-                'Funciona Offline',
-                'WhatsApp Recibos',
-                'Suporte Prioritário',
+                'PDV Rápido + Botão Repetir Saideira',
+                'Conferência Cega + Dedo-Duro Anti-Fraude',
+                'Monitor de Cozinha Touch ("Ding! 🛎️")',
+                'Coquetelaria em ml + Batches Caseiros',
+                'Módulo Pendura + Cobrança no Zap',
+                'Assistente do Dono + Lucro Real (CMV)',
+                'Funciona 100% Sem Internet (Offline)',
+                'Suporte Direto com a Gente no WhatsApp',
               ].map((f, i) => (
-                <div key={i} className="flex items-center gap-2 py-2">
-                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                  <span className="text-sm text-slate-300 font-medium">{f}</span>
+                <div key={i} className="flex items-center gap-2.5 py-1.5">
+                  <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  <span className="text-xs sm:text-sm text-slate-200 font-semibold">{f}</span>
                 </div>
               ))}
             </div>
 
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center gap-3 bg-[#16a34a] text-white px-12 py-5 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 w-full justify-center sm:w-auto">
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Contratar
-            </a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center justify-center gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white px-10 py-5 rounded-2xl text-base sm:text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Garantir Minha Vaga no Zap
+              </a>
+              <a href="/?demo=true" className="inline-flex items-center justify-center gap-2 bg-slate-950 hover:bg-slate-800 border border-white/15 text-white px-8 py-5 rounded-2xl text-base font-black uppercase tracking-tight transition-all">
+                🍺 Testar Antes
+              </a>
+            </div>
 
-            <p className="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">Sem cartão Sem contrato Cancele quando quiser</p>
+            <p className="mt-6 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+              Sem cartão de crédito • Sem contrato de fidelidade • Sai quando quiser
+            </p>
           </div>
         </div>
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="py-32 px-6 bg-white/[0.01]">
+      <section className="py-28 px-6 bg-white/[0.01] border-t border-white/5">
         <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-16 scroll-reveal">
-            <h2 className="text-3xl font-black uppercase tracking-tighter mb-8">Perguntas Frequentes</h2>
+          <div className="text-center mb-14 scroll-reveal">
+            <span className="text-[10px] font-black uppercase tracking-[0.35em] text-amber-400 mb-3 block">Sem letra miúda</span>
+            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-8">Tira-Dúvidas de Balcão</h2>
             
             {/* FAQ Search */}
             <div className="relative max-w-md mx-auto">
                <input 
                   type="text" 
-                  placeholder="Busque uma dúvida (ex: offline, grátis...)" 
+                  placeholder="Busque uma dúvida (ex: internet, grátis, garçom...)" 
                   onChange={(e) => setFaqSearch(e.target.value)}
-                  className="w-full bg-slate-900 border border-white/10 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-red-500/50 transition-all text-center"
+                  className="w-full bg-slate-900 border border-white/15 rounded-2xl px-6 py-4 text-xs font-bold uppercase tracking-widest focus:outline-none focus:border-emerald-500/60 transition-all text-center text-white placeholder:text-slate-500"
                />
-               <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none opacity-30">
+               <div className="absolute inset-y-0 right-6 flex items-center pointer-events-none opacity-40">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                </div>
             </div>
@@ -2346,17 +2892,17 @@ export const LandingPage2: React.FC = () => {
 
           <div className="space-y-2">
             {filteredFAQs.length === 0 ? (
-               <div className="py-10 text-center opacity-30">
-                  <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhuma resposta encontrada para sua busca</p>
+               <div className="py-10 text-center opacity-50">
+                  <p className="text-xs font-black uppercase tracking-widest italic">Nenhuma resposta encontrada — chama a gente no Zap que respondemos na hora!</p>
                </div>
             ) : (
                filteredFAQs.map((faq, i) => (
-                  <div key={i} className="scroll-reveal group border-b border-white/5 cursor-pointer" onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}>
-                    <div className="flex justify-between items-center py-6 group-hover:text-red-500 transition-colors">
+                  <div key={i} className="scroll-reveal group border-b border-white/10 cursor-pointer" onClick={() => setActiveFAQ(activeFAQ === i ? null : i)}>
+                    <div className="flex justify-between items-center py-6 group-hover:text-emerald-400 transition-colors">
                       <span className="text-base font-bold pr-4">{faq.q}</span>
-                      <span className={`text-xl font-black flex-shrink-0 transition-transform duration-300 ${activeFAQ === i ? 'rotate-45' : ''}`}>+</span>
+                      <span className={`text-xl font-black flex-shrink-0 transition-transform duration-300 ${activeFAQ === i ? 'rotate-45 text-emerald-400' : ''}`}>+</span>
                     </div>
-                    <div className={`overflow-hidden transition-all duration-500 ${activeFAQ === i ? 'max-h-40 pb-6' : 'max-h-0'}`}>
+                    <div className={`overflow-hidden transition-all duration-500 ${activeFAQ === i ? 'max-h-48 pb-6' : 'max-h-0'}`}>
                       <p className="text-slate-300 text-sm leading-relaxed">{faq.a}</p>
                     </div>
                   </div>
@@ -2367,36 +2913,42 @@ export const LandingPage2: React.FC = () => {
       </section>
 
       {/* ─── FINAL CTA ─── */}
-      <section className="py-20 px-6">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="scroll-reveal p-10 rounded-3xl bg-gradient-to-b from-emerald-900/20 to-transparent border border-emerald-500/20">
-            <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tight mb-4">
-              Pronto pra <span className="text-emerald-400">tirar a prova</span>?
+      <section className="py-24 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="scroll-reveal p-10 sm:p-14 rounded-[40px] bg-gradient-to-br from-emerald-900/30 via-slate-900 to-slate-950 border border-emerald-500/30 shadow-2xl">
+            <span className="text-4xl block mb-4">🍻</span>
+            <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.95] mb-4">
+              Bora <span className="text-emerald-400 italic">passar a régua</span> na bagunça?
             </h3>
-            <p className="text-slate-300 mb-8 text-sm">São 2 minutos. Sem compromisso. Sem cartão.</p>
-            <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center gap-3 bg-[#16a34a] text-white px-10 py-4 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
-              WhatsApp
-            </a>
-            <a href="/?demo=true" className="inline-flex items-center gap-3 bg-slate-900 border border-white/10 text-white px-10 py-4 rounded-2xl text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95 ml-4">
-              Testar Demo
-            </a>
+            <p className="text-slate-300 mb-8 text-base max-w-xl mx-auto">
+              Em 2 minutos você testa o sistema completo direto na tela ou chama a gente no WhatsApp pra deixarmos seu bar no jeito ainda hoje.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <a href={whatsAppLink} target="_blank" rel="noopener noreferrer" className="cta-glow inline-flex items-center justify-center gap-3 bg-[#16a34a] hover:bg-[#15803d] text-white px-10 py-4 rounded-2xl text-base sm:text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
+                Chamar no WhatsApp
+              </a>
+              <a href="/?demo=true" className="inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 border border-white/15 text-white px-10 py-4 rounded-2xl text-base sm:text-lg font-black uppercase tracking-tight transition-all hover:scale-105 active:scale-95">
+                🍺 Abrir Bar de Teste (Demo)
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-
-
       </main>
 
       {/* ─── FOOTER ─── */}
-      <footer className="py-16 border-t border-white/5">
+      <footer className="py-16 border-t border-white/10 bg-slate-950/60">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center font-barrio text-lg">B</div>
-            <span className="text-lg font-black uppercase font-barrio text-slate-300">Botequista</span>
+            <span className="text-lg font-black uppercase font-barrio text-slate-200">Botequista</span>
+            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">v5.7 • Feito pra Boteco</span>
           </div>
-          <p className="text-xs font-bold text-slate-400">&copy; {new Date().getFullYear()} Botequista. Todos os direitos reservados.</p>
-          <div className="flex gap-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+          <p className="text-xs font-bold text-slate-400">&copy; {new Date().getFullYear()} Botequista. De balcão pra balcão.</p>
+          <div className="flex flex-wrap justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <a href="/menu" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors">Cardápio QR</a>
+            <button onClick={() => setIsTechConsoleModalOpen(true)} className="hover:text-emerald-400 transition-colors cursor-pointer">Console Tech</button>
             <button onClick={() => setIsPrivacyOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Privacidade</button>
             <button onClick={() => setIsTermsOpen(true)} className="hover:text-red-500 transition-colors cursor-pointer">Termos</button>
           </div>
