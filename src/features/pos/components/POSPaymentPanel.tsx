@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { PaymentMethod, formatCurrency, sanitizeCurrencyInput, parseCurrencyValue, safeFloat } from '../../../types';
+import { SmartRedeModal } from './modals/SmartRedeModal';
 
 interface PaymentEntry {
    method: PaymentMethod;
@@ -36,6 +37,7 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
    const [validationError, setValidationError] = useState<string | null>(null);
    const [toast, setToast] = useState<string | null>(null);
    const [isProcessing, setIsProcessing] = useState(false);
+   const [showRedeModal, setShowRedeModal] = useState(false);
 
    const isQuickSale = useMemo(() => {
       return activeTabId?.startsWith('tab-express') || false;
@@ -161,6 +163,28 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
       return Math.max(0, safeFloat(handed - toPay));
    }, [paymentAmountInput, cashReceivedInput, paymentMethodInput, remainingBalance]);
 
+   const handleRedePaymentApproved = (details: { nsu: string; authCode: string; brand: string; cardLast4: string }) => {
+      setShowRedeModal(false);
+      const inputVal = parseCurrencyValue(paymentAmountInput);
+      const finalAmount = inputVal > 0 ? inputVal : remainingBalance;
+
+      if (isQuickSale) {
+         onComplete([{
+            method: paymentMethodInput,
+            amount: finalAmount,
+            customerName: `REDE NSU:${details.nsu}`
+         }]);
+      } else {
+         setCurrentPayments(prev => [...prev, {
+            method: paymentMethodInput,
+            amount: finalAmount,
+            customerName: `REDE NSU:${details.nsu}`
+         }]);
+         setPaymentAmountInput('');
+         setToast(`PAGAMENTO REDE APROVADO! NSU: ${details.nsu}`);
+      }
+   };
+
    return (
       <div className="flex flex-col h-full bg-white dark:bg-slate-900 animate-in slide-in-from-right-4 duration-300 overflow-hidden">
          {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl animate-bounce">{toast}</div>}
@@ -264,6 +288,17 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
                         </div>
                      )}
 
+                     {(paymentMethodInput === PaymentMethod.DEBITO || paymentMethodInput === PaymentMethod.CREDITO) && (
+                        <button
+                           type="button"
+                           onClick={() => setShowRedeModal(true)}
+                           className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white py-4 rounded-[25px] font-black uppercase text-[11px] tracking-wider shadow-xl shadow-orange-600/25 active:scale-95 transition-all flex items-center justify-center gap-2.5 border border-orange-400/30 cursor-pointer"
+                        >
+                           <span className="text-base">💳</span>
+                           <span>Disparar na Maquininha Smart Rede</span>
+                        </button>
+                     )}
+
                      {!isQuickSale && (
                         <button onClick={handleAddPayment} disabled={remainingBalance <= 0.05} className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-4 rounded-[25px] font-black uppercase text-xs tracking-widest shadow-2xl active:scale-95 disabled:opacity-30 transition-all flex items-center justify-center gap-3">
                            <span>ADICIONAR RECEBIMENTO</span>
@@ -343,6 +378,15 @@ const POSPaymentPanel: React.FC<POSPaymentPanelProps> = ({
 
             </div>
          </div>
+
+         {/* Modal Simulador de Cobrança Smart Rede */}
+         <SmartRedeModal
+            isOpen={showRedeModal}
+            onClose={() => setShowRedeModal(false)}
+            amount={parseCurrencyValue(paymentAmountInput) > 0 ? parseCurrencyValue(paymentAmountInput) : remainingBalance}
+            method={paymentMethodInput}
+            onPaymentApproved={handleRedePaymentApproved}
+         />
       </div>
    );
 };

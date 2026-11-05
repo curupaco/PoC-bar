@@ -1964,6 +1964,7 @@ export const LandingPage2: React.FC = () => {
       accent: 'red' as const,
       features: [
         { icon: '🕵️', tag: 'FIM DO CHUTE', title: 'Fechamento no Escuro (Conferência Cega)', desc: 'Quem fecha o turno conta as notas da gaveta e digita no sistema sem saber quanto deveria ter. Acabou o "deu certinho, patrão" no olhômetro.' },
+        { icon: '💳', tag: 'INTEGRAÇÃO REDE', title: 'Conciliação Automática de Cartões (Itaú)', desc: 'Audite na hora as vendas de cartões, taxas retidas (MDR) e previsão de recebíveis direto do extrato bancário oficial das maquininhas Rede.' },
         { icon: '📓', tag: 'ADEUS CADERNINHO', title: 'Pendura Profissional + Régua no Zap', desc: 'Histórico completo do que o freguês consumiu e disparo de cobrança educada em 1 clique no WhatsApp com sua chave Pix. Receba sem perder o amigo.' },
         { icon: '🛡️', tag: 'OLHO VIVO', title: 'Dedo-Duro Anti-Espertinho (Score)', desc: 'Cancelaram item depois de imprimir a conta? O sistema bloqueia ou exige senha e dá uma nota de confiabilidade pra cada operador do caixa.' },
         { icon: '💵', tag: 'GAVETA LIMPA', title: 'Sangria & Troco Carimbados', desc: 'Tirou R$ 40 do caixa pra pagar o gelo ou o limão? Lança a sangria em 5 segundos igual caixa eletrônico e o fechamento da madrugada não fura.' },
@@ -2216,7 +2217,8 @@ export const LandingPage2: React.FC = () => {
               { icon: '⚡', text: 'Pedido lançado em 2s' },
               { icon: '📶', text: 'Funciona 100% sem Wi-Fi' },
               { icon: '🕵️', text: 'Conferência Cega de Gaveta' },
-              { icon: '💳', text: 'Sem cartão • Sem mensalidade' },
+              { icon: '💳', text: 'Conciliação REDE (Itaú)' },
+              { icon: '🚀', text: 'Sem mensalidade fixa' },
             ].map((badge, idx) => (
               <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/70 border border-white/10 text-slate-200 text-xs font-bold">
                 <span>{badge.icon}</span>
@@ -2708,6 +2710,7 @@ export const LandingPage2: React.FC = () => {
             {[
               { f: 'Continua vendendo se o Wi-Fi cair na sexta à noite', b: true, t: false },
               { f: 'Conferência Cega (caixa conta sem ver o esperado)', b: true, t: false },
+              { f: 'Conciliação automática com maquininhas REDE (Itaú)', b: true, t: false },
               { f: 'Radar de Mesa Moscando + Botão Repetir Saideira', b: true, t: false },
               { f: 'Ficha de Drinks em ml + Batches Caseiros com Validade', b: true, t: false },
               { f: 'Régua de Cobrança de Fiado (Pendura) no WhatsApp', b: true, t: false },
