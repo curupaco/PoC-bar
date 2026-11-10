@@ -1,5 +1,8 @@
 User-agent: *
-Disallow: /todo
 Allow: /
+Allow: /landing
+Allow: /conheca
+Disallow: /todo
+Disallow: /api/
 
-Sitemap: https://botequista.app/sitemap.xml
+Sitemap: https://botequista.com.br/sitemap.xml

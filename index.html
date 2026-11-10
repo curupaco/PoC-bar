@@ -27,6 +27,34 @@
   <meta name="twitter:description" content="Fácil igual seu caderninho. Esperto igual dono de bar.">
   <meta name="twitter:image" content="https://botequista.com.br/og-botequista.png">
 
+  <!-- Dados Estruturados Schema.org (JSON-LD para Google e Robôs de IA) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Botequista",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web, Android",
+    "description": "Sistema completo de gestão, PDV de balcão, comanda digital, fechamento cego de caixa e conciliação bancária REDE para bares e restaurantes.",
+    "url": "https://botequista.com.br",
+    "image": "https://botequista.com.br/og-botequista.png",
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "BRL"
+    },
+    "featureList": [
+      "PDV ultrarrápido para balcão e salão",
+      "Conferência Cega de fechamento de caixa",
+      "Controle de comandas, mesas e racha a conta",
+      "Monitor de cozinha (KDS) com campainha touch",
+      "Ficha técnica fracionada em ml para drinks e coquetelaria",
+      "Conciliação automática com maquininhas REDE Itaú",
+      "Funciona 100% offline sem Wi-Fi"
+    ]
+  }
+  </script>
+
   <!-- Vínculo Crítico para Instalação no Android -->
   <link rel="manifest" href="/manifest.json?v=4">
   <link rel="apple-touch-icon" href="/logo.svg?v=4">
@@ -99,6 +127,22 @@
 </head>
 
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+  <noscript>
+    <div style="font-family:sans-serif;max-width:800px;margin:40px auto;padding:24px;line-height:1.6;color:#0f172a">
+      <h1>Botequista — O Sistema Inteligente para Bares e Botecos</h1>
+      <p><strong>Fácil igual seu caderninho. Esperto igual dono de bar.</strong></p>
+      <p>O Botequista é a plataforma completa de gestão de bares, PDV de balcão e mesas, fechamento cego de caixa, controle de penduras no WhatsApp, monitor de cozinha e conciliação de cartões com maquininhas REDE (Itaú).</p>
+      <h2>Principais Recursos do Sistema:</h2>
+      <ul>
+        <li><strong>Salão & Balcão:</strong> Lançamento de pedidos em 2 segundos, radar de mesas sem consumo e divisão de contas simplificada.</li>
+        <li><strong>Gaveta Blindada:</strong> Fechamento cego de turno no escuro (o caixa conta sem ver o esperado) e controle de sangrias.</li>
+        <li><strong>Cozinha & Copo:</strong> Monitor de pedidos em tempo real com campainha para o garçom e ficha técnica de drinks fracionados.</li>
+        <li><strong>Conciliação REDE:</strong> Auditoria automática de taxas de cartão (MDR) e previsão de recebíveis bancários.</li>
+        <li><strong>Offline First:</strong> Funciona mesmo quando a internet do bar cai.</li>
+      </ul>
+      <p>Acesse <a href="https://botequista.com.br/landing">botequista.com.br/landing</a> para conhecer todos os detalhes.</p>
+    </div>
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/index.tsx"></script>
 </body>
