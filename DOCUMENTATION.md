@@ -7,7 +7,7 @@
 ---
 
 ## 1. Visão Geral e Arquitetura
-O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta disponibilidade em ambientes com conectividade instável.
+O **Botequista** é uma solução PWA (Progressive Web App) projetada para alta disponibilidade em ambientes com conectividade instável!
 
 ### Diferenciais Técnicos
 *   **Offline-First Real:** Utiliza `idb` (IndexedDB Wrapper) para persistir o estado completo da aplicação localmente.
